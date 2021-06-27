@@ -121,6 +121,21 @@ namespace Voxel2Pixel
 			return scaled;
 		}
 
+		public static byte[] UpscaleY(this byte[] texture, int factor, int width = 0)
+		{
+			if (factor == 1) return texture;
+			int xSide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
+				ySide = width == 0 ? xSide * 4 : texture.Length / width,
+				newYside = ySide * factor,
+				factor4 = factor * 4;
+			byte[] scaled = new byte[texture.Length * factor];
+			for (int x = 0; x < xSide; x++)
+				for (int y = 0; y < ySide; y += 4)
+					for (int z = 0; z < factor4; z += 4)
+						Array.Copy(texture, x * ySide + y, scaled, x * newYside + y * factor + z, 4);
+			return scaled;
+		}
+
 		/// <param name="ints">rgba8888 color values (one int per pixel)</param>
 		/// <returns>rgba8888 texture (four bytes per pixel)</returns>
 		public static byte[] Int2ByteArray(this int[] ints)
