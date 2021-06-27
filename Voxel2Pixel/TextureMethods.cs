@@ -5,6 +5,9 @@ using System.Text;
 
 namespace Voxel2Pixel
 {
+	/// <summary>
+	/// x is height, y is width
+	/// </summary>
 	public static class TextureMethods
 	{
 		public static byte R(this int color) => (byte)(color >> 24);
@@ -103,6 +106,18 @@ namespace Voxel2Pixel
 				for (int z = x + 1; z < x + factor; z++)
 					Array.Copy(scaled, x * newYside, scaled, z * newYside, newYside);
 			}
+			return scaled;
+		}
+
+		public static byte[] UpscaleX(this byte[] texture, int factor, int width = 0)
+		{
+			if (factor == 1) return texture;
+			int xSide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
+				ySide = width == 0 ? xSide * 4 : texture.Length / width;
+			byte[] scaled = new byte[texture.Length * factor];
+			for (int x = 0; x < xSide; x++)
+				for (int z = 0; z < factor; z++)
+					Array.Copy(texture, x * ySide, scaled, (x * factor + z) * ySide, ySide);
 			return scaled;
 		}
 
