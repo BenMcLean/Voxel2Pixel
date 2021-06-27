@@ -162,12 +162,12 @@ namespace Voxel2Pixel
 		public static byte[] Int2ByteArray(this int[] ints)
 		{
 			byte[] bytes = new byte[ints.Length * 4];
-			for (int i = 0; i < ints.Length; i++)
+			for (int i = 0, j = 0; i < ints.Length; i++)
 			{
-				bytes[i * 4] = (byte)(ints[i] >> 24);
-				bytes[i * 4 + 1] = (byte)(ints[i] >> 16);
-				bytes[i * 4 + 2] = (byte)(ints[i] >> 8);
-				bytes[i * 4 + 3] = (byte)ints[i];
+				bytes[j++] = (byte)(ints[i] >> 24);
+				bytes[j++] = (byte)(ints[i] >> 16);
+				bytes[j++] = (byte)(ints[i] >> 8);
+				bytes[j++] = (byte)ints[i];
 			}
 			return bytes;
 		}
@@ -177,11 +177,11 @@ namespace Voxel2Pixel
 		public static int[] Byte2IntArray(this byte[] bytes)
 		{
 			int[] ints = new int[bytes.Length / 4];
-			for (int i = 0; i < bytes.Length; i += 4)
-				ints[i / 4] = (bytes[i] << 24) |
-					(bytes[i + 1] << 16) |
-					(bytes[i + 2] << 8) |
-					bytes[i + 3];
+			for (int i = 0, j = 0; i < bytes.Length; i += 4)
+				ints[j++] = (bytes[i] << 24)
+					| (bytes[i + 1] << 16)
+					| (bytes[i + 2] << 8)
+					| bytes[i + 3];
 			return ints;
 		}
 
