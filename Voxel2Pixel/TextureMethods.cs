@@ -101,6 +101,8 @@ namespace Voxel2Pixel
 			return tiled;
 		}
 
+		public static byte[] Tile(this byte[] texture, int xFactor, int yFactor = 1, int width = 0) => TileY(TileX(texture, xFactor, width), yFactor);
+
 		public static byte[] TileX(this byte[] texture, int factor = 2, int width = 0)
 		{
 			if (factor < 2) return texture;
@@ -160,18 +162,7 @@ namespace Voxel2Pixel
 			return scaled;
 		}
 
-		public static byte[] UpscaleY(this byte[] texture, int factor, int width = 0)
-		{
-			if (factor < 2) return texture;
-			int ySide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
-				xSide = width == 0 ? ySide * 4 : texture.Length / width;
-			byte[] scaled = new byte[texture.Length * factor];
-			for (int y = 0; y < ySide; y++)
-				for (int z = 0; z < factor; z++)
-					Array.Copy(texture, y * xSide, scaled, (y * factor + z) * xSide, xSide);
-			return scaled;
-		}
-
+		public static byte[] UpscaleXY(this byte[] texture, int xFactor, int yFactor, int width) => UpscaleY(UpscaleX(texture, xFactor, width), yFactor, width * xFactor);
 		public static byte[] UpscaleX(this byte[] texture, int factor, int width = 0)
 		{
 			if (factor < 2) return texture;
@@ -187,14 +178,16 @@ namespace Voxel2Pixel
 			return scaled;
 		}
 
-		public static byte[] FlipY(this byte[] texture, int width = 0)
+		public static byte[] UpscaleY(this byte[] texture, int factor, int width = 0)
 		{
+			if (factor < 2) return texture;
 			int ySide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
 				xSide = width == 0 ? ySide * 4 : texture.Length / width;
-			byte[] flipped = new byte[texture.Length];
+			byte[] scaled = new byte[texture.Length * factor];
 			for (int y = 0; y < ySide; y++)
-				Array.Copy(texture, y * xSide, flipped, (ySide - 1 - y) * xSide, xSide);
-			return flipped;
+				for (int z = 0; z < factor; z++)
+					Array.Copy(texture, y * xSide, scaled, (y * factor + z) * xSide, xSide);
+			return scaled;
 		}
 
 		public static byte[] FlipX(this byte[] texture, int width = 0)
@@ -205,6 +198,16 @@ namespace Voxel2Pixel
 			for (int y = 0; y < ySide; y++)
 				for (int x = 0; x < xSide; x += 4)
 					Array.Copy(texture, y * xSide + x, flipped, y * xSide + (xSide - 4 - x), 4);
+			return flipped;
+		}
+
+		public static byte[] FlipY(this byte[] texture, int width = 0)
+		{
+			int ySide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
+				xSide = width == 0 ? ySide * 4 : texture.Length / width;
+			byte[] flipped = new byte[texture.Length];
+			for (int y = 0; y < ySide; y++)
+				Array.Copy(texture, y * xSide, flipped, (ySide - 1 - y) * xSide, xSide);
 			return flipped;
 		}
 
