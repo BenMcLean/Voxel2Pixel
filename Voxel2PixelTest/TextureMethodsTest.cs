@@ -9,7 +9,7 @@ namespace Voxel2PixelTest
 		[Fact]
 		public void Test1()
 		{
-			int width = 2, height = 2, scale = 100;
+			int width = 2, height = 2, scale = 100, tileY = 3;
 			byte[] bytes = new byte[width * height * 4]
 			.DrawPixel(255, 0, 0, 255, 0, 0, width)
 			.DrawPixel(0, 255, 0, 255, 1, 0, width)
@@ -17,8 +17,9 @@ namespace Voxel2PixelTest
 			.DrawPixel(255, 255, 255, 255, 1, 1, width)
 			//.DrawRectangle(0, 0, 255, 255, 10, 10, 80, 80, width);
 			.Upscale(scale, width)
-			.DrawRectangle(0, 0, 0, 255, width * scale / 4, height * scale / 4, width * scale / 4 * 2, height * scale / 4 * 2, width * scale);
-			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes, width * scale, height * scale)
+			.DrawRectangle(0, 0, 0, 255, width * scale / 4, height * scale / 4, width * scale / 4 * 2, height * scale / 4 * 2, width * scale)
+			.TileY(tileY, width * scale);
+			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes, width * scale, height * scale * tileY)
 				.SaveAsPng("output.png");
 		}
 	}

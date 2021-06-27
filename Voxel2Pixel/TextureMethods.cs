@@ -101,11 +101,20 @@ namespace Voxel2Pixel
 			return tiled;
 		}
 
+		public static byte[] TileY(this byte[] texture, int factor, int width = 0)
+		{
+			if (factor < 2) return texture;
+			byte[] tiled = new byte[texture.Length * factor];
+			for (int y = 0; y < tiled.Length; y += texture.Length)
+				Array.Copy(texture, 0, tiled, y, texture.Length);
+			return tiled;
+		}
+
 		public static byte[] Upscale(this byte[] texture, int factor, bool x, bool y = false, int width = 0) => x && y ? Upscale(texture, factor, width) : x ? UpscaleX(texture, factor, width) : y ? UpscaleY(texture, factor, width) : texture;
 
 		public static byte[] Upscale(this byte[] texture, int factor, int width = 0)
 		{
-			if (factor == 1) return texture;
+			if (factor < 2) return texture;
 			int ySide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
 				xSide = width == 0 ? ySide * 4 : texture.Length / width,
 				newYside = ySide * factor,
@@ -123,7 +132,7 @@ namespace Voxel2Pixel
 
 		public static int[] Upscale(this int[] texture, int factor, int width = 0)
 		{
-			if (factor == 1) return texture;
+			if (factor < 2) return texture;
 			int ySide = width == 0 ? (int)Math.Sqrt(texture.Length) : width,
 				xSide = width == 0 ? ySide : texture.Length / width,
 				newYside = ySide * factor,
@@ -141,7 +150,7 @@ namespace Voxel2Pixel
 
 		public static byte[] UpscaleY(this byte[] texture, int factor, int width = 0)
 		{
-			if (factor == 1) return texture;
+			if (factor < 2) return texture;
 			int ySide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
 				xSide = width == 0 ? ySide * 4 : texture.Length / width;
 			byte[] scaled = new byte[texture.Length * factor];
@@ -153,7 +162,7 @@ namespace Voxel2Pixel
 
 		public static byte[] UpscaleX(this byte[] texture, int factor, int width = 0)
 		{
-			if (factor == 1) return texture;
+			if (factor < 2) return texture;
 			int ySide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
 				xSide = width == 0 ? ySide * 4 : texture.Length / width,
 				newXside = xSide * factor,
