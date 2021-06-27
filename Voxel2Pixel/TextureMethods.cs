@@ -2,7 +2,6 @@
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Drawing;
 
 namespace Voxel2Pixel
 {
@@ -170,9 +169,9 @@ namespace Voxel2Pixel
 						|| !byte.TryParse(tokens[2], out byte b))
 						throw new InvalidDataException("Palette stream is an incorrectly formatted JASC palette.");
 					result[x] = (r << 24)
-						+ (g << 16)
-						+ (b << 8)
-						+ (x == 255 ? 0 : 255);
+						| (g << 16)
+						| (b << 8)
+						| (x == 255 ? 0 : 255);
 				}
 			}
 			return result;
