@@ -101,7 +101,19 @@ namespace Voxel2Pixel
 			return tiled;
 		}
 
-		public static byte[] TileY(this byte[] texture, int factor, int width = 0)
+		public static byte[] TileX(this byte[] texture, int factor = 2, int width = 0)
+		{
+			if (factor < 2) return texture;
+			byte[] tiled = new byte[texture.Length * factor];
+			int ySide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
+				newYside = ySide * factor;
+			for (int y1 = 0, y2 = 0; y1 < texture.Length; y1 += ySide, y2 += newYside)
+				for (int x = 0; x < newYside; x += ySide)
+					Array.Copy(texture, y1, tiled, y2 + x, ySide);
+			return tiled;
+		}
+
+		public static byte[] TileY(this byte[] texture, int factor = 2)
 		{
 			if (factor < 2) return texture;
 			byte[] tiled = new byte[texture.Length * factor];
