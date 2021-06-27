@@ -6,7 +6,7 @@ using System.Text;
 namespace Voxel2Pixel
 {
 	/// <summary>
-	/// x is height, y is width
+	/// x is width, y is height
 	/// </summary>
 	public static class TextureMethods
 	{
@@ -47,11 +47,11 @@ namespace Voxel2Pixel
 		public static byte[] DrawPixel(this byte[] texture, byte r, byte g, byte b, byte a, int x, int y, int width = 0)
 		{
 			if (x < 0 || y < 0) return texture;
-			int xSide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
-				ySide = width == 0 ? xSide * 4 : texture.Length / width;
-			y *= 4;
+			int ySide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
+				xSide = width == 0 ? ySide * 4 : texture.Length / width;
+			x *= 4;
 			if (x >= xSide || y >= ySide) return texture;
-			int offset = x * ySide + y;
+			int offset = y * xSide + x;
 			texture[offset] = r;
 			texture[offset + 1] = g;
 			texture[offset + 2] = b;
@@ -63,22 +63,22 @@ namespace Voxel2Pixel
 		public static byte[] DrawRectangle(this byte[] texture, byte r, byte g, byte b, byte a, int x, int y, int rectHeight, int rectWidth = 0, int width = 0)
 		{
 			if (rectWidth < 1) rectWidth = rectHeight;
-			int xSide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
-				ySide = width == 0 ? xSide * 4 : texture.Length / width;
+			int ySide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
+				xSide = width == 0 ? ySide * 4 : texture.Length / width;
 			if (x < 0 || y < 0 || x >= xSide || y >= ySide) return texture;
-			int offset = x * ySide + y * 4;
-			if (x + rectHeight >= xSide) rectHeight = xSide - x;
-			if ((y + rectWidth) * 4 >= ySide) rectWidth = ySide / 4 - y;
+			int offset = y * xSide + x * 4;
+			if (y + rectWidth >= ySide) rectWidth = ySide - y;
+			if ((x + rectHeight) * 4 >= xSide) rectHeight = xSide / 4 - x;
 			int rectWidth4 = rectWidth * 4,
-				xStop = offset + ySide * rectHeight;
+				yStop = offset + xSide * rectHeight;
 			texture[offset] = r;
 			texture[offset + 1] = g;
 			texture[offset + 2] = b;
 			texture[offset + 3] = a;
-			for (int y2 = offset + 4; y2 < offset + rectWidth4; y2 += 4)
-				Array.Copy(texture, offset, texture, y2, 4);
-			for (int x2 = offset; x2 < xStop; x2 += ySide)
-				Array.Copy(texture, offset, texture, x2, rectWidth4);
+			for (int x2 = offset + 4; x2 < offset + rectWidth4; x2 += 4)
+				Array.Copy(texture, offset, texture, x2, 4);
+			for (int y2 = offset; y2 < yStop; y2 += xSide)
+				Array.Copy(texture, offset, texture, y2, rectWidth4);
 			return texture;
 		}
 
@@ -106,17 +106,17 @@ namespace Voxel2Pixel
 		public static byte[] Upscale(this byte[] texture, int factor, int width = 0)
 		{
 			if (factor == 1) return texture;
-			int xSide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
-				ySide = width == 0 ? xSide * 4 : texture.Length / width,
-				newXside = xSide * factor,
-				newYside = ySide * factor;
+			int ySide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
+				xSide = width == 0 ? ySide * 4 : texture.Length / width,
+				newYside = ySide * factor,
+				newXside = xSide * factor;
 			byte[] scaled = new byte[texture.Length * factor * factor];
-			for (int x = 0; x < newXside; x += factor)
+			for (int y = 0; y < newYside; y += factor)
 			{
-				for (int y = 0; y < newYside; y += 4)
-					Array.Copy(texture, x / factor * ySide + (y / factor & -4), scaled, x * newYside + y, 4); // (y / factor & -4) == y / 4 / factor * 4
-				for (int z = x + 1; z < x + factor; z++)
-					Array.Copy(scaled, x * newYside, scaled, z * newYside, newYside);
+				for (int x = 0; x < newXside; x += 4)
+					Array.Copy(texture, y / factor * xSide + (x / factor & -4), scaled, y * newXside + x, 4); // (y / factor & -4) == y / 4 / factor * 4
+				for (int z = y + 1; z < y + factor; z++)
+					Array.Copy(scaled, y * newXside, scaled, z * newXside, newXside);
 			}
 			return scaled;
 		}
@@ -124,66 +124,66 @@ namespace Voxel2Pixel
 		public static int[] Upscale(this int[] texture, int factor, int width = 0)
 		{
 			if (factor == 1) return texture;
-			int xSide = width == 0 ? (int)Math.Sqrt(texture.Length) : width,
-				ySide = width == 0 ? xSide : texture.Length / width,
-				newXside = xSide * factor,
-				newYside = ySide * factor;
+			int ySide = width == 0 ? (int)Math.Sqrt(texture.Length) : width,
+				xSide = width == 0 ? ySide : texture.Length / width,
+				newYside = ySide * factor,
+				newXside = xSide * factor;
 			int[] scaled = new int[texture.Length * factor * factor];
-			for (int x = 0; x < newXside; x += factor)
+			for (int y = 0; y < newYside; y += factor)
 			{
-				for (int y = 0; y < newYside; y++)
-					scaled[x * newYside + y] = texture[x / factor * ySide + y / factor];
-				for (int z = x + 1; z < x + factor; z++)
-					Array.Copy(scaled, x * newYside, scaled, z * newYside, newYside);
+				for (int x = 0; x < newXside; x++)
+					scaled[y * newXside + x] = texture[y / factor * xSide + x / factor];
+				for (int z = y + 1; z < y + factor; z++)
+					Array.Copy(scaled, y * newXside, scaled, z * newXside, newXside);
 			}
-			return scaled;
-		}
-
-		public static byte[] UpscaleX(this byte[] texture, int factor, int width = 0)
-		{
-			if (factor == 1) return texture;
-			int xSide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
-				ySide = width == 0 ? xSide * 4 : texture.Length / width;
-			byte[] scaled = new byte[texture.Length * factor];
-			for (int x = 0; x < xSide; x++)
-				for (int z = 0; z < factor; z++)
-					Array.Copy(texture, x * ySide, scaled, (x * factor + z) * ySide, ySide);
 			return scaled;
 		}
 
 		public static byte[] UpscaleY(this byte[] texture, int factor, int width = 0)
 		{
 			if (factor == 1) return texture;
-			int xSide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
-				ySide = width == 0 ? xSide * 4 : texture.Length / width,
-				newYside = ySide * factor,
-				factor4 = factor * 4;
+			int ySide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
+				xSide = width == 0 ? ySide * 4 : texture.Length / width;
 			byte[] scaled = new byte[texture.Length * factor];
-			for (int x = 0; x < xSide; x++)
-				for (int y = 0; y < ySide; y += 4)
-					for (int z = 0; z < factor4; z += 4)
-						Array.Copy(texture, x * ySide + y, scaled, x * newYside + y * factor + z, 4);
+			for (int y = 0; y < ySide; y++)
+				for (int z = 0; z < factor; z++)
+					Array.Copy(texture, y * xSide, scaled, (y * factor + z) * xSide, xSide);
 			return scaled;
 		}
 
-		public static byte[] FlipX(this byte[] texture, int width = 0)
+		public static byte[] UpscaleX(this byte[] texture, int factor, int width = 0)
 		{
-			int xSide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
-				ySide = width == 0 ? xSide * 4 : texture.Length / width;
-			byte[] flipped = new byte[texture.Length];
-			for (int x = 0; x < xSide; x++)
-				Array.Copy(texture, x * ySide, flipped, (xSide - 1 - x) * ySide, ySide);
-			return flipped;
+			if (factor == 1) return texture;
+			int ySide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
+				xSide = width == 0 ? ySide * 4 : texture.Length / width,
+				newXside = xSide * factor,
+				factor4 = factor * 4;
+			byte[] scaled = new byte[texture.Length * factor];
+			for (int y = 0; y < ySide; y++)
+				for (int x = 0; x < xSide; x += 4)
+					for (int z = 0; z < factor4; z += 4)
+						Array.Copy(texture, y * xSide + x, scaled, y * newXside + x * factor + z, 4);
+			return scaled;
 		}
 
 		public static byte[] FlipY(this byte[] texture, int width = 0)
 		{
-			int xSide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
-				ySide = width == 0 ? xSide * 4 : texture.Length / width;
+			int ySide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
+				xSide = width == 0 ? ySide * 4 : texture.Length / width;
 			byte[] flipped = new byte[texture.Length];
-			for (int x = 0; x < xSide; x++)
-				for (int y = 0; y < ySide; y += 4)
-					Array.Copy(texture, x * ySide + y, flipped, x * ySide + (ySide - 4 - y), 4);
+			for (int y = 0; y < ySide; y++)
+				Array.Copy(texture, y * xSide, flipped, (ySide - 1 - y) * xSide, xSide);
+			return flipped;
+		}
+
+		public static byte[] FlipX(this byte[] texture, int width = 0)
+		{
+			int ySide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
+				xSide = width == 0 ? ySide * 4 : texture.Length / width;
+			byte[] flipped = new byte[texture.Length];
+			for (int y = 0; y < ySide; y++)
+				for (int x = 0; x < xSide; x += 4)
+					Array.Copy(texture, y * xSide + x, flipped, y * xSide + (xSide - 4 - x), 4);
 			return flipped;
 		}
 
@@ -219,10 +219,10 @@ namespace Voxel2Pixel
 		{
 			T[] result = new T[list.Sum(a => a.Length)];
 			int offset = 0;
-			for (int x = 0; x < list.Length; x++)
+			for (int i = 0; i < list.Length; i++)
 			{
-				list[x].CopyTo(result, offset);
-				offset += list[x].Length;
+				list[i].CopyTo(result, offset);
+				offset += list[i].Length;
 			}
 			return result;
 		}
@@ -241,7 +241,7 @@ namespace Voxel2Pixel
 				 || numColors != 256)
 					throw new InvalidDataException("Palette stream does not contain exactly 256 colors.");
 				result = new int[numColors];
-				for (int x = 0; x < numColors; x++)
+				for (int i = 0; i < numColors; i++)
 				{
 					string[] tokens = streamReader.ReadLine()?.Trim().Split(' ');
 					if (tokens == null || tokens.Length != 3
@@ -249,10 +249,10 @@ namespace Voxel2Pixel
 						|| !byte.TryParse(tokens[1], out byte g)
 						|| !byte.TryParse(tokens[2], out byte b))
 						throw new InvalidDataException("Palette stream is an incorrectly formatted JASC palette.");
-					result[x] = (r << 24)
+					result[i] = (r << 24)
 						| (g << 16)
 						| (b << 8)
-						| (x == 255 ? 0 : 255);
+						| (i == 255 ? 0 : 255);
 				}
 			}
 			return result;
