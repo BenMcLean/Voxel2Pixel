@@ -22,12 +22,12 @@ namespace Voxel2Pixel
 		public static byte[] Index2ByteArray(this byte[] index, int[] palette)
 		{
 			byte[] bytes = new byte[index.Length * 4];
-			for (int i = 0; i < index.Length; i++)
+			for (int i = 0, j = 0; i < index.Length; i++)
 			{
-				bytes[i * 4] = (byte)(palette[index[i]] >> 24);
-				bytes[i * 4 + 1] = (byte)(palette[index[i]] >> 16);
-				bytes[i * 4 + 2] = (byte)(palette[index[i]] >> 8);
-				bytes[i * 4 + 3] = (byte)palette[index[i]];
+				bytes[j++] = (byte)(palette[index[i]] >> 24);
+				bytes[j++] = (byte)(palette[index[i]] >> 16);
+				bytes[j++] = (byte)(palette[index[i]] >> 8);
+				bytes[j++] = (byte)palette[index[i]];
 			}
 			return bytes;
 		}
@@ -47,10 +47,10 @@ namespace Voxel2Pixel
 		public static byte[] DrawPixel(this byte[] texture, byte r, byte g, byte b, byte a, int x, int y, int width = 0)
 		{
 			int offset = (x * (width == 0 ? (int)Math.Sqrt(texture.Length / 4) : (texture.Length / 4) / width) + y) * 4;
-			texture[offset] = r;
-			texture[offset + 1] = g;
-			texture[offset + 2] = b;
-			texture[offset + 3] = a;
+			texture[offset++] = r;
+			texture[offset++] = g;
+			texture[offset++] = b;
+			texture[offset] = a;
 			return texture;
 		}
 
