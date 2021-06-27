@@ -15,8 +15,9 @@ namespace Voxel2PixelTest
 				.DrawPixel(0, 255, 0, 255, 0, 1, width)
 				.DrawPixel(0, 0, 255, 255, 1, 0, width)
 				.DrawPixel(255, 255, 255, 255, 1, 1, width)
-				.UpscaleY(scale, width);
-			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes, width * scale, height)
+				.Upscale(scale, width)
+				.FlipY();
+			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes, width * scale, height * scale)
 				.SaveAsPng("output.png");
 		}
 	}
