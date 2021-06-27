@@ -46,7 +46,12 @@ namespace Voxel2Pixel
 		public static byte[] DrawPixel(this byte[] texture, int color, int x, int y, int width = 0) => DrawPixel(texture, (byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, width);
 		public static byte[] DrawPixel(this byte[] texture, byte r, byte g, byte b, byte a, int x, int y, int width = 0)
 		{
-			int offset = (x * (width == 0 ? (int)Math.Sqrt(texture.Length / 4) : (texture.Length / 4) / width) + y) * 4;
+			if (x < 0 || y < 0) return texture;
+			int xSide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
+				ySide = width == 0 ? xSide * 4 : texture.Length / width;
+			y *= 4;
+			if (x >= xSide || y >= ySide) return texture;
+			int offset = x * ySide + y;
 			texture[offset] = r;
 			texture[offset + 1] = g;
 			texture[offset + 2] = b;
@@ -60,10 +65,10 @@ namespace Voxel2Pixel
 			if (rectWidth < 1) rectWidth = rectHeight;
 			int xSide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
 				ySide = width == 0 ? xSide * 4 : texture.Length / width;
-			if (x > xSide || y > ySide) return texture;
+			if (x < 0 || y < 0 || x >= xSide || y >= ySide) return texture;
 			int offset = x * ySide + y * 4;
-			if (x + rectHeight > xSide) rectHeight = xSide - x;
-			if (y + rectWidth > ySide / 4) rectWidth = ySide / 4 - y;
+			if (x + rectHeight >= xSide) rectHeight = xSide - x;
+			if ((y + rectWidth) * 4 >= ySide) rectWidth = ySide / 4 - y;
 			int rectWidth4 = rectWidth * 4,
 				xStop = offset + ySide * rectHeight;
 			texture[offset] = r;
