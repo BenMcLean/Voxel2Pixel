@@ -9,7 +9,7 @@ namespace Voxel2PixelTest
 		[Fact]
 		public void Test1()
 		{
-			int width = 2, height = 2, scale = 50, tileX = 3, tileY = 1;
+			int width = 2, height = 2, scale = 20, tileX = 7, tileY = 6;
 			byte[] bytes = new byte[width * height * 4]
 			.DrawPixel(255, 0, 0, 255, 0, 0, width)
 			.DrawPixel(0, 255, 0, 255, 1, 0, width)
