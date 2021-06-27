@@ -73,6 +73,8 @@ namespace Voxel2Pixel
 			return tiled;
 		}
 
+		public static byte[] Upscale(this byte[] texture, int factor, bool x, bool y = false, int width = 0) => x && y ? Upscale(texture, factor, width) : x ? UpscaleX(texture, factor, width) : y ? UpscaleY(texture, factor, width) : texture;
+
 		public static byte[] Upscale(this byte[] texture, int factor, int width = 0)
 		{
 			if (factor == 1) return texture;
