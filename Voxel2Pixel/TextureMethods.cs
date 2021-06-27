@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Drawing;
 
 namespace Voxel2Pixel
 {
