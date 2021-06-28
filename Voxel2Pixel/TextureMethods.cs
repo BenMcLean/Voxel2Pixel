@@ -110,8 +110,7 @@ namespace Voxel2Pixel
 		public static byte[] Upscale(this byte[] texture, int xFactor, int yFactor, int width = 0)
 		{
 			if (xFactor < 1 || yFactor < 1 || (xFactor < 2 && yFactor < 2)) return texture;
-			int ySide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
-				xSide = width == 0 ? ySide * 4 : texture.Length / width,
+			int xSide = (width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width) * 4,
 				newXside = xSide * xFactor,
 				newXsideFactor = newXside * yFactor,
 				xFactor4 = xFactor * 4;
