@@ -127,12 +127,11 @@ namespace Voxel2Pixel
 		}
 		public static byte[] FlipX(this byte[] texture, int width = 0)
 		{
-			int ySide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
-				xSide = width == 0 ? ySide * 4 : texture.Length / width;
+			int xSide = (width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width) * 4;
 			byte[] flipped = new byte[texture.Length];
-			for (int y = 0; y < ySide; y++)
+			for (int y = 0; y < flipped.Length; y += xSide)
 				for (int x = 0; x < xSide; x += 4)
-					Array.Copy(texture, y * xSide + x, flipped, y * xSide + (xSide - 4 - x), 4);
+					Array.Copy(texture, y + x, flipped, y + xSide - 4 - x, 4);
 			return flipped;
 		}
 		public static byte[] FlipY(this byte[] texture, int width = 0)
