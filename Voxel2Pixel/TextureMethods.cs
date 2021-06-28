@@ -45,8 +45,8 @@ namespace Voxel2Pixel
 		public static byte[] DrawPixel(this byte[] texture, byte r, byte g, byte b, byte a, int x, int y, int width = 0)
 		{
 			if (x < 0 || y < 0) return texture;
-			int xSide = (width == 0 ? (int)Math.Sqrt(texture.Length >> 2) : width) * 4,
-				ySide = (width == 0 ? xSide : texture.Length / width) >> 2;
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) * 4,
+				ySide = (width < 1 ? xSide : texture.Length / width) >> 2;
 			x *= 4;
 			if (x >= xSide || y >= ySide) return texture;
 			int offset = y * xSide + x;
@@ -60,8 +60,8 @@ namespace Voxel2Pixel
 		public static byte[] DrawRectangle(this byte[] texture, byte r, byte g, byte b, byte a, int x, int y, int rectWidth, int rectHeight = 0, int width = 0)
 		{
 			if (rectHeight < 1) rectHeight = rectWidth;
-			int xSide = (width == 0 ? (int)Math.Sqrt(texture.Length >> 2) : width) * 4,
-				ySide = (width == 0 ? xSide : texture.Length / width) >> 2,
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) * 4,
+				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
 				x4 = x * 4;
 			if (x < 0)
 			{
@@ -93,7 +93,7 @@ namespace Voxel2Pixel
 		{
 			if (factor < 2) return texture;
 			byte[] tiled = new byte[texture.Length * factor];
-			int xSide = (width == 0 ? (int)Math.Sqrt(texture.Length >> 2) : width) * 4,
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) * 4,
 				newXside = xSide * factor;
 			for (int y1 = 0, y2 = 0; y1 < texture.Length; y1 += xSide, y2 += newXside)
 				for (int x = 0; x < newXside; x += xSide)
@@ -111,7 +111,7 @@ namespace Voxel2Pixel
 		public static byte[] Upscale(this byte[] texture, int xFactor, int yFactor, int width = 0)
 		{
 			if (xFactor < 1 || yFactor < 1 || (xFactor < 2 && yFactor < 2)) return texture;
-			int xSide = (width == 0 ? (int)Math.Sqrt(texture.Length >> 2) : width) * 4,
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) * 4,
 				newXside = xSide * xFactor,
 				newXsideFactor = newXside * yFactor,
 				xFactor4 = xFactor * 4;
@@ -136,7 +136,7 @@ namespace Voxel2Pixel
 		}
 		public static byte[] FlipY(this byte[] texture, int width = 0)
 		{
-			int xSide = (width == 0 ? (int)Math.Sqrt(texture.Length >> 2) : width) * 4;
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) * 4;
 			byte[] flipped = new byte[texture.Length];
 			for (int y = 0; y < flipped.Length; y += xSide)
 				for (int x = 0; x < xSide; x += 4)
@@ -213,8 +213,8 @@ namespace Voxel2Pixel
 		/*
 		public static void Print<T>(T[] texture, int width = 0)
 		{
-			int xSide = width == 0 ? (int)System.Math.Sqrt(texture.Length >> 2) : width,
-				ySide = width == 0 ? xSide * 4 : texture.Length / width;
+			int xSide = width < 1 ? (int)System.Math.Sqrt(texture.Length >> 2) : width,
+				ySide = width < 1 ? xSide * 4 : texture.Length / width;
 			for (int x = 0; x < xSide; x++)
 			{
 				for (int y = 0; y < ySide; y += 4)
