@@ -16,7 +16,8 @@ namespace Voxel2PixelTest
 			.DrawPixel(0, 0, 255, 255, 0, 1, width)
 			.DrawPixel(255, 255, 255, 255, 1, 1, width)
 			.Upscale(xScale, yScale, width)
-			.DrawRectangle(0, 0, 0, 255, width * xScale / 4, height * yScale / 4, width * xScale / 4 * 2, height * yScale / 4 * 2, width * xScale);
+			.DrawRectangle(0, 0, 0, 255, width * xScale / 4, height * yScale / 4, width * xScale / 4 * 2, height * yScale / 4 * 2, width * xScale)
+			.FlipY(width * xScale);
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes, width * xScale, height * yScale)
 				.SaveAsPng("output.png");
 		}

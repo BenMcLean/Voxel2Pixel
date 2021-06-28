@@ -128,11 +128,10 @@ namespace Voxel2Pixel
 		}
 		public static byte[] FlipY(this byte[] texture, int width = 0)
 		{
-			int ySide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
-				xSide = width == 0 ? ySide * 4 : texture.Length / width;
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length / 4) : width) * 4;
 			byte[] flipped = new byte[texture.Length];
-			for (int y = 0; y < ySide; y++)
-				Array.Copy(texture, y * xSide, flipped, (ySide - 1 - y) * xSide, xSide);
+			for (int y = 0; y < flipped.Length; y += xSide)
+				Array.Copy(texture, y, flipped, flipped.Length - xSide - y, xSide);
 			return flipped;
 		}
 		/// <param name="ints">rgba8888 color values (one int per pixel)</param>
