@@ -62,7 +62,17 @@ namespace Voxel2Pixel
 			int xSide = (width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width) * 4,
 				ySide = (width == 0 ? xSide : texture.Length / width) / 4,
 				x4 = x * 4;
-			if (x < 0 || y < 0 || x4 >= xSide || y >= ySide) return texture;
+			if (x < 0)
+			{
+				rectWidth += x;
+				x = 0;
+			}
+			if (y < 0)
+			{
+				rectHeight += y;
+				y = 0;
+			}
+			if (rectWidth < 1 || rectHeight < 1 || x4 >= xSide || y >= ySide) return texture;
 			if ((x + rectWidth) * 4 >= xSide) rectWidth = xSide / 4 - x;
 			if (y + rectHeight >= ySide) rectHeight = ySide / 4 - y;
 			int offset = y * xSide + x4,
