@@ -44,8 +44,8 @@ namespace Voxel2Pixel
 		public static byte[] DrawPixel(this byte[] texture, byte r, byte g, byte b, byte a, int x, int y, int width = 0)
 		{
 			if (x < 0 || y < 0) return texture;
-			int ySide = width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width,
-				xSide = width == 0 ? ySide * 4 : texture.Length / width;
+			int xSide = (width == 0 ? (int)Math.Sqrt(texture.Length / 4) : width) * 4,
+				ySide = (width == 0 ? xSide : texture.Length / width) / 4;
 			x *= 4;
 			if (x >= xSide || y >= ySide) return texture;
 			int offset = y * xSide + x;
@@ -110,23 +110,6 @@ namespace Voxel2Pixel
 			{
 				for (int x = 0; x < newXside; x += 4)
 					Array.Copy(texture, y / factor * xSide + (x / factor & -4), scaled, y * newXside + x, 4); // (y / factor & -4) == y / 4 / factor * 4
-				for (int z = y + 1; z < y + factor; z++)
-					Array.Copy(scaled, y * newXside, scaled, z * newXside, newXside);
-			}
-			return scaled;
-		}
-		public static int[] Upscale(this int[] texture, int factor, int width = 0)
-		{
-			if (factor < 2) return texture;
-			int ySide = width == 0 ? (int)Math.Sqrt(texture.Length) : width,
-				xSide = width == 0 ? ySide : texture.Length / width,
-				newYside = ySide * factor,
-				newXside = xSide * factor;
-			int[] scaled = new int[texture.Length * factor * factor];
-			for (int y = 0; y < newYside; y += factor)
-			{
-				for (int x = 0; x < newXside; x++)
-					scaled[y * newXside + x] = texture[y / factor * xSide + x / factor];
 				for (int z = y + 1; z < y + factor; z++)
 					Array.Copy(scaled, y * newXside, scaled, z * newXside, newXside);
 			}
