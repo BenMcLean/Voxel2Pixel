@@ -74,7 +74,7 @@ namespace Voxel2Pixel
 			texture[offset + 3] = a;
 			for (int x2 = offset + 4; x2 < offset + rectWidth4; x2 += 4)
 				Array.Copy(texture, offset, texture, x2, 4);
-			for (int y2 = offset; y2 < yStop; y2 += xSide)
+			for (int y2 = offset + xSide; y2 < yStop; y2 += xSide)
 				Array.Copy(texture, offset, texture, y2, rectWidth4);
 			return texture;
 		}
