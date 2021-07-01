@@ -52,7 +52,7 @@ namespace Voxel2Pixel
 			if (x < 0 || y < 0) return texture;
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2;
-			x *= 4;
+			x <<= 2; //x *= 4;
 			if (x >= xSide || y >= ySide) return texture;
 			int offset = y * xSide + x;
 			texture[offset] = r;
@@ -185,8 +185,7 @@ namespace Voxel2Pixel
 		public static T[] ConcatArrays<T>(params T[][] list)
 		{
 			T[] result = new T[list.Sum(a => a.Length)];
-			int offset = 0;
-			for (int i = 0; i < list.Length; i++)
+			for (int i = 0, offset = 0; i < list.Length; i++)
 			{
 				list[i].CopyTo(result, offset);
 				offset += list[i].Length;
