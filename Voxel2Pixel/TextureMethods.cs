@@ -12,6 +12,10 @@ namespace Voxel2Pixel
 	/// </summary>
 	public static class TextureMethods
 	{
+		//TODO: Crop
+		//TODO: Paste
+		//TODO: DrawTriangle
+		//TODO: DrawEllipse
 		public static byte R(this int color) => (byte)(color >> 24);
 		public static byte G(this int color) => (byte)(color >> 16);
 		public static byte B(this int color) => (byte)(color >> 8);
@@ -90,23 +94,24 @@ namespace Voxel2Pixel
 				Array.Copy(texture, offset, texture, y2, rectWidth4);
 			return texture;
 		}
-		public static byte[] TileX(this byte[] texture, int factor = 2, int width = 0)
+		public static byte[] Tile(this byte[] texture, int xFactor = 2, int yFactor = 2, int width = 0)
 		{
-			if (factor < 2) return texture;
-			byte[] tiled = new byte[texture.Length * factor];
+			if (xFactor < 1 || yFactor < 1 || (xFactor < 2 && yFactor < 2)) return texture;
+			byte[] tiled = new byte[texture.Length * xFactor * yFactor];
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
-				newXside = xSide * factor;
-			for (int y1 = 0, y2 = 0; y1 < texture.Length; y1 += xSide, y2 += newXside)
-				for (int x = 0; x < newXside; x += xSide)
-					Array.Copy(texture, y1, tiled, y2 + x, xSide);
-			return tiled;
-		}
-		public static byte[] TileY(this byte[] texture, int factor = 2)
-		{
-			if (factor < 2) return texture;
-			byte[] tiled = new byte[texture.Length * factor];
-			for (int y = 0; y < tiled.Length; y += texture.Length)
-				Array.Copy(texture, 0, tiled, y, texture.Length);
+				newXside = xSide * xFactor;
+			if (xFactor > 1)
+				for (int y1 = 0, y2 = 0; y1 < texture.Length; y1 += xSide, y2 += newXside)
+					for (int x = 0; x < newXside; x += xSide)
+						Array.Copy(texture, y1, tiled, y2 + x, xSide);
+			else
+				Array.Copy(texture, tiled, texture.Length);
+			if (yFactor > 1)
+			{
+				int xScaledLength = texture.Length * xFactor;
+				for (int y = xScaledLength; y < tiled.Length; y += xScaledLength)
+					Array.Copy(tiled, 0, tiled, y, xScaledLength);
+			}
 			return tiled;
 		}
 		public static byte[] Upscale(this byte[] texture, int xFactor, int yFactor, int width = 0)
