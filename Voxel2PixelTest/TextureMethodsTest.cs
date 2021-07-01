@@ -18,10 +18,11 @@ namespace Voxel2PixelTest
 			.Upscale(xScale, yScale, width)
 			.DrawRectangle(0, 0, 0, 255, width * xScale / 4, height * yScale / 4, width * xScale / 4 * 2, height * yScale / 4 * 2, width * xScale)
 			.Tile(xTile, yTile, width * xScale);
-			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes, width * xScale * xTile, height * yScale * yTile)
-				.SaveAsPng("output.png");
-			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes.Crop(10, 15, 80, 50, width * xScale * xTile), 80, 50)
+			byte[] crop = bytes.Crop(10, 15, 25, 20, width * xScale * xTile);
+			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(crop, 20, 20)
 				.SaveAsPng("cropped.png");
+			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes.Insert(95, 95, crop, 25, width * xScale * xTile), width * xScale * xTile, height * yScale * yTile)
+				.SaveAsPng("output.png");
 		}
 	}
 }
