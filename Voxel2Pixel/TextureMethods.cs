@@ -15,36 +15,7 @@ namespace Voxel2Pixel
 	{
 		//TODO: DrawTriangle
 		//TODO: DrawEllipse
-		public static byte R(this int color) => (byte)(color >> 24);
-		public static byte G(this int color) => (byte)(color >> 16);
-		public static byte B(this int color) => (byte)(color >> 8);
-		public static byte A(this int color) => (byte)color;
-		public static int Color(byte r, byte g, byte b, byte a) => r << 24 | g << 16 | b << 8 | a;
-		/// <param name="index">Palette indexes (one byte per pixel)</param>
-		/// <param name="palette">256 rgba8888 color values</param>
-		/// <returns>rgba8888 texture (four bytes per pixel)</returns>
-		public static byte[] Index2ByteArray(this byte[] index, int[] palette)
-		{
-			byte[] bytes = new byte[index.Length << 2];
-			for (int i = 0, j = 0; i < index.Length; i++)
-			{
-				bytes[j++] = (byte)(palette[index[i]] >> 24);
-				bytes[j++] = (byte)(palette[index[i]] >> 16);
-				bytes[j++] = (byte)(palette[index[i]] >> 8);
-				bytes[j++] = (byte)palette[index[i]];
-			}
-			return bytes;
-		}
-		/// <param name="index">Palette indexes (one byte per pixel)</param>
-		/// <param name="palette">256 rgba8888 color values</param>
-		/// <returns>rgba8888 texture (one int per pixel)</returns>
-		public static int[] Index2IntArray(this byte[] index, int[] palette)
-		{
-			int[] ints = new int[index.Length];
-			for (int i = 0; i < index.Length; i++)
-				ints[i] = palette[index[i]];
-			return ints;
-		}
+		#region Drawing
 		public static byte[] DrawPixel(this byte[] texture, int color, int x, int y, int width = 0) => DrawPixel(texture, (byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, width);
 		public static byte[] DrawPixel(this byte[] texture, byte r, byte g, byte b, byte a, int x, int y, int width = 0)
 		{
@@ -93,34 +64,6 @@ namespace Voxel2Pixel
 				Array.Copy(texture, offset, texture, y2, rectWidth4);
 			return texture;
 		}
-		public static byte[] Crop(this byte[] texture, int x, int y, int croppedWidth, int croppedHeight, int width = 0)
-		{
-			if (x < 0)
-			{
-				croppedWidth += x;
-				x = 0;
-			}
-			if (y < 0)
-			{
-				croppedHeight += y;
-				y = 0;
-			}
-			if (croppedWidth < 0 || croppedHeight < 0) return texture;
-			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
-			x <<= 2; // x *= 4;
-			if (x > xSide) return texture;
-			int ySide = (width < 1 ? xSide : texture.Length / width) >> 2;
-			if (y > ySide) return texture;
-			if (y + croppedHeight > ySide)
-				croppedHeight = ySide - y;
-			croppedWidth <<= 2; // croppedWidth *= 4;
-			if (x + croppedWidth > xSide)
-				croppedWidth = xSide - x;
-			byte[] cropped = new byte[croppedWidth * croppedHeight];
-			for (int y1 = y * xSide + x, y2 = 0; y2 < cropped.Length; y1 += xSide, y2 += croppedWidth)
-				Array.Copy(texture, y1, cropped, y2, croppedWidth);
-			return cropped;
-		}
 		public static byte[] DrawInsert(this byte[] texture, int x, int y, byte[] insert, int insertWidth = 0, int width = 0)
 		{
 			int insertX = 0, insertY = 0;
@@ -149,6 +92,69 @@ namespace Voxel2Pixel
 					Array.Copy(insert, y2, texture, y1, actualInsertXside);
 			return texture;
 		}
+		#endregion Drawing
+		#region Image manipulation
+		public static byte[] Crop(this byte[] texture, int x, int y, int croppedWidth, int croppedHeight, int width = 0)
+		{
+			if (x < 0)
+			{
+				croppedWidth += x;
+				x = 0;
+			}
+			if (y < 0)
+			{
+				croppedHeight += y;
+				y = 0;
+			}
+			if (croppedWidth < 0 || croppedHeight < 0) return texture;
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
+			x <<= 2; // x *= 4;
+			if (x > xSide) return texture;
+			int ySide = (width < 1 ? xSide : texture.Length / width) >> 2;
+			if (y > ySide) return texture;
+			if (y + croppedHeight > ySide)
+				croppedHeight = ySide - y;
+			croppedWidth <<= 2; // croppedWidth *= 4;
+			if (x + croppedWidth > xSide)
+				croppedWidth = xSide - x;
+			byte[] cropped = new byte[croppedWidth * croppedHeight];
+			for (int y1 = y * xSide + x, y2 = 0; y2 < cropped.Length; y1 += xSide, y2 += croppedWidth)
+				Array.Copy(texture, y1, cropped, y2, croppedWidth);
+			return cropped;
+		}
+		public static byte[] FlipX(this byte[] texture, int width = 0)
+		{
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
+			byte[] flipped = new byte[texture.Length];
+			for (int y = 0; y < flipped.Length; y += xSide)
+				Array.Copy(texture, y, flipped, flipped.Length - xSide - y, xSide);
+			return flipped;
+		}
+		public static byte[] FlipY(this byte[] texture, int width = 0)
+		{
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
+			byte[] flipped = new byte[texture.Length];
+			for (int y = 0; y < flipped.Length; y += xSide)
+				for (int x = 0; x < xSide; x += 4)
+					Array.Copy(texture, y + x, flipped, y + xSide - 4 - x, 4);
+			return flipped;
+		}
+		public static byte[] Resize(this byte[] texture, int newX, int newY, int width = 0)
+		{
+			if (newX < 1 || newY < 1) return texture;
+			newX <<= 2; // newX *= 4;
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
+			byte[] resized = new byte[newX * newY];
+			if (newX == xSide)
+				Array.Copy(texture, resized, Math.Min(texture.Length, resized.Length));
+			else
+			{
+				int newXside = Math.Min(xSide, newX);
+				for (int y1 = 0, y2 = 0; y1 < texture.Length && y2 < resized.Length; y1 += xSide, y2 += newX)
+					Array.Copy(texture, y1, resized, y2, newXside);
+			}
+			return resized;
+		}
 		public static byte[] Tile(this byte[] texture, int xFactor = 2, int yFactor = 2, int width = 0)
 		{
 			if (xFactor < 1 || yFactor < 1 || (xFactor < 2 && yFactor < 2)) return texture;
@@ -168,22 +174,6 @@ namespace Voxel2Pixel
 					Array.Copy(tiled, 0, tiled, y, xScaledLength);
 			}
 			return tiled;
-		}
-		public static byte[] Resize(this byte[] texture, int newX, int newY, int width = 0)
-		{
-			if (newX < 1 || newY < 1) return texture;
-			newX <<= 2; // newX *= 4;
-			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
-			byte[] resized = new byte[newX * newY];
-			if (newX == xSide)
-				Array.Copy(texture, resized, Math.Min(texture.Length, resized.Length));
-			else
-			{
-				int newXside = Math.Min(xSide, newX);
-				for (int y1 = 0, y2 = 0; y1 < texture.Length && y2 < resized.Length; y1 += xSide, y2 += newX)
-					Array.Copy(texture, y1, resized, y2, newXside);
-			}
-			return resized;
 		}
 		public static byte[] Upscale(this byte[] texture, int xFactor, int yFactor, int width = 0)
 		{
@@ -210,22 +200,37 @@ namespace Voxel2Pixel
 			}
 			return scaled;
 		}
-		public static byte[] FlipX(this byte[] texture, int width = 0)
+		#endregion Image manipulation
+		#region Utilities
+		public static byte R(this int color) => (byte)(color >> 24);
+		public static byte G(this int color) => (byte)(color >> 16);
+		public static byte B(this int color) => (byte)(color >> 8);
+		public static byte A(this int color) => (byte)color;
+		public static int Color(byte r, byte g, byte b, byte a) => r << 24 | g << 16 | b << 8 | a;
+		/// <param name="index">Palette indexes (one byte per pixel)</param>
+		/// <param name="palette">256 rgba8888 color values</param>
+		/// <returns>rgba8888 texture (four bytes per pixel)</returns>
+		public static byte[] Index2ByteArray(this byte[] index, int[] palette)
 		{
-			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
-			byte[] flipped = new byte[texture.Length];
-			for (int y = 0; y < flipped.Length; y += xSide)
-				Array.Copy(texture, y, flipped, flipped.Length - xSide - y, xSide);
-			return flipped;
+			byte[] bytes = new byte[index.Length << 2];
+			for (int i = 0, j = 0; i < index.Length; i++)
+			{
+				bytes[j++] = (byte)(palette[index[i]] >> 24);
+				bytes[j++] = (byte)(palette[index[i]] >> 16);
+				bytes[j++] = (byte)(palette[index[i]] >> 8);
+				bytes[j++] = (byte)palette[index[i]];
+			}
+			return bytes;
 		}
-		public static byte[] FlipY(this byte[] texture, int width = 0)
+		/// <param name="index">Palette indexes (one byte per pixel)</param>
+		/// <param name="palette">256 rgba8888 color values</param>
+		/// <returns>rgba8888 texture (one int per pixel)</returns>
+		public static int[] Index2IntArray(this byte[] index, int[] palette)
 		{
-			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
-			byte[] flipped = new byte[texture.Length];
-			for (int y = 0; y < flipped.Length; y += xSide)
-				for (int x = 0; x < xSide; x += 4)
-					Array.Copy(texture, y + x, flipped, y + xSide - 4 - x, 4);
-			return flipped;
+			int[] ints = new int[index.Length];
+			for (int i = 0; i < index.Length; i++)
+				ints[i] = palette[index[i]];
+			return ints;
 		}
 		/// <param name="ints">rgba8888 color values (one int per pixel)</param>
 		/// <returns>rgba8888 texture (four bytes per pixel)</returns>
@@ -307,5 +312,6 @@ namespace Voxel2Pixel
 			}
 		}
 		*/
+		#endregion Utilities
 	}
 }
