@@ -12,7 +12,6 @@ namespace Voxel2Pixel
 	/// </summary>
 	public static class TextureMethods
 	{
-		//TODO: Crop
 		//TODO: Paste
 		//TODO: DrawTriangle
 		//TODO: DrawEllipse
@@ -93,6 +92,25 @@ namespace Voxel2Pixel
 			for (int y2 = offset + xSide; y2 < yStop; y2 += xSide)
 				Array.Copy(texture, offset, texture, y2, rectWidth4);
 			return texture;
+		}
+		public static byte[] Crop(this byte[] texture, int x, int y, int croppedWidth, int croppedHeight, int width = 0)
+		{
+			if (x < 0 || y < 0 || croppedWidth < 0 || croppedHeight < 0) return texture;
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
+			x <<= 2; // x *= 4;
+			if (x > xSide) return texture;
+			int ySide = (width < 1 ? xSide : texture.Length / width) >> 2;
+			if (y > ySide) return texture;
+			if (y + croppedHeight > ySide)
+				croppedHeight = ySide - y;
+			croppedWidth <<= 2; // croppedWidth *= 4;
+			if (x + croppedWidth > xSide)
+				croppedWidth = xSide - x;
+			byte[] cropped = new byte[croppedWidth * croppedHeight];
+			int offset = y * xSide + x;
+			for (int y1 = offset, y2 = 0; y2 < cropped.Length; y1 += xSide, y2 += croppedWidth)
+				Array.Copy(texture, y1, cropped, y2, croppedWidth);
+			return cropped;
 		}
 		public static byte[] Tile(this byte[] texture, int xFactor = 2, int yFactor = 2, int width = 0)
 		{

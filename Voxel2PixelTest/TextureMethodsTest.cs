@@ -9,7 +9,7 @@ namespace Voxel2PixelTest
 		[Fact]
 		public void Test1()
 		{
-			int width = 2, height = 2, xScale = 40, yScale = 30, xTile = 4, yTile = 3;
+			int width = 2, height = 2, xScale = 50, yScale = 50, xTile = 1, yTile = 1;
 			byte[] bytes = new byte[width * height * 4]
 			.DrawPixel(255, 0, 0, 255, 0, 0, width)
 			.DrawPixel(0, 255, 0, 255, 1, 0, width)
@@ -20,6 +20,8 @@ namespace Voxel2PixelTest
 			.Tile(xTile, yTile, width * xScale);
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes, width * xScale * xTile, height * yScale * yTile)
 				.SaveAsPng("output.png");
+			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes.Crop(10, 15, 80, 50, width * xScale * xTile), 80, 50)
+				.SaveAsPng("cropped.png");
 		}
 	}
 }
