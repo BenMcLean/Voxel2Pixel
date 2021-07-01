@@ -12,7 +12,6 @@ namespace Voxel2Pixel
 	/// </summary>
 	public static class TextureMethods
 	{
-		//TODO: Resize
 		//TODO: DrawTriangle
 		//TODO: DrawEllipse
 		public static byte R(this int color) => (byte)(color >> 24);
@@ -165,6 +164,22 @@ namespace Voxel2Pixel
 					Array.Copy(tiled, 0, tiled, y, xScaledLength);
 			}
 			return tiled;
+		}
+		public static byte[] Resize(this byte[] texture, int newX, int newY, int width = 0)
+		{
+			if (newX < 1 || newY < 1) return texture;
+			newX <<= 2; // newX *= 4;
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
+			byte[] resized = new byte[newX * newY];
+			if (newX == xSide)
+				Array.Copy(texture, resized, Math.Min(texture.Length, resized.Length));
+			else
+			{
+				int newXside = Math.Min(xSide, newX);
+				for (int y1 = 0, y2 = 0; y1 < texture.Length && y2 < resized.Length; y1 += xSide, y2 += newX)
+					Array.Copy(texture, y1, resized, y2, newXside);
+			}
+			return resized;
 		}
 		public static byte[] Upscale(this byte[] texture, int xFactor, int yFactor, int width = 0)
 		{

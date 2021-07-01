@@ -23,6 +23,8 @@ namespace Voxel2PixelTest
 				.SaveAsPng("cropped.png");
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes.Insert(-4, -3, crop, 25, width * xScale * xTile), width * xScale * xTile, height * yScale * yTile)
 				.SaveAsPng("output.png");
+			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes.Resize(800, 600, width * xScale * xTile), 800, 600)
+				.SaveAsPng("800x600.png");
 		}
 	}
 }
