@@ -6,6 +6,7 @@ using System.Text;
 namespace Voxel2Pixel
 {
 	/// <summary>
+	/// Methods that start with "Draw" modify the original array. Other methods return a copy.
 	/// x is width, y is height
 	/// (i << 2 == i * 4)
 	/// (i >> 2 == i / 4) when i is a positive integer
@@ -120,7 +121,7 @@ namespace Voxel2Pixel
 				Array.Copy(texture, y1, cropped, y2, croppedWidth);
 			return cropped;
 		}
-		public static byte[] Insert(this byte[] texture, int x, int y, byte[] insert, int insertWidth = 0, int width = 0)
+		public static byte[] DrawInsert(this byte[] texture, int x, int y, byte[] insert, int insertWidth = 0, int width = 0)
 		{
 			int insertX = 0, insertY = 0;
 			if (x < 0)
