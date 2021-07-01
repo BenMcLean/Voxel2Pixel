@@ -142,8 +142,11 @@ namespace Voxel2Pixel
 				actualInsertXside = (x + insertXside > xSide ? xSide - x : insertXside) - insertX,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2;
 			if (y > ySide) return texture;
-			for (int y1 = y * xSide + x, y2 = insertY * insertXside + insertX; y1 < texture.Length && y2 < insert.Length; y1 += xSide, y2 += insertXside)
-				Array.Copy(insert, y2, texture, y1, actualInsertXside);
+			if (xSide == insertXside && x == 0 && insertX == 0)
+				Array.Copy(insert, insertY * insertXside, texture, y * xSide, Math.Min(insert.Length - insertY * insertXside + insertX, texture.Length - y * xSide));
+			else
+				for (int y1 = y * xSide + x, y2 = insertY * insertXside + insertX; y1 < texture.Length && y2 < insert.Length; y1 += xSide, y2 += insertXside)
+					Array.Copy(insert, y2, texture, y1, actualInsertXside);
 			return texture;
 		}
 		public static byte[] Tile(this byte[] texture, int xFactor = 2, int yFactor = 2, int width = 0)
