@@ -154,8 +154,8 @@ namespace Voxel2Pixel
 				for (int x1 = y1, x2 = y2; x1 < y1 + xSide; x1 += 4, x2 += newXside + 8)
 				{
 					Array.Copy(texture, x1, slanted, x2, 4);
+					Array.Copy(texture, x1, slanted, x2 + 4, 4);
 					Array.Copy(texture, x1, slanted, x2 + newXside, 4);
-					Array.Copy(texture, x1, slanted, x2 + newXside + 4, 4);
 					Array.Copy(texture, x1, slanted, x2 + newXside2 + 4, 4);
 				}
 			return slanted;
