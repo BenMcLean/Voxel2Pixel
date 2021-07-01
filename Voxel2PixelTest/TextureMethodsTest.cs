@@ -14,7 +14,7 @@ namespace Voxel2PixelTest
 			.DrawPixel(255, 0, 0, 255, 0, 0, width)
 			.DrawPixel(0, 255, 0, 255, 1, 0, width)
 			.DrawPixel(0, 0, 255, 255, 0, 1, width)
-			.DrawPixel(255, 255, 255, 255, 1, 1, width)
+			.DrawPixel(128, 128, 128, 255, 1, 1, width)
 			.Upscale(xScale, yScale, width)
 			.DrawRectangle(0, 0, 0, 255, width * xScale / 4, height * yScale / 4, width * xScale / 4 * 2, height * yScale / 4 * 2, width * xScale)
 			.Tile(xTile, yTile, width * xScale);
@@ -23,7 +23,7 @@ namespace Voxel2PixelTest
 				.SaveAsPng("cropped.png");
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes, width * xScale * xTile, height * yScale * yTile)
 				.SaveAsPng("output.png");
-			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes.IsoSlantDown(width * xScale * xTile), width * xScale * xTile * 2, height * yScale * yTile * 2 + width * xScale * xTile * 2)
+			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes.IsoSlantDown(width * xScale * xTile), width * xScale * xTile * 2, height * yScale * yTile + width * xScale * xTile + 1)
 			.SaveAsPng("IsoSlantDown.png");
 			//Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes.Resize(800, 600, width * xScale * xTile), 800, 600)
 			//	.SaveAsPng("800x600.png");
