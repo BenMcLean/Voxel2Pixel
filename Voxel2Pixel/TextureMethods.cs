@@ -123,15 +123,26 @@ namespace Voxel2Pixel
 		}
 		public static byte[] Insert(this byte[] texture, int x, int y, byte[] insert, int insertWidth = 0, int width = 0)
 		{
-			//TODO: handle negative coordinates
+			int insertX = 0, insertY = 0;
+			if (x < 0)
+			{
+				insertX = -x;
+				insertX <<= 2;
+				x = 0;
+			}
+			if (y < 0)
+			{
+				insertY = -y;
+				y = 0;
+			}
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
 			x <<= 2; // x *= 4;
 			if (x > xSide) return texture;
 			int insertXside = (insertWidth < 1 ? (int)Math.Sqrt(insert.Length >> 2) : insertWidth) << 2,
-				actualInsertXside = x + insertXside > xSide ? xSide - x : insertXside,
+				actualInsertXside = (x + insertXside > xSide ? xSide - x : insertXside) - insertX,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2;
 			if (y > ySide) return texture;
-			for (int y1 = y * xSide + x, y2 = 0; y1 < texture.Length && y2 < insert.Length; y1 += xSide, y2 += insertXside)
+			for (int y1 = y * xSide + x, y2 = insertY * insertXside + insertX; y1 < texture.Length && y2 < insert.Length; y1 += xSide, y2 += insertXside)
 				Array.Copy(insert, y2, texture, y1, actualInsertXside);
 			return texture;
 		}
