@@ -315,18 +315,26 @@ namespace Voxel2Pixel
 				}
 			return tile;
 		}
-		public static byte[] Resize(this byte[] texture, int newX, int newY, int width = 0)
+		/// <summary>
+		/// Makes a new texture and copies the old texture to its upper left corner
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data of source image</param>
+		/// <param name="newWidth">width of newly resized texture</param>
+		/// <param name="newHeight">height of newly resized texture</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <returns>new raw rgba8888 pixel data of width newWidth</returns>
+		public static byte[] Resize(this byte[] texture, int newWidth, int newHeight, int width = 0)
 		{
-			if (newX < 1 || newY < 1) return texture;
-			newX <<= 2; // newX *= 4;
+			if (newWidth < 1 || newHeight < 1) return texture;
+			newWidth <<= 2; // newX *= 4;
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
-			byte[] resized = new byte[newX * newY];
-			if (newX == xSide)
+			byte[] resized = new byte[newWidth * newHeight];
+			if (newWidth == xSide)
 				Array.Copy(texture, resized, Math.Min(texture.Length, resized.Length));
 			else
 			{
-				int newXside = Math.Min(xSide, newX);
-				for (int y1 = 0, y2 = 0; y1 < texture.Length && y2 < resized.Length; y1 += xSide, y2 += newX)
+				int newXside = Math.Min(xSide, newWidth);
+				for (int y1 = 0, y2 = 0; y1 < texture.Length && y2 < resized.Length; y1 += xSide, y2 += newWidth)
 					Array.Copy(texture, y1, resized, y2, newXside);
 			}
 			return resized;
