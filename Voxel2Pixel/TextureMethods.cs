@@ -345,13 +345,13 @@ namespace Voxel2Pixel
 			return resized;
 		}
 		/// <summary>
-		/// 
+		/// Tile an image
 		/// </summary>
-		/// <param name="texture"></param>
-		/// <param name="xFactor"></param>
-		/// <param name="yFactor"></param>
-		/// <param name="width"></param>
-		/// <returns></returns>
+		/// <param name="texture">raw rgba8888 pixel data of source image</param>
+		/// <param name="xFactor">number of times to tile horizontally</param>
+		/// <param name="yFactor">number of times to tile vertically</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <returns>new raw rgba8888 pixel data of newWidth = width * xFactor</returns>
 		public static byte[] Tile(this byte[] texture, int xFactor = 2, int yFactor = 2, int width = 0)
 		{
 			if (xFactor < 1 || yFactor < 1 || (xFactor < 2 && yFactor < 2)) return (byte[])texture.Clone();
@@ -372,6 +372,14 @@ namespace Voxel2Pixel
 			}
 			return tiled;
 		}
+		/// <summary>
+		/// Simple nearest-neighbor upscaling by integer multipliers
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data of source image</param>
+		/// <param name="xFactor">horizontal scaling factor</param>
+		/// <param name="yFactor">vertical scaling factor</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <returns>new raw rgba8888 pixel data of newWidth = width * xFactor</returns>
 		public static byte[] Upscale(this byte[] texture, int xFactor, int yFactor, int width = 0)
 		{
 			if (xFactor < 1 || yFactor < 1 || (xFactor < 2 && yFactor < 2)) return (byte[])texture.Clone();
