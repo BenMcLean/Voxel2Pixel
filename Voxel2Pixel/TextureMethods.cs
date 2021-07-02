@@ -163,7 +163,6 @@ namespace Voxel2Pixel
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
 				newXside = xSide * 2;
 			byte[] slanted = new byte[newXside * ((xSide >> 2) + 1 + ySide)];
-			int soFar = 0;
 			for (int y1 = 0, y2 = 0; y1 < texture.Length; y1 += xSide, y2 += newXside)
 				for (int x1 = y1, x2 = y2; x1 < y1 + xSide; x1 += 4, x2 += newXside + 8)
 				{
@@ -171,8 +170,6 @@ namespace Voxel2Pixel
 					Array.Copy(texture, x1, slanted, x2 + newXside, 4);
 					Array.Copy(texture, x1, slanted, x2 + newXside + 4, 4);
 					Array.Copy(texture, x1, slanted, x2 + newXside + newXside + 4, 4);
-					if (soFar++ > 10)
-						return slanted;
 				}
 			return slanted;
 		}
@@ -183,7 +180,7 @@ namespace Voxel2Pixel
 				newXside = xSide * 2,
 				newXside2 = xSide << 2;
 			byte[] slanted = new byte[newXside * (xSide / 2 + ySide + 1)];
-			for (int y1 = 0, y2 = newXside * ((xSide >> 2) + 1); y1 < texture.Length; y1 += xSide, y2 += newXside2)
+			for (int y1 = 0, y2 = newXside * ((xSide >> 2) + 2); y1 < texture.Length; y1 += xSide, y2 += newXside2)
 				for (int x1 = y1, x2 = y2; x1 < y1 + xSide; x1 += 4, x2 += -newXside + 8)
 				{
 					Array.Copy(texture, x1, slanted, x2, 4);
