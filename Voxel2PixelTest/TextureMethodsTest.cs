@@ -1,4 +1,5 @@
 using SixLabors.ImageSharp;
+using Voxel2Pixel;
 using Xunit;
 using static Voxel2Pixel.TextureMethods;
 
@@ -18,9 +19,9 @@ namespace Voxel2PixelTest
 			.Upscale(xScale, yScale, width)
 			.DrawRectangle(0, 0, 0, 255, width * xScale / 4, height * yScale / 4, width * xScale / 4 * 2, height * yScale / 4 * 2, width * xScale)
 			.Tile(xTile, yTile, width * xScale);
-			byte[] crop = bytes.Crop(65, 70, 25, 20, width * xScale * xTile);
-			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(crop, 20, 20)
-				.SaveAsPng("cropped.png");
+			//byte[] crop = bytes.Crop(65, 70, 25, 20, width * xScale * xTile);
+			//Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(crop, 20, 20)
+			//	.SaveAsPng("cropped.png");
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes, width * xScale * xTile, height * yScale * yTile)
 				.SaveAsPng("output.png");
 			byte[] isoSlant = bytes.IsoSlantUp(width * xScale * xTile);

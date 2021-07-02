@@ -13,6 +13,9 @@ namespace Voxel2Pixel
 	/// </summary>
 	public static class TextureMethods
 	{
+		//TODO: RotateClockwise90
+		//TODO: RotateCounterClockwise90
+		//TODO: Rotate180
 		//TODO: DrawTriangle
 		//TODO: DrawEllipse
 		#region Drawing
@@ -151,17 +154,18 @@ namespace Voxel2Pixel
 				croppedWidth += x;
 				x = 0;
 			}
+			if (croppedWidth < 1) throw new InvalidDataException("croppedWidth < 1. Was: \"" + croppedWidth + "\"");
 			if (y < 0)
 			{
 				croppedHeight += y;
 				y = 0;
 			}
-			if (croppedWidth < 0 || croppedHeight < 0) return texture;
+			if (croppedHeight < 1) throw new InvalidDataException("croppedHeight < 1. Was: \"" + croppedHeight + "\"");
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
 			x <<= 2; // x *= 4;
-			if (x > xSide) return texture;
+			if (x > xSide) throw new InvalidDataException("x > xSide. x: \"" + x + "\", xSide: \"" + xSide + "\"");
 			int ySide = (width < 1 ? xSide : texture.Length / width) >> 2;
-			if (y > ySide) return texture;
+			if (y > ySide) throw new InvalidDataException("y > ySide. y: \"" + y + "\", ySide: \"" + ySide + "\"");
 			if (y + croppedHeight > ySide)
 				croppedHeight = ySide - y;
 			croppedWidth <<= 2; // croppedWidth *= 4;
@@ -325,7 +329,8 @@ namespace Voxel2Pixel
 		/// <returns>new raw rgba8888 pixel data of width newWidth</returns>
 		public static byte[] Resize(this byte[] texture, int newWidth, int newHeight, int width = 0)
 		{
-			if (newWidth < 1 || newHeight < 1) return texture;
+			if (newWidth < 1) throw new InvalidDataException("newWidth cannot be smaller than 1. Was: \"" + newWidth + "\"");
+			if (newHeight < 1) throw new InvalidDataException("newHeight cannot be smaller than 1. Was: \"" + newHeight + "\"");
 			newWidth <<= 2; // newX *= 4;
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
 			byte[] resized = new byte[newWidth * newHeight];
@@ -339,9 +344,17 @@ namespace Voxel2Pixel
 			}
 			return resized;
 		}
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="texture"></param>
+		/// <param name="xFactor"></param>
+		/// <param name="yFactor"></param>
+		/// <param name="width"></param>
+		/// <returns></returns>
 		public static byte[] Tile(this byte[] texture, int xFactor = 2, int yFactor = 2, int width = 0)
 		{
-			if (xFactor < 1 || yFactor < 1 || (xFactor < 2 && yFactor < 2)) return texture;
+			if (xFactor < 1 || yFactor < 1 || (xFactor < 2 && yFactor < 2)) return (byte[])texture.Clone();
 			byte[] tiled = new byte[texture.Length * xFactor * yFactor];
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				newXside = xSide * xFactor;
@@ -361,7 +374,7 @@ namespace Voxel2Pixel
 		}
 		public static byte[] Upscale(this byte[] texture, int xFactor, int yFactor, int width = 0)
 		{
-			if (xFactor < 1 || yFactor < 1 || (xFactor < 2 && yFactor < 2)) return texture;
+			if (xFactor < 1 || yFactor < 1 || (xFactor < 2 && yFactor < 2)) return (byte[])texture.Clone();
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				newXside = xSide * xFactor,
 				newXsideYfactor = newXside * yFactor;
