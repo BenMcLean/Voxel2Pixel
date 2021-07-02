@@ -25,7 +25,7 @@ namespace Voxel2PixelTest
 				.SaveAsPng("output.png");
 			byte[] isoSlant = bytes.IsoSlantUp(width * xScale * xTile);
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(isoSlant, width * xScale * xTile * 2, isoSlant.Length / (width * xScale * xTile * 8))
-			.SaveAsPng("IsoSlant.png");
+			.SaveAsPng("IsoSlantUp.png");
 			byte[] isoTile = bytes.IsoTile(width * xScale * xTile);
 			int isoWidth = (width * xScale * xTile + height * yScale * yTile - 1) * 2;
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(isoTile, isoWidth, isoTile.Length / (isoWidth * 4))

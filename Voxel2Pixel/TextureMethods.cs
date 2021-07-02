@@ -15,7 +15,6 @@ namespace Voxel2Pixel
 	{
 		//TODO: DrawTriangle
 		//TODO: DrawEllipse
-		//TODO: IsoTile
 		#region Drawing
 		public static byte[] DrawPixel(this byte[] texture, int color, int x, int y, int width = 0) => DrawPixel(texture, (byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, width);
 		public static byte[] DrawPixel(this byte[] texture, byte r, byte g, byte b, byte a, int x, int y, int width = 0)
@@ -144,8 +143,27 @@ namespace Voxel2Pixel
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
+				newXside = xSide * 2,
+				newXside2 = xSide << 2;
+			byte[] slanted = new byte[newXside * (xSide / 2 + ySide + 1)];
+			for (int y1 = 0, y2 = 0; y1 < texture.Length; y1 += xSide, y2 += newXside2)
+				for (int x1 = y1, x2 = y2; x1 < y1 + xSide; x1 += 4, x2 += newXside + 8)
+				{
+					Array.Copy(texture, x1, slanted, x2, 4);
+					Array.Copy(texture, x1, slanted, x2 + newXside, 4);
+					Array.Copy(texture, x1, slanted, x2 + newXside + 4, 4);
+					Array.Copy(slanted, x2 + newXside, slanted, x2 + newXside2, 8);
+					Array.Copy(texture, x1, slanted, x2 + newXside2 + newXside + 4, 4);
+				}
+			return slanted;
+		}
+		public static byte[] IsoSlantDownShort(this byte[] texture, int width = 0)
+		{
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
+				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
 				newXside = xSide * 2;
 			byte[] slanted = new byte[newXside * ((xSide >> 2) + 1 + ySide)];
+			int soFar = 0;
 			for (int y1 = 0, y2 = 0; y1 < texture.Length; y1 += xSide, y2 += newXside)
 				for (int x1 = y1, x2 = y2; x1 < y1 + xSide; x1 += 4, x2 += newXside + 8)
 				{
@@ -153,10 +171,30 @@ namespace Voxel2Pixel
 					Array.Copy(texture, x1, slanted, x2 + newXside, 4);
 					Array.Copy(texture, x1, slanted, x2 + newXside + 4, 4);
 					Array.Copy(texture, x1, slanted, x2 + newXside + newXside + 4, 4);
+					if (soFar++ > 10)
+						return slanted;
 				}
 			return slanted;
 		}
 		public static byte[] IsoSlantUp(this byte[] texture, int width = 0)
+		{
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
+				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
+				newXside = xSide * 2,
+				newXside2 = xSide << 2;
+			byte[] slanted = new byte[newXside * (xSide / 2 + ySide + 1)];
+			for (int y1 = 0, y2 = newXside * ((xSide >> 2) + 1); y1 < texture.Length; y1 += xSide, y2 += newXside2)
+				for (int x1 = y1, x2 = y2; x1 < y1 + xSide; x1 += 4, x2 += -newXside + 8)
+				{
+					Array.Copy(texture, x1, slanted, x2, 4);
+					Array.Copy(texture, x1, slanted, x2 - newXside, 4);
+					Array.Copy(texture, x1, slanted, x2 - newXside + 4, 4);
+					Array.Copy(slanted, x2 - newXside, slanted, x2 - newXside2, 8);
+					Array.Copy(texture, x1, slanted, x2 - newXside2 - newXside + 4, 4);
+				}
+			return slanted;
+		}
+		public static byte[] IsoSlantUpShort(this byte[] texture, int width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
@@ -177,8 +215,8 @@ namespace Voxel2Pixel
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
 				newXside = (xSide + ySide * 4) * 2 - 8;
-			byte[] tile = new byte[newXside * ySide * 2];
-			for (int y1 = 0, y2 = tile.Length / 2 - newXside; y1 < texture.Length; y1 += xSide, y2 += newXside + 8)
+			byte[] tile = new byte[newXside * (xSide / 4 + ySide)];
+			for (int y1 = 0, y2 = newXside * xSide / 4 - newXside; y1 < texture.Length; y1 += xSide, y2 += newXside + 8)
 				for (int x1 = y1, x2 = y2; x1 < y1 + xSide; x1 += 4, x2 += -newXside + 8)
 				{
 					Array.Copy(texture, x1, tile, x2, 4);
