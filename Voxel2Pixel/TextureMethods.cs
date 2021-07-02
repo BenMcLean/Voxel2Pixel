@@ -16,8 +16,21 @@ namespace Voxel2Pixel
 		//TODO: DrawTriangle
 		//TODO: DrawEllipse
 		#region Drawing
+		/// <summary>
+		/// Draws one pixel of the specified color
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data</param>
+		/// <param name="color">rgba color to draw</param>
+		/// <param name="width">texture width or 0 to assume square texture</param>
+		/// <returns>same texture with pixel drawn</returns>
 		public static byte[] DrawPixel(this byte[] texture, int color, int x, int y, int width = 0) => DrawPixel(texture, (byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, width);
-		public static byte[] DrawPixel(this byte[] texture, byte r, byte g, byte b, byte a, int x, int y, int width = 0)
+		/// <summary>
+		/// Draws one pixel of the specified color
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data</param>
+		/// <param name="width">texture width or 0 to assume square texture</param>
+		/// <returns>same texture with pixel drawn</returns>
+		public static byte[] DrawPixel(this byte[] texture, byte red, byte green, byte blue, byte alpha, int x, int y, int width = 0)
 		{
 			if (x < 0 || y < 0) return texture;
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
@@ -25,14 +38,27 @@ namespace Voxel2Pixel
 			x <<= 2; //x *= 4;
 			if (x >= xSide || y >= ySide) return texture;
 			int offset = y * xSide + x;
-			texture[offset] = r;
-			texture[offset + 1] = g;
-			texture[offset + 2] = b;
-			texture[offset + 3] = a;
+			texture[offset] = red;
+			texture[offset + 1] = green;
+			texture[offset + 2] = blue;
+			texture[offset + 3] = alpha;
 			return texture;
 		}
-		public static byte[] DrawRectangle(this byte[] texture, int color, int x, int y, int rectHeight, int rectWidth = 0, int width = 0) => DrawRectangle(texture, (byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, rectHeight, rectWidth, width);
-		public static byte[] DrawRectangle(this byte[] texture, byte r, byte g, byte b, byte a, int x, int y, int rectWidth, int rectHeight = 0, int width = 0)
+		/// <summary>
+		/// Draws a rectangle of the specified color
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data</param>
+		/// <param name="color">rgba color to draw</param>
+		/// <param name="width">texture width or 0 to assume square texture</param>
+		/// <returns>same texture with rectangle drawn</returns>
+		public static byte[] DrawRectangle(this byte[] texture, int color, int x, int y, int rectWidth, int rectHeight, int width = 0) => DrawRectangle(texture, (byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, rectWidth, rectHeight, width);
+		/// <summary>
+		/// Draws a rectangle of the specified color
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data</param>
+		/// <param name="width">texture width or 0 to assume square texture</param>
+		/// <returns>same texture with rectangle drawn</returns>
+		public static byte[] DrawRectangle(this byte[] texture, byte red, byte green, byte blue, byte alpha, int x, int y, int rectWidth, int rectHeight, int width = 0)
 		{
 			if (rectHeight < 1) rectHeight = rectWidth;
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
@@ -54,10 +80,10 @@ namespace Voxel2Pixel
 			int offset = y * xSide + x4,
 				rectWidth4 = rectWidth << 2,
 				yStop = offset + xSide * rectHeight;
-			texture[offset] = r;
-			texture[offset + 1] = g;
-			texture[offset + 2] = b;
-			texture[offset + 3] = a;
+			texture[offset] = red;
+			texture[offset + 1] = green;
+			texture[offset + 2] = blue;
+			texture[offset + 3] = alpha;
 			for (int x2 = offset + 4; x2 < offset + rectWidth4; x2 += 4)
 				Array.Copy(texture, offset, texture, x2, 4);
 			for (int y2 = offset + xSide; y2 < yStop; y2 += xSide)
