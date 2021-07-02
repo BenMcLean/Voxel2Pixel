@@ -21,14 +21,14 @@ namespace Voxel2Pixel
 		/// </summary>
 		/// <param name="texture">raw rgba8888 pixel data</param>
 		/// <param name="color">rgba color to draw</param>
-		/// <param name="width">texture width or 0 to assume square texture</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>same texture with pixel drawn</returns>
 		public static byte[] DrawPixel(this byte[] texture, int color, int x, int y, int width = 0) => DrawPixel(texture, (byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, width);
 		/// <summary>
 		/// Draws one pixel of the specified color
 		/// </summary>
 		/// <param name="texture">raw rgba8888 pixel data</param>
-		/// <param name="width">texture width or 0 to assume square texture</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>same texture with pixel drawn</returns>
 		public static byte[] DrawPixel(this byte[] texture, byte red, byte green, byte blue, byte alpha, int x, int y, int width = 0)
 		{
@@ -49,14 +49,18 @@ namespace Voxel2Pixel
 		/// </summary>
 		/// <param name="texture">raw rgba8888 pixel data</param>
 		/// <param name="color">rgba color to draw</param>
-		/// <param name="width">texture width or 0 to assume square texture</param>
+		/// <param name="x">upper left corner of rectangle</param>
+		/// <param name="y">upper left corner of rectangle</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>same texture with rectangle drawn</returns>
 		public static byte[] DrawRectangle(this byte[] texture, int color, int x, int y, int rectWidth, int rectHeight, int width = 0) => DrawRectangle(texture, (byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, rectWidth, rectHeight, width);
 		/// <summary>
 		/// Draws a rectangle of the specified color
 		/// </summary>
 		/// <param name="texture">raw rgba8888 pixel data</param>
-		/// <param name="width">texture width or 0 to assume square texture</param>
+		/// <param name="x">upper left corner of rectangle</param>
+		/// <param name="y">upper left corner of rectangle</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>same texture with rectangle drawn</returns>
 		public static byte[] DrawRectangle(this byte[] texture, byte red, byte green, byte blue, byte alpha, int x, int y, int rectWidth, int rectHeight, int width = 0)
 		{
@@ -90,6 +94,16 @@ namespace Voxel2Pixel
 				Array.Copy(texture, offset, texture, y2, rectWidth4);
 			return texture;
 		}
+		/// <summary>
+		/// Draws a texture onto a different texture
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data to be modified</param>
+		/// <param name="x">upper left corner of where to insert</param>
+		/// <param name="y">upper left corner of where to insert</param>
+		/// <param name="insert">raw rgba888 pixel data to insert</param>
+		/// <param name="insertWidth">width of insert or 0 to assume square texture</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <returns>same texture with insert drawn</returns>
 		public static byte[] DrawInsert(this byte[] texture, int x, int y, byte[] insert, int insertWidth = 0, int width = 0)
 		{
 			int insertX = 0, insertY = 0;
@@ -120,6 +134,16 @@ namespace Voxel2Pixel
 		}
 		#endregion Drawing
 		#region Image manipulation
+		/// <summary>
+		/// Extracts a rectangular piece of a texture
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data of source image</param>
+		/// <param name="x">upper left corner of selection</param>
+		/// <param name="y">upper left corner of selection</param>
+		/// <param name="croppedWidth">width of selection</param>
+		/// <param name="croppedHeight">height of selection</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <returns>new raw rgba8888 pixel data of width croppedWidth or smaller if x is smaller than zero or if x + croppedWidth extends outside the source texture</returns>
 		public static byte[] Crop(this byte[] texture, int x, int y, int croppedWidth, int croppedHeight, int width = 0)
 		{
 			if (x < 0)
@@ -148,6 +172,12 @@ namespace Voxel2Pixel
 				Array.Copy(texture, y1, cropped, y2, croppedWidth);
 			return cropped;
 		}
+		/// <summary>
+		/// Flips an image on the X axis
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data of source image</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <returns>new raw rgba8888 pixel data of identical size to source texture</returns>
 		public static byte[] FlipX(this byte[] texture, int width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
@@ -156,6 +186,12 @@ namespace Voxel2Pixel
 				Array.Copy(texture, y, flipped, flipped.Length - xSide - y, xSide);
 			return flipped;
 		}
+		/// <summary>
+		/// Flips an image on the Y axis
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data of source image</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <returns>new raw rgba8888 pixel data of identical size to source texture</returns>
 		public static byte[] FlipY(this byte[] texture, int width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
