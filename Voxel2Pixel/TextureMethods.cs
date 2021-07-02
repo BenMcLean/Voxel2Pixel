@@ -27,7 +27,7 @@ namespace Voxel2Pixel
 		/// <summary>
 		/// Draws one pixel of the specified color
 		/// </summary>
-		/// <param name="texture">raw rgba8888 pixel data</param>
+		/// <param name="texture">raw rgba8888 pixel data to be modified</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>same texture with pixel drawn</returns>
 		public static byte[] DrawPixel(this byte[] texture, byte red, byte green, byte blue, byte alpha, int x, int y, int width = 0)
@@ -47,7 +47,7 @@ namespace Voxel2Pixel
 		/// <summary>
 		/// Draws a rectangle of the specified color
 		/// </summary>
-		/// <param name="texture">raw rgba8888 pixel data</param>
+		/// <param name="texture">raw rgba8888 pixel data to be modified</param>
 		/// <param name="color">rgba color to draw</param>
 		/// <param name="x">upper left corner of rectangle</param>
 		/// <param name="y">upper left corner of rectangle</param>
@@ -57,7 +57,7 @@ namespace Voxel2Pixel
 		/// <summary>
 		/// Draws a rectangle of the specified color
 		/// </summary>
-		/// <param name="texture">raw rgba8888 pixel data</param>
+		/// <param name="texture">raw rgba8888 pixel data to be modified</param>
 		/// <param name="x">upper left corner of rectangle</param>
 		/// <param name="y">upper left corner of rectangle</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
@@ -201,6 +201,12 @@ namespace Voxel2Pixel
 					Array.Copy(texture, y + x, flipped, y + xSide - 4 - x, 4);
 			return flipped;
 		}
+		/// <summary>
+		/// Skews an image for use as an isometric wall tile sloping down
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data of source image</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <returns>new raw rgba8888 pixel data of double the source texture width</returns>
 		public static byte[] IsoSlantDown(this byte[] texture, int width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
@@ -219,6 +225,12 @@ namespace Voxel2Pixel
 				}
 			return slanted;
 		}
+		/// <summary>
+		/// Skews an image for use as a short isometric wall tile sloping down
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data of source image</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <returns>new raw rgba8888 pixel data of double the source texture width</returns>
 		public static byte[] IsoSlantDownShort(this byte[] texture, int width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
@@ -235,6 +247,12 @@ namespace Voxel2Pixel
 				}
 			return slanted;
 		}
+		/// <summary>
+		/// Skews an image for use as an isometric wall tile sloping up
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data of source image</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <returns>new raw rgba8888 pixel data of double the source texture width</returns>
 		public static byte[] IsoSlantUp(this byte[] texture, int width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
@@ -253,6 +271,12 @@ namespace Voxel2Pixel
 				}
 			return slanted;
 		}
+		/// <summary>
+		/// Skews an image for use as a short isometric wall tile sloping up
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data of source image</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <returns>new raw rgba8888 pixel data of double the source texture width</returns>
 		public static byte[] IsoSlantUpShort(this byte[] texture, int width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
@@ -269,6 +293,12 @@ namespace Voxel2Pixel
 				}
 			return slanted;
 		}
+		/// <summary>
+		/// Rotates and stretches an image for use as an isometric floor tile
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data of source image</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <returns>new raw rgba8888 pixel data where the width is derived from the source image size by the formula "newWidth = (width + height - 1) * 2"</returns>
 		public static byte[] IsoTile(this byte[] texture, int width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
