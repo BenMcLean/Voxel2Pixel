@@ -33,10 +33,9 @@ namespace Voxel2PixelTest
 				.DrawPixel(0, 255, 0, 255, 1, 0, width * xScale * xTile)
 				.DrawPixel(0, 0, 255, 255, 0, 1, width * xScale * xTile)
 				.DrawPixel(128, 128, 128, 255, 1, 1, width * xScale * xTile)
-				.IsoTile(width * xScale * xTile)
-				.Upscale(1, 2, isoWidth);
+				.RotateCounterClockwise45(width * xScale * xTile);
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(isoTile, isoWidth, isoTile.Length / (isoWidth * 4))
-			.SaveAsPng("IsoTile.png");
+			.SaveAsPng("rotated.png");
 			//Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes.Resize(800, 600, width * xScale * xTile), 800, 600)
 			//	.SaveAsPng("800x600.png");
 		}
