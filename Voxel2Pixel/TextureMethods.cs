@@ -311,7 +311,7 @@ namespace Voxel2Pixel
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
-				newXside = (xSide + ySide * 4) * 2 - 8;
+				newXside = (xSide + (ySide << 2)) * 2 - 8;
 			byte[] tile = new byte[newXside * ((xSide >> 2) + ySide)];
 			for (int y1 = 0, y2 = newXside * (xSide >> 2) - newXside; y1 < texture.Length; y1 += xSide, y2 += newXside + 8)
 				for (int x1 = y1, x2 = y2; x1 < y1 + xSide; x1 += 4, x2 += -newXside + 8)
@@ -327,7 +327,7 @@ namespace Voxel2Pixel
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
-				newXside = (xSide + ySide * 4) * 2 - 8,
+				newXside = (xSide + (ySide << 2)) * 2 - 8,
 				newXside2 = newXside * 2;
 			byte[] tile = new byte[newXside * ((xSide >> 2) + ySide) * 2];
 			for (int y1 = 0, y2 = newXside2 * (xSide >> 2) - newXside2; y1 < texture.Length; y1 += xSide, y2 += newXside2 + 8)
