@@ -24,11 +24,17 @@ namespace Voxel2PixelTest
 			//	.SaveAsPng("cropped.png");
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes, width * xScale * xTile, height * yScale * yTile)
 				.SaveAsPng("output.png");
-			byte[] isoSlant = bytes.IsoSlantUp(width * xScale * xTile);
+			byte[] isoSlant = bytes.IsoSlantDown(width * xScale * xTile);
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(isoSlant, width * xScale * xTile * 2, isoSlant.Length / (width * xScale * xTile * 8))
-			.SaveAsPng("IsoSlantUp.png");
-			byte[] isoTile = bytes.IsoTile(width * xScale * xTile);
+			.SaveAsPng("IsoSlantDown.png");
 			int isoWidth = (width * xScale * xTile + height * yScale * yTile - 1) * 2;
+			byte[] isoTile = bytes
+				.DrawPixel(128, 0, 0, 255, 0, 0, width * xScale * xTile)
+				.DrawPixel(0, 255, 0, 255, 1, 0, width * xScale * xTile)
+				.DrawPixel(0, 0, 255, 255, 0, 1, width * xScale * xTile)
+				.DrawPixel(128, 128, 128, 255, 1, 1, width * xScale * xTile)
+				.IsoTile(width * xScale * xTile)
+				.Upscale(1, 2, isoWidth);
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(isoTile, isoWidth, isoTile.Length / (isoWidth * 4))
 			.SaveAsPng("IsoTile.png");
 			//Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes.Resize(800, 600, width * xScale * xTile), 800, 600)
