@@ -16,7 +16,12 @@ namespace Voxel2Pixel
 		//TODO: RotateClockwise90
 		//TODO: RotateCounterClockwise90
 		//TODO: Rotate180
+		//TODO: RotateClockwise45
+		//TODO: RotateCounterClockwise45
+		//TODO: RotateClockwise135
+		//TODO: RotateCounterClockwise135
 		//TODO: DrawTriangle
+		//TODO: DrawCircle
 		//TODO: DrawEllipse
 		#region Drawing
 		/// <summary>
