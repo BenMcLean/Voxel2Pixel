@@ -13,7 +13,6 @@ namespace Voxel2Pixel
 	/// </summary>
 	public static class TextureMethods
 	{
-		//TODO: RotateClockwise90
 		//TODO: RotateCounterClockwise90
 		//TODO: Rotate180
 		//TODO: RotateClockwise45
@@ -340,6 +339,17 @@ namespace Voxel2Pixel
 					Array.Copy(tile, x2, tile, x2 + newXside2 + newXside, 8);
 				}
 			return tile;
+		}
+		public static byte[] RotateClockwise90(this byte[] texture, int width = 0)
+		{
+			int ySide2 = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width),
+				xSide1 = ySide2 << 2,
+				xSide2 = (width < 1 ? ySide2 : texture.Length / width);
+			byte[] rotated = new byte[texture.Length];
+			for (int y1 = 0, y2 = xSide2 - 4; y1 < texture.Length; y1 += xSide1, y2 -= 4)
+				for (int x1 = y1, x2 = y2; x1 < y1 + xSide1; x1 += 4, x2 += xSide2)
+					Array.Copy(texture, x1, rotated, x2, 4);
+			return rotated;
 		}
 		/// <summary>
 		/// Makes a new texture and copies the old texture to its upper left corner
