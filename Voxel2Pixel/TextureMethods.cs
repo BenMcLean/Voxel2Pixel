@@ -317,8 +317,7 @@ namespace Voxel2Pixel
 				{
 					Array.Copy(texture, x1, tile, x2, 4);
 					Array.Copy(texture, x1, tile, x2 + 4, 4);
-					Array.Copy(texture, x1, tile, x2 + newXside, 4);
-					Array.Copy(texture, x1, tile, x2 + newXside + 4, 4);
+					Array.Copy(tile, x2, tile, x2 + newXside, 8);
 				}
 			return tile;
 		}
