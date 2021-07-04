@@ -17,8 +17,8 @@ namespace Voxel2PixelTest
 			.DrawPixel(0, 0, 255, 255, 0, 1, width)
 			.DrawPixel(128, 128, 128, 255, 1, 1, width)
 			.Upscale(xScale, yScale, width)
-			.DrawRectangle(0, 0, 0, 255, width * xScale / 4, height * yScale / 4, width * xScale / 4 * 2, height * yScale / 4 * 2, width * xScale)
-			.Rotate180(width * xScale);
+			.DrawRectangle(0, 0, 0, 255, width * xScale / 4, height * yScale / 4, width * xScale / 4 * 2, height * yScale / 4 * 2, width * xScale);
+			//.Rotate180(width * xScale);
 			//int swap = xScale;
 			//xScale = yScale;
 			//yScale = swap;
@@ -30,7 +30,7 @@ namespace Voxel2PixelTest
 			byte[] isoSlant = bytes.IsoSlantDown(width * xScale * xTile);
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(isoSlant, width * xScale * xTile * 2, isoSlant.Length / (width * xScale * xTile * 8))
 			.SaveAsPng("IsoSlantDown.png");
-			int isoWidth = (width * xScale * xTile + height * yScale * yTile - 1) * 2;
+			int isoWidth = (width * xScale * xTile + height * yScale * yTile - 1);
 			byte[] isoTile = bytes
 				.DrawPixel(128, 0, 0, 255, 0, 0, width * xScale * xTile)
 				.DrawPixel(0, 255, 0, 255, 1, 0, width * xScale * xTile)
