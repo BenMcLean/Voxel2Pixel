@@ -13,7 +13,6 @@ namespace Voxel2Pixel
 	/// </summary>
 	public static class TextureMethods
 	{
-		//TODO: Rotate180
 		//TODO: RotateClockwise45
 		//TODO: RotateClockwise135
 		//TODO: RotateCounter135
@@ -346,6 +345,15 @@ namespace Voxel2Pixel
 			byte[] rotated = new byte[texture.Length];
 			for (int y1 = 0, y2 = xSide2 - 4; y1 < texture.Length; y1 += xSide1, y2 -= 4)
 				for (int x1 = y1, x2 = y2; x1 < y1 + xSide1; x1 += 4, x2 += xSide2)
+					Array.Copy(texture, x1, rotated, x2, 4);
+			return rotated;
+		}
+		public static byte[] Rotate180(this byte[] texture, int width = 0)
+		{
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
+			byte[] rotated = new byte[texture.Length];
+			for (int y1 = 0, y2 = texture.Length - xSide; y1 < texture.Length; y1 += xSide, y2 -= xSide)
+				for (int x1 = y1, x2 = y2 + xSide - 4; x1 < y1 + xSide; x1 += 4, x2 -= 4)
 					Array.Copy(texture, x1, rotated, x2, 4);
 			return rotated;
 		}
