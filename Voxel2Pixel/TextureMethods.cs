@@ -13,11 +13,10 @@ namespace Voxel2Pixel
 	/// </summary>
 	public static class TextureMethods
 	{
-		//TODO: RotateCounterClockwise90
 		//TODO: Rotate180
 		//TODO: RotateClockwise45
 		//TODO: RotateClockwise135
-		//TODO: RotateCounterClockwise135
+		//TODO: RotateCounter135
 		//TODO: DrawTriangle
 		//TODO: DrawCircle
 		//TODO: DrawEllipse
@@ -321,7 +320,7 @@ namespace Voxel2Pixel
 				}
 			return tile;
 		}
-		public static byte[] RotateCounterClockwise45(this byte[] texture, int width = 0)
+		public static byte[] RotateCounter45(this byte[] texture, int width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
@@ -347,6 +346,17 @@ namespace Voxel2Pixel
 			byte[] rotated = new byte[texture.Length];
 			for (int y1 = 0, y2 = xSide2 - 4; y1 < texture.Length; y1 += xSide1, y2 -= 4)
 				for (int x1 = y1, x2 = y2; x1 < y1 + xSide1; x1 += 4, x2 += xSide2)
+					Array.Copy(texture, x1, rotated, x2, 4);
+			return rotated;
+		}
+		public static byte[] RotateCounter90(this byte[] texture, int width = 0)
+		{
+			int ySide2 = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width),
+				xSide1 = ySide2 << 2,
+				xSide2 = (width < 1 ? ySide2 : texture.Length / width);
+			byte[] rotated = new byte[texture.Length];
+			for (int y1 = 0, y2 = texture.Length - xSide2; y1 < texture.Length; y1 += xSide1, y2 += 4)
+				for (int x1 = y1, x2 = y2; x1 < y1 + xSide1; x1 += 4, x2 -= xSide2)
 					Array.Copy(texture, x1, rotated, x2, 4);
 			return rotated;
 		}
