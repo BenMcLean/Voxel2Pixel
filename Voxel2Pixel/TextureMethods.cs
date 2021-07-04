@@ -137,75 +137,58 @@ namespace Voxel2Pixel
 			return texture;
 		}
 		#endregion Drawing
-		#region Image manipulation
-		/// <summary>
-		/// Extracts a rectangular piece of a texture
-		/// </summary>
-		/// <param name="texture">raw rgba8888 pixel data of source image</param>
-		/// <param name="x">upper left corner of selection</param>
-		/// <param name="y">upper left corner of selection</param>
-		/// <param name="croppedWidth">width of selection</param>
-		/// <param name="croppedHeight">height of selection</param>
-		/// <param name="width">width of texture or 0 to assume square texture</param>
-		/// <returns>new raw rgba8888 pixel data of width croppedWidth or smaller if x is smaller than zero or if x + croppedWidth extends outside the source texture</returns>
-		public static byte[] Crop(this byte[] texture, int x, int y, int croppedWidth, int croppedHeight, int width = 0)
+		#region Rotation
+		public static byte[] RotateClockwise90(this byte[] texture, int width = 0)
 		{
-			if (x < 0)
-			{
-				croppedWidth += x;
-				x = 0;
-			}
-			if (croppedWidth < 1) throw new InvalidDataException("croppedWidth < 1. Was: \"" + croppedWidth + "\"");
-			if (y < 0)
-			{
-				croppedHeight += y;
-				y = 0;
-			}
-			if (croppedHeight < 1) throw new InvalidDataException("croppedHeight < 1. Was: \"" + croppedHeight + "\"");
-			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
-			x <<= 2; // x *= 4;
-			if (x > xSide) throw new InvalidDataException("x > xSide. x: \"" + x + "\", xSide: \"" + xSide + "\"");
-			int ySide = (width < 1 ? xSide : texture.Length / width) >> 2;
-			if (y > ySide) throw new InvalidDataException("y > ySide. y: \"" + y + "\", ySide: \"" + ySide + "\"");
-			if (y + croppedHeight > ySide)
-				croppedHeight = ySide - y;
-			croppedWidth <<= 2; // croppedWidth *= 4;
-			if (x + croppedWidth > xSide)
-				croppedWidth = xSide - x;
-			byte[] cropped = new byte[croppedWidth * croppedHeight];
-			for (int y1 = y * xSide + x, y2 = 0; y2 < cropped.Length; y1 += xSide, y2 += croppedWidth)
-				Array.Copy(texture, y1, cropped, y2, croppedWidth);
-			return cropped;
+			int ySide2 = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width),
+				xSide1 = ySide2 << 2,
+				xSide2 = (width < 1 ? ySide2 : texture.Length / width);
+			byte[] rotated = new byte[texture.Length];
+			for (int y1 = 0, y2 = xSide2 - 4; y1 < texture.Length; y1 += xSide1, y2 -= 4)
+				for (int x1 = y1, x2 = y2; x1 < y1 + xSide1; x1 += 4, x2 += xSide2)
+					Array.Copy(texture, x1, rotated, x2, 4);
+			return rotated;
 		}
-		/// <summary>
-		/// Flips an image on the X axis
-		/// </summary>
-		/// <param name="texture">raw rgba8888 pixel data of source image</param>
-		/// <param name="width">width of texture or 0 to assume square texture</param>
-		/// <returns>new raw rgba8888 pixel data of identical size to source texture</returns>
-		public static byte[] FlipX(this byte[] texture, int width = 0)
+		public static byte[] Rotate180(this byte[] texture, int width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
-			byte[] flipped = new byte[texture.Length];
-			for (int y = 0; y < flipped.Length; y += xSide)
-				Array.Copy(texture, y, flipped, flipped.Length - xSide - y, xSide);
-			return flipped;
+			byte[] rotated = new byte[texture.Length];
+			for (int y1 = 0, y2 = texture.Length - xSide; y1 < texture.Length; y1 += xSide, y2 -= xSide)
+				for (int x1 = y1, x2 = y2 + xSide - 4; x1 < y1 + xSide; x1 += 4, x2 -= 4)
+					Array.Copy(texture, x1, rotated, x2, 4);
+			return rotated;
 		}
-		/// <summary>
-		/// Flips an image on the Y axis
-		/// </summary>
-		/// <param name="texture">raw rgba8888 pixel data of source image</param>
-		/// <param name="width">width of texture or 0 to assume square texture</param>
-		/// <returns>new raw rgba8888 pixel data of identical size to source texture</returns>
-		public static byte[] FlipY(this byte[] texture, int width = 0)
+		public static byte[] RotateCounter90(this byte[] texture, int width = 0)
 		{
-			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
-			byte[] flipped = new byte[texture.Length];
-			for (int y = 0; y < flipped.Length; y += xSide)
-				for (int x = 0; x < xSide; x += 4)
-					Array.Copy(texture, y + x, flipped, y + xSide - 4 - x, 4);
-			return flipped;
+			int ySide2 = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width),
+				xSide1 = ySide2 << 2,
+				xSide2 = (width < 1 ? ySide2 : texture.Length / width);
+			byte[] rotated = new byte[texture.Length];
+			for (int y1 = 0, y2 = texture.Length - xSide2; y1 < texture.Length; y1 += xSide1, y2 += 4)
+				for (int x1 = y1, x2 = y2; x1 < y1 + xSide1; x1 += 4, x2 -= xSide2)
+					Array.Copy(texture, x1, rotated, x2, 4);
+			return rotated;
 		}
+		public static byte[] RotateCounter45(this byte[] texture, int width = 0)
+		{
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
+				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
+				newXside = (xSide + (ySide << 2)) * 2 - 8,
+				newXside2 = newXside * 2;
+			byte[] tile = new byte[newXside * ((xSide >> 2) + ySide) * 2];
+			for (int y1 = 0, y2 = newXside2 * (xSide >> 2) - newXside2; y1 < texture.Length; y1 += xSide, y2 += newXside2 + 8)
+				for (int x1 = y1, x2 = y2; x1 < y1 + xSide; x1 += 4, x2 += -newXside2 + 8)
+				{
+					Array.Copy(texture, x1, tile, x2, 4);
+					Array.Copy(texture, x1, tile, x2 + 4, 4);
+					Array.Copy(tile, x2, tile, x2 + newXside, 8);
+					Array.Copy(tile, x2, tile, x2 + newXside2, 8);
+					Array.Copy(tile, x2, tile, x2 + newXside2 + newXside, 8);
+				}
+			return tile;
+		}
+		#endregion Rotation
+		#region Isometric
 		/// <summary>
 		/// Skews an image for use as an isometric wall tile sloping down
 		/// </summary>
@@ -319,54 +302,75 @@ namespace Voxel2Pixel
 				}
 			return tile;
 		}
-		public static byte[] RotateCounter45(this byte[] texture, int width = 0)
+		#endregion Isometric
+		#region Image manipulation
+		/// <summary>
+		/// Extracts a rectangular piece of a texture
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data of source image</param>
+		/// <param name="x">upper left corner of selection</param>
+		/// <param name="y">upper left corner of selection</param>
+		/// <param name="croppedWidth">width of selection</param>
+		/// <param name="croppedHeight">height of selection</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <returns>new raw rgba8888 pixel data of width croppedWidth or smaller if x is smaller than zero or if x + croppedWidth extends outside the source texture</returns>
+		public static byte[] Crop(this byte[] texture, int x, int y, int croppedWidth, int croppedHeight, int width = 0)
 		{
-			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
-				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
-				newXside = (xSide + (ySide << 2)) * 2 - 8,
-				newXside2 = newXside * 2;
-			byte[] tile = new byte[newXside * ((xSide >> 2) + ySide) * 2];
-			for (int y1 = 0, y2 = newXside2 * (xSide >> 2) - newXside2; y1 < texture.Length; y1 += xSide, y2 += newXside2 + 8)
-				for (int x1 = y1, x2 = y2; x1 < y1 + xSide; x1 += 4, x2 += -newXside2 + 8)
-				{
-					Array.Copy(texture, x1, tile, x2, 4);
-					Array.Copy(texture, x1, tile, x2 + 4, 4);
-					Array.Copy(tile, x2, tile, x2 + newXside, 8);
-					Array.Copy(tile, x2, tile, x2 + newXside2, 8);
-					Array.Copy(tile, x2, tile, x2 + newXside2 + newXside, 8);
-				}
-			return tile;
+			if (x < 0)
+			{
+				croppedWidth += x;
+				x = 0;
+			}
+			if (croppedWidth < 1) throw new InvalidDataException("croppedWidth < 1. Was: \"" + croppedWidth + "\"");
+			if (y < 0)
+			{
+				croppedHeight += y;
+				y = 0;
+			}
+			if (croppedHeight < 1) throw new InvalidDataException("croppedHeight < 1. Was: \"" + croppedHeight + "\"");
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
+			x <<= 2; // x *= 4;
+			if (x > xSide) throw new InvalidDataException("x > xSide. x: \"" + x + "\", xSide: \"" + xSide + "\"");
+			int ySide = (width < 1 ? xSide : texture.Length / width) >> 2;
+			if (y > ySide) throw new InvalidDataException("y > ySide. y: \"" + y + "\", ySide: \"" + ySide + "\"");
+			if (y + croppedHeight > ySide)
+				croppedHeight = ySide - y;
+			croppedWidth <<= 2; // croppedWidth *= 4;
+			if (x + croppedWidth > xSide)
+				croppedWidth = xSide - x;
+			byte[] cropped = new byte[croppedWidth * croppedHeight];
+			for (int y1 = y * xSide + x, y2 = 0; y2 < cropped.Length; y1 += xSide, y2 += croppedWidth)
+				Array.Copy(texture, y1, cropped, y2, croppedWidth);
+			return cropped;
 		}
-		public static byte[] RotateClockwise90(this byte[] texture, int width = 0)
-		{
-			int ySide2 = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width),
-				xSide1 = ySide2 << 2,
-				xSide2 = (width < 1 ? ySide2 : texture.Length / width);
-			byte[] rotated = new byte[texture.Length];
-			for (int y1 = 0, y2 = xSide2 - 4; y1 < texture.Length; y1 += xSide1, y2 -= 4)
-				for (int x1 = y1, x2 = y2; x1 < y1 + xSide1; x1 += 4, x2 += xSide2)
-					Array.Copy(texture, x1, rotated, x2, 4);
-			return rotated;
-		}
-		public static byte[] Rotate180(this byte[] texture, int width = 0)
+		/// <summary>
+		/// Flips an image on the X axis
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data of source image</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <returns>new raw rgba8888 pixel data of identical size to source texture</returns>
+		public static byte[] FlipX(this byte[] texture, int width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
-			byte[] rotated = new byte[texture.Length];
-			for (int y1 = 0, y2 = texture.Length - xSide; y1 < texture.Length; y1 += xSide, y2 -= xSide)
-				for (int x1 = y1, x2 = y2 + xSide - 4; x1 < y1 + xSide; x1 += 4, x2 -= 4)
-					Array.Copy(texture, x1, rotated, x2, 4);
-			return rotated;
+			byte[] flipped = new byte[texture.Length];
+			for (int y = 0; y < flipped.Length; y += xSide)
+				Array.Copy(texture, y, flipped, flipped.Length - xSide - y, xSide);
+			return flipped;
 		}
-		public static byte[] RotateCounter90(this byte[] texture, int width = 0)
+		/// <summary>
+		/// Flips an image on the Y axis
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data of source image</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <returns>new raw rgba8888 pixel data of identical size to source texture</returns>
+		public static byte[] FlipY(this byte[] texture, int width = 0)
 		{
-			int ySide2 = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width),
-				xSide1 = ySide2 << 2,
-				xSide2 = (width < 1 ? ySide2 : texture.Length / width);
-			byte[] rotated = new byte[texture.Length];
-			for (int y1 = 0, y2 = texture.Length - xSide2; y1 < texture.Length; y1 += xSide1, y2 += 4)
-				for (int x1 = y1, x2 = y2; x1 < y1 + xSide1; x1 += 4, x2 -= xSide2)
-					Array.Copy(texture, x1, rotated, x2, 4);
-			return rotated;
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
+			byte[] flipped = new byte[texture.Length];
+			for (int y = 0; y < flipped.Length; y += xSide)
+				for (int x = 0; x < xSide; x += 4)
+					Array.Copy(texture, y + x, flipped, y + xSide - 4 - x, 4);
+			return flipped;
 		}
 		/// <summary>
 		/// Makes a new texture and copies the old texture to its upper left corner
