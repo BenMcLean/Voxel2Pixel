@@ -139,6 +139,26 @@ namespace Voxel2Pixel
 		#endregion Drawing
 		#region Rotation
 		/// <summary>
+		/// Rotates image clockwise by 45 degrees
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data of source image</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <returns>new raw rgba8888 pixel data of newWidth = width + height - 1</returns>
+		public static byte[] RotateClockwise45(this byte[] texture, int width = 0)
+		{
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
+				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
+				newXside = (xSide + (ySide << 2)) - 4;
+			byte[] rotated = new byte[newXside * ((xSide >> 2) + ySide)];
+			for (int y1 = texture.Length - xSide, y2 = newXside * (xSide >> 2) - newXside; y1 < texture.Length; y1 += 4, y2 += newXside + 4)
+				for (int x1 = y1, x2 = y2; x1 >= 0; x1 -= xSide, x2 += -newXside + 4)
+				{
+					Array.Copy(texture, x1, rotated, x2, 4);
+					Array.Copy(texture, x1, rotated, x2 + newXside, 4);
+				}
+			return rotated;
+		}
+		/// <summary>
 		/// Rotates image clockwise by 90 degrees
 		/// </summary>
 		/// <param name="texture">raw rgba8888 pixel data of source image</param>
@@ -198,14 +218,14 @@ namespace Voxel2Pixel
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
 				newXside = (xSide + (ySide << 2)) - 4;
-			byte[] tile = new byte[newXside * ((xSide >> 2) + ySide)];
+			byte[] rotated = new byte[newXside * ((xSide >> 2) + ySide)];
 			for (int y1 = 0, y2 = newXside * (xSide >> 2) - newXside; y1 < texture.Length; y1 += xSide, y2 += newXside + 4)
 				for (int x1 = y1, x2 = y2; x1 < y1 + xSide; x1 += 4, x2 += -newXside + 4)
 				{
-					Array.Copy(texture, x1, tile, x2, 4);
-					Array.Copy(texture, x1, tile, x2 + newXside, 4);
+					Array.Copy(texture, x1, rotated, x2, 4);
+					Array.Copy(texture, x1, rotated, x2 + newXside, 4);
 				}
-			return tile;
+			return rotated;
 		}
 		#endregion Rotation
 		#region Isometric
