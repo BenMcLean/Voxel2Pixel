@@ -138,6 +138,12 @@ namespace Voxel2Pixel
 		}
 		#endregion Drawing
 		#region Rotation
+		/// <summary>
+		/// Rotates image clockwise by 90 degrees
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data of source image</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <returns>new raw rgba8888 pixel data where its width is the height of the source texture</returns>
 		public static byte[] RotateClockwise90(this byte[] texture, int width = 0)
 		{
 			int ySide2 = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width),
@@ -149,6 +155,12 @@ namespace Voxel2Pixel
 					Array.Copy(texture, x1, rotated, x2, 4);
 			return rotated;
 		}
+		/// <summary>
+		/// Rotates an image 180 degrees
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data of source image</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <returns>new raw rgba8888 pixel data of identical size to source texture</returns>
 		public static byte[] Rotate180(this byte[] texture, int width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
@@ -158,6 +170,12 @@ namespace Voxel2Pixel
 					Array.Copy(texture, x1, rotated, x2, 4);
 			return rotated;
 		}
+		/// <summary>
+		/// Rotates image counter-clockwise by 90 degrees
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data of source image</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <returns>new raw rgba8888 pixel data where its width is the height of the source texture</returns>
 		public static byte[] RotateCounter90(this byte[] texture, int width = 0)
 		{
 			int ySide2 = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width),
