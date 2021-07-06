@@ -13,7 +13,6 @@ namespace Voxel2Pixel
 	/// </summary>
 	public static class TextureMethods
 	{
-		//TODO: RotateClockwise135
 		//TODO: RotateCounter135
 		//TODO: DrawTriangle
 		//TODO: DrawCircle
@@ -172,6 +171,26 @@ namespace Voxel2Pixel
 			for (int y1 = 0, y2 = xSide2 - 4; y1 < texture.Length; y1 += xSide1, y2 -= 4)
 				for (int x1 = y1, x2 = y2; x1 < y1 + xSide1; x1 += 4, x2 += xSide2)
 					Array.Copy(texture, x1, rotated, x2, 4);
+			return rotated;
+		}
+		/// <summary>
+		/// Rotates image clockwise by 135 degrees
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data of source image</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <returns>new raw rgba8888 pixel data of newWidth = width + height - 1</returns>
+		public static byte[] RotateClockwise135(this byte[] texture, int width = 0)
+		{
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
+				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
+				newXside = (xSide + (ySide << 2)) - 4;
+			byte[] rotated = new byte[newXside * ((xSide >> 2) + ySide)];
+			for (int y1 = texture.Length - 4, y2 = newXside * (xSide >> 2) - newXside; y1 > 0; y1 -= xSide, y2 += newXside + 4)
+				for (int x1 = y1, x2 = y2; x1 > y1 - xSide; x1 -= 4, x2 += -newXside + 4)
+				{
+					Array.Copy(texture, x1, rotated, x2, 4);
+					Array.Copy(texture, x1, rotated, x2 + newXside, 4);
+				}
 			return rotated;
 		}
 		/// <summary>
@@ -423,7 +442,7 @@ namespace Voxel2Pixel
 		{
 			if (newWidth < 1) throw new InvalidDataException("newWidth cannot be smaller than 1. Was: \"" + newWidth + "\"");
 			if (newHeight < 1) throw new InvalidDataException("newHeight cannot be smaller than 1. Was: \"" + newHeight + "\"");
-			newWidth <<= 2; // newX *= 4;
+			newWidth <<= 2; // newWidth *= 4;
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
 			byte[] resized = new byte[newWidth * newHeight];
 			if (newWidth == xSide)
