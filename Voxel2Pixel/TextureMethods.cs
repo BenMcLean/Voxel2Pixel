@@ -140,7 +140,7 @@ namespace Voxel2Pixel
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
 				triangleWidth4 = triangleWidth << 2;
-			if (x + triangleWidth > xSide || y + triangleHeight > ySide) throw new NotImplementedException();
+			if ((x + triangleWidth) >> 2 > xSide || y + triangleHeight > ySide) throw new NotImplementedException();
 			int offset = y * xSide + (x << 2);
 			texture[offset] = red;
 			texture[offset + 1] = green;
