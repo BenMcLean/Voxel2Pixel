@@ -149,8 +149,9 @@ namespace Voxel2Pixel
 			int yStop = offset + triangleHeight * xSide;
 			for (int x1 = yStop; x1 < yStop + triangleWidth4; x1 += 4)
 				Array.Copy(texture, offset, texture, x1, 4);
+			float @float = (float)(triangleWidth - 1) / triangleHeight;
 			for (int y1 = yStop - xSide, y2 = triangleHeight - 1; y1 > offset; y1 -= xSide, y2--)
-				Array.Copy(texture, yStop, texture, y1, ((int)(((float)(triangleWidth - 1) / triangleHeight) * y2) + 1) << 2);
+				Array.Copy(texture, yStop, texture, y1, ((int)(@float * y2) + 1) << 2);
 			return texture;
 		}
 		#endregion Drawing
