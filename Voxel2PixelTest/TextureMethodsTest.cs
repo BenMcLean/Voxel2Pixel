@@ -17,7 +17,8 @@ namespace Voxel2PixelTest
 			.DrawPixel(0, 0, 255, 255, 0, 1, width)
 			.DrawPixel(128, 128, 128, 255, 1, 1, width)
 			.Upscale(xScale, yScale, width)
-			.DrawRectangle(0, 0, 0, 255, width * xScale / 4, height * yScale / 4, width * xScale / 4 * 2, height * yScale / 4 * 2, width * xScale);
+			.DrawRectangle(0, 0, 0, 255, width * xScale / 4, height * yScale / 4, width * xScale / 4 * 2, height * yScale / 4 * 2, width * xScale)
+			.DrawTriangle(0, 128, 0, 255, 10, 10, 20, 40, width * xScale);
 			//.Rotate180(width * xScale);
 			//int swap = xScale;
 			//xScale = yScale;
@@ -25,6 +26,7 @@ namespace Voxel2PixelTest
 			//byte[] crop = bytes.Crop(65, 70, 25, 20, width * xScale * xTile);
 			//Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(crop, 20, 20)
 			//	.SaveAsPng("cropped.png");
+
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes, width * xScale * xTile, height * yScale * yTile)
 				.SaveAsPng("output.png");
 			byte[] isoSlant = bytes.IsoSlantDown(width * xScale * xTile);

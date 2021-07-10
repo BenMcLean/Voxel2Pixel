@@ -133,6 +133,26 @@ namespace Voxel2Pixel
 					Array.Copy(insert, y2, texture, y1, actualInsertXside);
 			return texture;
 		}
+		public static byte[] DrawTriangle(this byte[] texture, int color, int x, int y, int triangleWidth, int triangleHeight, int width = 0) => DrawTriangle(texture, (byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, triangleWidth, triangleHeight, width);
+		public static byte[] DrawTriangle(this byte[] texture, byte red, byte green, byte blue, byte alpha, int x, int y, int triangleWidth, int triangleHeight, int width = 0)
+		{
+			if (x < 0 || y < 0 || triangleWidth < 1 || triangleHeight < 1) throw new NotImplementedException();
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
+				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
+				triangleWidth4 = triangleWidth << 2;
+			if (x + triangleWidth > xSide || y + triangleHeight > ySide) throw new NotImplementedException();
+			int offset = y * xSide + (x << 2);
+			texture[offset] = red;
+			texture[offset + 1] = green;
+			texture[offset + 2] = blue;
+			texture[offset + 3] = alpha;
+			int yStop = offset + triangleHeight * xSide;
+			for (int x1 = yStop; x1 < yStop + triangleWidth4; x1 += 4)
+				Array.Copy(texture, offset, texture, x1, 4);
+			for (int y1 = yStop - xSide, y2 = triangleHeight - 1; y1 > offset; y1 -= xSide, y2--)
+				Array.Copy(texture, yStop, texture, y1, ((int)(((float)(triangleWidth - 1) / triangleHeight) * y2) + 1) << 2);
+			return texture;
+		}
 		#endregion Drawing
 		#region Rotation
 		/// <summary>
