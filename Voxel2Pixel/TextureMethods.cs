@@ -140,18 +140,20 @@ namespace Voxel2Pixel
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
 				triangleWidth4 = triangleWidth << 2;
-			if ((x + triangleWidth) >> 2 > xSide || y + triangleHeight > ySide) throw new NotImplementedException();
+			if (/*(x + triangleWidth) >> 2 > xSide ||*/ y > ySide) throw new NotImplementedException();
 			int offset = y * xSide + (x << 2);
 			texture[offset] = red;
 			texture[offset + 1] = green;
 			texture[offset + 2] = blue;
 			texture[offset + 3] = alpha;
-			int yStop = offset + triangleHeight * xSide;
-			for (int x1 = yStop; x1 < yStop + triangleWidth4; x1 += 4)
+			int xStop = Math.Min(Math.Min((y + 1) * xSide, offset + triangleWidth4), texture.Length - 4),
+				longest = xStop - offset;
+			for (int x1 = offset + 4; x1 < xStop; x1 += 4)
 				Array.Copy(texture, offset, texture, x1, 4);
+			int yStop = offset - triangleHeight * xSide;
 			float @float = (float)(triangleWidth - 1) / triangleHeight;
-			for (int y1 = yStop - xSide, y2 = triangleHeight - 1; y1 > offset; y1 -= xSide, y2--)
-				Array.Copy(texture, yStop, texture, y1, ((int)(@float * y2) + 1) << 2);
+			for (int y1 = offset - xSide, y2 = triangleHeight - 1; y1 > 0 && y1 > yStop; y1 -= xSide, y2--)
+				Array.Copy(texture, offset, texture, y1, Math.Min(longest, ((int)(@float * y2) + 1) << 2));
 			return texture;
 		}
 		#endregion Drawing
