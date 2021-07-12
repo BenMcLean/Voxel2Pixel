@@ -166,13 +166,10 @@ namespace Voxel2Pixel
 				actualInsertXside = (x + insertXside > xSide ? xSide - x : insertXside) - insertX,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2;
 			if (y > ySide) return texture;
-			if (threshold == 0 && xSide == insertXside && x == 0 && insertX == 0)
-				Array.Copy(insert, insertY * insertXside, texture, y * xSide, Math.Min(insert.Length - insertY * insertXside + insertX, texture.Length - y * xSide));
-			else
-				for (int y1 = y * xSide + x, y2 = insertY * insertXside + insertX; y1 < texture.Length && y2 < insert.Length; y1 += xSide, y2 += insertXside)
-					for (int x1 = 0; x1 < actualInsertXside; x1 += 4)
-						if (insert[y2 + x1 + 3] >= threshold)
-							Array.Copy(insert, y2 + x1, texture, y1 + x1, 4);
+			for (int y1 = y * xSide + x, y2 = insertY * insertXside + insertX; y1 < texture.Length && y2 < insert.Length; y1 += xSide, y2 += insertXside)
+				for (int x1 = 0; x1 < actualInsertXside; x1 += 4)
+					if (insert[y2 + x1 + 3] >= threshold)
+						Array.Copy(insert, y2 + x1, texture, y1 + x1, 4);
 			return texture;
 		}
 		public static byte[] DrawTriangle(this byte[] texture, int color, int x, int y, int triangleWidth, int triangleHeight, int width = 0) => DrawTriangle(texture, (byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, triangleWidth, triangleHeight, width);
