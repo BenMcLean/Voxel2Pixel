@@ -14,6 +14,7 @@ namespace Voxel2Pixel
 	public static class TextureMethods
 	{
 		//TODO: DrawTriangle
+		//TODO: DrawLine
 		//TODO: DrawCircle
 		//TODO: DrawEllipse
 		#region Drawing
@@ -131,6 +132,47 @@ namespace Voxel2Pixel
 			else
 				for (int y1 = y * xSide + x, y2 = insertY * insertXside + insertX; y1 < texture.Length && y2 < insert.Length; y1 += xSide, y2 += insertXside)
 					Array.Copy(insert, y2, texture, y1, actualInsertXside);
+			return texture;
+		}
+		/// <summary>
+		/// Draws a texture onto a different texture with simple transparency
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data to be modified</param>
+		/// <param name="x">upper left corner of where to insert</param>
+		/// <param name="y">upper left corner of where to insert</param>
+		/// <param name="insert">raw rgba888 pixel data to insert</param>
+		/// <param name="insertWidth">width of insert or 0 to assume square texture</param>
+		/// <param name="threshold">only draws pixel if alpha is higher than or equal to threshold</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <returns>same texture with insert drawn</returns>
+		public static byte[] DrawTransparentInsert(this byte[] texture, int x, int y, byte[] insert, int insertWidth = 0, byte threshold = 0, int width = 0)
+		{
+			int insertX = 0, insertY = 0;
+			if (x < 0)
+			{
+				insertX = -x;
+				insertX <<= 2;
+				x = 0;
+			}
+			if (y < 0)
+			{
+				insertY = -y;
+				y = 0;
+			}
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
+			x <<= 2; // x *= 4;
+			if (x > xSide) return texture;
+			int insertXside = (insertWidth < 1 ? (int)Math.Sqrt(insert.Length >> 2) : insertWidth) << 2,
+				actualInsertXside = (x + insertXside > xSide ? xSide - x : insertXside) - insertX,
+				ySide = (width < 1 ? xSide : texture.Length / width) >> 2;
+			if (y > ySide) return texture;
+			if (threshold == 0 && xSide == insertXside && x == 0 && insertX == 0)
+				Array.Copy(insert, insertY * insertXside, texture, y * xSide, Math.Min(insert.Length - insertY * insertXside + insertX, texture.Length - y * xSide));
+			else
+				for (int y1 = y * xSide + x, y2 = insertY * insertXside + insertX; y1 < texture.Length && y2 < insert.Length; y1 += xSide, y2 += insertXside)
+					for (int x1 = 0; x1 < actualInsertXside; x1 += 4)
+						if (insert[y2 + x1 + 3] >= threshold)
+							Array.Copy(insert, y2 + x1, texture, y1 + x1, 4);
 			return texture;
 		}
 		public static byte[] DrawTriangle(this byte[] texture, int color, int x, int y, int triangleWidth, int triangleHeight, int width = 0) => DrawTriangle(texture, (byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, triangleWidth, triangleHeight, width);
