@@ -198,6 +198,35 @@ namespace Voxel2Pixel
 		#endregion Drawing
 		#region Rotation
 		/// <summary>
+		/// Flips an image on the X axis
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data of source image</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <returns>new raw rgba8888 pixel data of identical size to source texture</returns>
+		public static byte[] FlipX(this byte[] texture, int width = 0)
+		{
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
+			byte[] flipped = new byte[texture.Length];
+			for (int y = 0; y < flipped.Length; y += xSide)
+				Array.Copy(texture, y, flipped, flipped.Length - xSide - y, xSide);
+			return flipped;
+		}
+		/// <summary>
+		/// Flips an image on the Y axis
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data of source image</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <returns>new raw rgba8888 pixel data of identical size to source texture</returns>
+		public static byte[] FlipY(this byte[] texture, int width = 0)
+		{
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
+			byte[] flipped = new byte[texture.Length];
+			for (int y = 0; y < flipped.Length; y += xSide)
+				for (int x = 0; x < xSide; x += 4)
+					Array.Copy(texture, y + x, flipped, y + xSide - 4 - x, 4);
+			return flipped;
+		}
+		/// <summary>
 		/// Rotates image clockwise by 45 degrees
 		/// </summary>
 		/// <param name="texture">raw rgba8888 pixel data of source image</param>
@@ -481,35 +510,6 @@ namespace Voxel2Pixel
 			for (int y1 = y * xSide + x, y2 = 0; y2 < cropped.Length; y1 += xSide, y2 += croppedWidth)
 				Array.Copy(texture, y1, cropped, y2, croppedWidth);
 			return cropped;
-		}
-		/// <summary>
-		/// Flips an image on the X axis
-		/// </summary>
-		/// <param name="texture">raw rgba8888 pixel data of source image</param>
-		/// <param name="width">width of texture or 0 to assume square texture</param>
-		/// <returns>new raw rgba8888 pixel data of identical size to source texture</returns>
-		public static byte[] FlipX(this byte[] texture, int width = 0)
-		{
-			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
-			byte[] flipped = new byte[texture.Length];
-			for (int y = 0; y < flipped.Length; y += xSide)
-				Array.Copy(texture, y, flipped, flipped.Length - xSide - y, xSide);
-			return flipped;
-		}
-		/// <summary>
-		/// Flips an image on the Y axis
-		/// </summary>
-		/// <param name="texture">raw rgba8888 pixel data of source image</param>
-		/// <param name="width">width of texture or 0 to assume square texture</param>
-		/// <returns>new raw rgba8888 pixel data of identical size to source texture</returns>
-		public static byte[] FlipY(this byte[] texture, int width = 0)
-		{
-			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
-			byte[] flipped = new byte[texture.Length];
-			for (int y = 0; y < flipped.Length; y += xSide)
-				for (int x = 0; x < xSide; x += 4)
-					Array.Copy(texture, y + x, flipped, y + xSide - 4 - x, 4);
-			return flipped;
 		}
 		/// <summary>
 		/// Makes a new texture and copies the old texture to its upper left corner
