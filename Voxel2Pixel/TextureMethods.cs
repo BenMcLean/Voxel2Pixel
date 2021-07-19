@@ -176,9 +176,17 @@ namespace Voxel2Pixel
 		public static byte[] DrawTriangle(this byte[] texture, byte red, byte green, byte blue, byte alpha, int x, int y, int triangleWidth, int triangleHeight, int width = 0)
 		{
 			if (x < 0 || y < 0 || triangleWidth < 1 || triangleHeight < 1) throw new NotImplementedException();
-			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
-				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
-				triangleWidth4 = triangleWidth << 2;
+			int textureWidth = width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width,
+				xSide = textureWidth << 2,
+				ySide = (width < 1 ? xSide : texture.Length / width) >> 2;
+			if ((x < 0 && x + triangleWidth < 0)
+				|| (x > textureWidth && x + triangleWidth > textureWidth)
+				|| (y < 0 && y + triangleHeight < 0)
+				|| (y > ySide && y + triangleHeight > ySide))
+				return texture; // Triangle is completely outside the texture bounds.
+			int realX = x < 0 ? 0 : x > (xSide >> 2) ? xSide : (x << 2),
+				realY = (y < 0 ? 0 : Math.Min(y, ySide)) * xSide,
+			triangleWidth4 = triangleWidth << 2;
 			if (/*(x + triangleWidth) >> 2 > xSide ||*/ y > ySide) throw new NotImplementedException();
 			int offset = y * xSide + (x << 2);
 			texture[offset] = red;
