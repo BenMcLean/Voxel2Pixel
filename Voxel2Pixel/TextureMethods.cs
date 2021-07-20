@@ -173,6 +173,40 @@ namespace Voxel2Pixel
 						Array.Copy(insert, y2 + x1, texture, y1 + x1, 4);
 			return texture;
 		}
+		/// <summary>
+		/// Draws 1 pixel wide padding around the outside of a rectangular area by copying pixels from the edges of the area
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data to be modified</param>
+		/// <param name="x">upper left corner of area</param>
+		/// <param name="y">upper left corner of area</param>
+		/// <param name="areaWidth">width of area</param>
+		/// <param name="areaHeight">height of area or 0 to assume square area</param>
+		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <returns>same texture with padding drawn</returns>
+		public static byte[] DrawPadding(this byte[] texture, int x, int y, int areaWidth, int areaHeight, int width = 0)
+		{
+			if (areaHeight < 1) areaHeight = areaWidth;
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
+				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
+				x4 = x * 4,
+				offset = y > 0 ? (y - 1) * xSide + x4 : x4,
+				stop = Math.Min((y + areaHeight) * xSide + x4, texture.Length),
+				areaWidth4 = areaWidth << 2;
+			if (x4 > xSide || offset > texture.Length)
+				return texture;
+			if (y > 0)
+				Array.Copy(texture, offset + xSide, texture, offset, Math.Min(areaWidth4, xSide - x4));
+			if (y + areaHeight < ySide)
+				Array.Copy(texture, stop - xSide, texture, stop, Math.Min(areaWidth4, xSide - x4));
+			for (int y1 = Math.Max(x4, offset); y1 <= stop; y1 += xSide)
+			{
+				if (x > 0)
+					Array.Copy(texture, y1, texture, y1 - 4, 4);
+				if (x4 + areaWidth4 < xSide)
+					Array.Copy(texture, y1 + areaWidth4 - 4, texture, y1 + areaWidth4, 4);
+			}
+			return texture;
+		}
 		public static byte[] DrawTriangle(this byte[] texture, int color, int x, int y, int triangleWidth, int triangleHeight, int width = 0) => DrawTriangle(texture, (byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, triangleWidth, triangleHeight, width);
 		public static byte[] DrawTriangle(this byte[] texture, byte red, byte green, byte blue, byte alpha, int x, int y, int triangleWidth, int triangleHeight, int width = 0)
 		{
