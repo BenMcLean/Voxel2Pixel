@@ -8,6 +8,7 @@ namespace Voxel2Pixel
 	/// <summary>
 	/// Methods that start with "Draw" modify the original array. Other methods return a copy.
 	/// x is width, y is height
+	/// x+ is right, y+ is down
 	/// (i << 2 == i * 4)
 	/// (i >> 2 == i / 4) when i is a positive integer
 	/// </summary>
@@ -145,7 +146,7 @@ namespace Voxel2Pixel
 		/// <param name="threshold">only draws pixel if alpha is higher than or equal to threshold</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>same texture with insert drawn</returns>
-		public static byte[] DrawTransparentInsert(this byte[] texture, int x, int y, byte[] insert, int insertWidth = 0, byte threshold = 0, int width = 0)
+		public static byte[] DrawTransparentInsert(this byte[] texture, int x, int y, byte[] insert, int insertWidth = 0, byte threshold = 128, int width = 0)
 		{
 			int insertX = 0, insertY = 0;
 			if (x < 0)
@@ -175,7 +176,6 @@ namespace Voxel2Pixel
 		public static byte[] DrawTriangle(this byte[] texture, int color, int x, int y, int triangleWidth, int triangleHeight, int width = 0) => DrawTriangle(texture, (byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, triangleWidth, triangleHeight, width);
 		public static byte[] DrawTriangle(this byte[] texture, byte red, byte green, byte blue, byte alpha, int x, int y, int triangleWidth, int triangleHeight, int width = 0)
 		{
-			if (x < 0 || y < 0 || triangleWidth < 1 || triangleHeight < 1) throw new NotImplementedException();
 			int textureWidth = width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width,
 				xSide = textureWidth << 2,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2;
@@ -184,23 +184,38 @@ namespace Voxel2Pixel
 				|| (y < 0 && y + triangleHeight < 0)
 				|| (y > ySide && y + triangleHeight > ySide))
 				return texture; // Triangle is completely outside the texture bounds.
-			int realX = x < 0 ? 0 : x > (xSide >> 2) ? xSide : (x << 2),
-				realY = (y < 0 ? 0 : Math.Min(y, ySide)) * xSide,
-			triangleWidth4 = triangleWidth << 2;
-			if (/*(x + triangleWidth) >> 2 > xSide ||*/ y > ySide) throw new NotImplementedException();
-			int offset = y * xSide + (x << 2);
+			int realX = x < 1 ? 0 : Math.Min(xSide, x << 2),
+				realY = y < 1 ? 0 : (Math.Min(y, ySide) * xSide);
+			bool isWide = triangleWidth > 0,
+				isTall = triangleHeight > 0;
+			triangleWidth = Math.Abs(triangleWidth);
+			triangleHeight = Math.Abs(triangleHeight);
+			int triangleWidth4 = triangleWidth << 2;
+			//if (/*(x + triangleWidth) >> 2 > xSide ||*/ y > ySide) throw new NotImplementedException();
+			int offset = realY * xSide + (realX << 2);
 			texture[offset] = red;
 			texture[offset + 1] = green;
 			texture[offset + 2] = blue;
 			texture[offset + 3] = alpha;
-			int xStop = Math.Min(Math.Min((y + 1) * xSide, offset + triangleWidth4), texture.Length - 4),
+			int xStop, yStop, longest;
+			if (isWide)
+			{
+				xStop = Math.Min(Math.Min((realY + 1) * xSide, offset + triangleWidth4), texture.Length - 4);
 				longest = xStop - offset;
-			for (int x1 = offset + 4; x1 < xStop; x1 += 4)
-				Array.Copy(texture, offset, texture, x1, 4);
-			int yStop = offset - triangleHeight * xSide;
-			float @float = (float)(triangleWidth - 1) / triangleHeight;
-			for (int y1 = offset - xSide, y2 = triangleHeight - 1; y1 > 0 && y1 > yStop; y1 -= xSide, y2--)
-				Array.Copy(texture, offset, texture, y1, Math.Min(longest, ((int)(@float * y2) + 1) << 2));
+				for (int x1 = offset + 4; x1 < xStop; x1 += 4)
+					Array.Copy(texture, offset, texture, x1, 4);
+			}
+			else
+			{
+				xStop = Math.Max(Math.Max(realY * xSide, offset - triangleWidth4), 0);
+				longest = offset - xStop;
+				for (int x1 = offset - 4; x1 > xStop; x1 -= 4)
+					Array.Copy(texture, offset, texture, x1, 4);
+			}
+			//int yStop = offset - triangleHeight * xSide;
+			//float @float = (float)(triangleWidth - 1) / triangleHeight;
+			//for (int y1 = offset - xSide, y2 = triangleHeight - 1; y1 > 0 && y1 > yStop; y1 -= xSide, y2--)
+			//	Array.Copy(texture, offset, texture, y1, Math.Min(longest, ((int)(@float * y2) + 1) << 2));
 			return texture;
 		}
 		#endregion Drawing
@@ -783,20 +798,6 @@ namespace Voxel2Pixel
 			}
 			return result;
 		}
-		/*
-		public static void Print<T>(T[] texture, int width = 0)
-		{
-			int xSide = width < 1 ? (int)System.Math.Sqrt(texture.Length >> 2) : width,
-				ySide = width < 1 ? xSide << 2 : texture.Length / width;
-			for (int x = 0; x < xSide; x++)
-			{
-				for (int y = 0; y < ySide; y += 4)
-					for (int z = 0; z < 4; z++)
-						Console.Write(texture[x * ySide + y + z] + ", ");
-				Console.WriteLine();
-			}
-		}
-		*/
 		#endregion Utilities
 	}
 }
