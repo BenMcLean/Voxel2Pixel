@@ -44,13 +44,13 @@ namespace Voxel2PixelTest
 			//Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes.Resize(800, 600, width * xScale * xTile), 800, 600)
 			//	.SaveAsPng("800x600.png");
 		}
-
 		[Fact]
 		public void DrawRectangleTest()
 		{
-			int width = 64, height = 64, xScale = 10, yScale = 10;
+			int width = 10, height = 10, xScale = 10, yScale = 10;
 			byte[] bytes = new byte[width * height * 4]
-				.DrawRectangle(0, 255, 0, 255, 0, 24, 4, 40, width);
+				.DrawRectangle(0, 0, 0, 255, -5, -5, width + 5, height + 5, width)
+				.DrawRectangle(0, 0, 255, 255, 0, 5, 5, 5, width);
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes.Upscale(xScale, yScale), width * xScale, height * yScale)
 				.SaveAsPng("DrawRectangleTest.png");
 		}

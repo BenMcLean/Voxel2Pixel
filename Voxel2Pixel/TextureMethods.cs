@@ -68,9 +68,6 @@ namespace Voxel2Pixel
 		public static byte[] DrawRectangle(this byte[] texture, byte red, byte green, byte blue, byte alpha, int x, int y, int rectWidth, int rectHeight, int width = 0)
 		{
 			if (rectHeight < 1) rectHeight = rectWidth;
-			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
-				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
-				x4 = x << 2;
 			if (x < 0)
 			{
 				rectWidth += x;
@@ -81,10 +78,14 @@ namespace Voxel2Pixel
 				rectHeight += y;
 				y = 0;
 			}
-			if (rectWidth < 1 || rectHeight < 1 || x4 >= xSide || y >= ySide) return texture;
-			if ((x + rectWidth) << 2 >= xSide) rectWidth = (xSide >> 2) - x;
-			if (y + rectHeight >= ySide) rectHeight = (ySide >> 2) - y;
-			int offset = y * xSide + x4,
+			width = width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width;
+			int height = (texture.Length / width) >> 2;
+			if (rectWidth < 1 || rectHeight < 1 || x >= width || y >= height) return texture;
+			rectWidth = Math.Min(rectWidth, width - x);
+			rectHeight = Math.Min(rectHeight, height - y);
+			int xSide = width << 2,
+				x4 = x << 2,
+				offset = y * xSide + x4,
 				rectWidth4 = rectWidth << 2,
 				yStop = offset + xSide * rectHeight;
 			texture[offset] = red;
