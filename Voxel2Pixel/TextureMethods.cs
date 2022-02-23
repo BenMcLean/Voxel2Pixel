@@ -737,6 +737,20 @@ namespace Voxel2Pixel
 		}
 		#endregion Image manipulation
 		#region Utilities
+		/// <summary>
+		/// Compute power of two greater than or equal to `n`
+		/// </summary>
+		public static uint NextPowerOf2(this uint n)
+		{
+			n--; // decrement `n` (to handle the case when `n` itself is a power of 2)
+				 // set all bits after the last set bit
+			n |= n >> 1;
+			n |= n >> 2;
+			n |= n >> 4;
+			n |= n >> 8;
+			n |= n >> 16;
+			return ++n; // increment `n` and return
+		}
 		public static byte R(this int color) => (byte)(color >> 24);
 		public static byte G(this int color) => (byte)(color >> 16);
 		public static byte B(this int color) => (byte)(color >> 8);
