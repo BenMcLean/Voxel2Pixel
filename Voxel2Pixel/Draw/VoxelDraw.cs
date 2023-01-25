@@ -193,10 +193,10 @@ namespace Voxel2Pixel.Draw
 						{
 							renderer.RectRight(
 								x: pixelX * scaleX,
-								y: pixelY * scaleY,
+								y: pixelY * scaleY + 1,
 								voxel: voxelLeft,
 								sizeX: scaleX,
-								sizeY: scaleY);
+								sizeY: scaleY - 1);
 							if (pixelY >= model.SizeZ - 1
 								|| model.At(voxelX, voxelY - 1, pixelY + 1) == 0)
 								renderer.RectVertical(
@@ -215,10 +215,10 @@ namespace Voxel2Pixel.Draw
 						{
 							renderer.RectLeft(
 								x: (pixelX + 1) * scaleX,
-								y: pixelY * scaleY,
+								y: pixelY * scaleY + 1,
 								voxel: voxelRight,
 								sizeX: scaleX,
-								sizeY: scaleY);
+								sizeY: scaleY - 1);
 							if (pixelY >= model.SizeZ - 1
 								|| model.At(voxelX - 1, voxelY, pixelY + 1) == 0)
 								renderer.RectVertical(
@@ -241,10 +241,10 @@ namespace Voxel2Pixel.Draw
 							{
 								renderer.RectLeft(
 									x: pixelX * scaleX,
-									y: pixelY * scaleY,
+									y: pixelY * scaleY + 1,
 									voxel: voxel,
 									sizeX: scaleX,
-									sizeY: scaleY);
+									sizeY: scaleY - 1);
 								if (peek)
 									renderer.RectVertical(
 										x: pixelX * scaleX,
@@ -257,10 +257,10 @@ namespace Voxel2Pixel.Draw
 							{
 								renderer.RectRight(
 									x: (pixelX + 1) * scaleX,
-									y: pixelY * scaleY,
+									y: pixelY * scaleY + 1,
 									voxel: voxel,
 									sizeX: scaleX,
-									sizeY: scaleY);
+									sizeY: scaleY - 1);
 								if (peek)
 									renderer.RectVertical(
 										x: (pixelX + 1) * scaleX,
