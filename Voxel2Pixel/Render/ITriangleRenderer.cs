@@ -16,51 +16,26 @@
 		/// <summary>
 		/// Draws a triangle 3 high and 2 wide pointing left, representing the visible vertical face of voxel
 		/// </summary>
-		void DrawLeftTriangleVerticalFace(int x, int y, byte voxel, int vx, int vy, int vz);
+		void DrawLeftTriangleVerticalFace(int x, int y, byte voxel);
 		/// <summary>
 		/// Draws a triangle 3 high and 2 wide pointing left, representing the left face of voxel
 		/// </summary>
-		void DrawLeftTriangleLeftFace(int x, int y, byte voxel, int vx, int vy, int vz);
+		void DrawLeftTriangleLeftFace(int x, int y, byte voxel);
 		/// <summary>
 		/// Draws a triangle 3 high and 2 wide pointing left, representing the right face of voxel
 		/// </summary>
-		void DrawLeftTriangleRightFace(int x, int y, byte voxel, int vx, int vy, int vz);
+		void DrawLeftTriangleRightFace(int x, int y, byte voxel);
 		/// <summary>
 		/// Draws a triangle 3 high and 2 wide pointing right representing the visible vertical face of voxel
 		/// </summary>
-		void DrawRightTriangleVerticalFace(int x, int y, byte voxel, int vx, int vy, int vz);
+		void DrawRightTriangleVerticalFace(int x, int y, byte voxel);
 		/// <summary>
 		/// Draws a triangle 3 high and 2 wide pointing right representing the left face of voxel
 		/// </summary>
-		void DrawRightTriangleLeftFace(int x, int y, byte voxel, int vx, int vy, int vz);
+		void DrawRightTriangleLeftFace(int x, int y, byte voxel);
 		/// <summary>
 		/// Draws a triangle 3 high and 2 wide pointing right representing the right face of voxel
 		/// </summary>
-		void DrawRightTriangleRightFace(int x, int y, byte voxel, int vx, int vy, int vz);
-		/// <summary>
-		/// Draws a triangle 3 high and 2 wide pointing left, representing the visible vertical face of voxel
-		/// </summary>
-		void DrawLeftTriangleVerticalFace(int x, int y, byte voxel, int depth, int vx, int vy, int vz);
-		/// <summary>
-		/// Draws a triangle 3 high and 2 wide pointing left, representing the left face of voxel
-		/// </summary>
-		void DrawLeftTriangleLeftFace(int x, int y, byte voxel, int depth, int vx, int vy, int vz);
-		/// <summary>
-		/// Draws a triangle 3 high and 2 wide pointing left, representing the right face of voxel
-		/// </summary>
-		void DrawLeftTriangleRightFace(int x, int y, byte voxel, int depth, int vx, int vy, int vz);
-		/// <summary>
-		/// Draws a triangle 3 high and 2 wide pointing right representing the visible vertical face of voxel
-		/// </summary>
-		void DrawRightTriangleVerticalFace(int x, int y, byte voxel, int depth, int vx, int vy, int vz);
-		/// <summary>
-		/// Draws a triangle 3 high and 2 wide pointing right representing the left face of voxel
-		/// </summary>
-		void DrawRightTriangleLeftFace(int x, int y, byte voxel, int depth, int vx, int vy, int vz);
-		/// <summary>
-		/// Draws a triangle 3 high and 2 wide pointing right representing the right face of voxel
-		/// </summary>
-		void DrawRightTriangleRightFace(int x, int y, byte voxel, int depth, int vx, int vy, int vz);
-		void DrawTriangleOutline(int x, int y, byte voxel, int vx, int vy, int vz);
+		void DrawRightTriangleRightFace(int x, int y, byte voxel);
 	}
 }
