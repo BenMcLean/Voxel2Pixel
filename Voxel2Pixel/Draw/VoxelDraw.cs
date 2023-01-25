@@ -274,5 +274,55 @@ namespace Voxel2Pixel.Draw
 					}
 				}
 		}
+		public static void DrawAbove(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 2)
+		{
+			int pixelHeight = (model.SizeX + model.SizeZ) * 2;
+			for (int voxelY = 0; voxelY < model.SizeY; voxelY++)
+			{ // voxel y is pixel x
+			  // Begin bottom row
+				byte voxel = (byte)model.At(0, voxelY, 0);
+				if (voxel != 0) renderer.RectRight(voxelY * scaleX, 0, voxel, scaleX, scaleY);
+				// Finish bottom row
+				// Begin main bulk of model
+				for (int pixelY = 1; pixelY < pixelHeight; pixelY += 2)
+				{ // pixel y
+					bool below = false, above = pixelHeight - pixelY < 2;
+					int startX = (pixelY / 2) > model.SizeZ - 1 ? (pixelY / 2) - model.SizeZ + 1 : 0,
+						startZ = (pixelY / 2) > model.SizeZ - 1 ? model.SizeZ - 1 : (pixelY / 2);
+					for (int voxelX = startX, voxelZ = startZ;
+						 voxelX <= model.SizeX && voxelZ >= -1;
+						 voxelX++, voxelZ--)
+					{ // vx is voxel x, vz is voxel z
+						if (!above && voxelZ + 1 < model.SizeZ && voxelX < model.SizeX)
+						{
+							voxel = (byte)model.At(voxelX, voxelY, voxelZ + 1);
+							if (voxel != 0)
+							{
+								renderer.RectRight(voxelY * scaleX, (pixelY + 1) * scaleY, voxel, scaleX, scaleY);
+								above = true;
+							}
+						}
+						if (!below && voxelX > 0 && voxelZ >= 0)
+						{
+							voxel = (byte)model.At(voxelX - 1, voxelY, voxelZ);
+							if (voxel != 0)
+							{
+								renderer.RectVertical(voxelY * scaleX, pixelY * scaleY, voxel, scaleX, scaleY);
+								below = true;
+							}
+						}
+						if ((above && below) || voxelX >= model.SizeX || voxelZ < 0) break;
+						voxel = (byte)model.At(voxelX, voxelY, voxelZ);
+						if (voxel != 0)
+						{
+							if (!above) renderer.RectVertical(voxelY * scaleX, (pixelY + 1) * scaleY, voxel, scaleX, scaleY);
+							if (!below) renderer.RectRight(voxelY * scaleX, pixelY * scaleY, voxel, scaleX, scaleY);
+							break;
+						}
+					}
+				}
+				// Finish main bulk of model
+			}
+		}
 	}
 }
