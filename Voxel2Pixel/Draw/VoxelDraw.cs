@@ -116,5 +116,104 @@ namespace Voxel2Pixel.Draw
 							break;
 						}
 		}
+		public static void Draw45Peek(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 6)
+		{
+			int pixelWidth = model.SizeX + model.SizeY;
+			for (int py = 0; py < model.SizeZ; py++)
+				for (int px = 0; px <= pixelWidth; px += 2)
+				{
+					bool leftDone = false,
+						rightDone = pixelWidth - px < 2;
+					int startX = px >= model.SizeX ? 0 : model.SizeX - px - 1,
+						startY = px < model.SizeX ? 0 : px - model.SizeX + 1;
+					for (int vx = startX, vy = startY;
+						 vx <= model.SizeX && vy <= model.SizeY;
+						 vx++, vy++)
+					{ // vx is voxel x, vy is voxel y
+						if (!leftDone
+							&& vy > 0
+							&& vx < model.SizeX
+							&& model.At(vx, vy - 1, py) is byte voxel
+							&& voxel != 0)
+						{
+							renderer.RectRight(
+								x: px * scaleX,
+								y: py * scaleY,
+								voxel: voxel,
+								sizeX: scaleX,
+								sizeY: scaleY);
+							if (py >= model.SizeZ - 1
+								|| model.At(vx, vy - 1, py + 1) == 0)
+								renderer.RectVertical(
+									x: px * scaleX,
+									y: (py + 1) * scaleY - 1,
+									voxel: voxel,
+									sizeX: scaleX,
+									sizeY: 1);
+							leftDone = true;
+						}
+						if (!rightDone && vx > 0 && vy < model.SizeY)
+						{
+							if (model.At(vx - 1, vy, py) is byte voxel2
+								&& voxel2 != 0)
+							{
+								renderer.RectLeft(
+									x: (px + 1) * scaleX,
+									y: py * scaleY,
+									voxel: voxel2,
+									sizeX: scaleX,
+									sizeY: scaleY);
+								if (py >= model.SizeZ - 1 || model.At(vx - 1, vy, py + 1) == 0)
+									renderer.RectVertical(
+										x: (px + 1) * scaleX,
+										y: (py + 1) * scaleY - 1,
+										voxel: voxel2,
+										sizeX: scaleX,
+										sizeY: 1);
+								rightDone = true;
+							}
+						}
+						if ((leftDone && rightDone) || vx >= model.SizeX || vy >= model.SizeY) break;
+						if (model.At(vx, vy, py) is byte voxel3
+							&& voxel3 != 0)
+						{
+							bool peek = py >= model.SizeZ - 1 || model.At(vx, vy, py + 1) == 0;
+							if (!leftDone)
+							{
+								renderer.RectLeft(
+									x: px * scaleX,
+									y: py * scaleY,
+									voxel: voxel3,
+									sizeX: scaleX,
+									sizeY: scaleY);
+								if (peek)
+									renderer.RectVertical(
+										x: px * scaleX,
+										y: (py + 1) * scaleY - 1,
+										voxel: voxel3,
+										sizeX: scaleX,
+										sizeY: 1);
+							}
+							if (!rightDone)
+							{
+								renderer.RectRight(
+									x: (px + 1) * scaleX,
+									y: py * scaleY,
+									voxel: voxel3,
+									sizeX: scaleX,
+									sizeY: scaleY);
+								if (peek)
+									renderer.RectVertical(
+										x: (px + 1) * scaleX,
+										y: (py + 1) * scaleY - 1,
+										voxel: voxel3,
+										sizeX: scaleX,
+										sizeY: 1);
+							}
+							break;
+						}
+					}
+				}
+		}
 	}
 }
