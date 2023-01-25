@@ -6,7 +6,8 @@ namespace Voxel2Pixel.Render
 	{
 		public byte[] Image { get; set; }
 		public int Width { get; set; }
-		IVoxelColor IVoxelColor { get; set; }
+		public int Height => (Image.Length / Width) >> 2;
+		public IVoxelColor IVoxelColor { get; set; }
 		public void Rect(int x, int y, int color, int sizeX, int sizeY) =>
 			Image.DrawRectangle(
 				x: x,
