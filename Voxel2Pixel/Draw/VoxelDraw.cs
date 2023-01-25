@@ -21,13 +21,7 @@ namespace Voxel2Pixel.Draw
 							break;
 						}
 		}
-		public static void DrawRightPeek(IModel model, IRectangleRenderer renderer) =>
-			DrawRightPeek(
-				model: model,
-				renderer: renderer,
-				scaleX: 6,
-				scaleY: 6);
-		public static void DrawRightPeek(IModel model, IRectangleRenderer renderer, int scaleX, int scaleY)
+		public static void DrawRightPeek(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 6)
 		{
 			for (int z = 0; z < model.SizeZ; z++)
 				for (int y = 0; y < model.SizeY; y++)
@@ -41,7 +35,8 @@ namespace Voxel2Pixel.Draw
 								voxel: voxel,
 								sizeX: scaleX,
 								sizeY: scaleY - 1);
-							if (z >= model.SizeZ - 1 || model.At(x, y, z + 1) == 0)
+							if (z >= model.SizeZ - 1
+								|| model.At(x, y, z + 1) == 0)
 								renderer.RectVertical(
 									x: y * scaleX,
 									y: (z + 1) * scaleY - 1,
@@ -66,7 +61,7 @@ namespace Voxel2Pixel.Draw
 							break;
 						}
 		}
-		public static void DrawLeftPeek(IModel model, IRectangleRenderer renderer, int scaleX, int scaleY)
+		public static void DrawLeftPeek(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 6)
 		{
 			for (int z = 0; z < model.SizeZ; z++)
 				for (int y = 0; y < model.SizeY; y++)
@@ -80,7 +75,8 @@ namespace Voxel2Pixel.Draw
 								voxel: voxel,
 								sizeX: scaleX,
 								sizeY: scaleY - 1);
-							if (z >= model.SizeZ - 1 || model.At(x, y, z + 1) == 0)
+							if (z >= model.SizeZ - 1
+								|| model.At(x, y, z + 1) == 0)
 								renderer.RectVertical(
 									x: y * scaleX,
 									y: (z + 1) * scaleY - 1,
