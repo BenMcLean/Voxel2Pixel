@@ -20,12 +20,15 @@ namespace Voxel2PixelTest
 			{
 				Image = new byte[voxModel.SizeX * 4 * voxModel.SizeY],
 				Width = voxModel.SizeX,
+				//Image = new byte[VoxelDraw.IsoWidth(voxModel) * 4 * VoxelDraw.IsoHeight(voxModel)],
+				//Width = VoxelDraw.IsoWidth(voxModel),
 				IVoxelColor = new FlatVoxelColor
 				{
 					Palette = voxModel.Palette,
 				},
 			};
 			VoxelDraw.DrawRight(voxModel, arrayRenderer);
+			//VoxelDraw.DrawIso(voxModel, arrayRenderer);
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(
 				//data: arrayRenderer.Image,
 				//width: arrayRenderer.Width,
