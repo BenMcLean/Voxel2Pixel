@@ -1,4 +1,5 @@
-﻿using Voxel2Pixel.Model;
+﻿using System;
+using Voxel2Pixel.Model;
 using Voxel2Pixel.Render;
 
 namespace Voxel2Pixel.Draw
@@ -281,24 +282,38 @@ namespace Voxel2Pixel.Draw
 			{ // voxel y is pixel x
 			  // Begin bottom row
 				byte voxel = (byte)model.At(0, voxelY, 0);
-				if (voxel != 0) renderer.RectRight(voxelY * scaleX, 0, voxel, scaleX, scaleY);
+				if (voxel != 0)
+					renderer.RectRight(
+						x: voxelY * scaleX,
+						y: 0,
+						voxel: voxel,
+						sizeX: scaleX,
+						sizeY: scaleY);
 				// Finish bottom row
 				// Begin main bulk of model
 				for (int pixelY = 1; pixelY < pixelHeight; pixelY += 2)
 				{ // pixel y
-					bool below = false, above = pixelHeight - pixelY < 2;
+					bool below = false,
+						above = pixelHeight - pixelY < 2;
 					int startX = (pixelY / 2) > model.SizeZ - 1 ? (pixelY / 2) - model.SizeZ + 1 : 0,
 						startZ = (pixelY / 2) > model.SizeZ - 1 ? model.SizeZ - 1 : (pixelY / 2);
 					for (int voxelX = startX, voxelZ = startZ;
 						 voxelX <= model.SizeX && voxelZ >= -1;
 						 voxelX++, voxelZ--)
 					{ // vx is voxel x, vz is voxel z
-						if (!above && voxelZ + 1 < model.SizeZ && voxelX < model.SizeX)
+						if (!above
+							&& voxelZ + 1 < model.SizeZ
+							&& voxelX < model.SizeX)
 						{
 							voxel = (byte)model.At(voxelX, voxelY, voxelZ + 1);
 							if (voxel != 0)
 							{
-								renderer.RectRight(voxelY * scaleX, (pixelY + 1) * scaleY, voxel, scaleX, scaleY);
+								renderer.RectRight(
+									x: voxelY * scaleX,
+									y: (pixelY + 1) * scaleY,
+									voxel: voxel,
+									sizeX: scaleX,
+									sizeY: scaleY);
 								above = true;
 							}
 						}
@@ -307,21 +322,395 @@ namespace Voxel2Pixel.Draw
 							voxel = (byte)model.At(voxelX - 1, voxelY, voxelZ);
 							if (voxel != 0)
 							{
-								renderer.RectVertical(voxelY * scaleX, pixelY * scaleY, voxel, scaleX, scaleY);
+								renderer.RectVertical(
+									x: voxelY * scaleX,
+									y: pixelY * scaleY,
+									voxel: voxel,
+									sizeX: scaleX,
+									sizeY: scaleY);
 								below = true;
 							}
 						}
-						if ((above && below) || voxelX >= model.SizeX || voxelZ < 0) break;
+						if ((above && below)
+							|| voxelX >= model.SizeX
+							|| voxelZ < 0)
+							break;
 						voxel = (byte)model.At(voxelX, voxelY, voxelZ);
 						if (voxel != 0)
 						{
-							if (!above) renderer.RectVertical(voxelY * scaleX, (pixelY + 1) * scaleY, voxel, scaleX, scaleY);
-							if (!below) renderer.RectRight(voxelY * scaleX, pixelY * scaleY, voxel, scaleX, scaleY);
+							if (!above)
+								renderer.RectVertical(
+									x: voxelY * scaleX,
+									y: (pixelY + 1) * scaleY,
+									voxel: voxel,
+									sizeX: scaleX,
+									sizeY: scaleY);
+							if (!below)
+								renderer.RectRight(
+									x: voxelY * scaleX,
+									y: pixelY * scaleY,
+									voxel: voxel,
+									sizeX: scaleX,
+									sizeY: scaleY);
 							break;
 						}
 					}
 				}
 				// Finish main bulk of model
+			}
+		}
+		public static int IsoHeight(IModel model) => (model.SizeZ + Math.Max(model.SizeX, model.SizeY)) * 4;
+		public static int IsoWidth(IModel model) => (model.SizeX + model.SizeY) * 2;
+		public static void DrawIso(IModel model, ITriangleRenderer renderer)
+		{
+			byte voxel;
+			int sizeVoxelX = model.SizeX,
+				sizeVoxelY = model.SizeY,
+				sizeVoxelZ = model.SizeZ,
+				sizeVoxelX2 = sizeVoxelX * 2,
+				sizeVoxelY2 = sizeVoxelY * 2,
+				pixelWidth = IsoWidth(model);
+			// To move one x+ in voxels is x + 2, y - 2 in pixels.
+			// To move one x- in voxels is x - 2, y + 2 in pixels.
+			// To move one y+ in voxels is x + 2, y + 2 in pixels.
+			// To move one y- in voxels is x - 2, y - 2 in pixels.
+			// To move one z+ in voxels is y + 4 in pixels.
+			// To move one z- in voxels is y - 4 in pixels.
+			for (int pixelX = 0; pixelX < pixelWidth; pixelX += 4)
+			{
+				int bottomPixelY = Math.Abs(sizeVoxelX2 - 2 - pixelX),
+						topPixelY = sizeVoxelX2 - 2 + // black space at the bottom from the first column
+							(sizeVoxelZ - 1) * 4 + // height of model
+							sizeVoxelY2 - Math.Abs(sizeVoxelY2 - 2 - pixelX);
+
+				// Begin drawing bottom row triangles
+				if (pixelX < sizeVoxelX2 - 2)
+				{ // Left side of model
+					bool rightEmpty = true;
+					voxel = (byte)model.At(sizeVoxelX - pixelX / 2 - 2, 0, 0); // Front right
+					if (voxel != 0)
+					{
+						renderer.DrawRightTriangleLeftFace(pixelX + 2, bottomPixelY - 4, voxel, sizeVoxelX - pixelX / 2 - 2, 0, 0);
+						renderer.DrawLeftTriangleLeftFace(pixelX + 2, bottomPixelY - 6, voxel, sizeVoxelX - pixelX / 2 - 2, 0, 0);
+						rightEmpty = false;
+					}
+					voxel = (byte)model.At(sizeVoxelX - pixelX / 2 - 1, 0, 0); // Center
+					if (voxel != 0)
+					{
+						renderer.DrawLeftTriangleLeftFace(pixelX, bottomPixelY - 4, voxel, sizeVoxelX - pixelX / 2 - 1, 0, 0);
+						if (rightEmpty)
+							renderer.DrawRightTriangleRightFace(pixelX + 2, bottomPixelY - 4, voxel, sizeVoxelX - pixelX / 2 - 1, 0, 0);
+					}
+				}
+				else if (pixelX > sizeVoxelX2 - 2)
+				{ // Right side of model
+					bool leftEmpty = true;
+					voxel = (byte)model.At(0, pixelX / 2 - sizeVoxelX, 0); // Front left
+					if (voxel != 0)
+					{
+						renderer.DrawRightTriangleRightFace(pixelX, bottomPixelY - 6, voxel, 0, pixelX / 2 - sizeVoxelX, 0);
+						renderer.DrawLeftTriangleRightFace(pixelX, bottomPixelY - 4, voxel, 0, pixelX / 2 - sizeVoxelX, 0);
+						leftEmpty = false;
+					}
+					voxel = (byte)model.At(0, pixelX / 2 - sizeVoxelX + 1, 0); // Center
+					if (voxel != 0)
+					{
+						renderer.DrawRightTriangleRightFace(pixelX + 2, bottomPixelY - 4, voxel, 0, pixelX / 2 - sizeVoxelX + 1, 0);
+						if (leftEmpty)
+							renderer.DrawLeftTriangleLeftFace(pixelX, bottomPixelY - 4, voxel, 0, pixelX / 2 - sizeVoxelX + 1, 0);
+					}
+				}
+				else
+				{ // Very bottom
+					voxel = (byte)model.At(0, 0, 0);
+					if (voxel != 0)
+					{
+						renderer.DrawLeftTriangleLeftFace(pixelX, bottomPixelY - 4, voxel, 0, 0, 0);
+						renderer.DrawRightTriangleRightFace(pixelX + 2, bottomPixelY - 4, voxel, 0, 0, 0);
+						if (sizeVoxelX % 2 == 0)
+							renderer.DrawRightTriangleRightFace(pixelX, bottomPixelY - 6, voxel, 0, 0, 0);
+					}
+					else
+					{
+						voxel = (byte)model.At(pixelX / 2 + 1, 0, 0);
+						if (voxel != 0)
+							renderer.DrawLeftTriangleRightFace(pixelX, bottomPixelY - 4, voxel, pixelX / 2 + 1, 0, 0);
+						voxel = (byte)model.At(0, pixelX / 2 - sizeVoxelX + 2, 0);
+						if (voxel != 0)
+							renderer.DrawRightTriangleLeftFace(pixelX + 2, bottomPixelY - 4, voxel, 0, pixelX / 2 - sizeVoxelX + 2, 0);
+					}
+				}
+				// Finish drawing bottom row triangles
+
+				// Begin drawing main bulk of model
+				for (int py = bottomPixelY - 4; py <= topPixelY; py += 4)
+				{
+					bool topSide = py > bottomPixelY + (sizeVoxelZ - 1) * 4, bottomSide = !topSide;
+					int additive = (py - bottomPixelY) / 4 - sizeVoxelZ + 1,
+						startVoxelX = (pixelX < sizeVoxelX2 ? sizeVoxelX - 1 - pixelX / 2 : 0) + (topSide ? additive : 0),
+						startVoxelY = (pixelX < sizeVoxelX2 ? 0 : pixelX / 2 - sizeVoxelX + 1) + (topSide ? additive : 0),
+						startVoxelZ = bottomSide ? (py - bottomPixelY) / 4 : sizeVoxelZ - 1;
+
+					bool left = false,
+						topLeft = false,
+						topRight = false,
+						right = false;
+					for (int voxelX = startVoxelX, voxelY = startVoxelY, voxelZ = startVoxelZ;
+						 voxelX < sizeVoxelX && voxelY < sizeVoxelY && voxelZ >= 0;
+						 voxelX++, voxelY++, voxelZ--)
+					{
+
+						// Order to check
+						// x, y-, z+ = Above front left
+						// x-, y, z+ = Above front right
+						// x, y, z+ = Above
+						// x, y-, z = Front left
+						// x-, y, z = Front right
+						// x, y, z  = Center
+						// x+, y, z = Back left
+						// x, y+, z = Back right
+						// x+, y, z- = Below back left
+						// x, y+ z- = Below back right
+
+						// OK here goes:
+						// x, y-, z+ = Above front left
+						if ((!left || !topLeft) && voxelX == 0 && voxelY > 0 && voxelZ < sizeVoxelZ - 1)
+						{
+							voxel = (byte)model.At(voxelX, voxelY - 1, voxelZ + 1);
+							if (voxel != 0)
+							{
+								if (!topLeft)
+								{
+									renderer.DrawLeftTriangleRightFace(pixelX, py, voxel, voxelX, voxelY - 1, voxelZ + 1);
+									topLeft = true;
+								}
+								if (!left)
+								{
+									renderer.DrawRightTriangleRightFace(pixelX, py - 2, voxel, voxelX, voxelY - 1, voxelZ + 1);
+									left = true;
+								}
+							}
+						}
+
+						// x-, y, z+ = Above front right
+						if ((!topRight || !right) && voxelX > 0 && voxelY == 0 && voxelZ < sizeVoxelZ - 1)
+						{
+							voxel = (byte)model.At(voxelX - 1, voxelY, voxelZ + 1);
+							if (voxel != 0)
+							{
+								if (!topRight)
+								{
+									renderer.DrawRightTriangleLeftFace(pixelX + 2, py, voxel, voxelX - 1, voxelY, voxelZ + 1);
+									topRight = true;
+								}
+								if (!right)
+								{
+									renderer.DrawLeftTriangleLeftFace(pixelX + 2, py - 2, voxel, voxelX - 1, voxelY, voxelZ + 1);
+									right = true;
+								}
+							}
+						}
+
+						// x, y, z+ = Above
+						if ((!topLeft || !topRight) && voxelZ < sizeVoxelZ - 1)
+						{
+							voxel = (byte)model.At(voxelX, voxelY, voxelZ + 1);
+							if (voxel != 0)
+							{
+								if (!topLeft)
+								{
+									renderer.DrawLeftTriangleLeftFace(pixelX, py, voxel, voxelX, voxelY, voxelZ + 1);
+									topLeft = true;
+								}
+								if (!topRight)
+								{
+									renderer.DrawRightTriangleRightFace(pixelX + 2, py, voxel, voxelX, voxelY, voxelZ + 1);
+									topRight = true;
+								}
+							}
+						}
+
+						// x, y-, z = Front left
+						if (!left && voxelY > 0)
+						{
+							voxel = (byte)model.At(voxelX, voxelY - 1, voxelZ);
+							if (voxel != 0)
+							{
+								renderer.DrawRightTriangleVerticalFace(pixelX, py - 2, voxel, voxelX, voxelY - 1, voxelZ);
+								left = true;
+							}
+						}
+
+						// x-, y, z = Front right
+						if (!right && voxelX > 0)
+						{
+							voxel = (byte)model.At(voxelX - 1, voxelY, voxelZ);
+							if (voxel != 0)
+							{
+								renderer.DrawLeftTriangleVerticalFace(pixelX + 2, py - 2, voxel, voxelX - 1, voxelY, voxelZ);
+								right = true;
+							}
+						}
+
+						// x, y, z  = Center
+						if (left && topLeft && topRight && right) break;
+						voxel = (byte)model.At(voxelX, voxelY, voxelZ);
+						if (voxel != 0)
+						{
+							if (!topLeft)
+								renderer.DrawLeftTriangleVerticalFace(pixelX, py, voxel, voxelX, voxelY, voxelZ);
+							if (!left)
+								renderer.DrawRightTriangleLeftFace(pixelX, py - 2, voxel, voxelX, voxelY, voxelZ);
+							if (!topRight)
+								renderer.DrawRightTriangleVerticalFace(pixelX + 2, py, voxel, voxelX, voxelY, voxelZ);
+							if (!right)
+								renderer.DrawLeftTriangleRightFace(pixelX + 2, py - 2, voxel, voxelX, voxelY, voxelZ);
+							break;
+						}
+
+						// x+, y, z = Back left
+						if ((!left || !topLeft) && voxelX < sizeVoxelX - 1)
+						{
+							voxel = (byte)model.At(voxelX + 1, voxelY, voxelZ);
+							if (voxel != 0)
+							{
+								if (!topLeft)
+								{
+									renderer.DrawLeftTriangleRightFace(pixelX, py, voxel, voxelX + 1, voxelY, voxelZ);
+									topLeft = true;
+								}
+								if (!left)
+								{
+									renderer.DrawRightTriangleRightFace(pixelX, py - 2, voxel, voxelX + 1, voxelY, voxelZ);
+									left = true;
+								}
+							}
+						}
+
+						// x, y+, z = Back right
+						if ((!right || !topRight) && voxelY < sizeVoxelY - 1)
+						{
+							voxel = (byte)model.At(voxelX, voxelY + 1, voxelZ);
+							if (voxel != 0)
+							{
+								if (!topRight)
+								{
+									renderer.DrawRightTriangleLeftFace(pixelX + 2, py, voxel, voxelX, voxelY + 1, voxelZ);
+									topRight = true;
+								}
+								if (!right)
+								{
+									renderer.DrawLeftTriangleLeftFace(pixelX + 2, py - 2, voxel, voxelX, voxelY + 1, voxelZ);
+									right = true;
+								}
+							}
+						}
+
+						// x+, y+ z = Back center
+						if ((!topLeft || !topRight) && voxelX < sizeVoxelX - 1 && voxelY < sizeVoxelY - 1)
+						{
+							voxel = (byte)model.At(voxelX + 1, voxelY + 1, voxelZ);
+							if (voxel != 0)
+							{
+								if (!topRight)
+								{
+									renderer.DrawRightTriangleRightFace(pixelX + 2, py, voxel, voxelX + 1, voxelY + 1, voxelZ);
+									topRight = true;
+								}
+								if (!topLeft)
+								{
+									renderer.DrawLeftTriangleLeftFace(pixelX, py, voxel, voxelX + 1, voxelY + 1, voxelZ);
+									topLeft = true;
+								}
+							}
+						}
+
+						// x+, y, z- = Below back left
+						if (!left && voxelX < sizeVoxelX - 1 && voxelZ > 0)
+						{
+							voxel = (byte)model.At(voxelX + 1, voxelY, voxelZ - 1);
+							if (voxel != 0)
+							{
+								renderer.DrawRightTriangleVerticalFace(pixelX, py - 2, voxel, voxelX + 1, voxelY, voxelZ - 1);
+								left = true;
+							}
+						}
+
+						// x, y+ z- = Below back right
+						if (!right && voxelY < sizeVoxelY - 1 && voxelZ > 0)
+						{
+							voxel = (byte)model.At(voxelX, voxelY + 1, voxelZ - 1);
+							if (voxel != 0)
+							{
+								renderer.DrawLeftTriangleVerticalFace(pixelX + 2, py - 2, voxel, voxelX, voxelY + 1, voxelZ - 1);
+								right = true;
+							}
+						}
+
+						// Debugging
+						//                    if (startVX == 10 && startVY == 0 && startVZ == 3) {
+						//                        Gdx.app.log("debug", "Coord: " + vx + ", " + vy + ", " + vz);
+						////                    if (!topLeft)
+						//                        renderer.drawLeftTriangle(px, py, flash());
+						////                    if (!left)
+						//                        renderer.drawRightTriangle(px, py - 2, flash());
+						////                    if (!topRight)
+						//                        renderer.drawRightTriangle(px + 2, py, flash());
+						////                    if (!right)
+						//                        renderer.drawLeftTriangle(px + 2, py - 2, flash());
+						//                    }
+						// Finish debugging
+					}
+				}
+				// Finish drawing main bulk of model
+
+				// Begin drawing top triangles
+				if (pixelX + 2 < sizeVoxelY2)
+				{ // Top left triangles
+					voxel = (byte)model.At(sizeVoxelX - 1, pixelX / 2 + 1, sizeVoxelZ - 1);
+					if (voxel != 0)
+						renderer.DrawLeftTriangleVerticalFace(pixelX + 2, topPixelY, voxel, sizeVoxelX - 1, pixelX / 2 + 1, sizeVoxelZ - 1);
+				}
+				else if (pixelX + 2 > sizeVoxelY2)
+				{ // Top right triangles
+					voxel = (byte)model.At(sizeVoxelY - 1 + sizeVoxelX - pixelX / 2, sizeVoxelY - 1, sizeVoxelZ - 1);
+					if (voxel != 0)
+						renderer.DrawRightTriangleVerticalFace(pixelX, topPixelY, voxel, sizeVoxelY - 1 + sizeVoxelX - pixelX / 2, sizeVoxelY - 1, sizeVoxelZ - 1);
+				}
+				// Finish drawing top triangles.
+
+				// Drawing right edge (only for when sizeVX + sizeVY is odd numbered)
+				if ((sizeVoxelX + sizeVoxelY) % 2 == 1)
+				{
+					int voxelX = 0,
+						voxelY = sizeVoxelY - 1,
+						bottom = Math.Abs(sizeVoxelX2 - 2 - pixelWidth);
+					voxel = (byte)model.At(voxelX, voxelY, 0);
+					if (voxel != 0)
+						renderer.DrawRightTriangleRightFace(pixelWidth + 2, bottom - 4, voxel, voxelX, voxelY, 0); // lower right corner
+					for (int pixelY = bottom; pixelY < bottom + sizeVoxelZ * 4; pixelY += 4)
+					{
+						int voxelZ = (pixelY - bottom) / 4;
+						bool aboveEmpty = true;
+						if (voxelZ != sizeVoxelZ - 1)
+						{
+							voxel = (byte)model.At(voxelX, voxelY, voxelZ + 1);
+							if (voxel != 0)
+							{
+								renderer.DrawRightTriangleRightFace(pixelWidth + 2, pixelY, voxel, voxelX, voxelY, voxelZ);
+								aboveEmpty = false;
+							}
+						}
+						voxel = (byte)model.At(voxelX, voxelY, voxelZ);
+						if (voxel != 0)
+						{
+							renderer.DrawLeftTriangleRightFace(pixelWidth + 2, pixelY - 2, voxel, voxelX, voxelY, voxelZ);
+							if (aboveEmpty)
+								renderer.DrawRightTriangleVerticalFace(pixelWidth + 2, pixelY, voxel, voxelX, voxelY, voxelZ);
+						}
+					}
+				}
+				// Finish drawing right edge
 			}
 		}
 	}
