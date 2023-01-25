@@ -2,7 +2,7 @@
 
 namespace Voxel2Pixel.Render
 {
-	public class ArrayRenderer : IRectangleRenderer
+	public class ArrayRenderer : IRectangleRenderer, ITriangleRenderer
 	{
 		public byte Transparency { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
 		public byte[] Image { get; set; }
@@ -37,5 +37,79 @@ namespace Voxel2Pixel.Render
 				color: IVoxelColor.VerticalFace(voxel),
 				sizeX: sizeX,
 				sizeY: sizeY);
+		public void DrawLeftTriangle(int x, int y, int color) =>
+			Image.DrawRectangle(
+				x: x + 1,
+				y: y,
+				color: color,
+				rectWidth: 1,
+				rectHeight: 1,
+				width: Width)
+				.DrawRectangle(
+				x: x,
+				y: y + 1,
+				color: color,
+				rectWidth: 2,
+				rectHeight: 1,
+				width: Width)
+				.DrawRectangle(
+				x: x + 1,
+				y: y + 2,
+				color: color,
+				rectWidth: 1,
+				rectHeight: 1,
+				width: Width);
+		public void DrawLeftTriangleLeftFace(int x, int y, byte voxel) =>
+			DrawLeftTriangle(
+				x: x,
+				y: y,
+				color: IVoxelColor.LeftFace(voxel));
+		public void DrawLeftTriangleRightFace(int x, int y, byte voxel) =>
+			DrawLeftTriangle(
+				x: x,
+				y: y,
+				color: IVoxelColor.RightFace(voxel));
+		public void DrawLeftTriangleVerticalFace(int x, int y, byte voxel) =>
+			DrawLeftTriangle(
+				x: x,
+				y: y,
+				color: IVoxelColor.VerticalFace(voxel));
+		public void DrawRightTriangle(int x, int y, int color) =>
+			Image.DrawRectangle(
+				x: x,
+				y: y,
+				color: color,
+				rectWidth: 1,
+				rectHeight: 1,
+				width: Width)
+				.DrawRectangle(
+				x: x,
+				y: y + 1,
+				color: color,
+				rectWidth: 2,
+				rectHeight: 1,
+				width: Width)
+				.DrawRectangle(
+				x: x,
+				y: y + 2,
+				color: color,
+				rectWidth: 1,
+				rectHeight: 1,
+				width: Width);
+		public void DrawRightTriangleLeftFace(int x, int y, byte voxel) =>
+			DrawRightTriangle(
+				x: x,
+				y: y,
+				color: IVoxelColor.LeftFace(voxel));
+		public void DrawRightTriangleRightFace(int x, int y, byte voxel) =>
+			DrawRightTriangle(
+				x: x,
+				y: y,
+				color: IVoxelColor.RightFace(voxel));
+		public void DrawRightTriangleVerticalFace(int x, int y, byte voxel) =>
+			DrawRightTriangle(
+				x: x,
+				y: y,
+				color: IVoxelColor.VerticalFace(voxel));
 	}
 }
