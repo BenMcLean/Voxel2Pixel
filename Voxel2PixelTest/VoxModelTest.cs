@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using Voxel2Pixel.Model;
 using Xunit;
 
 namespace Voxel2PixelTest
@@ -12,8 +9,7 @@ namespace Voxel2PixelTest
 		[Fact]
 		public void ArrayRendererTest()
 		{
-			if (!File.Exists(path))
-				throw new FileNotFoundException(Path.GetFullPath(path));
+			VoxModel voxModel = new VoxModel(path);
 		}
 	}
 }
