@@ -4,7 +4,6 @@ namespace Voxel2Pixel.Render
 {
 	public class ArrayRenderer : IRectangleRenderer, ITriangleRenderer
 	{
-		public byte Transparency { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
 		public byte[] Image { get; set; }
 		public int Width { get; set; }
 		IVoxelColor IVoxelColor { get; set; }
@@ -38,12 +37,10 @@ namespace Voxel2Pixel.Render
 				sizeX: sizeX,
 				sizeY: sizeY);
 		public void DrawLeftTriangle(int x, int y, int color) =>
-			Image.DrawRectangle(
+			Image.DrawPixel(
 				x: x + 1,
 				y: y,
 				color: color,
-				rectWidth: 1,
-				rectHeight: 1,
 				width: Width)
 				.DrawRectangle(
 				x: x,
@@ -52,12 +49,10 @@ namespace Voxel2Pixel.Render
 				rectWidth: 2,
 				rectHeight: 1,
 				width: Width)
-				.DrawRectangle(
+				.DrawPixel(
 				x: x + 1,
 				y: y + 2,
 				color: color,
-				rectWidth: 1,
-				rectHeight: 1,
 				width: Width);
 		public void DrawLeftTriangleLeftFace(int x, int y, byte voxel) =>
 			DrawLeftTriangle(
@@ -75,12 +70,10 @@ namespace Voxel2Pixel.Render
 				y: y,
 				color: IVoxelColor.VerticalFace(voxel));
 		public void DrawRightTriangle(int x, int y, int color) =>
-			Image.DrawRectangle(
+			Image.DrawPixel(
 				x: x,
 				y: y,
 				color: color,
-				rectWidth: 1,
-				rectHeight: 1,
 				width: Width)
 				.DrawRectangle(
 				x: x,
@@ -89,12 +82,10 @@ namespace Voxel2Pixel.Render
 				rectWidth: 2,
 				rectHeight: 1,
 				width: Width)
-				.DrawRectangle(
+				.DrawPixel(
 				x: x,
 				y: y + 2,
 				color: color,
-				rectWidth: 1,
-				rectHeight: 1,
 				width: Width);
 		public void DrawRightTriangleLeftFace(int x, int y, byte voxel) =>
 			DrawRightTriangle(
