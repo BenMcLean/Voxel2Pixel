@@ -208,6 +208,7 @@ namespace Voxel2Pixel
 			}
 			return texture;
 		}
+		/*
 		public static byte[] DrawTriangle(this byte[] texture, int color, int x, int y, int triangleWidth, int triangleHeight, int width = 0) => DrawTriangle(texture, (byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, triangleWidth, triangleHeight, width);
 		public static byte[] DrawTriangle(this byte[] texture, byte red, byte green, byte blue, byte alpha, int x, int y, int triangleWidth, int triangleHeight, int width = 0)
 		{
@@ -226,7 +227,7 @@ namespace Voxel2Pixel
 			triangleWidth = Math.Abs(triangleWidth);
 			triangleHeight = Math.Abs(triangleHeight);
 			int triangleWidth4 = triangleWidth << 2;
-			//if (/*(x + triangleWidth) >> 2 > xSide ||*/ y > ySide) throw new NotImplementedException();
+			//if ((x + triangleWidth) >> 2 > xSide || y > ySide) throw new NotImplementedException();
 			int offset = realY * xSide + (realX << 2);
 			texture[offset] = red;
 			texture[offset + 1] = green;
@@ -253,6 +254,7 @@ namespace Voxel2Pixel
 			//	Array.Copy(texture, offset, texture, y1, Math.Min(longest, ((int)(@float * y2) + 1) << 2));
 			return texture;
 		}
+		*/
 		#endregion Drawing
 		#region Rotation
 		/// <summary>
