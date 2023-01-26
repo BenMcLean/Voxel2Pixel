@@ -9,7 +9,7 @@ namespace Voxel2Pixel.Model
 			VoxFile = voxFile;
 			Model = voxFile.Models[modelNumber];
 		}
-		public VoxModel(string file, int modelNumber = 0) : this(VoxReader.VoxReader.Read(file), modelNumber) { }
+		public VoxModel(string filePath, int modelNumber = 0) : this(VoxReader.VoxReader.Read(filePath), modelNumber) { }
 		public VoxReader.Interfaces.IVoxFile VoxFile
 		{
 			get => voxFile;

@@ -22,10 +22,7 @@ namespace Voxel2PixelTest
 				Width = voxModel.SizeY,
 				//Image = new byte[VoxelDraw.IsoWidth(voxModel) * 4 * VoxelDraw.IsoHeight(voxModel)],
 				//Width = VoxelDraw.IsoWidth(voxModel),
-				IVoxelColor = new FlatVoxelColor
-				{
-					Palette = voxModel.Palette,
-				},
+				IVoxelColor = new NaiveDimmer(voxModel.Palette),
 			};
 			VoxelDraw.DrawRight(voxModel, arrayRenderer);
 			//VoxelDraw.DrawIso(voxModel, arrayRenderer);
