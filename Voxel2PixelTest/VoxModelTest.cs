@@ -14,17 +14,20 @@ namespace Voxel2PixelTest
 		[Fact]
 		public void ArrayRendererTest()
 		{
-			int xScale = 32, yScale = 32;
-			VoxModel voxModel = new VoxModel(path);
+			VoxModel model = new VoxModel(path);
+			int xScale = 6,
+				yScale = 6,
+				width = VoxelDraw.DrawRightPeekWidth(model),
+				height = VoxelDraw.DrawRightPeekHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{
-				Image = new byte[voxModel.SizeY * 4 * voxModel.SizeZ],
-				Width = voxModel.SizeY,
+				Image = new byte[width * 4 * height],
+				Width = width,
 				//Image = new byte[VoxelDraw.IsoWidth(voxModel) * 4 * VoxelDraw.IsoHeight(voxModel)],
 				//Width = VoxelDraw.IsoWidth(voxModel),
-				IVoxelColor = new NaiveDimmer(voxModel.Palette),
+				IVoxelColor = new NaiveDimmer(model.Palette),
 			};
-			VoxelDraw.DrawRight(voxModel, arrayRenderer);
+			VoxelDraw.DrawRightPeek(model, arrayRenderer);
 			//VoxelDraw.DrawIso(voxModel, arrayRenderer);
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(
 				//data: arrayRenderer.Image,

@@ -5,17 +5,14 @@ using Voxel2Pixel.Render;
 namespace Voxel2Pixel.Draw
 {
 	/// <summary>
-	/// Because of a massive cascade of collective stupidity on the part of mathematicians and the world in general for centuries, we don't really know what X, Y and Z coordinates actually mean in 3D space.
-	/// I blame Descartes for this. Descartes should have explicitly specified from the start which coordinate represents up and which coordinate represents forward or north in all ordinary / normal situations so that we'd all be using the same convention since the 17th century and life and the world in general would be simpler for everyone.
-	/// Breaking the convention would be fine, as long as we can know we're breaking it and how we're breaking it.
-	/// Because of this mess, I have been forced into a situation where X and Y mean something different in 2D space from what they mean in 3D space. Not only do the coordinates not match, but 3D is upside down when compared to 2D. I hate this. I hate it so much. But I'm stuck with it if I want my software to be interoperable with other existing software.
-	/// My convention for this program:
+	/// I have been forced into a situation where X and Y mean something different in 2D space from what they mean in 3D space. Not only do the coordinates not match, but 3D is upside down when compared to 2D. I hate this. I hate it so much. But I'm stuck with it if I want my software to be interoperable with other existing software.
 	/// In 2D space for pixels, X+ means east/right, Y+ means down. This is dictated by how 2D raster graphics are typically stored.
 	/// In 3D space for voxels, I'm following the MagicaVoxel convention, which is Z+up, right-handed, so X+ means east/right, Y+ means forwards/north and Z+ means up.
 	/// </summary>
 	public static class VoxelDraw
 	{
-		public static void Draw(IModel model, IRectangleRenderer renderer) => DrawRight(model, renderer);
+		public static int DrawRightWidth(IModel model) => model.SizeY;
+		public static int DrawRightHeight(IModel model) => model.SizeZ;
 		public static void DrawRight(IModel model, IRectangleRenderer renderer)
 		{
 			for (int z = 0; z < model.SizeZ; z++)
@@ -31,6 +28,8 @@ namespace Voxel2Pixel.Draw
 							break;
 						}
 		}
+		public static int DrawRightPeekWidth(IModel model, int scaleX = 6) => model.SizeY * scaleX;
+		public static int DrawRightPeekHeight(IModel model, int scaleY = 6) => model.SizeZ * scaleY;
 		public static void DrawRightPeek(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 6)
 		{
 			for (int z = 0; z < model.SizeZ; z++)
