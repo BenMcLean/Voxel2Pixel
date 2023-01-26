@@ -758,6 +758,15 @@ namespace Voxel2Pixel
 		public static byte B(this int color) => (byte)(color >> 8);
 		public static byte A(this int color) => (byte)color;
 		public static int Color(byte r, byte g, byte b, byte a) => r << 24 | g << 16 | b << 8 | a;
+		public static int LerpColor(this int startColor, int endColor, float change)
+		{
+			int sA = (startColor & 0xFE), sB = (startColor >> 8) & 0xFF, sG = (startColor >> 16) & 0xFF, sR = (startColor >> 24) & 0xFF,
+				eA = (endColor & 0xFE), eB = (endColor >> 8) & 0xFF, eG = (endColor >> 16) & 0xFF, eR = (endColor >> 24) & 0xFF;
+			return ((((int)(sR + change * (eR - sR)) & 0xFF) << 24)
+				| (((int)(sG + change * (eG - sG)) & 0xFF) << 16)
+				| (((int)(sB + change * (eB - sB)) & 0xFF) << 8)
+				| (((int)(sA + change * (eA - sA)) & 0xFE)));
+		}
 		/// <param name="index">Palette indexes (one byte per pixel)</param>
 		/// <param name="palette">256 rgba8888 color values</param>
 		/// <returns>rgba8888 texture (four bytes per pixel)</returns>

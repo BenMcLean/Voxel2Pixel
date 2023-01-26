@@ -8,24 +8,16 @@
 			Palette[2] = palette;
 			for (int brightness = 0; brightness < Palette.Length; brightness++)
 				if (brightness != 2)
-				{
 					Palette[brightness] = new int[Palette[2].Length];
-					double adjustment = (brightness + 1) / 3d;
-					for (int color = 0; color < Palette[brightness].Length; color++)
-						Palette[brightness][color] = Adjust(Palette[2][color], adjustment);
-				}
+			for (int color = 0; color < Palette[2].Length; color++)
+			{
+				Palette[0][color] = Palette[2][color].LerpColor(0x000000FF, 0.5f);
+				Palette[1][color] = Palette[2][color].LerpColor(0x000000FF, 0.25f);
+				Palette[3][color] = Palette[2][color].LerpColor(unchecked((int)0xFFFFFFFF), 0.25f);
+				Palette[4][color] = Palette[2][color].LerpColor(unchecked((int)0xFFFFFFFF), 0.5f);
+			}
 		}
 		private int[][] Palette { get; set; }
-		public static int Adjust(int color, double amount) =>
-			TextureMethods.Color(
-				r: Adjust(TextureMethods.R(color), amount),
-				g: Adjust(TextureMethods.G(color), amount),
-				b: Adjust(TextureMethods.B(color), amount),
-				a: byte.MaxValue);
-		public static byte Adjust(byte component, double amount) =>
-			amount < 1 ?
-				(byte)(component / amount)
-				: (byte)(component + (byte)((byte.MaxValue - component) / amount));
 		#region IDimmer
 		public int Dark(byte voxel) => Dimmer(0, voxel);
 		public int Dim(byte voxel) => Dimmer(1, voxel);
