@@ -18,8 +18,8 @@ namespace Voxel2PixelTest
 			VoxModel voxModel = new VoxModel(path);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{
-				Image = new byte[voxModel.SizeX * 4 * voxModel.SizeY],
-				Width = voxModel.SizeX,
+				Image = new byte[voxModel.SizeY * 4 * voxModel.SizeZ],
+				Width = voxModel.SizeY,
 				//Image = new byte[VoxelDraw.IsoWidth(voxModel) * 4 * VoxelDraw.IsoHeight(voxModel)],
 				//Width = VoxelDraw.IsoWidth(voxModel),
 				IVoxelColor = new FlatVoxelColor

@@ -4,6 +4,15 @@ using Voxel2Pixel.Render;
 
 namespace Voxel2Pixel.Draw
 {
+	/// <summary>
+	/// Because of a massive cascade of collective stupidity on the part of mathematicians and the world in general for centuries, we don't really know what X, Y and Z coordinates actually mean in 3D space.
+	/// I blame Descartes for this. Descartes should have explicitly specified from the start which coordinate represents up and which coordinate represents forward or north in all ordinary / normal situations so that we'd all be using the same convention since the 17th century and life and the world in general would be simpler for everyone.
+	/// Breaking the convention would be fine, as long as we can know we're breaking it and how we're breaking it.
+	/// Because of this mess, I have been forced into a situation where X and Y mean something different in 2D space from what they mean in 3D space. Not only do the coordinates not match, but 3D is upside down when compared to 2D. I hate this. I hate it so much. But I'm stuck with it if I want my software to be interoperable with other existing software.
+	/// My convention for this program:
+	/// In 2D space for pixels, X+ means east/right, Y+ means down. This is dictated by how 2D raster graphics are typically stored.
+	/// In 3D space for voxels, I'm following the MagicaVoxel convention, which is Z+up, right-handed, so X+ means east/right, Y+ means forwards/north and Z+ means up.
+	/// </summary>
 	public static class VoxelDraw
 	{
 		public static void Draw(IModel model, IRectangleRenderer renderer) => DrawRight(model, renderer);
@@ -17,7 +26,7 @@ namespace Voxel2Pixel.Draw
 						{
 							renderer.RectRight(
 								x: y,
-								y: z,
+								y: model.SizeZ - 1 - z,
 								voxel: voxel);
 							break;
 						}
@@ -32,7 +41,7 @@ namespace Voxel2Pixel.Draw
 						{
 							renderer.RectRight(
 								x: y * scaleX + 1,
-								y: z * scaleY,
+								y: (model.SizeZ - z) * scaleY,
 								voxel: voxel,
 								sizeX: scaleX,
 								sizeY: scaleY - 1);
@@ -57,7 +66,7 @@ namespace Voxel2Pixel.Draw
 						{
 							renderer.RectLeft(
 								x: y,
-								y: z,
+								y: model.SizeZ - z,
 								voxel: voxel);
 							break;
 						}
@@ -72,7 +81,7 @@ namespace Voxel2Pixel.Draw
 						{
 							renderer.RectRight(
 								x: y * scaleX + 1,
-								y: z * scaleY,
+								y: (model.SizeZ - z) * scaleY,
 								voxel: voxel,
 								sizeX: scaleX,
 								sizeY: scaleY - 1);
@@ -80,7 +89,7 @@ namespace Voxel2Pixel.Draw
 								|| model.At(x, y, z + 1) == 0)
 								renderer.RectVertical(
 									x: y * scaleX,
-									y: (z + 1) * scaleY - 1,
+									y: (model.SizeZ - z + 1) * scaleY - 1,
 									voxel: voxel,
 									sizeX: scaleX,
 									sizeY: 1);
