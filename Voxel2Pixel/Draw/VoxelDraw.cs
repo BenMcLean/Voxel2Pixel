@@ -245,8 +245,8 @@ namespace Voxel2Pixel.Draw
 		public static int DrawBottomHeight(IModel model) => model.SizeY;
 		public static void DrawBottom(IModel model, IRectangleRenderer renderer)
 		{
-			for (int y = 0; y < model.SizeY; y++)
-				for (int x = 0; x < model.SizeX; x++)
+			for (int x = 0; x < model.SizeX; x++)
+				for (int y = 0; y < model.SizeY; y++)
 					for (int z = 0; z < model.SizeZ; z++)
 						if (model.At(x, y, z) is byte voxel
 							&& voxel != 0)
@@ -454,91 +454,37 @@ namespace Voxel2Pixel.Draw
 					}
 				}
 		}
-		public static int DrawAboveWidth(IModel model, int scaleX = 6) => model.SizeX * scaleX;
-		public static int DrawAboveHeight(IModel model, int scaleY = 2) => (model.SizeX + model.SizeZ) * 2 * scaleY;
-		public static void DrawAbove(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 2)
+		public static int DrawAboveWidth(IModel model) => model.SizeX;
+		public static int DrawAboveHeight(IModel model) => model.SizeY + model.SizeZ;
+		public static void DrawAbove(IModel model, IRectangleRenderer renderer)
 		{
-			int pixelHeight = (model.SizeX + model.SizeZ) * 2;
-			for (int voxelY = 0; voxelY < model.SizeY; voxelY++)
-			{ // voxel y is pixel x
-			  // Begin bottom row
-				byte voxel = (byte)model.At(0, voxelY, 0);
-				if (voxel != 0)
-					renderer.RectRight(
-						x: voxelY * scaleX,
-						y: 0,
-						voxel: voxel,
-						sizeX: scaleX,
-						sizeY: scaleY);
-				// Finish bottom row
-				// Begin main bulk of model
-				for (int pixelY = 1; pixelY < pixelHeight; pixelY += 2)
-				{ // pixel y
-					bool below = false,
-						above = pixelHeight - pixelY < 2;
-					int startX = (pixelY / 2) > model.SizeZ - 1 ? (pixelY / 2) - model.SizeZ + 1 : 0,
-						startZ = (pixelY / 2) > model.SizeZ - 1 ? model.SizeZ - 1 : (pixelY / 2);
-					for (int voxelX = startX, voxelZ = startZ;
-						 voxelX <= model.SizeX && voxelZ >= -1;
-						 voxelX++, voxelZ--)
-					{ // vx is voxel x, vz is voxel z
+			int pixelHeight = model.SizeY + model.SizeZ;
+			for (int pixelX = 0; pixelX < model.SizeX; pixelX++)
+				for (int pixelY = 0; pixelY <= pixelHeight; pixelY += 2)
+				{
+					int startY = Math.Max(model.SizeZ - pixelY, 0),
+						startZ = model.SizeZ - Math.Max(pixelY - model.SizeX, 0);
+					bool above = false,
+						below = false;
+					for (int voxelY = startY, voxelZ = startZ;
+						voxelY < model.SizeY && voxelZ >= 0;
+						voxelY++, voxelZ--)
+					{
 						if (!above
-							&& voxelZ + 1 < model.SizeZ
-							&& voxelX < model.SizeX)
+							&& model.At(pixelX, voxelY, voxelZ) is byte voxel
+							&& voxel != 0)
 						{
-							voxel = (byte)model.At(voxelX, voxelY, voxelZ + 1);
-							if (voxel != 0)
-							{
-								renderer.RectRight(
-									x: voxelY * scaleX,
-									y: (pixelY + 1) * scaleY,
-									voxel: voxel,
-									sizeX: scaleX,
-									sizeY: scaleY);
-								above = true;
-							}
-						}
-						if (!below && voxelX > 0 && voxelZ >= 0)
-						{
-							voxel = (byte)model.At(voxelX - 1, voxelY, voxelZ);
-							if (voxel != 0)
-							{
-								renderer.RectVertical(
-									x: voxelY * scaleX,
-									y: pixelY * scaleY,
-									voxel: voxel,
-									sizeX: scaleX,
-									sizeY: scaleY);
-								below = true;
-							}
-						}
-						if ((above && below)
-							|| voxelX >= model.SizeX
-							|| voxelZ < 0)
-							break;
-						voxel = (byte)model.At(voxelX, voxelY, voxelZ);
-						if (voxel != 0)
-						{
-							if (!above)
-								renderer.RectVertical(
-									x: voxelY * scaleX,
-									y: (pixelY + 1) * scaleY,
-									voxel: voxel,
-									sizeX: scaleX,
-									sizeY: scaleY);
-							if (!below)
-								renderer.RectRight(
-									x: voxelY * scaleX,
-									y: pixelY * scaleY,
-									voxel: voxel,
-									sizeX: scaleX,
-									sizeY: scaleY);
+							renderer.RectVertical(
+								x: pixelX,
+								y: pixelY,
+								voxel: voxel,
+								sizeX: 1,
+								sizeY: 2);
+							above = true;
 							break;
 						}
 					}
 				}
-				// Finish main bulk of model
-			}
 		}
 		#endregion Diagonal
 		#region Isometric
