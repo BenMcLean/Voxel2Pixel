@@ -19,7 +19,7 @@ namespace Voxel2Pixel.Draw
 				for (int x = 0; x < model.SizeX; x++)
 					for (int y = 0; y < model.SizeY; y++)
 						if (model.At(x, y, z) is byte voxel
-						&& voxel != 0)
+							&& voxel != 0)
 						{
 							renderer.RectRight(
 								x: x,
@@ -43,13 +43,13 @@ namespace Voxel2Pixel.Draw
 							{
 								renderer.RectVertical(
 									x: x * scaleX,
-									y: (model.SizeZ - z - 1) * scaleY,
+									y: (model.SizeZ - 1 - z) * scaleY,
 									voxel: voxel,
 									sizeX: scaleX,
 									sizeY: 1);
 								renderer.RectRight(
 									x: x * scaleX,
-									y: (model.SizeZ - z - 1) * scaleY + 1,
+									y: (model.SizeZ - 1 - z) * scaleY + 1,
 									voxel: voxel,
 									sizeX: scaleX,
 									sizeY: scaleY - 1);
@@ -57,7 +57,7 @@ namespace Voxel2Pixel.Draw
 							else
 								renderer.RectRight(
 									x: x * scaleX,
-									y: (model.SizeZ - z - 1) * scaleY,
+									y: (model.SizeZ - 1 - z) * scaleY,
 									voxel: voxel,
 									sizeX: scaleX,
 									sizeY: scaleY);
@@ -96,13 +96,13 @@ namespace Voxel2Pixel.Draw
 							{
 								renderer.RectVertical(
 									x: y * scaleX,
-									y: (model.SizeZ - z - 1) * scaleY,
+									y: (model.SizeZ - 1 - z) * scaleY,
 									voxel: voxel,
 									sizeX: scaleX,
 									sizeY: 1);
 								renderer.RectRight(
 									x: y * scaleX,
-									y: (model.SizeZ - z - 1) * scaleY + 1,
+									y: (model.SizeZ - 1 - z) * scaleY + 1,
 									voxel: voxel,
 									sizeX: scaleX,
 									sizeY: scaleY - 1);
@@ -110,7 +110,7 @@ namespace Voxel2Pixel.Draw
 							else
 								renderer.RectRight(
 									x: y * scaleX,
-									y: (model.SizeZ - z - 1) * scaleY,
+									y: (model.SizeZ - 1 - z) * scaleY,
 									voxel: voxel,
 									sizeX: scaleX,
 									sizeY: scaleY);
@@ -149,13 +149,13 @@ namespace Voxel2Pixel.Draw
 							{
 								renderer.RectVertical(
 									x: (model.SizeY - 1 - y) * scaleX,
-									y: (model.SizeZ - z - 1) * scaleY,
+									y: (model.SizeZ - 1 - z) * scaleY,
 									voxel: voxel,
 									sizeX: scaleX,
 									sizeY: 1);
 								renderer.RectRight(
 									x: (model.SizeY - 1 - y) * scaleX,
-									y: (model.SizeZ - z - 1) * scaleY + 1,
+									y: (model.SizeZ - 1 - z) * scaleY + 1,
 									voxel: voxel,
 									sizeX: scaleX,
 									sizeY: scaleY - 1);
@@ -163,13 +163,15 @@ namespace Voxel2Pixel.Draw
 							else
 								renderer.RectRight(
 									x: (model.SizeY - 1 - y) * scaleX,
-									y: (model.SizeZ - z - 1) * scaleY,
+									y: (model.SizeZ - 1 - z) * scaleY,
 									voxel: voxel,
 									sizeX: scaleX,
 									sizeY: scaleY);
 							break;
 						}
 		}
+		public static int DrawTopWidth(IModel model) => model.SizeX;
+		public static int DrawTopHeight(IModel model) => model.SizeY;
 		public static void DrawTop(IModel model, IRectangleRenderer renderer)
 		{
 			for (int y = 0; y < model.SizeY; y++)
@@ -179,12 +181,13 @@ namespace Voxel2Pixel.Draw
 							&& voxel != 0)
 						{
 							renderer.RectVertical(
-								x: y,
-								y: z,
+								x: x,
+								y: model.SizeY - 1 - y,
 								voxel: voxel);
 							break;
 						}
 		}
+		/*
 		public static void DrawBottom(IModel model, IRectangleRenderer renderer)
 		{
 			for (int y = 0; y < model.SizeY; y++)
@@ -796,5 +799,6 @@ namespace Voxel2Pixel.Draw
 				// Finish drawing right edge
 			}
 		}
+		*/
 	}
 }
