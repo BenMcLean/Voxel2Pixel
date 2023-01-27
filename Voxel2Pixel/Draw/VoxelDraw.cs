@@ -353,11 +353,11 @@ namespace Voxel2Pixel.Draw
 							}
 							else
 								renderer.RectRight(
-								x: (pixelWidth - 1 - pixelX) * scaleX,
-								y: (model.SizeZ - 1 - pixelY) * scaleY,
-								voxel: voxelRight,
-								sizeX: scaleX,
-								sizeY: scaleY);
+									x: (pixelWidth - 1 - pixelX) * scaleX,
+									y: (model.SizeZ - 1 - pixelY) * scaleY,
+									voxel: voxelRight,
+									sizeX: scaleX,
+									sizeY: scaleY);
 							leftDone = true;
 						}
 						if (!rightDone
@@ -383,11 +383,11 @@ namespace Voxel2Pixel.Draw
 							}
 							else
 								renderer.RectLeft(
-								x: (pixelWidth - pixelX) * scaleX,
-								y: (model.SizeZ - 1 - pixelY) * scaleY,
-								voxel: voxelLeft,
-								sizeX: scaleX,
-								sizeY: scaleY);
+									x: (pixelWidth - pixelX) * scaleX,
+									y: (model.SizeZ - 1 - pixelY) * scaleY,
+									voxel: voxelLeft,
+									sizeX: scaleX,
+									sizeY: scaleY);
 							rightDone = true;
 						}
 						if (leftDone && rightDone) break;
@@ -414,20 +414,37 @@ namespace Voxel2Pixel.Draw
 								}
 								else
 									renderer.RectLeft(
-									x: (pixelWidth - 1 - pixelX) * scaleX,
-									y: (model.SizeZ - 1 - pixelY) * scaleY,
-									voxel: voxel,
-									sizeX: scaleX,
-									sizeY: scaleY);
+										x: (pixelWidth - 1 - pixelX) * scaleX,
+										y: (model.SizeZ - 1 - pixelY) * scaleY,
+										voxel: voxel,
+										sizeX: scaleX,
+										sizeY: scaleY);
 							}
 							if (!rightDone)
 							{
-								renderer.RectRight(
-									x: (pixelWidth - pixelX) * scaleX,
-									y: (model.SizeZ - 1 - pixelY) * scaleY,
-									voxel: voxel,
-									sizeX: scaleX,
-									sizeY: scaleY);
+								if (pixelY >= model.SizeZ - 1
+									|| model.At(voxelX, voxelY, pixelY + 1) == 0)
+								{
+									renderer.RectVertical(
+										x: (pixelWidth - pixelX) * scaleX,
+										y: (model.SizeZ - 1 - pixelY) * scaleY,
+										voxel: voxel,
+										sizeX: scaleX,
+										sizeY: 1);
+									renderer.RectRight(
+										x: (pixelWidth - pixelX) * scaleX,
+										y: (model.SizeZ - 1 - pixelY) * scaleY + 1,
+										voxel: voxel,
+										sizeX: scaleX,
+										sizeY: scaleY - 1);
+								}
+								else
+									renderer.RectRight(
+										x: (pixelWidth - pixelX) * scaleX,
+										y: (model.SizeZ - 1 - pixelY) * scaleY,
+										voxel: voxel,
+										sizeX: scaleX,
+										sizeY: scaleY);
 							}
 							break;
 						}
