@@ -265,8 +265,8 @@ namespace Voxel2Pixel.Draw
 			for (int pixelY = 0; pixelY < model.SizeZ; pixelY++)
 				for (int pixelX = 0; pixelX <= pixelWidth; pixelX += 2)
 				{
-					bool leftDone = false,
-						rightDone = pixelWidth - pixelX < 2;
+					bool leftDone = pixelWidth - pixelX < 2,
+						rightDone = false;
 					int startX = pixelX > model.SizeX - 1 ? 0 : model.SizeX - pixelX - 1,
 						startY = pixelX - model.SizeX + 1 < 0 ? 0 : pixelX - model.SizeX + 1;
 					for (int voxelX = startX, voxelY = startY;
@@ -274,25 +274,25 @@ namespace Voxel2Pixel.Draw
 						 voxelX++, voxelY++)
 					{
 						if (!leftDone
-							&& voxelY > 0
-							&& model.At(voxelX, voxelY - 1, pixelY) is byte voxelLeft
-							&& voxelLeft != 0)
-						{
-							renderer.RectRight(
-								x: pixelWidth - pixelX,
-								y: model.SizeZ - 1 - pixelY,
-								voxel: voxelLeft);
-							leftDone = true;
-						}
-						if (!rightDone
 							&& voxelX > 0
 							&& model.At(voxelX - 1, voxelY, pixelY) is byte voxelRight
 							&& voxelRight != 0)
 						{
-							renderer.RectLeft(
+							renderer.RectRight(
 								x: pixelWidth - 1 - pixelX,
 								y: model.SizeZ - 1 - pixelY,
 								voxel: voxelRight);
+							leftDone = true;
+						}
+						if (!rightDone
+							&& voxelY > 0
+							&& model.At(voxelX, voxelY - 1, pixelY) is byte voxelLeft
+							&& voxelLeft != 0)
+						{
+							renderer.RectLeft(
+								x: pixelWidth - pixelX,
+								y: model.SizeZ - 1 - pixelY,
+								voxel: voxelLeft);
 							rightDone = true;
 						}
 						if (leftDone && rightDone) break;
@@ -301,12 +301,12 @@ namespace Voxel2Pixel.Draw
 						{
 							if (!leftDone)
 								renderer.RectLeft(
-									x: pixelWidth - pixelX,
+									x: pixelWidth - 1 - pixelX,
 									y: model.SizeZ - 1 - pixelY,
 									voxel: voxel);
 							if (!rightDone)
 								renderer.RectRight(
-									x: pixelWidth - 1 - pixelX,
+									x: pixelWidth - pixelX,
 									y: model.SizeZ - 1 - pixelY,
 									voxel: voxel);
 							break;

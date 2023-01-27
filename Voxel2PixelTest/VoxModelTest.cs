@@ -15,8 +15,8 @@ namespace Voxel2PixelTest
 		public void ArrayRendererTest()
 		{
 			VoxModel model = new VoxModel(path);
-			int xScale = 6,
-				yScale = 6,
+			int xScale = 12,
+				yScale = 16,
 				width = VoxelDraw.Draw45Width(model),
 				height = VoxelDraw.Draw45Height(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
