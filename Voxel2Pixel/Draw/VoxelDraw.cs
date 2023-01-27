@@ -11,6 +11,7 @@ namespace Voxel2Pixel.Draw
 	/// </summary>
 	public static class VoxelDraw
 	{
+		#region Straight
 		public static int DrawWidth(IModel model) => model.SizeX;
 		public static int DrawHeight(IModel model) => model.SizeZ;
 		public static void Draw(IModel model, IRectangleRenderer renderer)
@@ -257,6 +258,8 @@ namespace Voxel2Pixel.Draw
 							break;
 						}
 		}
+		#endregion Straight
+		#region Diagonal
 		public static int Draw45Width(IModel model) => model.SizeX + model.SizeY;
 		public static int Draw45Height(IModel model) => model.SizeZ;
 		public static void Draw45(IModel model, IRectangleRenderer renderer)
@@ -451,7 +454,8 @@ namespace Voxel2Pixel.Draw
 					}
 				}
 		}
-		/*
+		public static int DrawAboveWidth(IModel model, int scaleX = 6) => model.SizeX * scaleX;
+		public static int DrawAboveHeight(IModel model, int scaleY = 2) => (model.SizeX + model.SizeZ) * 2 * scaleY;
 		public static void DrawAbove(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 2)
 		{
 			int pixelHeight = (model.SizeX + model.SizeZ) * 2;
@@ -536,6 +540,9 @@ namespace Voxel2Pixel.Draw
 				// Finish main bulk of model
 			}
 		}
+		#endregion Diagonal
+		#region Isometric
+		/*
 		public static int IsoHeight(IModel model) => (model.SizeZ + Math.Max(model.SizeX, model.SizeY)) * 4;
 		public static int IsoWidth(IModel model) => (model.SizeX + model.SizeY) * 2;
 		public static void DrawIso(IModel model, ITriangleRenderer renderer)
@@ -891,5 +898,6 @@ namespace Voxel2Pixel.Draw
 			}
 		}
 		*/
+		#endregion Isometric
 	}
 }
