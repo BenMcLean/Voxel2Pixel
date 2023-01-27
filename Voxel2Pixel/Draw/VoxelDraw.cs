@@ -514,9 +514,8 @@ namespace Voxel2Pixel.Draw
 		}
 		#endregion Diagonal
 		#region Isometric
-		/*
-		public static int IsoHeight(IModel model) => (model.SizeZ + Math.Max(model.SizeX, model.SizeY)) * 4;
-		public static int IsoWidth(IModel model) => (model.SizeX + model.SizeY) * 2;
+		public static int DrawIsoHeight(IModel model) => (model.SizeZ + Math.Max(model.SizeX, model.SizeY)) * 4;
+		public static int DrawIsoWidth(IModel model) => (model.SizeX + model.SizeY) * 2;
 		public static void DrawIso(IModel model, ITriangleRenderer renderer)
 		{
 			byte voxel;
@@ -525,7 +524,7 @@ namespace Voxel2Pixel.Draw
 				sizeVoxelZ = model.SizeZ,
 				sizeVoxelX2 = sizeVoxelX * 2,
 				sizeVoxelY2 = sizeVoxelY * 2,
-				pixelWidth = IsoWidth(model);
+				pixelWidth = (model.SizeX + model.SizeY) * 2;
 			// To move one x+ in voxels is x + 2, y - 2 in pixels.
 			// To move one x- in voxels is x - 2, y + 2 in pixels.
 			// To move one y+ in voxels is x + 2, y + 2 in pixels.
@@ -568,7 +567,7 @@ namespace Voxel2Pixel.Draw
 						renderer.DrawLeftTriangleRightFace(pixelX, bottomPixelY - 4, voxel);
 						leftEmpty = false;
 					}
-					voxel = (byte)model.At(0, pixelX / 2 - sizeVoxelX + 1, 0); // Center
+					voxel = (byte)model.At(0, pixelX / 2 - sizeVoxelX, 0); // Center
 					if (voxel != 0)
 					{
 						renderer.DrawRightTriangleRightFace(pixelX + 2, bottomPixelY - 4, voxel);
@@ -869,7 +868,6 @@ namespace Voxel2Pixel.Draw
 				// Finish drawing right edge
 			}
 		}
-		*/
 		#endregion Isometric
 	}
 }
