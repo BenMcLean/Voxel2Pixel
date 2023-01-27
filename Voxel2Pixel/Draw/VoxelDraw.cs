@@ -38,20 +38,29 @@ namespace Voxel2Pixel.Draw
 						if (model.At(x, y, z) is byte voxel
 							&& voxel != 0)
 						{
-							renderer.RectRight(
-								x: y * scaleX + 1,
-								y: (model.SizeZ - z) * scaleY,
-								voxel: voxel,
-								sizeX: scaleX,
-								sizeY: scaleY - 1);
 							if (z >= model.SizeZ - 1
 								|| model.At(x, y, z + 1) == 0)
+							{
 								renderer.RectVertical(
 									x: y * scaleX,
-									y: (z + 1) * scaleY - 1,
+									y: (model.SizeZ - z - 1) * scaleY,
 									voxel: voxel,
 									sizeX: scaleX,
 									sizeY: 1);
+								renderer.RectRight(
+									x: y * scaleX,
+									y: (model.SizeZ - z - 1) * scaleY + 1,
+									voxel: voxel,
+									sizeX: scaleX,
+									sizeY: scaleY - 1);
+							}
+							else
+								renderer.RectRight(
+									x: y * scaleX,
+									y: (model.SizeZ - z - 1) * scaleY,
+									voxel: voxel,
+									sizeX: scaleX,
+									sizeY: scaleY);
 							break;
 						}
 		}
