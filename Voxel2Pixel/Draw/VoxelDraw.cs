@@ -470,19 +470,45 @@ namespace Voxel2Pixel.Draw
 						voxelY < model.SizeY && voxelZ >= 0;
 						voxelY++, voxelZ--)
 					{
-						if (!above
-							&& model.At(pixelX, voxelY, voxelZ) is byte voxel
+						if (model.At(pixelX, voxelY, voxelZ) is byte voxel
 							&& voxel != 0)
+						{
+							if (!above)
+								renderer.RectVertical(
+									x: pixelX,
+									y: pixelY,
+									voxel: voxel);
+							if (!below)
+								renderer.RectRight(
+									x: pixelX,
+									y: pixelY + 1,
+									voxel: voxel);
+							break;
+						}
+						if (!above
+							&& voxelY < model.SizeY - 1
+							&& model.At(pixelX, voxelY + 1, voxelZ) is byte voxelAbove
+							&& voxelAbove != 0)
+						{
+							renderer.RectRight(
+								x: pixelX,
+								y: pixelY,
+								voxel: voxelAbove);
+							above = true;
+						}
+						if (!below
+							&& voxelZ > 0
+							&& model.At(pixelX, voxelY, voxelZ - 1) is byte voxelBelow
+							&& voxelBelow != 0)
 						{
 							renderer.RectVertical(
 								x: pixelX,
-								y: pixelY,
-								voxel: voxel,
-								sizeX: 1,
-								sizeY: 2);
-							above = true;
-							break;
+								y: pixelY + 1,
+								voxel: voxelBelow);
+							below = true;
 						}
+						if (above && below)
+							break;
 					}
 				}
 		}
