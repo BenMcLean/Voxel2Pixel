@@ -317,9 +317,9 @@ namespace Voxel2Pixel.Draw
 					}
 				}
 		}
-		public static int Draw45PeekWidth(IModel model, int scaleX = 6) => (model.SizeX + model.SizeY) * scaleX;
+		public static int Draw45PeekWidth(IModel model, int scaleX = 4) => (model.SizeX + model.SizeY) * scaleX;
 		public static int Draw45PeekHeight(IModel model, int scaleY = 6) => model.SizeZ * scaleY;
-		public static void Draw45Peek(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 6)
+		public static void Draw45Peek(IModel model, IRectangleRenderer renderer, int scaleX = 4, int scaleY = 6)
 		{
 			int pixelWidth = model.SizeX + model.SizeY;
 			for (int pixelY = 0; pixelY < model.SizeZ; pixelY++)
