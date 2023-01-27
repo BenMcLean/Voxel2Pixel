@@ -28,6 +28,42 @@ namespace Voxel2Pixel.Draw
 							break;
 						}
 		}
+		public static int DrawPeekWidth(IModel model, int scaleX = 6) => model.SizeX * scaleX;
+		public static int DrawPeekHeight(IModel model, int scaleY = 6) => model.SizeZ * scaleY;
+		public static void DrawPeek(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 6)
+		{
+			for (int z = 0; z < model.SizeZ; z++)
+				for (int x = 0; x < model.SizeX; x++)
+					for (int y = 0; y < model.SizeY; y++)
+						if (model.At(x, y, z) is byte voxel
+							&& voxel != 0)
+						{
+							if (z >= model.SizeZ - 1
+								|| model.At(x, y, z + 1) == 0)
+							{
+								renderer.RectVertical(
+									x: x * scaleX,
+									y: (model.SizeZ - z - 1) * scaleY,
+									voxel: voxel,
+									sizeX: scaleX,
+									sizeY: 1);
+								renderer.RectRight(
+									x: x * scaleX,
+									y: (model.SizeZ - z - 1) * scaleY + 1,
+									voxel: voxel,
+									sizeX: scaleX,
+									sizeY: scaleY - 1);
+							}
+							else
+								renderer.RectRight(
+									x: x * scaleX,
+									y: (model.SizeZ - z - 1) * scaleY,
+									voxel: voxel,
+									sizeX: scaleX,
+									sizeY: scaleY);
+							break;
+						}
+		}
 		public static int DrawRightWidth(IModel model) => model.SizeY;
 		public static int DrawRightHeight(IModel model) => model.SizeZ;
 		public static void DrawRight(IModel model, IRectangleRenderer renderer)
@@ -81,43 +117,56 @@ namespace Voxel2Pixel.Draw
 							break;
 						}
 		}
+		public static int DrawLeftWidth(IModel model) => model.SizeY;
+		public static int DrawLeftHeight(IModel model) => model.SizeZ;
 		public static void DrawLeft(IModel model, IRectangleRenderer renderer)
 		{
 			for (int z = 0; z < model.SizeZ; z++)
 				for (int y = 0; y < model.SizeY; y++)
-					for (int x = model.SizeX - 1; x >= 0; x++)
+					for (int x = model.SizeX - 1; x >= 0; x--)
 						if (model.At(x, y, z) is byte voxel
 							&& voxel != 0)
 						{
 							renderer.RectLeft(
-								x: y,
-								y: model.SizeZ - z,
+								x: model.SizeY - 1 - y,
+								y: model.SizeZ - 1 - z,
 								voxel: voxel);
 							break;
 						}
 		}
+		public static int DrawLeftPeekWidth(IModel model, int scaleX = 6) => model.SizeY * scaleX;
+		public static int DrawLeftPeekHeight(IModel model, int scaleY = 6) => model.SizeZ * scaleY;
 		public static void DrawLeftPeek(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 6)
 		{
 			for (int z = 0; z < model.SizeZ; z++)
 				for (int y = 0; y < model.SizeY; y++)
-					for (int x = model.SizeX - 1; x >= 0; x++)
+					for (int x = model.SizeX - 1; x >= 0; x--)
 						if (model.At(x, y, z) is byte voxel
 							&& voxel != 0)
 						{
-							renderer.RectRight(
-								x: y * scaleX + 1,
-								y: (model.SizeZ - z) * scaleY,
-								voxel: voxel,
-								sizeX: scaleX,
-								sizeY: scaleY - 1);
 							if (z >= model.SizeZ - 1
 								|| model.At(x, y, z + 1) == 0)
+							{
 								renderer.RectVertical(
-									x: y * scaleX,
-									y: (model.SizeZ - z + 1) * scaleY - 1,
+									x: (model.SizeY - 1 - y) * scaleX,
+									y: (model.SizeZ - z - 1) * scaleY,
 									voxel: voxel,
 									sizeX: scaleX,
 									sizeY: 1);
+								renderer.RectRight(
+									x: (model.SizeY - 1 - y) * scaleX,
+									y: (model.SizeZ - z - 1) * scaleY + 1,
+									voxel: voxel,
+									sizeX: scaleX,
+									sizeY: scaleY - 1);
+							}
+							else
+								renderer.RectRight(
+									x: (model.SizeY - 1 - y) * scaleX,
+									y: (model.SizeZ - z - 1) * scaleY,
+									voxel: voxel,
+									sizeX: scaleX,
+									sizeY: scaleY);
 							break;
 						}
 		}
