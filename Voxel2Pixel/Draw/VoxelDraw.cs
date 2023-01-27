@@ -75,7 +75,7 @@ namespace Voxel2Pixel.Draw
 							&& voxel != 0)
 						{
 							renderer.RectRight(
-								x: y,
+								x: model.SizeY - 1 - y,
 								y: model.SizeZ - 1 - z,
 								voxel: voxel);
 							break;
@@ -95,13 +95,13 @@ namespace Voxel2Pixel.Draw
 								|| model.At(x, y, z + 1) == 0)
 							{
 								renderer.RectVertical(
-									x: y * scaleX,
+									x: (model.SizeY - 1 - y) * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY,
 									voxel: voxel,
 									sizeX: scaleX,
 									sizeY: 1);
 								renderer.RectRight(
-									x: y * scaleX,
+									x: (model.SizeY - 1 - y) * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY + 1,
 									voxel: voxel,
 									sizeX: scaleX,
@@ -109,7 +109,7 @@ namespace Voxel2Pixel.Draw
 							}
 							else
 								renderer.RectRight(
-									x: y * scaleX,
+									x: (model.SizeY - 1 - y) * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY,
 									voxel: voxel,
 									sizeX: scaleX,
