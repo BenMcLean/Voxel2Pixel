@@ -11,6 +11,23 @@ namespace Voxel2Pixel.Draw
 	/// </summary>
 	public static class VoxelDraw
 	{
+		public static int DrawWidth(IModel model) => model.SizeX;
+		public static int DrawHeight(IModel model) => model.SizeZ;
+		public static void Draw(IModel model, IRectangleRenderer renderer)
+		{
+			for (int z = 0; z < model.SizeZ; z++)
+				for (int x = 0; x < model.SizeX; x++)
+					for (int y = 0; y < model.SizeY; y++)
+						if (model.At(x, y, z) is byte voxel
+						&& voxel != 0)
+						{
+							renderer.RectRight(
+								x: x,
+								y: model.SizeZ - 1 - z,
+								voxel: voxel);
+							break;
+						}
+		}
 		public static int DrawRightWidth(IModel model) => model.SizeY;
 		public static int DrawRightHeight(IModel model) => model.SizeZ;
 		public static void DrawRight(IModel model, IRectangleRenderer renderer)

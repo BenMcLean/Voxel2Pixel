@@ -17,8 +17,8 @@ namespace Voxel2PixelTest
 			VoxModel model = new VoxModel(path);
 			int xScale = 6,
 				yScale = 6,
-				width = VoxelDraw.DrawRightPeekWidth(model),
-				height = VoxelDraw.DrawRightPeekHeight(model);
+				width = VoxelDraw.DrawWidth(model),
+				height = VoxelDraw.DrawHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{
 				Image = new byte[width * 4 * height],
@@ -27,7 +27,7 @@ namespace Voxel2PixelTest
 				//Width = VoxelDraw.IsoWidth(voxModel),
 				IVoxelColor = new NaiveDimmer(model.Palette),
 			};
-			VoxelDraw.DrawRightPeek(model, arrayRenderer);
+			VoxelDraw.Draw(model, arrayRenderer);
 			//VoxelDraw.DrawIso(voxModel, arrayRenderer);
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(
 				//data: arrayRenderer.Image,
