@@ -396,7 +396,24 @@ namespace Voxel2Pixel.Draw
 						{
 							if (!leftDone)
 							{
-								renderer.RectLeft(
+								if (pixelY >= model.SizeZ - 1
+									|| model.At(voxelX, voxelY, pixelY + 1) == 0)
+								{
+									renderer.RectVertical(
+										x: (pixelWidth - 1 - pixelX) * scaleX,
+										y: (model.SizeZ - 1 - pixelY) * scaleY,
+										voxel: voxel,
+										sizeX: scaleX,
+										sizeY: 1);
+									renderer.RectLeft(
+										x: (pixelWidth - 1 - pixelX) * scaleX,
+										y: (model.SizeZ - 1 - pixelY) * scaleY + 1,
+										voxel: voxel,
+										sizeX: scaleX,
+										sizeY: scaleY - 1);
+								}
+								else
+									renderer.RectLeft(
 									x: (pixelWidth - 1 - pixelX) * scaleX,
 									y: (model.SizeZ - 1 - pixelY) * scaleY,
 									voxel: voxel,
