@@ -117,6 +117,23 @@ namespace Voxel2Pixel.Draw
 							break;
 						}
 		}
+		public static int DrawBackWidth(IModel model) => model.SizeX;
+		public static int DrawBackHeight(IModel model) => model.SizeZ;
+		public static void DrawBack(IModel model, IRectangleRenderer renderer)
+		{
+			for (int z = 0; z < model.SizeZ; z++)
+				for (int x = 0; x < model.SizeX; x++)
+					for (int y = model.SizeY - 1; y >= 0; y--)
+						if (model.At(x, y, z) is byte voxel
+							&& voxel != 0)
+						{
+							renderer.RectLeft(
+								x: model.SizeX - 1 - x,
+								y: model.SizeZ - 1 - z,
+								voxel: voxel);
+							break;
+						}
+		}
 		public static int DrawLeftWidth(IModel model) => model.SizeY;
 		public static int DrawLeftHeight(IModel model) => model.SizeZ;
 		public static void DrawLeft(IModel model, IRectangleRenderer renderer)
