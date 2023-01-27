@@ -257,7 +257,8 @@ namespace Voxel2Pixel.Draw
 							break;
 						}
 		}
-		/*
+		public static int Draw45Width(IModel model) => model.SizeX + model.SizeY;
+		public static int Draw45Height(IModel model) => model.SizeZ;
 		public static void Draw45(IModel model, IRectangleRenderer renderer)
 		{
 			int pixelWidth = model.SizeX + model.SizeY;
@@ -269,11 +270,11 @@ namespace Voxel2Pixel.Draw
 					int startX = pixelX > model.SizeX - 1 ? 0 : model.SizeX - pixelX - 1,
 						startY = pixelX - model.SizeX + 1 < 0 ? 0 : pixelX - model.SizeX + 1;
 					for (int voxelX = startX, voxelY = startY;
-						 voxelX <= model.SizeX && voxelY <= model.SizeY;
+						 voxelX < model.SizeX && voxelY < model.SizeY;
 						 voxelX++, voxelY++)
 					{
 						if (!leftDone
-							&& voxelY != 0
+							&& voxelY > 0
 							&& model.At(voxelX, voxelY - 1, pixelY) is byte voxelLeft
 							&& voxelLeft != 0)
 						{
@@ -313,6 +314,7 @@ namespace Voxel2Pixel.Draw
 					}
 				}
 		}
+		/*
 		public static void Draw45Peek(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 6)
 		{
 			int pixelWidth = model.SizeX + model.SizeY;
