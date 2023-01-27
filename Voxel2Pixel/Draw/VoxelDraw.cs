@@ -280,7 +280,7 @@ namespace Voxel2Pixel.Draw
 						{
 							renderer.RectRight(
 								x: pixelX,
-								y: pixelY,
+								y: model.SizeZ - 1 - pixelY,
 								voxel: voxelLeft);
 							leftDone = true;
 						}
@@ -291,7 +291,7 @@ namespace Voxel2Pixel.Draw
 						{
 							renderer.RectLeft(
 								x: pixelX + 1,
-								y: pixelY,
+								y: model.SizeZ - 1 - pixelY,
 								voxel: voxelRight);
 							rightDone = true;
 						}
@@ -302,12 +302,12 @@ namespace Voxel2Pixel.Draw
 							if (!leftDone)
 								renderer.RectLeft(
 									x: pixelX,
-									y: pixelY,
+									y: model.SizeZ - 1 - pixelY,
 									voxel: voxel);
 							if (!rightDone)
 								renderer.RectRight(
 									x: pixelX + 1,
-									y: pixelY,
+									y: model.SizeZ - 1 - pixelY,
 									voxel: voxel);
 							break;
 						}
