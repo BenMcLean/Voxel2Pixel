@@ -187,22 +187,24 @@ namespace Voxel2Pixel.Draw
 							break;
 						}
 		}
-		/*
+		public static int DrawBottomWidth(IModel model) => model.SizeX;
+		public static int DrawBottomHeight(IModel model) => model.SizeY;
 		public static void DrawBottom(IModel model, IRectangleRenderer renderer)
 		{
 			for (int y = 0; y < model.SizeY; y++)
 				for (int x = 0; x < model.SizeX; x++)
-					for (int z = 0; z < model.SizeZ; z--)
+					for (int z = 0; z < model.SizeZ; z++)
 						if (model.At(x, y, z) is byte voxel
 							&& voxel != 0)
 						{
 							renderer.RectVertical(
-								x: y,
-								y: z,
+								x: x,
+								y: y,
 								voxel: voxel);
 							break;
 						}
 		}
+		/*
 		public static void Draw45(IModel model, IRectangleRenderer renderer)
 		{
 			int pixelWidth = model.SizeX + model.SizeY;

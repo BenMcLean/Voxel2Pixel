@@ -17,15 +17,15 @@ namespace Voxel2PixelTest
 			VoxModel model = new VoxModel(path);
 			int xScale = 6,
 				yScale = 6,
-				width = VoxelDraw.DrawTopWidth(model),
-				height = VoxelDraw.DrawTopHeight(model);
+				width = VoxelDraw.DrawBottomWidth(model),
+				height = VoxelDraw.DrawBottomHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{
 				Image = new byte[width * 4 * height],
 				Width = width,
 				IVoxelColor = new NaiveDimmer(model.Palette),
 			};
-			VoxelDraw.DrawTop(model, arrayRenderer);
+			VoxelDraw.DrawBottom(model, arrayRenderer);
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(
 				data: arrayRenderer.Image.Upscale(xScale, yScale, arrayRenderer.Width),
 				width: arrayRenderer.Width * xScale,
