@@ -39,10 +39,43 @@ namespace Voxel2PixelTest
 				.DrawPixel(0, 0, 255, 255, 0, 1, width * xScale * xTile)
 				.DrawPixel(128, 128, 128, 255, 1, 1, width * xScale * xTile)
 				.RotateCounter45(width * xScale * xTile);
-			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(isoTile, isoWidth, isoTile.Length / (isoWidth * 4))
+			int isoHeight = isoTile.Length / (isoWidth * 4);
+			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(isoTile, isoWidth, isoHeight)
 			.SaveAsPng("rotated.png");
 			//Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes.Resize(800, 600, width * xScale * xTile), 800, 600)
 			//	.SaveAsPng("800x600.png");
+			byte[] stamp = (byte[])isoTile.Clone();
+			isoTile = isoTile
+				.DrawTransparentInsert(
+					x: isoWidth / -2,
+					y: isoHeight / -2,
+					insert: stamp,
+					insertWidth: isoWidth,
+					threshold: 1,
+					width: isoWidth)
+				.DrawTransparentInsert(
+					x: isoWidth / -2,
+					y: isoHeight / 2,
+					insert: stamp,
+					insertWidth: isoWidth,
+					threshold: 1,
+					width: isoWidth)
+				.DrawTransparentInsert(
+					x: isoWidth / 2,
+					y: isoHeight / -2,
+					insert: stamp,
+					insertWidth: isoWidth,
+					threshold: 1,
+					width: isoWidth)
+				.DrawTransparentInsert(
+					x: isoWidth / 2,
+					y: isoHeight / 2,
+					insert: stamp,
+					insertWidth: isoWidth,
+					threshold: 1,
+					width: isoWidth);
+			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(isoTile, isoWidth, isoHeight)
+			.SaveAsPng("stamped.png");
 		}
 		[Fact]
 		public void DrawRectangleTest()
