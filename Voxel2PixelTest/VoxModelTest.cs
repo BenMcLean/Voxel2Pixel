@@ -15,6 +15,12 @@ namespace Voxel2PixelTest
 		public void ArrayRendererTest()
 		{
 			VoxModel model = new VoxModel(path);
+			//EmptyModel model = new EmptyModel
+			//{
+			//	SizeX = 5,
+			//	SizeY = 8,
+			//	SizeZ = 3,
+			//};
 			int xScale = 12,
 				yScale = 12,
 				width = VoxelDraw.DrawIsoWidth(model),
