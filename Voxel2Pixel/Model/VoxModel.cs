@@ -54,7 +54,7 @@ namespace Voxel2Pixel.Model
 		public int SizeX => Model.Size.X;
 		public int SizeY => Model.Size.Y;
 		public int SizeZ => Model.Size.Z;
-		public byte? At(int x, int y, int z) => Voxels[x][y][z];
+		public byte? At(int x, int y, int z) => IsInside(x, y, z) ? Voxels[x][y][z] : (byte?)null;
 		public bool IsInside(int x, int y, int z) => !IsOutside(x, y, z);
 		public bool IsOutside(int x, int y, int z) => x < 0 || y < 0 || z < 0 || x >= SizeX || y >= SizeY || z >= SizeZ;
 		#endregion IModel

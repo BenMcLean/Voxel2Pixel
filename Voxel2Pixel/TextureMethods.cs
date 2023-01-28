@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -781,6 +782,29 @@ namespace Voxel2Pixel
 				bytes[j++] = (byte)palette[index[i]];
 			}
 			return bytes;
+		}
+		public static int[] PaletteFromTexture(this byte[] texture)
+		{
+			List<int> palette = new List<int> { 0 };
+			foreach (int pixel in texture.Byte2IntArray())
+				if (!palette.Contains(pixel))
+				{
+					palette.Add(pixel);
+					if (palette.Count >= byte.MaxValue)
+						break;
+				}
+			int[] result = new int[byte.MaxValue];
+			Array.Copy(palette.ToArray(), result, palette.Count);
+			return result;
+		}
+		public static byte[] Byte2IndexArray(this byte[] bytes) => Byte2IndexArray(bytes, PaletteFromTexture(bytes));
+		public static byte[] Byte2IndexArray(this byte[] bytes, int[] palette)
+		{
+			byte[] indexes = new byte[bytes.Length >> 2];
+			int[] ints = bytes.Byte2IntArray();
+			for (int i = 0; i < indexes.Length; i++)
+				indexes[i] = (byte)Math.Max(Array.IndexOf(palette, ints[i]), 0);
+			return indexes;
 		}
 		/// <param name="index">Palette indexes (one byte per pixel)</param>
 		/// <param name="palette">256 rgba8888 color values</param>
