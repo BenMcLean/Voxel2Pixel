@@ -524,7 +524,8 @@ namespace Voxel2Pixel.Draw
 				sizeVoxelZ = model.SizeZ,
 				sizeVoxelX2 = sizeVoxelX * 2,
 				sizeVoxelY2 = sizeVoxelY * 2,
-				pixelWidth = (model.SizeX + model.SizeY) * 2;
+				pixelWidth = (model.SizeX + model.SizeY) * 2,
+				pixelHeight = (model.SizeZ + Math.Max(model.SizeX, model.SizeY)) * 4;
 			// To move one x+ in voxels is x + 2, y - 2 in pixels.
 			// To move one x- in voxels is x - 2, y + 2 in pixels.
 			// To move one y+ in voxels is x + 2, y + 2 in pixels.
@@ -545,16 +546,28 @@ namespace Voxel2Pixel.Draw
 					voxel = (byte)model.At(sizeVoxelX - pixelX / 2 - 2, 0, 0); // Front right
 					if (voxel != 0)
 					{
-						renderer.DrawRightTriangleLeftFace(pixelX + 2, bottomPixelY - 4, voxel);
-						renderer.DrawLeftTriangleLeftFace(pixelX + 2, bottomPixelY - 6, voxel);
+						renderer.DrawRightTriangleLeftFace(
+							x: pixelX + 2,
+							y: bottomPixelY - 4,
+							voxel: voxel);
+						renderer.DrawLeftTriangleLeftFace(
+							x: pixelX + 2,
+							y: bottomPixelY - 6,
+							voxel: voxel);
 						rightEmpty = false;
 					}
 					voxel = (byte)model.At(sizeVoxelX - pixelX / 2 - 1, 0, 0); // Center
 					if (voxel != 0)
 					{
-						renderer.DrawLeftTriangleLeftFace(pixelX, bottomPixelY - 4, voxel);
+						renderer.DrawLeftTriangleLeftFace(
+							x: pixelX,
+							y: bottomPixelY - 4,
+							voxel: voxel);
 						if (rightEmpty)
-							renderer.DrawRightTriangleRightFace(pixelX + 2, bottomPixelY - 4, voxel);
+							renderer.DrawRightTriangleRightFace(
+								x: pixelX + 2,
+								y: bottomPixelY - 4,
+								voxel: voxel);
 					}
 				}
 				else if (pixelX > sizeVoxelX2 - 2)
@@ -563,16 +576,28 @@ namespace Voxel2Pixel.Draw
 					voxel = (byte)model.At(0, pixelX / 2 - sizeVoxelX, 0); // Front left
 					if (voxel != 0)
 					{
-						renderer.DrawRightTriangleRightFace(pixelX, bottomPixelY - 6, voxel);
-						renderer.DrawLeftTriangleRightFace(pixelX, bottomPixelY - 4, voxel);
+						renderer.DrawRightTriangleRightFace(
+							x: pixelX,
+							y: bottomPixelY - 6,
+							voxel: voxel);
+						renderer.DrawLeftTriangleRightFace(
+							x: pixelX,
+							y: bottomPixelY - 4,
+							voxel: voxel);
 						leftEmpty = false;
 					}
 					voxel = (byte)model.At(0, pixelX / 2 - sizeVoxelX, 0); // Center
 					if (voxel != 0)
 					{
-						renderer.DrawRightTriangleRightFace(pixelX + 2, bottomPixelY - 4, voxel);
+						renderer.DrawRightTriangleRightFace(
+							x: pixelX + 2,
+							y: bottomPixelY - 4,
+							voxel: voxel);
 						if (leftEmpty)
-							renderer.DrawLeftTriangleLeftFace(pixelX, bottomPixelY - 4, voxel);
+							renderer.DrawLeftTriangleLeftFace(
+								x: pixelX,
+								y: bottomPixelY - 4,
+								voxel: voxel);
 					}
 				}
 				else
@@ -580,19 +605,34 @@ namespace Voxel2Pixel.Draw
 					voxel = (byte)model.At(0, 0, 0);
 					if (voxel != 0)
 					{
-						renderer.DrawLeftTriangleLeftFace(pixelX, bottomPixelY - 4, voxel);
-						renderer.DrawRightTriangleRightFace(pixelX + 2, bottomPixelY - 4, voxel);
+						renderer.DrawLeftTriangleLeftFace(
+							x: pixelX,
+							y: bottomPixelY - 4,
+							voxel: voxel);
+						renderer.DrawRightTriangleRightFace(
+							x: pixelX + 2,
+							y: bottomPixelY - 4,
+							voxel: voxel);
 						if (sizeVoxelX % 2 == 0)
-							renderer.DrawRightTriangleRightFace(pixelX, bottomPixelY - 6, voxel);
+							renderer.DrawRightTriangleRightFace(
+								x: pixelX,
+								y: bottomPixelY - 6,
+								voxel: voxel);
 					}
 					else
 					{
 						voxel = (byte)model.At(pixelX / 2 + 1, 0, 0);
 						if (voxel != 0)
-							renderer.DrawLeftTriangleRightFace(pixelX, bottomPixelY - 4, voxel);
+							renderer.DrawLeftTriangleRightFace(
+								x: pixelX,
+								y: bottomPixelY - 4,
+								voxel: voxel);
 						voxel = (byte)model.At(0, pixelX / 2 - sizeVoxelX + 2, 0);
 						if (voxel != 0)
-							renderer.DrawRightTriangleLeftFace(pixelX + 2, bottomPixelY - 4, voxel);
+							renderer.DrawRightTriangleLeftFace(
+								x: pixelX + 2,
+								y: bottomPixelY - 4,
+								voxel: voxel);
 					}
 				}
 				// Finish drawing bottom row triangles
@@ -636,12 +676,18 @@ namespace Voxel2Pixel.Draw
 							{
 								if (!topLeft)
 								{
-									renderer.DrawLeftTriangleRightFace(pixelX, py, voxel);
+									renderer.DrawLeftTriangleRightFace(
+										x: pixelX,
+										y: py,
+										voxel: voxel);
 									topLeft = true;
 								}
 								if (!left)
 								{
-									renderer.DrawRightTriangleRightFace(pixelX, py - 2, voxel);
+									renderer.DrawRightTriangleRightFace(
+										x: pixelX,
+										y: py - 2,
+										voxel: voxel);
 									left = true;
 								}
 							}
@@ -655,12 +701,18 @@ namespace Voxel2Pixel.Draw
 							{
 								if (!topRight)
 								{
-									renderer.DrawRightTriangleLeftFace(pixelX + 2, py, voxel);
+									renderer.DrawRightTriangleLeftFace(
+										x: pixelX + 2,
+										y: py,
+										voxel: voxel);
 									topRight = true;
 								}
 								if (!right)
 								{
-									renderer.DrawLeftTriangleLeftFace(pixelX + 2, py - 2, voxel);
+									renderer.DrawLeftTriangleLeftFace(
+										x: pixelX + 2,
+										y: py - 2,
+										voxel: voxel);
 									right = true;
 								}
 							}
@@ -674,12 +726,18 @@ namespace Voxel2Pixel.Draw
 							{
 								if (!topLeft)
 								{
-									renderer.DrawLeftTriangleLeftFace(pixelX, py, voxel);
+									renderer.DrawLeftTriangleLeftFace(
+										x: pixelX,
+										y: py,
+										voxel: voxel);
 									topLeft = true;
 								}
 								if (!topRight)
 								{
-									renderer.DrawRightTriangleRightFace(pixelX + 2, py, voxel);
+									renderer.DrawRightTriangleRightFace(
+										x: pixelX + 2,
+										y: py,
+										voxel: voxel);
 									topRight = true;
 								}
 							}
@@ -691,7 +749,10 @@ namespace Voxel2Pixel.Draw
 							voxel = (byte)model.At(voxelX, voxelY - 1, voxelZ);
 							if (voxel != 0)
 							{
-								renderer.DrawRightTriangleVerticalFace(pixelX, py - 2, voxel);
+								renderer.DrawRightTriangleVerticalFace(
+									x: pixelX,
+									y: py - 2,
+									voxel: voxel);
 								left = true;
 							}
 						}
@@ -702,7 +763,10 @@ namespace Voxel2Pixel.Draw
 							voxel = (byte)model.At(voxelX - 1, voxelY, voxelZ);
 							if (voxel != 0)
 							{
-								renderer.DrawLeftTriangleVerticalFace(pixelX + 2, py - 2, voxel);
+								renderer.DrawLeftTriangleVerticalFace(
+									x: pixelX + 2,
+									y: py - 2,
+									voxel: voxel);
 								right = true;
 							}
 						}
@@ -713,13 +777,25 @@ namespace Voxel2Pixel.Draw
 						if (voxel != 0)
 						{
 							if (!topLeft)
-								renderer.DrawLeftTriangleVerticalFace(pixelX, py, voxel);
+								renderer.DrawLeftTriangleVerticalFace(
+									x: pixelX,
+									y: py,
+									voxel: voxel);
 							if (!left)
-								renderer.DrawRightTriangleLeftFace(pixelX, py - 2, voxel);
+								renderer.DrawRightTriangleLeftFace(
+									x: pixelX,
+									y: py - 2,
+									voxel: voxel);
 							if (!topRight)
-								renderer.DrawRightTriangleVerticalFace(pixelX + 2, py, voxel);
+								renderer.DrawRightTriangleVerticalFace(
+									x: pixelX + 2,
+									y: py,
+									voxel: voxel);
 							if (!right)
-								renderer.DrawLeftTriangleRightFace(pixelX + 2, py - 2, voxel);
+								renderer.DrawLeftTriangleRightFace(
+									x: pixelX + 2,
+									y: py - 2,
+									voxel: voxel);
 							break;
 						}
 
@@ -731,12 +807,18 @@ namespace Voxel2Pixel.Draw
 							{
 								if (!topLeft)
 								{
-									renderer.DrawLeftTriangleRightFace(pixelX, py, voxel);
+									renderer.DrawLeftTriangleRightFace(
+										x: pixelX,
+										y: py,
+										voxel: voxel);
 									topLeft = true;
 								}
 								if (!left)
 								{
-									renderer.DrawRightTriangleRightFace(pixelX, py - 2, voxel);
+									renderer.DrawRightTriangleRightFace(
+										x: pixelX,
+										y: py - 2,
+										voxel: voxel);
 									left = true;
 								}
 							}
@@ -750,12 +832,18 @@ namespace Voxel2Pixel.Draw
 							{
 								if (!topRight)
 								{
-									renderer.DrawRightTriangleLeftFace(pixelX + 2, py, voxel);
+									renderer.DrawRightTriangleLeftFace(
+										x: pixelX + 2,
+										y: py,
+										voxel: voxel);
 									topRight = true;
 								}
 								if (!right)
 								{
-									renderer.DrawLeftTriangleLeftFace(pixelX + 2, py - 2, voxel);
+									renderer.DrawLeftTriangleLeftFace(
+										x: pixelX + 2,
+										y: py - 2,
+										voxel: voxel);
 									right = true;
 								}
 							}
@@ -769,12 +857,18 @@ namespace Voxel2Pixel.Draw
 							{
 								if (!topRight)
 								{
-									renderer.DrawRightTriangleRightFace(pixelX + 2, py, voxel);
+									renderer.DrawRightTriangleRightFace(
+										x: pixelX + 2,
+										y: py,
+										voxel: voxel);
 									topRight = true;
 								}
 								if (!topLeft)
 								{
-									renderer.DrawLeftTriangleLeftFace(pixelX, py, voxel);
+									renderer.DrawLeftTriangleLeftFace(
+										x: pixelX,
+										y: py,
+										voxel: voxel);
 									topLeft = true;
 								}
 							}
@@ -786,7 +880,10 @@ namespace Voxel2Pixel.Draw
 							voxel = (byte)model.At(voxelX + 1, voxelY, voxelZ - 1);
 							if (voxel != 0)
 							{
-								renderer.DrawRightTriangleVerticalFace(pixelX, py - 2, voxel);
+								renderer.DrawRightTriangleVerticalFace(
+									x: pixelX,
+									y: py - 2,
+									voxel: voxel);
 								left = true;
 							}
 						}
@@ -797,7 +894,10 @@ namespace Voxel2Pixel.Draw
 							voxel = (byte)model.At(voxelX, voxelY + 1, voxelZ - 1);
 							if (voxel != 0)
 							{
-								renderer.DrawLeftTriangleVerticalFace(pixelX + 2, py - 2, voxel);
+								renderer.DrawLeftTriangleVerticalFace(
+									x: pixelX + 2,
+									y: py - 2,
+									voxel: voxel);
 								right = true;
 							}
 						}
@@ -824,13 +924,19 @@ namespace Voxel2Pixel.Draw
 				{ // Top left triangles
 					voxel = (byte)model.At(sizeVoxelX - 1, pixelX / 2 + 1, sizeVoxelZ - 1);
 					if (voxel != 0)
-						renderer.DrawLeftTriangleVerticalFace(pixelX + 2, topPixelY, voxel);
+						renderer.DrawLeftTriangleVerticalFace(
+							x: pixelX + 2,
+							y: topPixelY,
+							voxel: voxel);
 				}
 				else if (pixelX + 2 > sizeVoxelY2)
 				{ // Top right triangles
 					voxel = (byte)model.At(sizeVoxelY - 1 + sizeVoxelX - pixelX / 2, sizeVoxelY - 1, sizeVoxelZ - 1);
 					if (voxel != 0)
-						renderer.DrawRightTriangleVerticalFace(pixelX, topPixelY, voxel);
+						renderer.DrawRightTriangleVerticalFace(
+							x: pixelX,
+							y: topPixelY,
+							voxel: voxel);
 				}
 				// Finish drawing top triangles.
 
@@ -842,7 +948,10 @@ namespace Voxel2Pixel.Draw
 						bottom = Math.Abs(sizeVoxelX2 - 2 - pixelWidth);
 					voxel = (byte)model.At(voxelX, voxelY, 0);
 					if (voxel != 0)
-						renderer.DrawRightTriangleRightFace(pixelWidth + 2, bottom - 4, voxel); // lower right corner
+						renderer.DrawRightTriangleRightFace(
+							x: pixelWidth + 2,
+							y: bottom - 4,
+							voxel: voxel); // lower right corner
 					for (int pixelY = bottom; pixelY < bottom + sizeVoxelZ * 4; pixelY += 4)
 					{
 						int voxelZ = (pixelY - bottom) / 4;
@@ -852,16 +961,25 @@ namespace Voxel2Pixel.Draw
 							voxel = (byte)model.At(voxelX, voxelY, voxelZ + 1);
 							if (voxel != 0)
 							{
-								renderer.DrawRightTriangleRightFace(pixelWidth + 2, pixelY, voxel);
+								renderer.DrawRightTriangleRightFace(
+									x: pixelWidth + 2,
+									y: pixelY,
+									voxel: voxel);
 								aboveEmpty = false;
 							}
 						}
 						voxel = (byte)model.At(voxelX, voxelY, voxelZ);
 						if (voxel != 0)
 						{
-							renderer.DrawLeftTriangleRightFace(pixelWidth + 2, pixelY - 2, voxel);
+							renderer.DrawLeftTriangleRightFace(
+								x: pixelWidth + 2,
+								y: pixelY - 2,
+								voxel: voxel);
 							if (aboveEmpty)
-								renderer.DrawRightTriangleVerticalFace(pixelWidth + 2, pixelY, voxel);
+								renderer.DrawRightTriangleVerticalFace(
+									x: pixelWidth + 2,
+									y: pixelY,
+									voxel: voxel);
 						}
 					}
 				}
