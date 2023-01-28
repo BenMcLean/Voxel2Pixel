@@ -270,8 +270,8 @@ namespace Voxel2Pixel.Draw
 				{
 					bool leftDone = pixelWidth - pixelX < 2,
 						rightDone = false;
-					int startX = pixelX > model.SizeX - 1 ? 0 : model.SizeX - pixelX - 1,
-						startY = pixelX - model.SizeX + 1 < 0 ? 0 : pixelX - model.SizeX + 1;
+					int startX = Math.Max(model.SizeX - pixelX - 1, 0),
+						startY = Math.Max(pixelX - model.SizeX + 1, 0);
 					for (int voxelX = startX, voxelY = startY;
 						 voxelX < model.SizeX && voxelY < model.SizeY;
 						 voxelX++, voxelY++)
@@ -327,8 +327,8 @@ namespace Voxel2Pixel.Draw
 				{
 					bool leftDone = pixelWidth - pixelX < 2,
 						rightDone = false;
-					int startX = pixelX > model.SizeX - 1 ? 0 : model.SizeX - pixelX - 1,
-						startY = pixelX - model.SizeX + 1 < 0 ? 0 : pixelX - model.SizeX + 1;
+					int startX = Math.Max(model.SizeX - pixelX - 1, 0),
+						startY = Math.Max(pixelX - model.SizeX + 1, 0);
 					for (int voxelX = startX, voxelY = startY;
 						 voxelX < model.SizeX && voxelY < model.SizeY;
 						 voxelX++, voxelY++)
