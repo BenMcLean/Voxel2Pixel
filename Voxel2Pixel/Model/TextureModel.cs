@@ -11,9 +11,9 @@ namespace Voxel2Pixel.Model
 			Indexes = texture.Byte2IndexArray(Palette);
 		}
 		public int[] Palette { get; set; }
-		public byte[] Indexes { get; set; }
+		public byte[] Indexes { get; }
 		#region IModel
-		public int SizeX { get; set; }
+		public int SizeX { get; }
 		public int SizeY => Indexes.Length / SizeX;
 		public int SizeZ { get; set; } = 1;
 		public byte? At(int x, int y, int z) => IsInside(x, y, z) ? Indexes[y * SizeX + x] : (byte?)null;
