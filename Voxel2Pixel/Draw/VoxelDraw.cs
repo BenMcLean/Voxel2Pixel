@@ -545,13 +545,41 @@ namespace Voxel2Pixel.Draw
 							&& pixelX > pixelY - modelSizeX2
 							&& pixelX < pixelWidth + modelSizeY2 - pixelY - 2,
 						startAtLeft = !startAtTop && pixelX < modelSizeY2;
-					renderer.Triangle(
-						x: pixelX,
-						y: pixelY,
-						right: right,
-						color: startAtTop ? 0x00FF00FF
-						: startAtLeft ? 0x00FFFFFF
-						: right ? unchecked((int)0xFF0000FF) : 0x0000FFFF);
+					//screen.x = (map.x - map.y) * TILE_WIDTH_HALF;
+					//screen.y = (map.x + map.y) * TILE_HEIGHT_HALF;
+					//map.x = (screen.x / TILE_WIDTH_HALF + screen.y / TILE_HEIGHT_HALF) / 2;
+					//map.y = (screen.y / TILE_HEIGHT_HALF - (screen.x / TILE_WIDTH_HALF)) / 2;
+					int x = pixelX / 2 + 1,
+						y = pixelY / 2 + 1,
+						startX = startAtTop ? (pixelX + pixelY / 2) / 2
+						: 0,
+						startY = startAtTop ? Math.Abs(pixelY / 2 - pixelX) / 2
+						: 0,
+						startZ = startAtTop ? model.SizeZ - 1
+						: 0;
+					//renderer.Triangle(
+					//	x: pixelX,
+					//	y: pixelY,
+					//	right: right,
+					//	color: startZ > -1 ? 0x00FF00FF
+					//	//: startAtLeft ? 0x00FFFFFF
+					//	: right ? unchecked((int)0xFF0000FF) : 0x0000FFFF);
+					if (startAtTop)
+						for (int voxelX = startX, voxelY = startY, voxelZ = startZ, distance = 0;
+							voxelX < model.SizeX && voxelY < model.SizeY && voxelZ >= 0;
+							voxelX++, voxelY++, voxelZ--, distance++)
+						{
+							if (model.At(voxelX, voxelY, voxelZ) is byte voxel
+								&& voxel != 0)
+							{
+								renderer.TriangleRightFace(
+									x: pixelX,
+									y: pixelY,
+									right: right,
+									voxel: voxel);
+								break;
+							}
+						}
 				}
 			}
 		}
