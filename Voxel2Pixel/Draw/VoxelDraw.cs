@@ -12,9 +12,9 @@ namespace Voxel2Pixel.Draw
 	public static class VoxelDraw
 	{
 		#region Straight
-		public static int DrawWidth(IModel model) => model.SizeX;
-		public static int DrawHeight(IModel model) => model.SizeZ;
-		public static void Draw(IModel model, IRectangleRenderer renderer)
+		public static int FrontWidth(IModel model) => model.SizeX;
+		public static int FrontHeight(IModel model) => model.SizeZ;
+		public static void Front(IModel model, IRectangleRenderer renderer)
 		{
 			for (int z = 0; z < model.SizeZ; z++)
 				for (int x = 0; x < model.SizeX; x++)
@@ -29,9 +29,9 @@ namespace Voxel2Pixel.Draw
 							break;
 						}
 		}
-		public static int DrawPeekWidth(IModel model, int scaleX = 6) => model.SizeX * scaleX;
-		public static int DrawPeekHeight(IModel model, int scaleY = 6) => model.SizeZ * scaleY;
-		public static void DrawPeek(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 6)
+		public static int FrontPeekWidth(IModel model, int scaleX = 6) => model.SizeX * scaleX;
+		public static int FrontPeekHeight(IModel model, int scaleY = 6) => model.SizeZ * scaleY;
+		public static void FrontPeek(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 6)
 		{
 			for (int z = 0; z < model.SizeZ; z++)
 				for (int x = 0; x < model.SizeX; x++)
@@ -65,9 +65,9 @@ namespace Voxel2Pixel.Draw
 							break;
 						}
 		}
-		public static int DrawRightWidth(IModel model) => model.SizeY;
-		public static int DrawRightHeight(IModel model) => model.SizeZ;
-		public static void DrawRight(IModel model, IRectangleRenderer renderer)
+		public static int RightWidth(IModel model) => model.SizeY;
+		public static int RightHeight(IModel model) => model.SizeZ;
+		public static void Right(IModel model, IRectangleRenderer renderer)
 		{
 			for (int z = 0; z < model.SizeZ; z++)
 				for (int y = 0; y < model.SizeY; y++)
@@ -82,9 +82,9 @@ namespace Voxel2Pixel.Draw
 							break;
 						}
 		}
-		public static int DrawRightPeekWidth(IModel model, int scaleX = 6) => model.SizeY * scaleX;
-		public static int DrawRightPeekHeight(IModel model, int scaleY = 6) => model.SizeZ * scaleY;
-		public static void DrawRightPeek(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 6)
+		public static int RightPeekWidth(IModel model, int scaleX = 6) => model.SizeY * scaleX;
+		public static int RightPeekHeight(IModel model, int scaleY = 6) => model.SizeZ * scaleY;
+		public static void RightPeek(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 6)
 		{
 			for (int z = 0; z < model.SizeZ; z++)
 				for (int y = 0; y < model.SizeY; y++)
@@ -118,9 +118,9 @@ namespace Voxel2Pixel.Draw
 							break;
 						}
 		}
-		public static int DrawBackWidth(IModel model) => model.SizeX;
-		public static int DrawBackHeight(IModel model) => model.SizeZ;
-		public static void DrawBack(IModel model, IRectangleRenderer renderer)
+		public static int BackWidth(IModel model) => model.SizeX;
+		public static int BackHeight(IModel model) => model.SizeZ;
+		public static void Back(IModel model, IRectangleRenderer renderer)
 		{
 			for (int z = 0; z < model.SizeZ; z++)
 				for (int x = 0; x < model.SizeX; x++)
@@ -135,9 +135,9 @@ namespace Voxel2Pixel.Draw
 							break;
 						}
 		}
-		public static int DrawBackPeekWidth(IModel model, int scaleX = 6) => model.SizeX * scaleX;
-		public static int DrawBackPeekHeight(IModel model, int scaleY = 6) => model.SizeZ * scaleY;
-		public static void DrawBackPeek(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 6)
+		public static int BackPeekWidth(IModel model, int scaleX = 6) => model.SizeX * scaleX;
+		public static int BackPeekHeight(IModel model, int scaleY = 6) => model.SizeZ * scaleY;
+		public static void BackPeek(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 6)
 		{
 			for (int z = 0; z < model.SizeZ; z++)
 				for (int x = 0; x < model.SizeX; x++)
@@ -171,9 +171,9 @@ namespace Voxel2Pixel.Draw
 							break;
 						}
 		}
-		public static int DrawLeftWidth(IModel model) => model.SizeY;
-		public static int DrawLeftHeight(IModel model) => model.SizeZ;
-		public static void DrawLeft(IModel model, IRectangleRenderer renderer)
+		public static int LeftWidth(IModel model) => model.SizeY;
+		public static int LeftHeight(IModel model) => model.SizeZ;
+		public static void Left(IModel model, IRectangleRenderer renderer)
 		{
 			for (int z = 0; z < model.SizeZ; z++)
 				for (int y = 0; y < model.SizeY; y++)
@@ -188,9 +188,9 @@ namespace Voxel2Pixel.Draw
 							break;
 						}
 		}
-		public static int DrawLeftPeekWidth(IModel model, int scaleX = 6) => model.SizeY * scaleX;
-		public static int DrawLeftPeekHeight(IModel model, int scaleY = 6) => model.SizeZ * scaleY;
-		public static void DrawLeftPeek(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 6)
+		public static int LeftPeekWidth(IModel model, int scaleX = 6) => model.SizeY * scaleX;
+		public static int LeftPeekHeight(IModel model, int scaleY = 6) => model.SizeZ * scaleY;
+		public static void LeftPeek(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 6)
 		{
 			for (int z = 0; z < model.SizeZ; z++)
 				for (int y = 0; y < model.SizeY; y++)
@@ -224,9 +224,9 @@ namespace Voxel2Pixel.Draw
 							break;
 						}
 		}
-		public static int DrawTopWidth(IModel model) => model.SizeX;
-		public static int DrawTopHeight(IModel model) => model.SizeY;
-		public static void DrawTop(IModel model, IRectangleRenderer renderer)
+		public static int TopWidth(IModel model) => model.SizeX;
+		public static int TopHeight(IModel model) => model.SizeY;
+		public static void Top(IModel model, IRectangleRenderer renderer)
 		{
 			for (int y = 0; y < model.SizeY; y++)
 				for (int x = 0; x < model.SizeX; x++)
@@ -241,9 +241,9 @@ namespace Voxel2Pixel.Draw
 							break;
 						}
 		}
-		public static int DrawBottomWidth(IModel model) => model.SizeX;
-		public static int DrawBottomHeight(IModel model) => model.SizeY;
-		public static void DrawBottom(IModel model, IRectangleRenderer renderer)
+		public static int BottomWidth(IModel model) => model.SizeX;
+		public static int BottomHeight(IModel model) => model.SizeY;
+		public static void Bottom(IModel model, IRectangleRenderer renderer)
 		{
 			for (int x = 0; x < model.SizeX; x++)
 				for (int y = 0; y < model.SizeY; y++)
@@ -514,9 +514,9 @@ namespace Voxel2Pixel.Draw
 		}
 		#endregion Diagonal
 		#region Isometric
-		public static int DrawIsoWidth(IModel model) => 2 * (model.SizeX + model.SizeY);
-		public static int DrawIsoHeight(IModel model) => 2 * (model.SizeX + model.SizeY) + 4 * model.SizeZ - 1;
-		public static void DrawIso(IModel model, ITriangleRenderer renderer)
+		public static int IsoWidth(IModel model) => 2 * (model.SizeX + model.SizeY);
+		public static int IsoHeight(IModel model) => 2 * (model.SizeX + model.SizeY) + 4 * model.SizeZ - 1;
+		public static void Iso(IModel model, ITriangleRenderer renderer)
 		{
 			// To move one x+ in voxels is x + 2, y - 2 in pixels.
 			// To move one x- in voxels is x - 2, y + 2 in pixels.
@@ -524,12 +524,12 @@ namespace Voxel2Pixel.Draw
 			// To move one y- in voxels is x + 2, y + 2 in pixels.
 			// To move one z+ in voxels is y - 4 in pixels.
 			// To move one z- in voxels is y + 4 in pixels.
-			int pixelWidth = DrawIsoWidth(model),
-				pixelHeight = DrawIsoHeight(model),
-				modelSizeX2 = model.SizeX * 2,
+			int modelSizeX2 = model.SizeX * 2,
 				modelSizeY2 = model.SizeY * 2,
-				modelSizeZ4 = model.SizeZ * 4;
-			bool evenX = model.SizeX % 2 == 0;
+				modelSizeZ4 = model.SizeZ * 4,
+				pixelWidth = modelSizeX2 + modelSizeY2,
+				pixelHeight = pixelWidth + modelSizeZ4;
+			bool evenSizeX = model.SizeX % 2 == 0;
 			for (int pixelY = 0; pixelY < pixelHeight - 2; pixelY += 2)
 			{
 				int pixelStartX = pixelY < modelSizeX2 + modelSizeZ4 ?
@@ -540,12 +540,16 @@ namespace Voxel2Pixel.Draw
 						: pixelWidth + modelSizeY2 + modelSizeZ4 - pixelY - 2;
 				for (int pixelX = pixelStartX; pixelX < pixelStopX; pixelX += 2)
 				{
-					bool right = ((pixelX >> 1) + (pixelY >> 1) & 1) == (evenX ? 0 : 1);
+					bool right = ((pixelX >> 1) + (pixelY >> 1) & 1) == (evenSizeX ? 0 : 1),
+						startAtTop = pixelY < modelSizeX2 + modelSizeY2
+							&& pixelX > pixelY - modelSizeX2
+							&& pixelX < pixelWidth + modelSizeY2 - pixelY - 2;
 					renderer.Triangle(
 						x: pixelX,
 						y: pixelY,
 						right: right,
-						color: right ? unchecked((int)0xFF0000FF) : 0x0000FFFF);
+						color: startAtTop ? 0x00FF00FF
+						: right ? unchecked((int)0xFF0000FF) : 0x0000FFFF);
 				}
 			}
 		}
