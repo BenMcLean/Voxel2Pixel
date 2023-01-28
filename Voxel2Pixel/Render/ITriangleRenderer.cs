@@ -6,36 +6,24 @@
 	public interface ITriangleRenderer : IVoxelRenderer
 	{
 		/// <summary>
-		/// Draws a triangle 3 high and 2 wide pointing left
+		/// Draws a triangle 3 high and 2 wide
 		/// </summary>
-		void DrawLeftTriangle(int x, int y, int color);
+		/// <param name="right">Points right if true, else points left</param>
+		void Triangle(int x, int y, bool right, int color);
 		/// <summary>
-		/// Draws a triangle 3 high and 2 wide pointing right
+		/// Draws a triangle 3 high and 2 wide, representing the visible vertical face of voxel
 		/// </summary>
-		void DrawRightTriangle(int x, int y, int color);
+		/// <param name="right">Points right if true, else points left</param>
+		void TriangleVerticalFace(int x, int y, bool right, byte voxel);
 		/// <summary>
-		/// Draws a triangle 3 high and 2 wide pointing left, representing the visible vertical face of voxel
+		/// Draws a triangle 3 high and 2 wide, representing the left face of voxel
 		/// </summary>
-		void DrawLeftTriangleVerticalFace(int x, int y, byte voxel);
+		/// <param name="right">Points right if true, else points left</param>
+		void TriangleLeftFace(int x, int y, bool right, byte voxel);
 		/// <summary>
-		/// Draws a triangle 3 high and 2 wide pointing left, representing the left face of voxel
+		/// Draws a triangle 3 high and 2 wide, representing the right face of voxel
 		/// </summary>
-		void DrawLeftTriangleLeftFace(int x, int y, byte voxel);
-		/// <summary>
-		/// Draws a triangle 3 high and 2 wide pointing left, representing the right face of voxel
-		/// </summary>
-		void DrawLeftTriangleRightFace(int x, int y, byte voxel);
-		/// <summary>
-		/// Draws a triangle 3 high and 2 wide pointing right representing the visible vertical face of voxel
-		/// </summary>
-		void DrawRightTriangleVerticalFace(int x, int y, byte voxel);
-		/// <summary>
-		/// Draws a triangle 3 high and 2 wide pointing right representing the left face of voxel
-		/// </summary>
-		void DrawRightTriangleLeftFace(int x, int y, byte voxel);
-		/// <summary>
-		/// Draws a triangle 3 high and 2 wide pointing right representing the right face of voxel
-		/// </summary>
-		void DrawRightTriangleRightFace(int x, int y, byte voxel);
+		/// <param name="right">Points right if true, else points left</param>
+		void TriangleRightFace(int x, int y, bool right, byte voxel);
 	}
 }

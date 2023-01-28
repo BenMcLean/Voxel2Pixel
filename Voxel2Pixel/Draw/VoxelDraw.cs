@@ -536,19 +536,17 @@ namespace Voxel2Pixel.Draw
 						Math.Max(modelSizeX2 - pixelY - 2, 0)
 						: pixelY - modelSizeX2 - modelSizeZ4 + 2,
 					pixelStopX = pixelY < modelSizeY2 + modelSizeZ4 ?
-						Math.Min(modelSizeX2 + pixelY + 2, pixelWidth)
+						Math.Min(modelSizeX2 + pixelY + 2, pixelWidth - 1)
 						: pixelWidth + modelSizeY2 + modelSizeZ4 - pixelY - 2;
 				for (int pixelX = pixelStartX; pixelX < pixelStopX; pixelX += 2)
-					if (((pixelX >> 1) + (pixelY >> 1) & 1) == (evenX ? 0 : 1))
-						renderer.DrawRightTriangle(
-							x: pixelX,
-							y: pixelY,
-							color: unchecked((int)0xFF0000FF));
-					else
-						renderer.DrawLeftTriangle(
-							x: pixelX,
-							y: pixelY,
-							color: 0x0000FFFF);
+				{
+					bool right = ((pixelX >> 1) + (pixelY >> 1) & 1) == (evenX ? 0 : 1);
+					renderer.Triangle(
+						x: pixelX,
+						y: pixelY,
+						right: right,
+						color: right ? unchecked((int)0xFF0000FF) : 0x0000FFFF);
+				}
 			}
 		}
 		#endregion Isometric
