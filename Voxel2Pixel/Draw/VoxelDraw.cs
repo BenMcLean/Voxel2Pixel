@@ -260,9 +260,9 @@ namespace Voxel2Pixel.Draw
 		}
 		#endregion Straight
 		#region Diagonal
-		public static int Draw45Width(IModel model) => model.SizeX + model.SizeY;
-		public static int Draw45Height(IModel model) => model.SizeZ;
-		public static void Draw45(IModel model, IRectangleRenderer renderer)
+		public static int DiagonalWidth(IModel model) => model.SizeX + model.SizeY;
+		public static int DiagonalHeight(IModel model) => model.SizeZ;
+		public static void Diagonal(IModel model, IRectangleRenderer renderer)
 		{
 			int pixelWidth = model.SizeX + model.SizeY;
 			for (int pixelY = 0; pixelY < model.SizeZ; pixelY++)
@@ -317,9 +317,9 @@ namespace Voxel2Pixel.Draw
 					}
 				}
 		}
-		public static int Draw45PeekWidth(IModel model, int scaleX = 4) => (model.SizeX + model.SizeY) * scaleX;
-		public static int Draw45PeekHeight(IModel model, int scaleY = 6) => model.SizeZ * scaleY;
-		public static void Draw45Peek(IModel model, IRectangleRenderer renderer, int scaleX = 4, int scaleY = 6)
+		public static int DiagonalPeekWidth(IModel model, int scaleX = 4) => (model.SizeX + model.SizeY) * scaleX;
+		public static int DiagonalPeekHeight(IModel model, int scaleY = 6) => model.SizeZ * scaleY;
+		public static void DiagonalPeek(IModel model, IRectangleRenderer renderer, int scaleX = 4, int scaleY = 6)
 		{
 			int pixelWidth = model.SizeX + model.SizeY;
 			for (int pixelY = 0; pixelY < model.SizeZ; pixelY++)
@@ -454,9 +454,9 @@ namespace Voxel2Pixel.Draw
 					}
 				}
 		}
-		public static int DrawAboveWidth(IModel model) => model.SizeX;
-		public static int DrawAboveHeight(IModel model) => model.SizeY + model.SizeZ;
-		public static void DrawAbove(IModel model, IRectangleRenderer renderer)
+		public static int AboveWidth(IModel model) => model.SizeX;
+		public static int AboveHeight(IModel model) => model.SizeY + model.SizeZ;
+		public static void Above(IModel model, IRectangleRenderer renderer)
 		{
 			int pixelHeight = model.SizeY + model.SizeZ;
 			for (int pixelX = 0; pixelX < model.SizeX; pixelX++)
