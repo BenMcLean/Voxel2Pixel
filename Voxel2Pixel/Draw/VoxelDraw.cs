@@ -543,12 +543,14 @@ namespace Voxel2Pixel.Draw
 					bool right = ((pixelX >> 1) + (pixelY >> 1) & 1) == (evenSizeX ? 0 : 1),
 						startAtTop = pixelY < modelSizeX2 + modelSizeY2
 							&& pixelX > pixelY - modelSizeX2
-							&& pixelX < pixelWidth + modelSizeY2 - pixelY - 2;
+							&& pixelX < pixelWidth + modelSizeY2 - pixelY - 2,
+						startAtLeft = !startAtTop && pixelX < modelSizeY2;
 					renderer.Triangle(
 						x: pixelX,
 						y: pixelY,
 						right: right,
 						color: startAtTop ? 0x00FF00FF
+						: startAtLeft ? 0x00FFFFFF
 						: right ? unchecked((int)0xFF0000FF) : 0x0000FFFF);
 				}
 			}
