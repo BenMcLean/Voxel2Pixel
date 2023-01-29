@@ -455,16 +455,15 @@ namespace Voxel2Pixel.Draw
 				}
 		}
 		public static int AboveWidth(IModel model) => model.SizeX;
-		public static int AboveHeight(IModel model) => model.SizeY + model.SizeZ + 1;
+		public static int AboveHeight(IModel model) => model.SizeY + model.SizeZ - 1;
 		public static void Above(IModel model, IRectangleRenderer renderer)
 		{
-			int pixelHeight = model.SizeY + model.SizeZ;
+			int pixelHeight = model.SizeY + model.SizeZ - 1;
 			for (int pixelX = 0; pixelX < model.SizeX; pixelX++)
 				for (int pixelY = 0; pixelY <= pixelHeight; pixelY++)
 				{
-					//TODO: if startY is greater than model.SizeY, then subtract 1 from startZ
-					int startY = Math.Max(model.SizeY - 1 - pixelY, 0),
-						startZ = model.SizeZ - 1 - Math.Max(pixelY - model.SizeY, 0);
+					int startY = Math.Max(model.SizeY - 1 - pixelY, 0) + (pixelY > model.SizeY ? -1 : 0),
+						startZ = model.SizeZ - 1 - Math.Max(pixelY - model.SizeY, 0) + (pixelY > model.SizeY - 1 ? -1 : 0);
 					bool above = false,
 						below = false;
 					for (int voxelY = startY, voxelZ = startZ;
@@ -475,14 +474,10 @@ namespace Voxel2Pixel.Draw
 							&& model.At(pixelX, voxelY, voxelZ + 1) is byte voxelAbove
 							&& voxelAbove != 0)
 						{
-							renderer.Rect(
+							renderer.RectRight(
 								x: pixelX,
 								y: pixelY,
-								color: 0x00FF00FF);
-							//renderer.RectRight(
-							//	x: pixelX,
-							//	y: pixelY,
-							//	voxel: voxelAbove);
+								voxel: voxelAbove);
 							above = true;
 						}
 						if (voxelY > 0
