@@ -2,9 +2,9 @@
 {
 	public class ArrayModel : IModel
 	{
-		public ArrayModel(byte[][][] model) => Model = model;
+		public ArrayModel(byte[][][] voxels) => Voxels = voxels;
 		public ArrayModel(int sizeX = 1, int sizeY = 1, int sizeZ = 1) : this(MakeModel(sizeX, sizeY, sizeZ)) { }
-		public byte[][][] Model;
+		public byte[][][] Voxels;
 		public static byte[][][] MakeModel(int sizeX = 1, int sizeY = 1, int sizeZ = 1)
 		{
 			byte[][][] model = new byte[sizeX][][];
@@ -17,10 +17,10 @@
 			return model;
 		}
 		#region IModel
-		public int SizeX => Model.Length;
-		public int SizeY => Model[0].Length;
-		public int SizeZ => Model[0][0].Length;
-		public byte? At(int x, int y, int z) => IsInside(x, y, z) ? Model[x][y][z] : (byte?)null;
+		public int SizeX => Voxels.Length;
+		public int SizeY => Voxels[0].Length;
+		public int SizeZ => Voxels[0][0].Length;
+		public byte? At(int x, int y, int z) => IsInside(x, y, z) ? Voxels[x][y][z] : (byte?)null;
 		public bool IsInside(int x, int y, int z) => !IsOutside(x, y, z);
 		public bool IsOutside(int x, int y, int z) => x < 0 || y < 0 || z < 0 || x >= SizeX || y >= SizeY || z >= SizeZ;
 		#endregion IModel
