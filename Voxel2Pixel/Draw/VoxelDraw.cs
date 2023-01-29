@@ -455,13 +455,14 @@ namespace Voxel2Pixel.Draw
 				}
 		}
 		public static int AboveWidth(IModel model) => model.SizeX;
-		public static int AboveHeight(IModel model) => model.SizeY + model.SizeZ;
+		public static int AboveHeight(IModel model) => model.SizeY + model.SizeZ + 1;
 		public static void Above(IModel model, IRectangleRenderer renderer)
 		{
 			int pixelHeight = model.SizeY + model.SizeZ;
 			for (int pixelX = 0; pixelX < model.SizeX; pixelX++)
-				for (int pixelY = 0; pixelY <= pixelHeight; pixelY += 2)
+				for (int pixelY = 0; pixelY <= pixelHeight; pixelY++)
 				{
+					//TODO: if startY is greater than model.SizeY, then subtract 1 from startZ
 					int startY = Math.Max(model.SizeY - 1 - pixelY, 0),
 						startZ = model.SizeZ - 1 - Math.Max(pixelY - model.SizeY, 0);
 					bool above = false,
@@ -470,6 +471,30 @@ namespace Voxel2Pixel.Draw
 						voxelY < model.SizeY && voxelZ >= 0;
 						voxelY++, voxelZ--)
 					{
+						if (voxelZ < model.SizeZ - 1
+							&& model.At(pixelX, voxelY, voxelZ + 1) is byte voxelAbove
+							&& voxelAbove != 0)
+						{
+							renderer.Rect(
+								x: pixelX,
+								y: pixelY,
+								color: 0x00FF00FF);
+							//renderer.RectRight(
+							//	x: pixelX,
+							//	y: pixelY,
+							//	voxel: voxelAbove);
+							above = true;
+						}
+						if (voxelY > 0
+							&& model.At(pixelX, voxelY - 1, voxelZ) is byte voxelFront
+							&& voxelFront != 0)
+						{
+							renderer.RectVertical(
+								x: pixelX,
+								y: pixelY + 1,
+								voxel: voxelFront);
+							below = true;
+						}
 						if (model.At(pixelX, voxelY, voxelZ) is byte voxel
 							&& voxel != 0)
 						{
@@ -487,13 +512,13 @@ namespace Voxel2Pixel.Draw
 						}
 						if (!above
 							&& voxelY < model.SizeY - 1
-							&& model.At(pixelX, voxelY + 1, voxelZ) is byte voxelAbove
-							&& voxelAbove != 0)
+							&& model.At(pixelX, voxelY + 1, voxelZ) is byte voxelBack
+							&& voxelBack != 0)
 						{
 							renderer.RectRight(
 								x: pixelX,
 								y: pixelY,
-								voxel: voxelAbove);
+								voxel: voxelBack);
 							above = true;
 						}
 						if (!below
