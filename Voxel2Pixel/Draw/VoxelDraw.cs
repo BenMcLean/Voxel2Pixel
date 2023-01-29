@@ -455,10 +455,10 @@ namespace Voxel2Pixel.Draw
 				}
 		}
 		public static int AboveWidth(IModel model) => model.SizeX;
-		public static int AboveHeight(IModel model) => model.SizeY + model.SizeZ - 1;
+		public static int AboveHeight(IModel model) => model.SizeY + model.SizeZ;
 		public static void Above(IModel model, IRectangleRenderer renderer)
 		{
-			int pixelHeight = model.SizeY + model.SizeZ - 1;
+			int pixelHeight = model.SizeY + model.SizeZ;
 			for (int pixelX = 0; pixelX < model.SizeX; pixelX++)
 				for (int pixelY = 0; pixelY <= pixelHeight; pixelY++)
 				{

@@ -3,17 +3,19 @@
 	public class ArrayModel : IModel
 	{
 		public ArrayModel(byte[][][] model) => Model = model;
-		public ArrayModel(int sizeX = 1, int sizeY = 1, int sizeZ = 1)
-		{
-			Model = new byte[sizeX][][];
-			for (int x = 0; x < SizeX; x++)
-			{
-				Model[x] = new byte[sizeY][];
-				for (int y = 0; y < SizeY; y++)
-					Model[x][y] = new byte[sizeZ];
-			}
-		}
+		public ArrayModel(int sizeX = 1, int sizeY = 1, int sizeZ = 1) : this(MakeModel(sizeX, sizeY, sizeZ)) { }
 		public byte[][][] Model;
+		public static byte[][][] MakeModel(int sizeX = 1, int sizeY = 1, int sizeZ = 1)
+		{
+			byte[][][] model = new byte[sizeX][][];
+			for (int x = 0; x < sizeX; x++)
+			{
+				model[x] = new byte[sizeY][];
+				for (int y = 0; y < sizeY; y++)
+					model[x][y] = new byte[sizeZ];
+			}
+			return model;
+		}
 		#region IModel
 		public int SizeX => Model.Length;
 		public int SizeY => Model[0].Length;
