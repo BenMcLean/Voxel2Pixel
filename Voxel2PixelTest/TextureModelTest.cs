@@ -8,13 +8,16 @@ using static Voxel2Pixel.TextureMethods;
 
 namespace Voxel2PixelTest
 {
-	public class VoxModelTest
+	public class TextureModelTest
 	{
-		const string path = @"..\..\..\Sora.vox";
 		[Fact]
 		public void ArrayRendererTest()
 		{
-			VoxModel model = new VoxModel(path);
+			int testTextureWidth = 32, testTextureHeight = 32;
+			TextureModel model = new TextureModel(TestTexture(testTextureWidth, testTextureHeight), testTextureWidth)
+			{
+				SizeZ = 5,
+			};
 			int xScale = 12,
 				yScale = 12,
 				width = VoxelDraw.AboveWidth(model),
@@ -30,7 +33,15 @@ namespace Voxel2PixelTest
 				data: arrayRenderer.Image.Upscale(xScale, yScale, arrayRenderer.Width),
 				width: arrayRenderer.Width * xScale,
 				height: arrayRenderer.Height * yScale)
-				.SaveAsPng("Sora.png");
+				.SaveAsPng("TextureModel.png");
 		}
+		public byte[] TestTexture(int width, int height) =>
+			new byte[16] {
+				255,0,0,255,
+				0,255,0,255,
+				0,0,255,255,
+				128,128,128,255}
+			.Upscale(width / 2, height / 2, 2)
+			.DrawRectangle(0, 0, 0, 255, width / 4, height / 4, width / 2, height / 2, width);
 	}
 }

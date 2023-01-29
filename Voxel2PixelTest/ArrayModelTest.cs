@@ -1,18 +1,42 @@
-﻿using System.Collections.ObjectModel;
+﻿using SixLabors.ImageSharp;
 using System;
-using Voxel2Pixel.Model;
+using System.Collections.ObjectModel;
 using System.Linq;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
+using Voxel2Pixel.Model;
 using Voxel2Pixel.Render;
 using Xunit;
-using SixLabors.ImageSharp;
 using static Voxel2Pixel.TextureMethods;
 
 namespace Voxel2PixelTest
 {
 	public class ArrayModelTest
 	{
+		[Fact]
+		public void ArrayRendererTest()
+		{
+			ArrayModel model = new ArrayModel(RainbowBox(
+				sizeX: 8,
+				sizeY: 8,
+				sizeZ: 8));
+			int xScale = 12,
+				yScale = 12,
+				width = VoxelDraw.AboveWidth(model),
+				height = VoxelDraw.AboveHeight(model);
+			ArrayRenderer arrayRenderer = new ArrayRenderer
+			{
+				Image = new byte[width * 4 * height],
+				Width = width,
+				IVoxelColor = new NaiveDimmer(RainbowPalette),
+			};
+			VoxelDraw.Above(model, arrayRenderer);
+			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(
+				data: arrayRenderer.Image.Upscale(xScale, yScale, arrayRenderer.Width),
+				width: arrayRenderer.Width * xScale,
+				height: arrayRenderer.Height * yScale)
+				.SaveAsPng("ArrayModel.png");
+		}
 		public static readonly ReadOnlyCollection<int> Rainbow = Array.AsReadOnly(new int[7]
 		{ // Just a color test, not a political statement.
 			unchecked((int)0xFF0000FF),//Red
@@ -55,27 +79,6 @@ namespace Voxel2PixelTest
 				model[sizeX - 1][sizeY - 1][z] = voxel;
 			}
 			return model;
-		}
-		[Fact]
-		public void ArrayRendererTest()
-		{
-			ArrayModel model = new ArrayModel(RainbowBox(8, 8, 8));
-			int xScale = 12,
-				yScale = 12,
-				width = VoxelDraw.AboveWidth(model),
-				height = VoxelDraw.AboveHeight(model);
-			ArrayRenderer arrayRenderer = new ArrayRenderer
-			{
-				Image = new byte[width * 4 * height],
-				Width = width,
-				IVoxelColor = new NaiveDimmer(RainbowPalette),
-			};
-			VoxelDraw.Above(model, arrayRenderer);
-			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(
-				data: arrayRenderer.Image.Upscale(xScale, yScale, arrayRenderer.Width),
-				width: arrayRenderer.Width * xScale,
-				height: arrayRenderer.Height * yScale)
-				.SaveAsPng("ArrayModel.png");
 		}
 	}
 }
