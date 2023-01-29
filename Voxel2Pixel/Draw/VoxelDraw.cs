@@ -462,8 +462,8 @@ namespace Voxel2Pixel.Draw
 			for (int pixelX = 0; pixelX < model.SizeX; pixelX++)
 				for (int pixelY = 0; pixelY <= pixelHeight; pixelY++)
 				{
-					int startY = Math.Max(model.SizeY - 1 - pixelY, 0) + (pixelY > model.SizeY ? -1 : 0),
-						startZ = model.SizeZ - 1 - Math.Max(pixelY - model.SizeY, 0) + (pixelY > model.SizeY - 1 ? -1 : 0);
+					int startY = Math.Max(model.SizeY - 1 - pixelY, 0),
+						startZ = model.SizeZ - 1 - Math.Max(pixelY + 1 - model.SizeY, 0);
 					bool above = false,
 						below = false;
 					for (int voxelY = startY, voxelZ = startZ;
