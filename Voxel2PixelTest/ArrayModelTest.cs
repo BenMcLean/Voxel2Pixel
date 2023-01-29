@@ -7,7 +7,7 @@ using Voxel2Pixel.Draw;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Render;
 using Xunit;
-using static Voxel2Pixel.TextureMethods;
+using static Voxel2Pixel.Draw.TextureMethods;
 
 namespace Voxel2PixelTest
 {
