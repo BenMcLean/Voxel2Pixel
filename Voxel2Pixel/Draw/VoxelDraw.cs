@@ -473,6 +473,16 @@ namespace Voxel2Pixel.Draw
 						startZ = model.SizeZ - 1 - Math.Max(pixelY + 1 - model.SizeY, 0);
 					bool higher = false,
 						lower = false;
+					if (pixelY + 2 > pixelHeight
+						&& model.At(pixelX, 0, 0) is byte bottomEdge
+						&& bottomEdge != 0)
+					{
+						renderer.RectRight(
+							x: pixelX,
+							y: pixelY,
+							voxel: bottomEdge);
+						continue;
+					}
 					for (int voxelY = startY, voxelZ = startZ;
 						voxelY < model.SizeY && voxelZ >= 0;
 						voxelY++, voxelZ--)
