@@ -460,12 +460,12 @@ namespace Voxel2Pixel.Draw
 		{
 			int pixelHeight = model.SizeY + model.SizeZ;
 			for (int pixelX = 0; pixelX < model.SizeX; pixelX++)
-				for (int pixelY = 0; pixelY <= pixelHeight; pixelY++)
+				for (int pixelY = 0; pixelY <= pixelHeight; pixelY += 2)
 				{
 					int startY = Math.Max(model.SizeY - 1 - pixelY, 0),
 						startZ = model.SizeZ - 1 - Math.Max(pixelY + 1 - model.SizeY, 0);
-					bool above = false,
-						below = false;
+					bool higher = false,
+						lower = false;
 					for (int voxelY = startY, voxelZ = startZ;
 						voxelY < model.SizeY && voxelZ >= 0;
 						voxelY++, voxelZ--)
@@ -478,7 +478,7 @@ namespace Voxel2Pixel.Draw
 								x: pixelX,
 								y: pixelY,
 								voxel: voxelAbove);
-							above = true;
+							higher = true;
 						}
 						if (voxelY > 0
 							&& model.At(pixelX, voxelY - 1, voxelZ) is byte voxelFront
@@ -488,24 +488,24 @@ namespace Voxel2Pixel.Draw
 								x: pixelX,
 								y: pixelY + 1,
 								voxel: voxelFront);
-							below = true;
+							lower = true;
 						}
 						if (model.At(pixelX, voxelY, voxelZ) is byte voxel
 							&& voxel != 0)
 						{
-							if (!above)
+							if (!higher)
 								renderer.RectVertical(
 									x: pixelX,
 									y: pixelY,
 									voxel: voxel);
-							if (!below)
+							if (!lower)
 								renderer.RectRight(
 									x: pixelX,
 									y: pixelY + 1,
 									voxel: voxel);
 							break;
 						}
-						if (!above
+						if (!higher
 							&& voxelY < model.SizeY - 1
 							&& model.At(pixelX, voxelY + 1, voxelZ) is byte voxelBack
 							&& voxelBack != 0)
@@ -514,9 +514,9 @@ namespace Voxel2Pixel.Draw
 								x: pixelX,
 								y: pixelY,
 								voxel: voxelBack);
-							above = true;
+							higher = true;
 						}
-						if (!below
+						if (!lower
 							&& voxelZ > 0
 							&& model.At(pixelX, voxelY, voxelZ - 1) is byte voxelBelow
 							&& voxelBelow != 0)
@@ -525,9 +525,9 @@ namespace Voxel2Pixel.Draw
 								x: pixelX,
 								y: pixelY + 1,
 								voxel: voxelBelow);
-							below = true;
+							lower = true;
 						}
-						if (above && below)
+						if (higher && lower)
 							break;
 					}
 				}

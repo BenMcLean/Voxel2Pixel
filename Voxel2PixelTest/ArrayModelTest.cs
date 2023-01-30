@@ -17,11 +17,11 @@ namespace Voxel2PixelTest
 		public void ArrayRendererTest()
 		{
 			ArrayModel model = new ArrayModel(RainbowBox(
-				sizeX: 8,
-				sizeY: 8,
-				sizeZ: 8));
-			int xScale = 12,
-				yScale = 12,
+				sizeX: 7,
+				sizeY: 7,
+				sizeZ: 7));
+			int xScale = 1,
+				yScale = 1,
 				width = VoxelDraw.AboveWidth(model),
 				height = VoxelDraw.AboveHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
@@ -62,7 +62,7 @@ namespace Voxel2PixelTest
 				model[x][0][sizeZ - 1] = voxel;
 				model[x][sizeY - 1][sizeZ - 1] = voxel;
 			}
-			for (int y = 1; y < sizeY - 2; y++)
+			for (int y = 1; y < sizeY - 1; y++)
 			{
 				byte voxel = (byte)(y % Rainbow.Count + 1);
 				model[0][y][0] = voxel;
@@ -70,7 +70,7 @@ namespace Voxel2PixelTest
 				model[0][y][sizeZ - 1] = voxel;
 				model[sizeX - 1][y][sizeZ - 1] = voxel;
 			}
-			for (int z = 1; z < sizeZ - 2; z++)
+			for (int z = 1; z < sizeZ - 1; z++)
 			{
 				byte voxel = (byte)(z % Rainbow.Count + 1);
 				model[0][0][z] = voxel;
