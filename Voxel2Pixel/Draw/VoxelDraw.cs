@@ -266,7 +266,7 @@ namespace Voxel2Pixel.Draw
 		{
 			int pixelWidth = model.SizeX + model.SizeY;
 			for (int pixelY = 0; pixelY < model.SizeZ; pixelY++)
-				for (int pixelX = 0; pixelX < pixelWidth + 1; pixelX += 2)
+				for (int pixelX = 0; pixelX <= pixelWidth; pixelX += 2)
 				{
 					bool leftDone = false,
 						rightDone = false;
@@ -284,7 +284,7 @@ namespace Voxel2Pixel.Draw
 						continue;
 					}
 					for (int voxelX = startX, voxelY = startY;
-						 voxelX < model.SizeX && voxelY < model.SizeY;
+						 voxelX <= model.SizeX && voxelY <= model.SizeY;
 						 voxelX++, voxelY++)
 					{
 						if (!leftDone
