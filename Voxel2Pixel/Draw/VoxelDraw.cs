@@ -270,47 +270,48 @@ namespace Voxel2Pixel.Draw
 				{
 					bool leftDone = pixelWidth - pixelX < 2,
 						rightDone = false;
-					int startX = Math.Max(model.SizeX - pixelX - 1, 0),
-						startY = Math.Max(pixelX - model.SizeX + 1, 0);
+					int startX = Math.Max(pixelX - model.SizeY + 1, 0),
+						startY = Math.Max(model.SizeY - pixelX - 1, 0),
+						voxelZ = model.SizeZ - 1 - pixelY;
 					for (int voxelX = startX, voxelY = startY;
 						 voxelX < model.SizeX && voxelY < model.SizeY;
 						 voxelX++, voxelY++)
 					{
 						if (!leftDone
 							&& voxelX > 0
-							&& model.At(voxelX - 1, voxelY, pixelY) is byte voxelRight
+							&& model.At(voxelX - 1, voxelY, voxelZ) is byte voxelRight
 							&& voxelRight != 0)
 						{
 							renderer.RectRight(
-								x: pixelWidth - 2 - pixelX,
-								y: model.SizeZ - 1 - pixelY,
+								x: pixelX,
+								y: pixelY,
 								voxel: voxelRight);
 							leftDone = true;
 						}
 						if (!rightDone
 							&& voxelY > 0
-							&& model.At(voxelX, voxelY - 1, pixelY) is byte voxelLeft
+							&& model.At(voxelX, voxelY - 1, voxelZ) is byte voxelLeft
 							&& voxelLeft != 0)
 						{
 							renderer.RectLeft(
-								x: pixelWidth - 1 - pixelX,
-								y: model.SizeZ - 1 - pixelY,
+								x: pixelX + 1,
+								y: pixelY,
 								voxel: voxelLeft);
 							rightDone = true;
 						}
 						if (leftDone && rightDone) break;
-						if (model.At(voxelX, voxelY, pixelY) is byte voxel
+						if (model.At(voxelX, voxelY, voxelZ) is byte voxel
 							&& voxel != 0)
 						{
 							if (!leftDone)
 								renderer.RectLeft(
-									x: pixelWidth - 2 - pixelX,
-									y: model.SizeZ - 1 - pixelY,
+									x: pixelX,
+									y: pixelY,
 									voxel: voxel);
 							if (!rightDone)
 								renderer.RectRight(
-									x: pixelWidth - 1 - pixelX,
-									y: model.SizeZ - 1 - pixelY,
+									x: pixelX + 1,
+									y: pixelY,
 									voxel: voxel);
 							break;
 						}

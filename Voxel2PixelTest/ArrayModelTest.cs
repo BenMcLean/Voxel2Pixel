@@ -17,20 +17,20 @@ namespace Voxel2PixelTest
 		public void ArrayRendererTest()
 		{
 			ArrayModel model = new ArrayModel(RainbowBox(
-				sizeX: 7,
+				sizeX: 6,
 				sizeY: 7,
-				sizeZ: 7));
+				sizeZ: 8));
 			int xScale = 1,
 				yScale = 1,
-				width = VoxelDraw.AboveWidth(model),
-				height = VoxelDraw.AboveHeight(model);
+				width = VoxelDraw.DiagonalWidth(model),
+				height = VoxelDraw.DiagonalHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{
 				Image = new byte[width * 4 * height],
 				Width = width,
 				IVoxelColor = new NaiveDimmer(RainbowPalette),
 			};
-			VoxelDraw.Above(model, arrayRenderer);
+			VoxelDraw.Diagonal(model, arrayRenderer);
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(
 				data: arrayRenderer.Image.Upscale(xScale, yScale, arrayRenderer.Width),
 				width: arrayRenderer.Width * xScale,
