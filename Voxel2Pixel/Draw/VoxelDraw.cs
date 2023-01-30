@@ -266,12 +266,12 @@ namespace Voxel2Pixel.Draw
 		{
 			int pixelWidth = model.SizeX + model.SizeY;
 			for (int pixelY = 0; pixelY < model.SizeZ; pixelY++)
-				for (int pixelX = 0; pixelX <= pixelWidth; pixelX += 2)
+				for (int pixelX = 0; pixelX < pixelWidth; pixelX += 2)
 				{
-					bool leftDone = pixelWidth - pixelX < 2,
+					bool leftDone = false,
 						rightDone = false;
 					int startX = Math.Max(pixelX - model.SizeY + 1, 0),
-						startY = Math.Max(model.SizeY - pixelX - 1, 0),
+						startY = Math.Max(model.SizeY - 1 - pixelX, 0),
 						voxelZ = model.SizeZ - 1 - pixelY;
 					for (int voxelX = startX, voxelY = startY;
 						 voxelX < model.SizeX && voxelY < model.SizeY;

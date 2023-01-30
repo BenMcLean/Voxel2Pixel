@@ -19,9 +19,9 @@ namespace Voxel2PixelTest
 			ArrayModel model = new ArrayModel(RainbowBox(
 				sizeX: 6,
 				sizeY: 7,
-				sizeZ: 8));
-			int xScale = 1,
-				yScale = 1,
+				sizeZ: 7));
+			int xScale = 32,
+				yScale = 32,
 				width = VoxelDraw.DiagonalWidth(model),
 				height = VoxelDraw.DiagonalHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
