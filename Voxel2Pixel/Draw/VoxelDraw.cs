@@ -332,134 +332,130 @@ namespace Voxel2Pixel.Draw
 		public static int DiagonalPeekHeight(IModel model, int scaleY = 6) => model.SizeZ * scaleY;
 		public static void DiagonalPeek(IModel model, IRectangleRenderer renderer, int scaleX = 4, int scaleY = 6)
 		{
+			void DrawRight(int x, int y, byte voxel, bool peek = false)
+			{
+				if (peek)
+				{
+					renderer.RectVertical(
+						x: x * scaleX,
+						y: y * scaleY,
+						voxel: voxel,
+						sizeX: scaleX,
+						sizeY: 1);
+					renderer.RectRight(
+						x: x * scaleX,
+						y: y * scaleY + 1,
+						voxel: voxel,
+						sizeX: scaleX,
+						sizeY: scaleY - 1);
+				}
+				else
+					renderer.RectRight(
+						x: x * scaleX,
+						y: y * scaleY,
+						voxel: voxel,
+						sizeX: scaleX,
+						sizeY: scaleY);
+			}
+			void DrawLeft(int x, int y, byte voxel, bool peek = false)
+			{
+				if (peek)
+				{
+					renderer.RectVertical(
+						x: x * scaleX,
+						y: y * scaleY,
+						voxel: voxel,
+						sizeX: scaleX,
+						sizeY: 1);
+					renderer.RectLeft(
+						x: x * scaleX,
+						y: y * scaleY + 1,
+						voxel: voxel,
+						sizeX: scaleX,
+						sizeY: scaleY - 1);
+				}
+				else
+					renderer.RectLeft(
+						x: x * scaleX,
+						y: y * scaleY,
+						voxel: voxel,
+						sizeX: scaleX,
+						sizeY: scaleY);
+			}
 			int pixelWidth = model.SizeX + model.SizeY;
 			for (int pixelY = 0; pixelY < model.SizeZ; pixelY++)
 				for (int pixelX = 0; pixelX <= pixelWidth; pixelX += 2)
 				{
-					bool leftDone = pixelWidth - pixelX < 2,
+					bool leftDone = false,
 						rightDone = false;
-					int startX = Math.Max(model.SizeX - pixelX - 1, 0),
-						startY = Math.Max(pixelX - model.SizeX + 1, 0);
+					int startX = Math.Max(pixelX - model.SizeY + 1, 0),
+						startY = Math.Max(model.SizeY - 1 - pixelX, 0),
+						voxelZ = model.SizeZ - 1 - pixelY;
+					if (pixelX + 2 >= pixelWidth + 1
+						&& model.At(model.SizeX - 1, 0, voxelZ) is byte rightEdge
+						&& rightEdge != 0)
+					{
+						DrawRight(
+							x: pixelX,
+							y: pixelY,
+							voxel: rightEdge,
+							peek: voxelZ >= model.SizeZ
+								|| (model.At(model.SizeX - 1, 0, voxelZ + 1) is byte voxelAbove
+								&& voxelAbove != 0));
+						continue;
+					}
 					for (int voxelX = startX, voxelY = startY;
-						 voxelX < model.SizeX && voxelY < model.SizeY;
+						 voxelX <= model.SizeX && voxelY <= model.SizeY;
 						 voxelX++, voxelY++)
 					{
 						if (!leftDone
 							&& voxelX > 0
-							&& model.At(voxelX - 1, voxelY, pixelY) is byte voxelRight
+							&& model.At(voxelX - 1, voxelY, voxelZ) is byte voxelRight
 							&& voxelRight != 0)
 						{
-							if (pixelY >= model.SizeZ - 1
-								|| model.At(voxelX - 1, voxelY, pixelY + 1) == 0)
-							{
-								renderer.RectVertical(
-									x: (pixelWidth - 1 - pixelX) * scaleX,
-									y: (model.SizeZ - 1 - pixelY) * scaleY,
-									voxel: voxelRight,
-									sizeX: scaleX,
-									sizeY: 1);
-								renderer.RectRight(
-									x: (pixelWidth - 1 - pixelX) * scaleX,
-									y: (model.SizeZ - 1 - pixelY) * scaleY + 1,
-									voxel: voxelRight,
-									sizeX: scaleX,
-									sizeY: scaleY - 1);
-							}
-							else
-								renderer.RectRight(
-									x: (pixelWidth - 1 - pixelX) * scaleX,
-									y: (model.SizeZ - 1 - pixelY) * scaleY,
-									voxel: voxelRight,
-									sizeX: scaleX,
-									sizeY: scaleY);
+							DrawRight(
+								x: pixelX,
+								y: pixelY,
+								voxel: voxelRight,
+								peek: voxelZ == model.SizeZ - 1
+									|| (model.At(voxelX - 1, voxelY, voxelZ + 1) is byte voxelAbove
+									&& voxelAbove == 0));
 							leftDone = true;
 						}
 						if (!rightDone
 							&& voxelY > 0
-							&& model.At(voxelX, voxelY - 1, pixelY) is byte voxelLeft
+							&& model.At(voxelX, voxelY - 1, voxelZ) is byte voxelLeft
 							&& voxelLeft != 0)
 						{
-							if (pixelY >= model.SizeZ - 1
-								|| model.At(voxelX, voxelY - 1, pixelY + 1) == 0)
-							{
-								renderer.RectVertical(
-									x: (pixelWidth - pixelX) * scaleX,
-									y: (model.SizeZ - 1 - pixelY) * scaleY,
-									voxel: voxelLeft,
-									sizeX: scaleX,
-									sizeY: 1);
-								renderer.RectLeft(
-									x: (pixelWidth - pixelX) * scaleX,
-									y: (model.SizeZ - 1 - pixelY) * scaleY + 1,
-									voxel: voxelLeft,
-									sizeX: scaleX,
-									sizeY: scaleY - 1);
-							}
-							else
-								renderer.RectLeft(
-									x: (pixelWidth - pixelX) * scaleX,
-									y: (model.SizeZ - 1 - pixelY) * scaleY,
-									voxel: voxelLeft,
-									sizeX: scaleX,
-									sizeY: scaleY);
+							DrawLeft(
+								x: pixelX + 1,
+								y: pixelY,
+								voxel: voxelLeft,
+								peek: voxelZ == model.SizeZ - 1
+									|| (model.At(voxelX, voxelY - 1, voxelZ + 1) is byte voxelAbove
+									&& voxelAbove == 0));
 							rightDone = true;
 						}
 						if (leftDone && rightDone) break;
-						if (model.At(voxelX, voxelY, pixelY) is byte voxel
+						if (model.At(voxelX, voxelY, voxelZ) is byte voxel
 							&& voxel != 0)
 						{
 							if (!leftDone)
-							{
-								if (pixelY >= model.SizeZ - 1
-									|| model.At(voxelX, voxelY, pixelY + 1) == 0)
-								{
-									renderer.RectVertical(
-										x: (pixelWidth - 1 - pixelX) * scaleX,
-										y: (model.SizeZ - 1 - pixelY) * scaleY,
-										voxel: voxel,
-										sizeX: scaleX,
-										sizeY: 1);
-									renderer.RectLeft(
-										x: (pixelWidth - 1 - pixelX) * scaleX,
-										y: (model.SizeZ - 1 - pixelY) * scaleY + 1,
-										voxel: voxel,
-										sizeX: scaleX,
-										sizeY: scaleY - 1);
-								}
-								else
-									renderer.RectLeft(
-										x: (pixelWidth - 1 - pixelX) * scaleX,
-										y: (model.SizeZ - 1 - pixelY) * scaleY,
-										voxel: voxel,
-										sizeX: scaleX,
-										sizeY: scaleY);
-							}
+								DrawLeft(
+									x: pixelX,
+									y: pixelY,
+									voxel: voxel,
+									peek: voxelZ == model.SizeZ - 1
+										|| (model.At(voxelX, voxelY, voxelZ + 1) is byte voxelAbove
+										&& voxelAbove == 0));
 							if (!rightDone)
-							{
-								if (pixelY >= model.SizeZ - 1
-									|| model.At(voxelX, voxelY, pixelY + 1) == 0)
-								{
-									renderer.RectVertical(
-										x: (pixelWidth - pixelX) * scaleX,
-										y: (model.SizeZ - 1 - pixelY) * scaleY,
-										voxel: voxel,
-										sizeX: scaleX,
-										sizeY: 1);
-									renderer.RectRight(
-										x: (pixelWidth - pixelX) * scaleX,
-										y: (model.SizeZ - 1 - pixelY) * scaleY + 1,
-										voxel: voxel,
-										sizeX: scaleX,
-										sizeY: scaleY - 1);
-								}
-								else
-									renderer.RectRight(
-										x: (pixelWidth - pixelX) * scaleX,
-										y: (model.SizeZ - 1 - pixelY) * scaleY,
-										voxel: voxel,
-										sizeX: scaleX,
-										sizeY: scaleY);
-							}
+								DrawRight(
+									x: pixelX + 1,
+									y: pixelY,
+									voxel: voxel,
+									peek: voxelZ == model.SizeZ - 1
+										|| (model.At(voxelX, voxelY, voxelZ + 1) is byte voxelAbove
+										&& voxelAbove == 0));
 							break;
 						}
 					}
