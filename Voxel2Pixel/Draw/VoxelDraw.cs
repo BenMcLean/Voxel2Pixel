@@ -586,16 +586,16 @@ namespace Voxel2Pixel.Draw
 					//screen.y = (map.x + map.y) * TILE_HEIGHT_HALF;
 					//map.x = (screen.x / TILE_WIDTH_HALF + screen.y / TILE_HEIGHT_HALF) / 2;
 					//map.y = (screen.y / TILE_HEIGHT_HALF - (screen.x / TILE_WIDTH_HALF)) / 2;
-					int x = pixelX / 2,
-						y = pixelY / 2,
-						startX = startAtTop ? model.SizeX - 1 - (y - x + model.SizeX) / 2
+					int halfX = pixelX / 2,
+						halfY = pixelY / 2,
+						startX = startAtTop ? model.SizeX - 1 - (halfY - halfX + model.SizeX) / 2
 							: startAtLeft ? 0
 							: 0,
-						startY = startAtTop ? model.SizeY - 1 - (x + y - model.SizeX + 1) / 2
-							: startAtLeft ? model.SizeY - 1 - x
+						startY = startAtTop ? model.SizeY - 1 - (halfX + halfY - model.SizeX + 1) / 2
+							: startAtLeft ? model.SizeY - 1 - halfX
 							: 0,
 						startZ = startAtTop ? model.SizeZ - 1
-							: startAtLeft ? model.SizeZ - 1 - y + x + model.SizeX
+							: startAtLeft ? model.SizeZ - 1 - (halfY - halfX - model.SizeX) / 2
 							: 0;
 					if (!startAtTop && !startAtLeft)
 						renderer.Triangle(
