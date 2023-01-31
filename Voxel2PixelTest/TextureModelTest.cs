@@ -20,15 +20,15 @@ namespace Voxel2PixelTest
 			};
 			int xScale = 1,
 				yScale = 1,
-				width = VoxelDraw.AboveWidth(model),
-				height = VoxelDraw.AboveHeight(model);
+				width = VoxelDraw.IsoWidth(model),
+				height = VoxelDraw.IsoHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{
 				Image = new byte[width * 4 * height],
 				Width = width,
 				IVoxelColor = new NaiveDimmer(model.Palette),
 			};
-			VoxelDraw.Above(model, arrayRenderer);
+			VoxelDraw.Iso(model, arrayRenderer);
 			ImageMaker.Png(
 				scaleX: xScale,
 				scaleY: yScale,

@@ -586,15 +586,14 @@ namespace Voxel2Pixel.Draw
 					//screen.y = (map.x + map.y) * TILE_HEIGHT_HALF;
 					//map.x = (screen.x / TILE_WIDTH_HALF + screen.y / TILE_HEIGHT_HALF) / 2;
 					//map.y = (screen.y / TILE_HEIGHT_HALF - (screen.x / TILE_WIDTH_HALF)) / 2;
-					int x = pixelX / 2 + 1,
-						y = pixelY / 2 + 1,
-						startX = startAtTop ? (x + y) / 2
+					int x = pixelX / 2,
+						y = pixelY / 2,
+						startX = startAtTop ? (x + y - model.SizeX) / 2
 						: 0,
-						startY = startAtTop ? (y - x) / 2
+						startY = startAtTop ? (y - x + model.SizeY) / 2
 						: 0,
 						startZ = startAtTop ? model.SizeZ - 1
 						: 0;
-
 					if (!startAtTop)
 						renderer.Triangle(
 							x: pixelX,
@@ -602,22 +601,31 @@ namespace Voxel2Pixel.Draw
 							right: right,
 							color: startAtLeft ? 0x00FFFFFF
 							: right ? unchecked((int)0xFF0000FF) : 0x0000FFFF);
-					else
-						for (int voxelX = startX, voxelY = startY, voxelZ = startZ, distance = 0;
-								voxelX < model.SizeX && voxelY < model.SizeY && voxelZ >= 0;
-								voxelX++, voxelY++, voxelZ--, distance++)
-						{
-							if (model.At(voxelX, voxelY, voxelZ) is byte voxel
-								&& voxel != 0)
-							{
-								renderer.TriangleRightFace(
-									x: pixelX,
-									y: pixelY,
-									right: right,
-									voxel: voxel);
-								break;
-							}
-						}
+					else if (model.At(startX, startY, startZ) is byte voxel
+						&& voxel != 0)
+					{
+						renderer.TriangleRightFace(
+							x: pixelX,
+							y: pixelY,
+							right: right,
+							voxel: voxel);
+						//break;
+					}
+					//for (int voxelX = startX, voxelY = startY, voxelZ = startZ, distance = 0;
+					//		voxelX < model.SizeX && voxelY < model.SizeY && voxelZ >= 0;
+					//		voxelX++, voxelY++, voxelZ--, distance++)
+					//{
+					//	if (model.At(voxelX, voxelY, voxelZ) is byte voxel
+					//		&& voxel != 0)
+					//	{
+					//		renderer.TriangleRightFace(
+					//			x: pixelX,
+					//			y: pixelY,
+					//			right: right,
+					//			voxel: voxel);
+					//		break;
+					//	}
+					//}
 				}
 			}
 		}
