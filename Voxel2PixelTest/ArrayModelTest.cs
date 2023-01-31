@@ -17,9 +17,9 @@ namespace Voxel2PixelTest
 		public void ArrayRendererTest()
 		{
 			ArrayModel model = new ArrayModel(RainbowBox(
-				sizeX: 7,
-				sizeY: 7,
-				sizeZ: 12));
+				sizeX: 9,
+				sizeY: 6,
+				sizeZ: 9));
 			int xScale = 32,
 				yScale = 32,
 				width = VoxelDraw.AboveWidth(model),
@@ -77,6 +77,35 @@ namespace Voxel2PixelTest
 				model[sizeX - 1][0][z] = voxel;
 				model[0][sizeY - 1][z] = voxel;
 				model[sizeX - 1][sizeY - 1][z] = voxel;
+			}
+			return model;
+		}
+		public byte[][][] SmallerRainbowBox(int sizeX, int sizeY, int sizeZ)
+		{
+			byte[][][] model = ArrayModel.MakeModel(sizeX, sizeY, sizeZ);
+			for (int x = 1; x < sizeX - 1; x++)
+			{
+				byte voxel = (byte)(x % Rainbow.Count);
+				model[x][1][1] = voxel;
+				model[x][sizeY - 2][1] = voxel;
+				model[x][1][sizeZ - 2] = voxel;
+				model[x][sizeY - 2][sizeZ - 2] = voxel;
+			}
+			for (int y = 1; y < sizeY - 2; y++)
+			{
+				byte voxel = (byte)(y % Rainbow.Count);
+				model[1][y][1] = voxel;
+				model[sizeX - 2][y][1] = voxel;
+				model[1][y][sizeZ - 2] = voxel;
+				model[sizeX - 2][y][sizeZ - 2] = voxel;
+			}
+			for (int z = 1; z < sizeZ - 2; z++)
+			{
+				byte voxel = (byte)(z % Rainbow.Count);
+				model[1][1][z] = voxel;
+				model[sizeX - 2][1][z] = voxel;
+				model[1][sizeY - 2][z] = voxel;
+				model[sizeX - 2][sizeY - 2][z] = voxel;
 			}
 			return model;
 		}

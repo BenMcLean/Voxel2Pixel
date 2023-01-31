@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Voxel2Pixel.Model
+﻿namespace Voxel2Pixel.Model
 {
 	public class EmptyModel : IModel
 	{

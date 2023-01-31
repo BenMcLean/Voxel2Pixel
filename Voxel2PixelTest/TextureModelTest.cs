@@ -16,10 +16,10 @@ namespace Voxel2PixelTest
 			int testTextureWidth = 32, testTextureHeight = 32;
 			TextureModel model = new TextureModel(TestTexture(testTextureWidth, testTextureHeight), testTextureWidth)
 			{
-				SizeZ = 5,
+				SizeZ = 1,
 			};
-			int xScale = 12,
-				yScale = 12,
+			int xScale = 1,
+				yScale = 1,
 				width = VoxelDraw.AboveWidth(model),
 				height = VoxelDraw.AboveHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
