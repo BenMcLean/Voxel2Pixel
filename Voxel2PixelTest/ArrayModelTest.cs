@@ -7,7 +7,6 @@ using Voxel2Pixel.Draw;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Render;
 using Xunit;
-using static Voxel2Pixel.Draw.TextureMethods;
 
 namespace Voxel2PixelTest
 {
@@ -31,10 +30,11 @@ namespace Voxel2PixelTest
 				IVoxelColor = new NaiveDimmer(RainbowPalette),
 			};
 			VoxelDraw.Iso(model, arrayRenderer);
-			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(
-				data: arrayRenderer.Image.Upscale(xScale, yScale, arrayRenderer.Width),
-				width: arrayRenderer.Width * xScale,
-				height: arrayRenderer.Height * yScale)
+			ImageMaker.Png(
+				scaleX: xScale,
+				scaleY: yScale,
+				width: width,
+				bytes: arrayRenderer.Image)
 				.SaveAsPng("ArrayModel.png");
 		}
 		public static readonly ReadOnlyCollection<int> Rainbow = Array.AsReadOnly(new int[7]

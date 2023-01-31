@@ -45,7 +45,7 @@ namespace Voxel2PixelTest
 						model.Voxels[randomX][randomY][randomZ] = 0;
 						model.Voxels[x][y][z] = 2;
 					}
-			AnimatedGifMaker.Gif(
+			ImageMaker.AnimatedGif(
 				width: width * xScale,
 				frames: frames.ToArray())
 				.SaveAsGif("AnimatedTest.gif");

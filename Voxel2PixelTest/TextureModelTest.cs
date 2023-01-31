@@ -29,10 +29,11 @@ namespace Voxel2PixelTest
 				IVoxelColor = new NaiveDimmer(model.Palette),
 			};
 			VoxelDraw.Above(model, arrayRenderer);
-			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(
-				data: arrayRenderer.Image.Upscale(xScale, yScale, arrayRenderer.Width),
-				width: arrayRenderer.Width * xScale,
-				height: arrayRenderer.Height * yScale)
+			ImageMaker.Png(
+				scaleX: xScale,
+				scaleY: yScale,
+				width: width,
+				bytes: arrayRenderer.Image)
 				.SaveAsPng("TextureModel.png");
 		}
 		public byte[] TestTexture(int width, int height) =>

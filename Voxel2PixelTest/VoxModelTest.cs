@@ -4,7 +4,6 @@ using Voxel2Pixel.Draw;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Render;
 using Xunit;
-using static Voxel2Pixel.Draw.TextureMethods;
 
 namespace Voxel2PixelTest
 {
@@ -15,9 +14,7 @@ namespace Voxel2PixelTest
 		public void ArrayRendererTest()
 		{
 			VoxModel model = new VoxModel(path);
-			int xScale = 32,
-				yScale = 32,
-				width = VoxelDraw.AboveWidth(model),
+			int width = VoxelDraw.AboveWidth(model),
 				height = VoxelDraw.AboveHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{
@@ -26,10 +23,11 @@ namespace Voxel2PixelTest
 				IVoxelColor = new NaiveDimmer(model.Palette),
 			};
 			VoxelDraw.Above(model, arrayRenderer);
-			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(
-				data: arrayRenderer.Image.Upscale(xScale, yScale, arrayRenderer.Width),
-				width: arrayRenderer.Width * xScale,
-				height: arrayRenderer.Height * yScale)
+			ImageMaker.Png(
+				scaleX: 32,
+				scaleY: 32,
+				width: width,
+				bytes: arrayRenderer.Image)
 				.SaveAsPng("Sora.png");
 		}
 	}
