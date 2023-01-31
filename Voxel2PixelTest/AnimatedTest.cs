@@ -11,16 +11,14 @@ namespace Voxel2PixelTest
 {
 	public class AnimatedTest
 	{
-		//[Fact]
+		[Fact]
 		public void GifTest()
 		{
 			ArrayModel model = new ArrayModel(
 				sizeX: 7,
 				sizeY: 4,
 				sizeZ: 7);
-			int xScale = 32,
-				yScale = 32,
-				width = VoxelDraw.AboveWidth(model),
+			int width = VoxelDraw.AboveWidth(model),
 				height = VoxelDraw.AboveHeight(model);
 			Random random = new System.Random();
 			IVoxelColor voxelColor = new NaiveDimmer(ArrayModelTest.RainbowPalette);
@@ -41,12 +39,14 @@ namespace Voxel2PixelTest
 							IVoxelColor = voxelColor,
 						};
 						VoxelDraw.Above(model, arrayRenderer);
-						frames.Add(arrayRenderer.Image.Upscale(xScale, yScale, width));
+						frames.Add(arrayRenderer.Image);
 						model.Voxels[randomX][randomY][randomZ] = 0;
 						model.Voxels[x][y][z] = 2;
 					}
-			ImageMaker.AnimatedGif(
-				width: width * xScale,
+			ImageMaker.AnimatedGifScaled(
+				scaleX: 32,
+				scaleY: 32,
+				width: width,
 				frames: frames.ToArray())
 				.SaveAsGif("AnimatedTest.gif");
 		}

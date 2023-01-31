@@ -9,11 +9,10 @@ namespace Voxel2PixelTest
 {
 	public class VoxModelTest
 	{
-		const string path = @"..\..\..\Sora.vox";
 		[Fact]
 		public void ArrayRendererTest()
 		{
-			VoxModel model = new VoxModel(path);
+			VoxModel model = new VoxModel(@"..\..\..\Sora.vox");
 			int width = VoxelDraw.AboveWidth(model),
 				height = VoxelDraw.AboveHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer

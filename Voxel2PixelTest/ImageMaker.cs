@@ -1,5 +1,6 @@
 ﻿using SixLabors.ImageSharp;
 using System;
+using System.Linq;
 using static Voxel2Pixel.Draw.TextureMethods;
 
 namespace Voxel2PixelTest
@@ -24,19 +25,14 @@ namespace Voxel2PixelTest
 				width: width * scaleX,
 				height: (bytes.Length / width >> 2) * scaleY);
 		}
-		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(params byte[][] frames) => AnimatedGif(
-			width: 0,
-			frames: frames);
-		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(int width, params byte[][] frames) => AnimatedGif(
-			width: width,
-			frameDelay: 25,
-			frames: frames);
-		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(int width, int frameDelay, params byte[][] frames) => AnimatedGif(
-			width: width,
+		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGifScaled(int scaleX, int scaleY, int width = 0, int frameDelay = 25, ushort repeatCount = 0, params byte[][] frames) => AnimatedGif(
+			width: width * scaleX,
 			frameDelay: frameDelay,
-			repeatCount: 0,
-			frames: frames);
-		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(int width, int frameDelay, ushort repeatCount, params byte[][] frames)
+			repeatCount: repeatCount,
+			frames: frames
+				.Select(f => f.Upscale(scaleX, scaleY, width))
+				.ToArray());
+		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(int width = 0, int frameDelay = 25, ushort repeatCount = 0, params byte[][] frames)
 		{
 			if (width < 1)
 				width = (int)Math.Sqrt(frames[0].Length >> 2);
