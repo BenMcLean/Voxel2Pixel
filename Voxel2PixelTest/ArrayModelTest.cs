@@ -16,7 +16,7 @@ namespace Voxel2PixelTest
 		public void ArrayRendererTest()
 		{
 			ArrayModel model = new ArrayModel(RainbowBox(
-				sizeX: 9,
+				sizeX: 8,
 				sizeY: 6,
 				sizeZ: 9));
 			int xScale = 1,

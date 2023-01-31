@@ -1,4 +1,5 @@
 ﻿using SixLabors.ImageSharp;
+using System.Security.Cryptography;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Model;
@@ -14,13 +15,16 @@ namespace Voxel2PixelTest
 		public void ArrayRendererTest()
 		{
 			int testTextureWidth = 10, testTextureHeight = 32;
-			TextureModel model = new TextureModel(TestTexture(testTextureWidth, testTextureHeight), testTextureWidth)
+			byte[] testTexture = TestTexture(testTextureWidth, testTextureHeight);
+			ImageMaker.Png(
+				width: testTextureWidth,
+				bytes: testTexture)
+				.SaveAsPng("TextureModelTestTexture.png");
+			TextureModel model = new TextureModel(testTexture, testTextureWidth)
 			{
 				SizeZ = 5,
 			};
-			int xScale = 1,
-				yScale = 1,
-				width = VoxelDraw.IsoWidth(model),
+			int width = VoxelDraw.IsoWidth(model),
 				height = VoxelDraw.IsoHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{
@@ -30,8 +34,8 @@ namespace Voxel2PixelTest
 			};
 			VoxelDraw.Iso(model, arrayRenderer);
 			ImageMaker.Png(
-				scaleX: xScale,
-				scaleY: yScale,
+				scaleX: 1,
+				scaleY: 1,
 				width: width,
 				bytes: arrayRenderer.Image)
 				.SaveAsPng("TextureModel.png");
