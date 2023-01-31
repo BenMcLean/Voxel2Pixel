@@ -590,21 +590,14 @@ namespace Voxel2Pixel.Draw
 						halfY = pixelY / 2,
 						startX = startAtTop ? model.SizeX - 1 - (halfY - halfX + model.SizeX) / 2
 							: startAtLeft ? 0
-							: 0,
+							: 0,//TODO
 						startY = startAtTop ? model.SizeY - 1 - (halfX + halfY - model.SizeX + 1) / 2
 							: startAtLeft ? model.SizeY - 1 - halfX
 							: 0,
 						startZ = startAtTop ? model.SizeZ - 1
 							: startAtLeft ? model.SizeZ - 1 - (halfY - halfX - model.SizeX) / 2
-							: 0;
-					if (!startAtTop && !startAtLeft)
-						renderer.Triangle(
-							x: pixelX,
-							y: pixelY,
-							right: right,
-							color: startAtLeft ? 0x00FFFFFF
-							: right ? unchecked((int)0xFF0000FF) : 0x0000FFFF);
-					else if (model.At(startX, startY, startZ) is byte voxel
+							: 0;//TODO
+					if (model.At(startX, startY, startZ) is byte voxel
 						&& voxel != 0)
 					{
 						renderer.TriangleRightFace(
