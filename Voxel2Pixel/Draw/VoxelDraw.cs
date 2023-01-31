@@ -590,7 +590,7 @@ namespace Voxel2Pixel.Draw
 						halfY = pixelY / 2,
 						startX = startAtTop ? model.SizeX - 1 - (halfY - halfX + model.SizeX) / 2
 							: startAtLeft ? 0
-							: 0,//TODO
+							: halfX - model.SizeY,
 						startY = startAtTop ? model.SizeY - 1 - (halfX + halfY - model.SizeX + 1) / 2
 							: startAtLeft ? model.SizeY - 1 - halfX
 							: 0,
