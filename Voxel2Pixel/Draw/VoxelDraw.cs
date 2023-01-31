@@ -589,12 +589,15 @@ namespace Voxel2Pixel.Draw
 					int x = pixelX / 2,
 						y = pixelY / 2,
 						startX = startAtTop ? model.SizeX - 1 - (y - x + model.SizeX) / 2
-						: 0,
+							: startAtLeft ? 0
+							: 0,
 						startY = startAtTop ? model.SizeY - 1 - (x + y - model.SizeX + 1) / 2
-						: 0,
+							: startAtLeft ? model.SizeY - 1 - x
+							: 0,
 						startZ = startAtTop ? model.SizeZ - 1
-						: 0;
-					if (!startAtTop)
+							: startAtLeft ? model.SizeZ - 1 - y + x + model.SizeX
+							: 0;
+					if (!startAtTop && !startAtLeft)
 						renderer.Triangle(
 							x: pixelX,
 							y: pixelY,
