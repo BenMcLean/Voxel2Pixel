@@ -553,7 +553,7 @@ namespace Voxel2Pixel.Draw
 		#region Isometric
 		public static int IsoWidth(IModel model) => 2 * (model.SizeX + model.SizeY);
 		public static int IsoHeight(IModel model) => 2 * (model.SizeX + model.SizeY) + 4 * model.SizeZ - 1;
-		public static void Iso(IModel model, ITriangleRenderer renderer)
+		public static void Iso(IModel model, ITriangleRenderer renderer, int stupid = 0)
 		{
 			// To move one x+ in voxels is x + 2, y - 2 in pixels.
 			// To move one x- in voxels is x - 2, y + 2 in pixels.
@@ -596,7 +596,7 @@ namespace Voxel2Pixel.Draw
 							: 0,
 						startZ = startAtTop ? model.SizeZ - 1
 							: startAtLeft ? model.SizeZ - 1 - (halfY - halfX - model.SizeX) / 2
-							: model.SizeZ - (halfY + halfX - 1) / 2 + model.SizeX;
+							: model.SizeZ - (halfY + halfX) / 2 + model.SizeX + stupid;
 					if (model.At(startX, startY, startZ) is byte voxel
 						&& voxel != 0)
 					{

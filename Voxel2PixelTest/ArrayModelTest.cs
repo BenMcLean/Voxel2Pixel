@@ -1,5 +1,6 @@
 ﻿using SixLabors.ImageSharp;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Voxel2Pixel.Color;
@@ -16,9 +17,9 @@ namespace Voxel2PixelTest
 		public void ArrayRendererTest()
 		{
 			ArrayModel model = new ArrayModel(RainbowBox(
-				sizeX: 8,
+				sizeX: 12,
 				sizeY: 6,
-				sizeZ: 9));
+				sizeZ: 7));
 			int width = VoxelDraw.IsoWidth(model),
 				height = VoxelDraw.IsoHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
@@ -34,6 +35,36 @@ namespace Voxel2PixelTest
 				width: width,
 				bytes: arrayRenderer.Image)
 				.SaveAsPng("ArrayModel.png");
+		}
+		[Fact]
+		public void StupidTest()
+		{
+			ArrayModel model = new ArrayModel(RainbowBox(
+				sizeX: 12,
+				sizeY: 6,
+				sizeZ: 7));
+			int width = VoxelDraw.IsoWidth(model),
+				height = VoxelDraw.IsoHeight(model);
+			IVoxelColor voxelColor = new NaiveDimmer(RainbowPalette);
+			List<byte[]> frames = new List<byte[]>();
+			for (int stupid = -model.SizeZ; stupid <= model.SizeZ; stupid++)
+			{
+				ArrayRenderer arrayRenderer = new ArrayRenderer
+				{
+					Image = new byte[width * 4 * height],
+					Width = width,
+					IVoxelColor = voxelColor,
+				};
+				VoxelDraw.Iso(model, arrayRenderer, stupid);
+				frames.Add(arrayRenderer.Image);
+			}
+			ImageMaker.AnimatedGifScaled(
+				scaleX: 32,
+				scaleY: 32,
+				frameDelay: 50,
+				width: width,
+				frames: frames.ToArray())
+				.SaveAsGif("stupid.gif");
 		}
 		public static readonly ReadOnlyCollection<int> Rainbow = Array.AsReadOnly(new int[7]
 		{ // Just a color test, not a political statement.
