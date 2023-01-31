@@ -596,7 +596,7 @@ namespace Voxel2Pixel.Draw
 							: 0,
 						startZ = startAtTop ? model.SizeZ - 1
 							: startAtLeft ? model.SizeZ - 1 - (halfY - halfX - model.SizeX) / 2
-							: model.SizeZ - (halfY + halfX) / 2 + model.SizeX;
+							: model.SizeZ - (halfY + halfX - 1) / 2 + model.SizeX;
 					if (model.At(startX, startY, startZ) is byte voxel
 						&& voxel != 0)
 					{

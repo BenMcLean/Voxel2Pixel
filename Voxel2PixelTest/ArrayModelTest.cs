@@ -19,9 +19,7 @@ namespace Voxel2PixelTest
 				sizeX: 8,
 				sizeY: 6,
 				sizeZ: 9));
-			int xScale = 1,
-				yScale = 1,
-				width = VoxelDraw.IsoWidth(model),
+			int width = VoxelDraw.IsoWidth(model),
 				height = VoxelDraw.IsoHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{
@@ -31,8 +29,8 @@ namespace Voxel2PixelTest
 			};
 			VoxelDraw.Iso(model, arrayRenderer);
 			ImageMaker.Png(
-				scaleX: xScale,
-				scaleY: yScale,
+				scaleX: 32,
+				scaleY: 32,
 				width: width,
 				bytes: arrayRenderer.Image)
 				.SaveAsPng("ArrayModel.png");
