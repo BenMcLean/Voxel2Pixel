@@ -1,7 +1,6 @@
 ﻿using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Gif;
-using SixLabors.ImageSharp.PixelFormats;
 using System;
+using System.Collections.Generic;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Model;
@@ -12,7 +11,6 @@ namespace Voxel2PixelTest
 {
 	public class AnimatedTest
 	{
-		public const int FrameDelay = 25;
 		//[Fact]
 		public void GifTest()
 		{
@@ -24,11 +22,9 @@ namespace Voxel2PixelTest
 				yScale = 32,
 				width = VoxelDraw.AboveWidth(model),
 				height = VoxelDraw.AboveHeight(model);
-			Image<Rgba32> gif = new Image<Rgba32>(width * xScale, height * xScale);
-			GifMetadata gifMetaData = gif.Metadata.GetGifMetadata();
-			gifMetaData.RepeatCount = 0;
-			gifMetaData.ColorTableMode = GifColorTableMode.Local;
 			Random random = new System.Random();
+			IVoxelColor voxelColor = new NaiveDimmer(ArrayModelTest.RainbowPalette);
+			List<byte[]> frames = new List<byte[]>();
 			for (int x = 0; x < model.SizeX; x++)
 				for (int y = model.SizeY - 1; y >= 0; y--)
 					for (int z = 0; z < model.SizeZ; z++)
@@ -42,21 +38,17 @@ namespace Voxel2PixelTest
 						{
 							Image = new byte[width * 4 * height],
 							Width = width,
-							IVoxelColor = new NaiveDimmer(ArrayModelTest.RainbowPalette),
+							IVoxelColor = voxelColor,
 						};
 						VoxelDraw.Above(model, arrayRenderer);
-						Image<Rgba32> frame = Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(
-								data: arrayRenderer.Image.Upscale(xScale, yScale, arrayRenderer.Width),
-								width: arrayRenderer.Width * xScale,
-								height: arrayRenderer.Height * yScale);
-						GifFrameMetadata metadata = frame.Frames.RootFrame.Metadata.GetGifMetadata();
-						metadata.FrameDelay = FrameDelay;
-						metadata.DisposalMethod = GifDisposalMethod.RestoreToBackground;
-						gif.Frames.AddFrame(frame.Frames.RootFrame);
+						frames.Add(arrayRenderer.Image.Upscale(xScale, yScale, width));
 						model.Voxels[randomX][randomY][randomZ] = 0;
 						model.Voxels[x][y][z] = 2;
 					}
-			gif.SaveAsGif("output.gif");
+			AnimatedGifMaker.Gif(
+				width: width * xScale,
+				frames: frames.ToArray())
+				.SaveAsGif("AnimatedTest.gif");
 		}
 	}
 }

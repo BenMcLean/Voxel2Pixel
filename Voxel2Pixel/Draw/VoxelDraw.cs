@@ -588,23 +588,24 @@ namespace Voxel2Pixel.Draw
 					//map.y = (screen.y / TILE_HEIGHT_HALF - (screen.x / TILE_WIDTH_HALF)) / 2;
 					int x = pixelX / 2 + 1,
 						y = pixelY / 2 + 1,
-						startX = startAtTop ? (pixelX + pixelY / 2) / 2
+						startX = startAtTop ? (x + y) / 2
 						: 0,
-						startY = startAtTop ? Math.Abs(pixelY / 2 - pixelX) / 2
+						startY = startAtTop ? (y - x) / 2
 						: 0,
 						startZ = startAtTop ? model.SizeZ - 1
 						: 0;
-					//renderer.Triangle(
-					//	x: pixelX,
-					//	y: pixelY,
-					//	right: right,
-					//	color: startZ > -1 ? 0x00FF00FF
-					//	//: startAtLeft ? 0x00FFFFFF
-					//	: right ? unchecked((int)0xFF0000FF) : 0x0000FFFF);
-					if (startAtTop)
+
+					if (!startAtTop)
+						renderer.Triangle(
+							x: pixelX,
+							y: pixelY,
+							right: right,
+							color: startAtLeft ? 0x00FFFFFF
+							: right ? unchecked((int)0xFF0000FF) : 0x0000FFFF);
+					else
 						for (int voxelX = startX, voxelY = startY, voxelZ = startZ, distance = 0;
-							voxelX < model.SizeX && voxelY < model.SizeY && voxelZ >= 0;
-							voxelX++, voxelY++, voxelZ--, distance++)
+								voxelX < model.SizeX && voxelY < model.SizeY && voxelZ >= 0;
+								voxelX++, voxelY++, voxelZ--, distance++)
 						{
 							if (model.At(voxelX, voxelY, voxelZ) is byte voxel
 								&& voxel != 0)
