@@ -588,9 +588,9 @@ namespace Voxel2Pixel.Draw
 					//map.y = (screen.y / TILE_HEIGHT_HALF - (screen.x / TILE_WIDTH_HALF)) / 2;
 					int x = pixelX / 2,
 						y = pixelY / 2,
-						startX = startAtTop ? (x + y - model.SizeX) / 2
+						startX = startAtTop ? (y - x + model.SizeX) / 2
 						: 0,
-						startY = startAtTop ? (y - x + model.SizeY) / 2
+						startY = startAtTop ? (x + y - model.SizeX + 1) / 2
 						: 0,
 						startZ = startAtTop ? model.SizeZ - 1
 						: 0;

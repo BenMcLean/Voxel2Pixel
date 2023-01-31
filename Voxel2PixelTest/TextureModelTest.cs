@@ -13,22 +13,22 @@ namespace Voxel2PixelTest
 		[Fact]
 		public void ArrayRendererTest()
 		{
-			int testTextureWidth = 32, testTextureHeight = 32;
+			int testTextureWidth = 10, testTextureHeight = 32;
 			TextureModel model = new TextureModel(TestTexture(testTextureWidth, testTextureHeight), testTextureWidth)
 			{
-				SizeZ = 1,
+				SizeZ = 5,
 			};
 			int xScale = 1,
 				yScale = 1,
-				width = VoxelDraw.IsoWidth(model),
-				height = VoxelDraw.IsoHeight(model);
+				width = VoxelDraw.AboveWidth(model),
+				height = VoxelDraw.AboveHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{
 				Image = new byte[width * 4 * height],
 				Width = width,
 				IVoxelColor = new NaiveDimmer(model.Palette),
 			};
-			VoxelDraw.Iso(model, arrayRenderer);
+			VoxelDraw.Above(model, arrayRenderer);
 			ImageMaker.Png(
 				scaleX: xScale,
 				scaleY: yScale,
