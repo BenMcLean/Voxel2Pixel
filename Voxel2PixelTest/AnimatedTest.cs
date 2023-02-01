@@ -58,24 +58,26 @@ namespace Voxel2PixelTest
 				sizeY: 8,
 				sizeZ: 8);
 			int width = VoxelDraw.IsoWidth(empty),
-				height = VoxelDraw.IsoHeight(empty);
-			int start = 6;
+				height = VoxelDraw.IsoHeight(empty),
+				start = 6;
+			IVoxelColor iVoxelColor = new NaiveDimmer(ArrayModelTest.RainbowPalette);
 			List<byte[]> frames = new List<byte[]>();
 			for (int sizeX = start; sizeX <= empty.SizeX; sizeX++)
 				for (int sizeY = start; sizeY <= empty.SizeY; sizeY++)
 					for (int sizeZ = start; sizeZ <= empty.SizeZ; sizeZ++)
 					{
-						ArrayModel model = new ArrayModel(ArrayModelTest.RainbowBox(
-							sizeX: sizeX,
-							sizeY: sizeY,
-							sizeZ: sizeZ));
 						ArrayRenderer arrayRenderer = new ArrayRenderer
 						{
 							Image = new byte[width * 4 * height],
 							Width = width,
-							IVoxelColor = new NaiveDimmer(ArrayModelTest.RainbowPalette),
+							IVoxelColor = iVoxelColor,
 						};
-						VoxelDraw.Iso(model, arrayRenderer);
+						VoxelDraw.Iso(
+							model: new ArrayModel(ArrayModelTest.RainbowBox(
+								sizeX: sizeX,
+								sizeY: sizeY,
+								sizeZ: sizeZ)),
+							renderer: arrayRenderer);
 						frames.Add(arrayRenderer.Image);
 					}
 			ImageMaker.AnimatedGifScaled(
