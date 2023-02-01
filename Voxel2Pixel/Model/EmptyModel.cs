@@ -2,6 +2,12 @@
 {
 	public class EmptyModel : IModel
 	{
+		public EmptyModel(int sizeX = 1, int sizeY = 1, int sizeZ = 1)
+		{
+			SizeX = sizeX;
+			SizeY = sizeY;
+			SizeZ = sizeZ;
+		}
 		#region IModel
 		public int SizeX { get; set; }
 		public int SizeY { get; set; }

@@ -52,6 +52,7 @@ namespace Voxel2PixelTest
 				metadata.DisposalMethod = SixLabors.ImageSharp.Formats.Gif.GifDisposalMethod.RestoreToBackground;
 				gif.Frames.AddFrame(image.Frames.RootFrame);
 			}
+			gif.Frames.RemoveFrame(0); // I don't know why ImageSharp has me doing this but if I don't then I get an extra transparent frame at the start.
 			return gif;
 		}
 	}

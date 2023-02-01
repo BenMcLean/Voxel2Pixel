@@ -17,7 +17,7 @@ namespace Voxel2PixelTest
 		public void ArrayRendererTest()
 		{
 			ArrayModel model = new ArrayModel(RainbowBox(
-				sizeX: 12,
+				sizeX: 11,
 				sizeY: 6,
 				sizeZ: 7));
 			int width = VoxelDraw.IsoWidth(model),
@@ -80,7 +80,7 @@ namespace Voxel2PixelTest
 			Enumerable.Range(0, byte.MaxValue)
 			.Select(i => i == 0 ? 0 : Rainbow[(i - 1) % Rainbow.Count])
 			.ToArray();
-		public byte[][][] RainbowBox(int sizeX, int sizeY, int sizeZ)
+		public static byte[][][] RainbowBox(int sizeX, int sizeY, int sizeZ)
 		{
 			byte[][][] model = ArrayModel.MakeModel(sizeX, sizeY, sizeZ);
 			for (int x = 0; x < sizeX; x++)
@@ -109,7 +109,7 @@ namespace Voxel2PixelTest
 			}
 			return model;
 		}
-		public byte[][][] SmallerRainbowBox(int sizeX, int sizeY, int sizeZ)
+		public static byte[][][] SmallerRainbowBox(int sizeX, int sizeY, int sizeZ)
 		{
 			byte[][][] model = ArrayModel.MakeModel(sizeX, sizeY, sizeZ);
 			for (int x = 1; x < sizeX - 1; x++)
