@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Render;
 
@@ -565,7 +566,26 @@ namespace Voxel2Pixel.Draw
 			// To move one y- in voxels is x + 2, y + 2 in pixels.
 			// To move one z+ in voxels is y - 4 in pixels.
 			// To move one z- in voxels is y + 4 in pixels.
-			void Tri(Face face, int x, int y, bool right, byte voxel)
+			// 12
+			//1122
+			//0123
+			//0033
+			//0  3
+			bool[] spots = new bool[4];
+			void Spot(int spot, Face face, int x, int y, byte voxel)
+			{
+				if (!spots[spot])
+				{
+					Tri(
+						right: spot % 2 == 0,
+						face: face,
+						x: x + (spot < 2 ? 0 : 2),
+						y: y + (spot == 0 || spot == 3 ? 2 : 0),
+						voxel: voxel);
+					spots[spot] = true;
+				}
+			}
+			void Tri(bool right, Face face, int x, int y, byte voxel)
 			{
 				switch (face)
 				{
@@ -606,17 +626,13 @@ namespace Voxel2Pixel.Draw
 					pixelStopX = pixelY < modelSizeY2 + modelSizeZ4 ?
 						Math.Min(modelSizeX2 + pixelY + 2, pixelWidth - 1)
 						: pixelWidth + modelSizeY2 + modelSizeZ4 - pixelY - 2;
-				for (int pixelX = pixelStartX; pixelX < pixelStopX; pixelX += 2)
+				for (int pixelX = pixelStartX; pixelX < pixelStopX; pixelX += 4)
 				{
 					bool right = ((pixelX >> 1) + (pixelY >> 1) & 1) == (evenSizeX ? 0 : 1),
 						startAtTop = pixelY < modelSizeX2 + modelSizeY2
 							&& pixelX > pixelY - modelSizeX2
 							&& pixelX < pixelWidth + modelSizeY2 - pixelY - 2,
 						startAtLeft = !startAtTop && pixelX < modelSizeY2;
-					//screen.x = (map.x - map.y) * TILE_WIDTH_HALF;
-					//screen.y = (map.x + map.y) * TILE_HEIGHT_HALF;
-					//map.x = (screen.x / TILE_WIDTH_HALF + screen.y / TILE_HEIGHT_HALF) / 2;
-					//map.y = (screen.y / TILE_HEIGHT_HALF - (screen.x / TILE_WIDTH_HALF)) / 2;
 					int halfX = pixelX / 2,
 						halfY = pixelY / 2,
 						startX = startAtTop ? model.SizeX - 1 - (halfY - halfX + model.SizeX) / 2
@@ -628,33 +644,156 @@ namespace Voxel2Pixel.Draw
 						startZ = startAtTop ? model.SizeZ - 1
 							: startAtLeft ? model.SizeZ - 1 - (halfY - halfX - model.SizeX) / 2
 							: model.SizeY + model.SizeZ - (halfY + halfX - model.SizeX - 1) / 2 - 2;
-					for (int voxelX = startX, voxelY = startY, voxelZ = startZ, distance = 0;
-							voxelX < model.SizeX && voxelY < model.SizeY && voxelZ >= 0;
-							voxelX++, voxelY++, voxelZ--, distance++)
+					Array.Clear(spots, 0, spots.Length);
+					for (int voxelX = startX, voxelY = startY, voxelZ = startZ;
+							voxelX < model.SizeX && voxelY < model.SizeY && voxelZ >= 0 && spots.Any(@bool => !@bool);
+							voxelX++, voxelY++, voxelZ--)
 					{
+						if ((!spots[0] || !spots[1])
+							&& voxelX > 0
+							&& voxelZ < model.SizeZ - 1
+							&& model.At(voxelX - 1, voxelY, voxelZ + 1) is byte xMinus1zPlus1
+							&& xMinus1zPlus1 != 0)
+						{
+							Spot(spot: 0,
+								face: Face.Right,
+								x: pixelX,
+								y: pixelY,
+								voxel: xMinus1zPlus1);
+							Spot(spot: 1,
+								face: Face.Right,
+								x: pixelX,
+								y: pixelY,
+								voxel: xMinus1zPlus1);
+						}
+						if ((!spots[2] || !spots[3])
+							&& voxelY > 0
+							&& voxelZ < model.SizeZ - 1
+							&& model.At(voxelX, voxelY - 1, voxelZ + 1) is byte yMinus1zPlus1
+							&& yMinus1zPlus1 != 0)
+						{
+							Spot(spot: 2,
+								face: Face.Left,
+								x: pixelX,
+								y: pixelY,
+								voxel: yMinus1zPlus1);
+							Spot(spot: 3,
+								face: Face.Left,
+								x: pixelX,
+								y: pixelY,
+								voxel: yMinus1zPlus1);
+						}
+						if ((!spots[1] || !spots[2])
+							&& voxelZ < model.SizeZ - 1
+							&& model.At(voxelX, voxelY, voxelZ + 1) is byte zPlus1
+							&& zPlus1 != 0)
+						{
+							Spot(spot: 1,
+								face: Face.Left,
+								x: pixelX,
+								y: pixelY,
+								voxel: zPlus1);
+							Spot(spot: 2,
+								face: Face.Right,
+								x: pixelX,
+								y: pixelY,
+								voxel: zPlus1);
+						}
+						if (!spots[0]
+							&& voxelX > 0
+							&& model.At(voxelX - 1, voxelY, voxelZ) is byte xMinus1
+							&& xMinus1 != 0)
+							Spot(spot: 0,
+								face: Face.Vertical,
+								x: pixelX,
+								y: pixelY,
+								voxel: xMinus1);
+						if (!spots[3]
+							&& voxelY > 0
+							&& model.At(voxelX, voxelY - 1, voxelZ) is byte yMinus1
+							&& yMinus1 != 0)
+							Spot(spot: 3,
+								face: Face.Vertical,
+								x: pixelX,
+								y: pixelY,
+								voxel: yMinus1);
 						if (model.At(voxelX, voxelY, voxelZ) is byte voxel
 							&& voxel != 0)
 						{
-							Tri(face: startAtTop ? Face.Vertical
-									: startAtLeft ? Face.Left
-									: Face.Right,
+							Spot(spot: 0,
+								face: Face.Left,
 								x: pixelX,
 								y: pixelY,
-								right: right,
+								voxel: voxel);
+							Spot(spot: 1,
+								face: Face.Vertical,
+								x: pixelX,
+								y: pixelY,
+								voxel: voxel);
+							Spot(spot: 2,
+								face: Face.Vertical,
+								x: pixelX,
+								y: pixelY,
+								voxel: voxel);
+							Spot(spot: 3,
+								face: Face.Right,
+								x: pixelX,
+								y: pixelY,
 								voxel: voxel);
 							break;
 						}
-						if (voxelX + 1 < model.SizeX
+						if ((!spots[0] || !spots[1])
+							&& voxelY < model.SizeY - 1
+							&& model.At(voxelX, voxelY + 1, voxelZ) is byte yPlus1
+							&& yPlus1 != 0)
+						{
+							Spot(spot: 0,
+								face: Face.Right,
+								x: pixelX,
+								y: pixelY,
+								voxel: yPlus1);
+							Spot(spot: 1,
+								face: Face.Right,
+								x: pixelX,
+								y: pixelY,
+								voxel: yPlus1);
+						}
+						if ((!spots[2] || !spots[3])
+							&& voxelX < model.SizeX - 1
 							&& model.At(voxelX + 1, voxelY, voxelZ) is byte xPlus1
 							&& xPlus1 != 0)
 						{
-							Tri(face: Face.Right,
+							Spot(spot: 2,
+								face: Face.Left,
 								x: pixelX,
 								y: pixelY,
-								right: right,
 								voxel: xPlus1);
-							break;
+							Spot(spot: 3,
+								face: Face.Left,
+								x: pixelX,
+								y: pixelY,
+								voxel: xPlus1);
 						}
+						if (!spots[0]
+							&& voxelY < model.SizeY - 1
+							&& voxelZ > 0
+							&& model.At(voxelX, voxelY + 1, voxelZ - 1) is byte yPlus1zMinus1
+							&& yPlus1zMinus1 != 0)
+							Spot(spot: 0,
+								face: Face.Vertical,
+								x: pixelX,
+								y: pixelY,
+								voxel: yPlus1zMinus1);
+						if (!spots[1]
+							&& voxelX < model.SizeX - 1
+							&& voxelZ > 0
+							&& model.At(voxelX + 1, voxelY, voxelZ - 1) is byte xPlus1zMinus1
+							&& xPlus1zMinus1 != 0)
+							Spot(spot: 1,
+								face: Face.Vertical,
+								x: pixelX,
+								y: pixelY,
+								voxel: xPlus1zMinus1);
 					}
 				}
 			}

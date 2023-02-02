@@ -17,8 +17,8 @@ namespace Voxel2PixelTest
 		public void ArrayRendererTest()
 		{
 			ArrayModel model = new ArrayModel(RainbowBox(
-				sizeX: 11,
-				sizeY: 6,
+				sizeX: 7,
+				sizeY: 7,
 				sizeZ: 7));
 			int width = VoxelDraw.IsoWidth(model),
 				height = VoxelDraw.IsoHeight(model);
@@ -30,8 +30,8 @@ namespace Voxel2PixelTest
 			};
 			VoxelDraw.Iso(model, arrayRenderer);
 			ImageMaker.Png(
-				scaleX: 32,
-				scaleY: 32,
+				scaleX: 16,
+				scaleY: 16,
 				width: width,
 				bytes: arrayRenderer.Image)
 				.SaveAsPng("ArrayModel.png");

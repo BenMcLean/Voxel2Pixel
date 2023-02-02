@@ -13,15 +13,15 @@ namespace Voxel2PixelTest
 		public void ArrayRendererTest()
 		{
 			VoxModel model = new VoxModel(@"..\..\..\Sora.vox");
-			int width = VoxelDraw.AboveWidth(model),
-				height = VoxelDraw.AboveHeight(model);
+			int width = VoxelDraw.IsoWidth(model),
+				height = VoxelDraw.IsoHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{
 				Image = new byte[width * 4 * height],
 				Width = width,
 				IVoxelColor = new NaiveDimmer(model.Palette),
 			};
-			VoxelDraw.Above(model, arrayRenderer);
+			VoxelDraw.Iso(model, arrayRenderer);
 			ImageMaker.Png(
 				scaleX: 32,
 				scaleY: 32,

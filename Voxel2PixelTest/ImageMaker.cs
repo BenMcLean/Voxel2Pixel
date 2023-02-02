@@ -18,6 +18,8 @@ namespace Voxel2PixelTest
 		}
 		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> Png(int scaleX, int scaleY, int width = 0, params byte[] bytes)
 		{
+			if (scaleX == 1 && scaleY == 1)
+				return Png(width, bytes);
 			if (width < 1)
 				width = (int)Math.Sqrt(bytes.Length >> 2);
 			return Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(
@@ -29,9 +31,10 @@ namespace Voxel2PixelTest
 			width: width * scaleX,
 			frameDelay: frameDelay,
 			repeatCount: repeatCount,
-			frames: frames
-				.Select(f => f.Upscale(scaleX, scaleY, width))
-				.ToArray());
+			frames: scaleX == 1 && scaleY == 1 ? frames
+				: frames
+					.Select(f => f.Upscale(scaleX, scaleY, width))
+					.ToArray());
 		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(int width = 0, int frameDelay = 25, ushort repeatCount = 0, params byte[][] frames)
 		{
 			if (width < 1)
