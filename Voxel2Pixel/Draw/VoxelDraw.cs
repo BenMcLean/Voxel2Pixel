@@ -776,6 +776,23 @@ namespace Voxel2Pixel.Draw
 								y: pixelY,
 								voxel: xPlus1);
 						}
+						if ((!spots[1] || !spots[2])
+							&& voxelX < model.SizeX - 1
+							&& voxelY < model.SizeY - 1
+							&& model.At(voxelX + 1, voxelY + 1, voxelZ) is byte xPlus1yPlus1
+							&& xPlus1yPlus1 != 0)
+						{
+							Spot(spot: 1,
+								face: Face.Left,
+								x: pixelX,
+								y: pixelY,
+								voxel: xPlus1yPlus1);
+							Spot(spot: 2,
+								face: Face.Right,
+								x: pixelX,
+								y: pixelY,
+								voxel: xPlus1yPlus1);
+						}
 						if (!spots[0]
 							&& voxelY < model.SizeY - 1
 							&& voxelZ > 0
