@@ -639,13 +639,13 @@ namespace Voxel2Pixel.Draw
 						halfY = pixelY / 2,
 						startX = startAtTop ? model.SizeX - 1 - (halfY - halfX + model.SizeX) / 2
 							: startAtLeft ? 0
-							: halfX - model.SizeY,
+							: halfX - model.SizeY + 1,
 						startY = startAtTop ? model.SizeY - 1 - (halfX + halfY - model.SizeX + 1) / 2
 							: startAtLeft ? model.SizeY - 1 - halfX
 							: 0,
 						startZ = startAtTop ? model.SizeZ - 1
 							: startAtLeft ? model.SizeZ - 2 - (halfY - halfX - model.SizeX) / 2
-							: model.SizeY + model.SizeZ - (halfY + halfX - model.SizeX - 1) / 2 - 2;
+							: model.SizeY + model.SizeZ - (halfY + halfX - model.SizeX - 1) / 2 - 3;
 					Array.Clear(spots, 0, spots.Length);
 					for (int voxelX = startX, voxelY = startY, voxelZ = startZ;
 							voxelX < model.SizeX && voxelY < model.SizeY && voxelZ >= 0 && spots.Any(@bool => !@bool);
