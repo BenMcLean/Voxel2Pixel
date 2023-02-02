@@ -18,12 +18,12 @@ namespace Voxel2PixelTest
 				sizeX: 7,
 				sizeY: 4,
 				sizeZ: 7);
-			int width = VoxelDraw.AboveWidth(model),
-				height = VoxelDraw.AboveHeight(model);
+			int width = VoxelDraw.IsoWidth(model),
+				height = VoxelDraw.IsoHeight(model);
 			Random random = new System.Random();
 			IVoxelColor voxelColor = new NaiveDimmer(ArrayModelTest.RainbowPalette);
 			List<byte[]> frames = new List<byte[]>();
-			for (int x = 0; x < model.SizeX; x++)
+			for (int x = model.SizeX - 1; x >= 0; x--)
 				for (int y = model.SizeY - 1; y >= 0; y--)
 					for (int z = 0; z < model.SizeZ; z++)
 					{
@@ -38,14 +38,14 @@ namespace Voxel2PixelTest
 							Width = width,
 							IVoxelColor = voxelColor,
 						};
-						VoxelDraw.Above(model, arrayRenderer);
+						VoxelDraw.Iso(model, arrayRenderer);
 						frames.Add(arrayRenderer.Image);
 						model.Voxels[randomX][randomY][randomZ] = 0;
 						model.Voxels[x][y][z] = 2;
 					}
 			ImageMaker.AnimatedGifScaled(
-				scaleX: 32,
-				scaleY: 32,
+				scaleX: 16,
+				scaleY: 16,
 				width: width,
 				frames: frames.ToArray())
 				.SaveAsGif("AnimatedTest.gif");
@@ -81,9 +81,10 @@ namespace Voxel2PixelTest
 						frames.Add(arrayRenderer.Image);
 					}
 			ImageMaker.AnimatedGifScaled(
-				scaleX: 32,
-				scaleY: 32,
+				scaleX: 16,
+				scaleY: 16,
 				width: width,
+				frameDelay: 20,
 				frames: frames.ToArray())
 				.SaveAsGif("SizeTest.gif");
 		}

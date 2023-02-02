@@ -553,7 +553,11 @@ namespace Voxel2Pixel.Draw
 		#region Isometric
 		public static int IsoWidth(IModel model) => 2 * (model.SizeX + model.SizeY);
 		public static int IsoHeight(IModel model) => 2 * (model.SizeX + model.SizeY) + 4 * model.SizeZ - 1;
-		public static void Iso(IModel model, ITriangleRenderer renderer, int stupid = 0)
+		private enum Face
+		{
+			Vertical, Left, Right,
+		};
+		public static void Iso(IModel model, ITriangleRenderer renderer)
 		{
 			// To move one x+ in voxels is x + 2, y - 2 in pixels.
 			// To move one x- in voxels is x - 2, y + 2 in pixels.
@@ -561,6 +565,33 @@ namespace Voxel2Pixel.Draw
 			// To move one y- in voxels is x + 2, y + 2 in pixels.
 			// To move one z+ in voxels is y - 4 in pixels.
 			// To move one z- in voxels is y + 4 in pixels.
+			void Tri(Face face, int x, int y, bool right, byte voxel)
+			{
+				switch (face)
+				{
+					case Face.Vertical:
+						renderer.TriangleVerticalFace(
+							x: x,
+							y: y,
+							right: right,
+							voxel: voxel);
+						break;
+					case Face.Left:
+						renderer.TriangleLeftFace(
+							x: x,
+							y: y,
+							right: right,
+							voxel: voxel);
+						break;
+					case Face.Right:
+						renderer.TriangleRightFace(
+							x: x,
+							y: y,
+							right: right,
+							voxel: voxel);
+						break;
+				}
+			}
 			int modelSizeX2 = model.SizeX * 2,
 				modelSizeY2 = model.SizeY * 2,
 				modelSizeZ4 = model.SizeZ * 4,
@@ -597,31 +628,34 @@ namespace Voxel2Pixel.Draw
 						startZ = startAtTop ? model.SizeZ - 1
 							: startAtLeft ? model.SizeZ - 1 - (halfY - halfX - model.SizeX) / 2
 							: model.SizeY + model.SizeZ - (halfY + halfX - model.SizeX - 1) / 2 - 2;
-					if (model.At(startX, startY, startZ) is byte voxel
-						&& voxel != 0)
+					for (int voxelX = startX, voxelY = startY, voxelZ = startZ, distance = 0;
+							voxelX < model.SizeX && voxelY < model.SizeY && voxelZ >= 0;
+							voxelX++, voxelY++, voxelZ--, distance++)
 					{
-						renderer.TriangleRightFace(
-							x: pixelX,
-							y: pixelY,
-							right: right,
-							voxel: voxel);
-						//break;
+						if (model.At(voxelX, voxelY, voxelZ) is byte voxel
+							&& voxel != 0)
+						{
+							Tri(face: startAtTop ? Face.Vertical
+									: startAtLeft ? Face.Left
+									: Face.Right,
+								x: pixelX,
+								y: pixelY,
+								right: right,
+								voxel: voxel);
+							break;
+						}
+						if (voxelX + 1 < model.SizeX
+							&& model.At(voxelX + 1, voxelY, voxelZ) is byte xPlus1
+							&& xPlus1 != 0)
+						{
+							Tri(face: Face.Right,
+								x: pixelX,
+								y: pixelY,
+								right: right,
+								voxel: xPlus1);
+							break;
+						}
 					}
-					//for (int voxelX = startX, voxelY = startY, voxelZ = startZ, distance = 0;
-					//		voxelX < model.SizeX && voxelY < model.SizeY && voxelZ >= 0;
-					//		voxelX++, voxelY++, voxelZ--, distance++)
-					//{
-					//	if (model.At(voxelX, voxelY, voxelZ) is byte voxel
-					//		&& voxel != 0)
-					//	{
-					//		renderer.TriangleRightFace(
-					//			x: pixelX,
-					//			y: pixelY,
-					//			right: right,
-					//			voxel: voxel);
-					//		break;
-					//	}
-					//}
 				}
 			}
 		}
