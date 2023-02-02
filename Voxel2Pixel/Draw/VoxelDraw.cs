@@ -621,7 +621,9 @@ namespace Voxel2Pixel.Draw
 			for (int pixelY = 0; pixelY < pixelHeight - 2; pixelY += 2)
 			{
 				int pixelStartX = pixelY < modelSizeX2 + modelSizeZ4 ?
-						Math.Max(modelSizeX2 - pixelY - 2, 0)
+						modelSizeX2 - pixelY - 2 > 0 ?
+							modelSizeX2 - pixelY - 2
+							: (pixelY % 4 < 2 ? 1 : 0)
 						: pixelY - modelSizeX2 - modelSizeZ4 + 2,
 					pixelStopX = pixelY < modelSizeY2 + modelSizeZ4 ?
 						Math.Min(modelSizeX2 + pixelY + 2, pixelWidth - 1)
@@ -642,7 +644,7 @@ namespace Voxel2Pixel.Draw
 							: startAtLeft ? model.SizeY - 1 - halfX
 							: 0,
 						startZ = startAtTop ? model.SizeZ - 1
-							: startAtLeft ? model.SizeZ - 1 - (halfY - halfX - model.SizeX) / 2
+							: startAtLeft ? model.SizeZ - 2 - (halfY - halfX - model.SizeX) / 2
 							: model.SizeY + model.SizeZ - (halfY + halfX - model.SizeX - 1) / 2 - 2;
 					Array.Clear(spots, 0, spots.Length);
 					for (int voxelX = startX, voxelY = startY, voxelZ = startZ;

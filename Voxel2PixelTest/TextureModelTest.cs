@@ -1,5 +1,4 @@
 ﻿using SixLabors.ImageSharp;
-using System.Security.Cryptography;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Model;
