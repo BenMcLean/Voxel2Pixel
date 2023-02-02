@@ -618,12 +618,12 @@ namespace Voxel2Pixel.Draw
 				pixelWidth = modelSizeX2 + modelSizeY2,
 				pixelHeight = pixelWidth + modelSizeZ4;
 			bool evenSizeX = model.SizeX % 2 == 0;
-			for (int pixelY = 0; pixelY < pixelHeight - 2; pixelY += 2)
+			for (int pixelY = 0; pixelY < pixelHeight - 2; pixelY += 4)
 			{
 				int pixelStartX = pixelY < modelSizeX2 + modelSizeZ4 ?
-						modelSizeX2 - pixelY - 2 > 0 ?
+						modelSizeX2 - pixelY - 1 > 0 ?
 							modelSizeX2 - pixelY - 2
-							: (pixelY % 4 < 2 ? 1 : 0)
+							: (evenSizeX ? 2 : 0) + (pixelY % 4 < 2 ? 0 : 1)
 						: pixelY - modelSizeX2 - modelSizeZ4 + 2,
 					pixelStopX = pixelY < modelSizeY2 + modelSizeZ4 ?
 						Math.Min(modelSizeX2 + pixelY + 2, pixelWidth - 1)
@@ -786,12 +786,12 @@ namespace Voxel2Pixel.Draw
 								x: pixelX,
 								y: pixelY,
 								voxel: yPlus1zMinus1);
-						if (!spots[1]
+						if (!spots[3]
 							&& voxelX < model.SizeX - 1
 							&& voxelZ > 0
 							&& model.At(voxelX + 1, voxelY, voxelZ - 1) is byte xPlus1zMinus1
 							&& xPlus1zMinus1 != 0)
-							Spot(spot: 1,
+							Spot(spot: 3,
 								face: Face.Vertical,
 								x: pixelX,
 								y: pixelY,

@@ -1,6 +1,5 @@
 ﻿using SixLabors.ImageSharp;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Voxel2Pixel.Color;
@@ -53,9 +52,9 @@ namespace Voxel2PixelTest
 		public static byte[][][] RainbowBox(int sizeX, int sizeY, int sizeZ)
 		{
 			byte[][][] model = ArrayModel.MakeModel(sizeX, sizeY, sizeZ);
-			for (int x = 0; x < sizeX; x++)
+			for (int x = 0; x < sizeX - 1; x++)
 			{
-				byte voxel = (byte)(x % Rainbow.Count + 1);
+				byte voxel = (byte)((sizeX - 1 - x) % Rainbow.Count + 1);
 				model[x][0][0] = voxel;
 				model[x][sizeY - 1][0] = voxel;
 				model[x][0][sizeZ - 1] = voxel;
@@ -63,7 +62,7 @@ namespace Voxel2PixelTest
 			}
 			for (int y = 1; y < sizeY - 1; y++)
 			{
-				byte voxel = (byte)(y % Rainbow.Count + 1);
+				byte voxel = (byte)((sizeY - 1 - y) % Rainbow.Count + 1);
 				model[0][y][0] = voxel;
 				model[sizeX - 1][y][0] = voxel;
 				model[0][y][sizeZ - 1] = voxel;
@@ -71,7 +70,7 @@ namespace Voxel2PixelTest
 			}
 			for (int z = 1; z < sizeZ - 1; z++)
 			{
-				byte voxel = (byte)(z % Rainbow.Count + 1);
+				byte voxel = (byte)((sizeZ - 1 - z) % Rainbow.Count + 1);
 				model[0][0][z] = voxel;
 				model[sizeX - 1][0][z] = voxel;
 				model[0][sizeY - 1][z] = voxel;
