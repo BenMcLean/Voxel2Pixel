@@ -36,36 +36,6 @@ namespace Voxel2PixelTest
 				bytes: arrayRenderer.Image)
 				.SaveAsPng("ArrayModel.png");
 		}
-		[Fact]
-		public void StupidTest()
-		{
-			ArrayModel model = new ArrayModel(RainbowBox(
-				sizeX: 12,
-				sizeY: 6,
-				sizeZ: 7));
-			int width = VoxelDraw.IsoWidth(model),
-				height = VoxelDraw.IsoHeight(model);
-			IVoxelColor voxelColor = new NaiveDimmer(RainbowPalette);
-			List<byte[]> frames = new List<byte[]>();
-			for (int stupid = -model.SizeZ; stupid <= model.SizeZ; stupid++)
-			{
-				ArrayRenderer arrayRenderer = new ArrayRenderer
-				{
-					Image = new byte[width * 4 * height],
-					Width = width,
-					IVoxelColor = voxelColor,
-				};
-				VoxelDraw.Iso(model, arrayRenderer, stupid);
-				frames.Add(arrayRenderer.Image);
-			}
-			ImageMaker.AnimatedGifScaled(
-				scaleX: 32,
-				scaleY: 32,
-				frameDelay: 50,
-				width: width,
-				frames: frames.ToArray())
-				.SaveAsGif("stupid.gif");
-		}
 		public static readonly ReadOnlyCollection<int> Rainbow = Array.AsReadOnly(new int[7]
 		{ // Just a color test, not a political statement.
 			unchecked((int)0xFF0000FF),//Red
