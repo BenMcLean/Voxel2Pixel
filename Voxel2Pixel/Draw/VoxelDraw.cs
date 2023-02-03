@@ -652,8 +652,7 @@ namespace Voxel2Pixel.Draw
 							voxelX++, voxelY++, voxelZ--)
 					{
 						if ((!spots[0] || !spots[1])
-							&& voxelX > 0
-							&& voxelZ < model.SizeZ - 1
+							&& model.IsInside(voxelX - 1, voxelY, voxelZ + 1)
 							&& model.At(voxelX - 1, voxelY, voxelZ + 1) is byte xMinus1zPlus1
 							&& xMinus1zPlus1 != 0)
 						{
@@ -669,8 +668,7 @@ namespace Voxel2Pixel.Draw
 								voxel: xMinus1zPlus1);
 						}
 						if ((!spots[2] || !spots[3])
-							&& voxelY > 0
-							&& voxelZ < model.SizeZ - 1
+							&& model.IsInside(voxelX, voxelY - 1, voxelZ + 1)
 							&& model.At(voxelX, voxelY - 1, voxelZ + 1) is byte yMinus1zPlus1
 							&& yMinus1zPlus1 != 0)
 						{
@@ -686,7 +684,7 @@ namespace Voxel2Pixel.Draw
 								voxel: yMinus1zPlus1);
 						}
 						if ((!spots[1] || !spots[2])
-							&& voxelZ < model.SizeZ - 1
+							&& model.IsInside(voxelX, voxelY, voxelZ + 1)
 							&& model.At(voxelX, voxelY, voxelZ + 1) is byte zPlus1
 							&& zPlus1 != 0)
 						{
@@ -702,7 +700,7 @@ namespace Voxel2Pixel.Draw
 								voxel: zPlus1);
 						}
 						if (!spots[0]
-							&& voxelX > 0
+							&& model.IsInside(voxelX - 1, voxelY, voxelZ)
 							&& model.At(voxelX - 1, voxelY, voxelZ) is byte xMinus1
 							&& xMinus1 != 0)
 							Spot(spot: 0,
@@ -711,7 +709,7 @@ namespace Voxel2Pixel.Draw
 								y: pixelY,
 								voxel: xMinus1);
 						if (!spots[3]
-							&& voxelY > 0
+							&& model.IsInside(voxelX, voxelY - 1, voxelZ)
 							&& model.At(voxelX, voxelY - 1, voxelZ) is byte yMinus1
 							&& yMinus1 != 0)
 							Spot(spot: 3,
@@ -719,7 +717,8 @@ namespace Voxel2Pixel.Draw
 								x: pixelX,
 								y: pixelY,
 								voxel: yMinus1);
-						if (model.At(voxelX, voxelY, voxelZ) is byte voxel
+						if (model.IsInside(voxelX, voxelY, voxelZ)
+							&& model.At(voxelX, voxelY, voxelZ) is byte voxel
 							&& voxel != 0)
 						{
 							Spot(spot: 0,
@@ -745,7 +744,7 @@ namespace Voxel2Pixel.Draw
 							break;
 						}
 						if ((!spots[0] || !spots[1])
-							&& voxelY < model.SizeY - 1
+							&& model.IsInside(voxelX, voxelY + 1, voxelZ)
 							&& model.At(voxelX, voxelY + 1, voxelZ) is byte yPlus1
 							&& yPlus1 != 0)
 						{
@@ -761,7 +760,7 @@ namespace Voxel2Pixel.Draw
 								voxel: yPlus1);
 						}
 						if ((!spots[2] || !spots[3])
-							&& voxelX < model.SizeX - 1
+							&& model.IsInside(voxelX + 1, voxelY, voxelZ)
 							&& model.At(voxelX + 1, voxelY, voxelZ) is byte xPlus1
 							&& xPlus1 != 0)
 						{
@@ -777,8 +776,7 @@ namespace Voxel2Pixel.Draw
 								voxel: xPlus1);
 						}
 						if ((!spots[1] || !spots[2])
-							&& voxelX < model.SizeX - 1
-							&& voxelY < model.SizeY - 1
+							&& model.IsInside(voxelX + 1, voxelY + 1, voxelZ)
 							&& model.At(voxelX + 1, voxelY + 1, voxelZ) is byte xPlus1yPlus1
 							&& xPlus1yPlus1 != 0)
 						{
@@ -794,8 +792,7 @@ namespace Voxel2Pixel.Draw
 								voxel: xPlus1yPlus1);
 						}
 						if (!spots[0]
-							&& voxelY < model.SizeY - 1
-							&& voxelZ > 0
+							&& model.IsInside(voxelX, voxelY + 1, voxelZ - 1)
 							&& model.At(voxelX, voxelY + 1, voxelZ - 1) is byte yPlus1zMinus1
 							&& yPlus1zMinus1 != 0)
 							Spot(spot: 0,
@@ -804,8 +801,7 @@ namespace Voxel2Pixel.Draw
 								y: pixelY,
 								voxel: yPlus1zMinus1);
 						if (!spots[3]
-							&& voxelX < model.SizeX - 1
-							&& voxelZ > 0
+							&& model.IsInside(voxelX + 1, voxelY, voxelZ - 1)
 							&& model.At(voxelX + 1, voxelY, voxelZ - 1) is byte xPlus1zMinus1
 							&& xPlus1zMinus1 != 0)
 							Spot(spot: 3,
