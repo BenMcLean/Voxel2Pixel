@@ -648,7 +648,7 @@ namespace Voxel2Pixel.Draw
 							: model.SizeY + model.SizeZ - (halfY + halfX - model.SizeX - 1) / 2 - 3;
 					Array.Clear(spots, 0, spots.Length);
 					for (int voxelX = startX, voxelY = startY, voxelZ = startZ;
-							voxelX < model.SizeX && voxelY < model.SizeY && voxelZ >= 0 && spots.Any(@bool => !@bool);
+							voxelX <= model.SizeX && voxelY <= model.SizeY && voxelZ >= 0 && spots.Any(@bool => !@bool);
 							voxelX++, voxelY++, voxelZ--)
 					{
 						if ((!spots[0] || !spots[1])

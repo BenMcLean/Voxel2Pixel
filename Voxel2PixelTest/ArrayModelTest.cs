@@ -52,7 +52,7 @@ namespace Voxel2PixelTest
 		public static byte[][][] RainbowBox(int sizeX, int sizeY, int sizeZ)
 		{
 			byte[][][] model = ArrayModel.MakeModel(sizeX, sizeY, sizeZ);
-			for (int x = 0; x < sizeX - 1; x++)
+			for (int x = 0; x < sizeX; x++)
 			{
 				byte voxel = (byte)((sizeX - 1 - x) % Rainbow.Count + 1);
 				model[x][0][0] = voxel;
