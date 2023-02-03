@@ -623,7 +623,7 @@ namespace Voxel2Pixel.Draw
 				int pixelStartX = pixelY < modelSizeX2 + modelSizeZ4 ?
 						modelSizeX2 - pixelY - 1 > 0 ?
 							modelSizeX2 - pixelY - 2
-							: (evenSizeX ? 2 : 0) + (pixelY % 4 < 2 ? 0 : 1)
+							: (evenSizeX ? -2 : 0) + (pixelY % 4 < 2 ? 0 : 1)
 						: pixelY - modelSizeX2 - modelSizeZ4 + 2,
 					pixelStopX = pixelY < modelSizeY2 + modelSizeZ4 ?
 						Math.Min(modelSizeX2 + pixelY + 2, pixelWidth - 1)
