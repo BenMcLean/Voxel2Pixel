@@ -2,9 +2,9 @@
 {
 	public class FlatVoxelColor : IVoxelColor
 	{
-		public int[] Palette { get; set; }
-		public int LeftFace(byte voxel) => Palette[voxel];
-		public int RightFace(byte voxel) => Palette[voxel];
-		public int VerticalFace(byte voxel) => Palette[voxel];
+		public uint[] Palette { get; set; }
+		public uint LeftFace(byte voxel) => Palette[voxel];
+		public uint RightFace(byte voxel) => Palette[voxel];
+		public uint VerticalFace(byte voxel) => Palette[voxel];
 	}
 }

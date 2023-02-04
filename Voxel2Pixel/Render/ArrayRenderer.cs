@@ -10,7 +10,7 @@ namespace Voxel2Pixel.Render
 		public int Height => (Image.Length / Width) >> 2;
 		public IVoxelColor IVoxelColor { get; set; }
 		#region IRectangleRenderer
-		public void Rect(int x, int y, int color, int sizeX, int sizeY) =>
+		public void Rect(int x, int y, uint color, int sizeX, int sizeY) =>
 			Image.DrawRectangle(
 				x: x,
 				y: y,
@@ -41,7 +41,7 @@ namespace Voxel2Pixel.Render
 				sizeY: sizeY);
 		#endregion IRectangleRenderer
 		#region ITriangleRenderer
-		public void LeftTriangle(int x, int y, int color) => Image
+		public void LeftTriangle(int x, int y, uint color) => Image
 			.DrawPixel(
 				x: x + 1,
 				y: y,
@@ -59,7 +59,7 @@ namespace Voxel2Pixel.Render
 				y: y + 2,
 				color: color,
 				width: Width);
-		public void RightTriangle(int x, int y, int color) => Image
+		public void RightTriangle(int x, int y, uint color) => Image
 			.DrawPixel(
 				x: x,
 				y: y,
@@ -77,7 +77,7 @@ namespace Voxel2Pixel.Render
 				y: y + 2,
 				color: color,
 				width: Width);
-		public void Triangle(int x, int y, bool right, int color)
+		public void Triangle(int x, int y, bool right, uint color)
 		{
 			if (right)
 				RightTriangle(x, y, color);

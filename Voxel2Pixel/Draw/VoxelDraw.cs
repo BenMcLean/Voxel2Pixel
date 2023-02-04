@@ -571,7 +571,8 @@ namespace Voxel2Pixel.Draw
 				modelSizeZ4 = model.SizeZ * 4,
 				pixelWidth = modelSizeX2 + modelSizeY2,
 				pixelHeight = pixelWidth + modelSizeZ4;
-			bool evenSizeX = model.SizeX % 2 == 0;
+			bool evenSizeX = model.SizeX % 2 == 0,
+				evenSizeY = model.SizeY % 2 == 0;
 			bool[] tiles = new bool[4];
 			#region Isometric local functions
 			void Tile(int tile, Face face, int x, int y, byte voxel)
@@ -815,7 +816,7 @@ namespace Voxel2Pixel.Draw
 				}
 			}
 			#endregion Isometric main tiled area
-			#region Isometric top left
+			#region Isometric top left edge
 			for (int pixelX = evenSizeX ? 0 : 2, pixelY = modelSizeX2 - (evenSizeX ? 2 : 4);
 				pixelX < modelSizeX2 && pixelY > 1;
 				pixelX += 4, pixelY -= 4)
@@ -834,8 +835,8 @@ namespace Voxel2Pixel.Draw
 						right: false,
 						voxel: voxel);
 			}
-			#endregion Isometric top left
-			#region Isometric top right
+			#endregion Isometric top left edge
+			#region Isometric top right edge
 			for (int pixelX = modelSizeX2 + 2, pixelY = 2;
 				pixelX < pixelWidth && pixelY < modelSizeY2;
 				pixelX += 4, pixelY += 4)
@@ -854,8 +855,8 @@ namespace Voxel2Pixel.Draw
 						right: true,
 						voxel: voxel);
 			}
-			#endregion Isometric top right
-			#region Isometric bottom left
+			#endregion Isometric top right edge
+			#region Isometric bottom left edge
 			for (int pixelX = evenSizeX ? 0 : -2, pixelY = modelSizeX2 + modelSizeZ4 - (evenSizeX ? 4 : 6);
 				pixelX < modelSizeY2 && pixelY < pixelHeight;
 				pixelX += 4, pixelY += 4)
@@ -869,11 +870,12 @@ namespace Voxel2Pixel.Draw
 				//	&& model.At(voxelX, voxelY, voxelZ) is byte voxel
 				//	&& voxel != 0)
 				//	renderer.TriangleVerticalFace(
-				renderer.Triangle(
-					x: pixelX - 2,
-					y: pixelY,
-					right: false,
-					color: unchecked((int)0xFFFF00FF));
+				if (pixelX >= 2)
+					renderer.Triangle(
+						x: pixelX - 2,
+						y: pixelY,
+						right: false,
+						color: 0xFFFF00FF);
 				renderer.Triangle(
 					x: pixelX,
 					y: pixelY,
@@ -883,9 +885,29 @@ namespace Voxel2Pixel.Draw
 					x: pixelX,
 					y: pixelY + 2,
 					right: false,
-					color: unchecked((int)0xFF00FFFF));
+					color: 0xFF00FFFF);
 			}
-			#endregion Isometric bottom left
+			#endregion Isometric bottom left edge
+			#region Isometric bottom right edge
+			for (int pixelX = modelSizeY2 + (evenSizeX != evenSizeY ? 0 : 2), pixelY = pixelHeight - (evenSizeY ? 6 : 0);
+				pixelX < pixelWidth;
+				pixelX += 4)//, pixelY -= 4)
+			{
+				//int halfX = pixelX / 2,
+				//	halfY = pixelY / 2,
+				//	voxelX = model.SizeX - 1 - (halfY - halfX + model.SizeX) / 2,
+				//	voxelY = model.SizeY - 1 - (halfX + halfY - model.SizeX + 1) / 2,
+				//	voxelZ = model.SizeZ - 1;
+				//if (model.IsInside(voxelX, voxelY, voxelZ)
+				//	&& model.At(voxelX, voxelY, voxelZ) is byte voxel
+				//	&& voxel != 0)
+				renderer.Triangle(
+					x: pixelX,
+					y: pixelY,
+					right: false,
+					color: evenSizeY ? 0xFFFFFFFF : 0x000000FF);
+			}
+			#endregion Isometric bottom right edge
 		}
 		#endregion Isometric
 	}

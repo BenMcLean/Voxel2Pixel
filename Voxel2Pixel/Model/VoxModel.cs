@@ -17,13 +17,13 @@ namespace Voxel2Pixel.Model
 			set
 			{
 				voxFile = value;
-				Palette = new int[Math.Min(VoxFile.Palette.Colors.Length + 1, 256)];
+				Palette = new uint[Math.Min(VoxFile.Palette.Colors.Length + 1, 256)];
 				for (int i = 0; i < Palette.Length - 1; i++)
 					Palette[i + 1] = Color(VoxFile.Palette.Colors[i]);
 			}
 		}
 		private VoxReader.Interfaces.IVoxFile voxFile;
-		public int[] Palette;
+		public uint[] Palette;
 		public VoxReader.Interfaces.IModel Model
 		{
 			get => model;
@@ -46,7 +46,7 @@ namespace Voxel2Pixel.Model
 		}
 		private VoxReader.Interfaces.IModel model;
 		public byte[][][] Voxels;
-		public static int Color(VoxReader.Color color) => TextureMethods.Color(
+		public static uint Color(VoxReader.Color color) => TextureMethods.Color(
 			r: color.R,
 			g: color.G,
 			b: color.B,

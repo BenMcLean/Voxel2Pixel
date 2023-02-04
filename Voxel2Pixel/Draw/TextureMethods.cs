@@ -27,7 +27,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="color">rgba color to draw</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>same texture with pixel drawn</returns>
-		public static byte[] DrawPixel(this byte[] texture, int color, int x, int y, int width = 0) => texture.DrawPixel((byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, width);
+		public static byte[] DrawPixel(this byte[] texture, uint color, int x, int y, int width = 0) => texture.DrawPixel((byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, width);
 		/// <summary>
 		/// Draws one pixel of the specified color
 		/// </summary>
@@ -57,7 +57,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="y">upper left corner of rectangle</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>same texture with rectangle drawn</returns>
-		public static byte[] DrawRectangle(this byte[] texture, int color, int x, int y, int rectWidth, int rectHeight, int width = 0) => texture.DrawRectangle((byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, rectWidth, rectHeight, width);
+		public static byte[] DrawRectangle(this byte[] texture, uint color, int x, int y, int rectWidth, int rectHeight, int width = 0) => texture.DrawRectangle((byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, rectWidth, rectHeight, width);
 		/// <summary>
 		/// Draws a rectangle of the specified color
 		/// </summary>
@@ -754,24 +754,24 @@ namespace Voxel2Pixel.Draw
 			n |= n >> 16;
 			return ++n; // increment `n` and return
 		}
-		public static byte R(this int color) => (byte)(color >> 24);
-		public static byte G(this int color) => (byte)(color >> 16);
-		public static byte B(this int color) => (byte)(color >> 8);
-		public static byte A(this int color) => (byte)color;
-		public static int Color(byte r, byte g, byte b, byte a) => r << 24 | g << 16 | b << 8 | a;
-		public static int LerpColor(this int startColor, int endColor, float change)
+		public static byte R(this uint color) => (byte)(color >> 24);
+		public static byte G(this uint color) => (byte)(color >> 16);
+		public static byte B(this uint color) => (byte)(color >> 8);
+		public static byte A(this uint color) => (byte)color;
+		public static uint Color(byte r, byte g, byte b, byte a) => (uint)(r << 24 | g << 16 | b << 8 | a);
+		public static uint LerpColor(this uint startColor, uint endColor, float change)
 		{
-			int sA = startColor & 0xFF, sB = startColor >> 8 & 0xFF, sG = startColor >> 16 & 0xFF, sR = startColor >> 24 & 0xFF,
+			uint sA = startColor & 0xFF, sB = startColor >> 8 & 0xFF, sG = startColor >> 16 & 0xFF, sR = startColor >> 24 & 0xFF,
 				eA = endColor & 0xFF, eB = endColor >> 8 & 0xFF, eG = endColor >> 16 & 0xFF, eR = endColor >> 24 & 0xFF;
-			return ((int)(sR + change * (eR - sR)) & 0xFF) << 24
-				| ((int)(sG + change * (eG - sG)) & 0xFF) << 16
-				| ((int)(sB + change * (eB - sB)) & 0xFF) << 8
-				| (int)(sA + change * (eA - sA)) & 0xFF;
+			return ((uint)(sR + change * (eR - sR)) & 0xFF) << 24
+				| ((uint)(sG + change * (eG - sG)) & 0xFF) << 16
+				| ((uint)(sB + change * (eB - sB)) & 0xFF) << 8
+				| (uint)(sA + change * (eA - sA)) & 0xFF;
 		}
 		/// <param name="index">Palette indexes (one byte per pixel)</param>
 		/// <param name="palette">256 rgba8888 color values</param>
 		/// <returns>rgba8888 texture (four bytes per pixel)</returns>
-		public static byte[] Index2ByteArray(this byte[] index, int[] palette)
+		public static byte[] Index2ByteArray(this byte[] index, uint[] palette)
 		{
 			byte[] bytes = new byte[index.Length << 2];
 			for (int i = 0, j = 0; i < index.Length; i++)
@@ -783,64 +783,64 @@ namespace Voxel2Pixel.Draw
 			}
 			return bytes;
 		}
-		public static int[] PaletteFromTexture(this byte[] texture)
+		public static uint[] PaletteFromTexture(this byte[] texture)
 		{
-			List<int> palette = new List<int> { 0 };
-			foreach (int pixel in texture.Byte2IntArray())
+			List<uint> palette = new List<uint> { 0 };
+			foreach (uint pixel in texture.Byte2UIntArray())
 				if (!palette.Contains(pixel))
 				{
 					palette.Add(pixel);
 					if (palette.Count >= byte.MaxValue)
 						break;
 				}
-			int[] result = new int[byte.MaxValue];
+			uint[] result = new uint[byte.MaxValue];
 			Array.Copy(palette.ToArray(), result, palette.Count);
 			return result;
 		}
 		public static byte[] Byte2IndexArray(this byte[] bytes) => bytes.Byte2IndexArray(bytes.PaletteFromTexture());
-		public static byte[] Byte2IndexArray(this byte[] bytes, int[] palette)
+		public static byte[] Byte2IndexArray(this byte[] bytes, uint[] palette)
 		{
 			byte[] indexes = new byte[bytes.Length >> 2];
-			int[] ints = bytes.Byte2IntArray();
+			uint[] uints = bytes.Byte2UIntArray();
 			for (int i = 0; i < indexes.Length; i++)
-				indexes[i] = (byte)Math.Max(Array.IndexOf(palette, ints[i]), 0);
+				indexes[i] = (byte)Math.Max(Array.IndexOf(palette, uints[i]), 0);
 			return indexes;
 		}
 		/// <param name="index">Palette indexes (one byte per pixel)</param>
 		/// <param name="palette">256 rgba8888 color values</param>
 		/// <returns>rgba8888 texture (one int per pixel)</returns>
-		public static int[] Index2IntArray(this byte[] index, int[] palette)
+		public static uint[] Index2UIntArray(this byte[] index, uint[] palette)
 		{
-			int[] ints = new int[index.Length];
+			uint[] uints = new uint[index.Length];
 			for (int i = 0; i < index.Length; i++)
-				ints[i] = palette[index[i]];
-			return ints;
+				uints[i] = palette[index[i]];
+			return uints;
 		}
 		/// <param name="ints">rgba8888 color values (one int per pixel)</param>
 		/// <returns>rgba8888 texture (four bytes per pixel)</returns>
-		public static byte[] Int2ByteArray(this int[] ints)
+		public static byte[] UInt2ByteArray(this uint[] uints)
 		{
-			byte[] bytes = new byte[ints.Length << 2];
-			for (int i = 0, j = 0; i < ints.Length; i++)
+			byte[] bytes = new byte[uints.Length << 2];
+			for (int i = 0, j = 0; i < uints.Length; i++)
 			{
-				bytes[j++] = (byte)(ints[i] >> 24);
-				bytes[j++] = (byte)(ints[i] >> 16);
-				bytes[j++] = (byte)(ints[i] >> 8);
-				bytes[j++] = (byte)ints[i];
+				bytes[j++] = (byte)(uints[i] >> 24);
+				bytes[j++] = (byte)(uints[i] >> 16);
+				bytes[j++] = (byte)(uints[i] >> 8);
+				bytes[j++] = (byte)uints[i];
 			}
 			return bytes;
 		}
 		/// <param name="bytes">rgba8888 color values (four bytes per pixel)</param>
 		/// <returns>rgba8888 texture (one int per pixel)</returns>
-		public static int[] Byte2IntArray(this byte[] bytes)
+		public static uint[] Byte2UIntArray(this byte[] bytes)
 		{
-			int[] ints = new int[bytes.Length >> 2];
+			uint[] uints = new uint[bytes.Length >> 2];
 			for (int i = 0, j = 0; i < bytes.Length; i += 4)
-				ints[j++] = bytes[i] << 24
+				uints[j++] = (uint)(bytes[i] << 24
 					| bytes[i + 1] << 16
 					| bytes[i + 2] << 8
-					| bytes[i + 3];
-			return ints;
+					| bytes[i + 3]);
+			return uints;
 		}
 		public static T[] ConcatArrays<T>(params T[][] list)
 		{
@@ -852,10 +852,10 @@ namespace Voxel2Pixel.Draw
 			}
 			return result;
 		}
-		public static int[] LoadPalette(string @string) => LoadPalette(new MemoryStream(Encoding.UTF8.GetBytes(@string)));
-		public static int[] LoadPalette(Stream stream)
+		public static uint[] LoadPalette(string @string) => LoadPalette(new MemoryStream(Encoding.UTF8.GetBytes(@string)));
+		public static uint[] LoadPalette(Stream stream)
 		{
-			int[] result;
+			uint[] result;
 			using (StreamReader streamReader = new StreamReader(stream))
 			{
 				string line;
@@ -865,7 +865,7 @@ namespace Voxel2Pixel.Draw
 				if (!int.TryParse(streamReader.ReadLine()?.Trim(), out int numColors)
 				 || numColors != 256)
 					throw new InvalidDataException("Palette stream does not contain exactly 256 colors.");
-				result = new int[numColors];
+				result = new uint[numColors];
 				for (int i = 0; i < numColors; i++)
 				{
 					string[] tokens = streamReader.ReadLine()?.Trim().Split(' ');
@@ -874,10 +874,10 @@ namespace Voxel2Pixel.Draw
 						|| !byte.TryParse(tokens[1], out byte g)
 						|| !byte.TryParse(tokens[2], out byte b))
 						throw new InvalidDataException("Palette stream is an incorrectly formatted JASC palette.");
-					result[i] = r << 24
+					result[i] = (uint)(r << 24
 						| g << 16
 						| b << 8
-						| (i == 255 ? 0 : 255);
+						| (i == 0 ? 0 : 255));
 				}
 			}
 			return result;

@@ -6,18 +6,18 @@
 	public interface IDimmer
 	{
 		/// <returns>Same as Dimmer(0, voxel)</returns>
-		int Dark(byte voxel);
+		uint Dark(byte voxel);
 		/// <returns>Same as Dimmer(1, voxel)</returns>
-		int Dim(byte voxel);
+		uint Dim(byte voxel);
 		/// <returns>Same as Dimmer(2, voxel)</returns>
-		int Medium(byte voxel);
+		uint Medium(byte voxel);
 		/// <returns>Same as Dimmer(3, voxel)</returns>
-		int Light(byte voxel);
+		uint Light(byte voxel);
 		/// <returns>Same as Dimmer(4, voxel)</returns>
-		int Bright(byte voxel);
+		uint Bright(byte voxel);
 		/// <param name="brightness">0 for dark, 1 for dim, 2 for medium, 3 for light and 4 for bright</param>
 		/// <param name="voxel">The color index of a voxel</param>
 		/// <returns>An rgba8888 color</returns>
-		int Dimmer(int brightness, byte voxel);
+		uint Dimmer(int brightness, byte voxel);
 	}
 }

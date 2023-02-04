@@ -35,17 +35,17 @@ namespace Voxel2PixelTest
 				bytes: arrayRenderer.Image)
 				.SaveAsPng("ArrayModel.png");
 		}
-		public static readonly ReadOnlyCollection<int> Rainbow = Array.AsReadOnly(new int[7]
+		public static readonly ReadOnlyCollection<uint> Rainbow = Array.AsReadOnly(new uint[7]
 		{ // Just a color test, not a political statement.
-			unchecked((int)0xFF0000FF),//Red
-			unchecked((int)0xFFA500FF),//Orange
-			unchecked((int)0xFFFF00FF),//Yellow
+			0xFF0000FF,//Red
+			0xFFA500FF,//Orange
+			0xFFFF00FF,//Yellow
 			0x00FF00FF,//Green
 			0x0000FFFF,//Blue
 			0x4B0082FF,//Indigo
-			unchecked((int)0x8F00FFFF)//Violet
+			0x8F00FFFF//Violet
 		});
-		public static readonly int[] RainbowPalette =
+		public static readonly uint[] RainbowPalette =
 			Enumerable.Range(0, byte.MaxValue)
 			.Select(i => i == 0 ? 0 : Rainbow[(i - 1) % Rainbow.Count])
 			.ToArray();

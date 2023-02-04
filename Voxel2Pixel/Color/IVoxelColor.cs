@@ -2,8 +2,8 @@
 {
 	public interface IVoxelColor
 	{
-		int VerticalFace(byte voxel);
-		int LeftFace(byte voxel);
-		int RightFace(byte voxel);
+		uint VerticalFace(byte voxel);
+		uint LeftFace(byte voxel);
+		uint RightFace(byte voxel);
 	}
 }

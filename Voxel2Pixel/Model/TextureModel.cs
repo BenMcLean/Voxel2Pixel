@@ -11,7 +11,7 @@ namespace Voxel2Pixel.Model
 			Palette = texture.PaletteFromTexture();
 			Indexes = texture.Byte2IndexArray(Palette);
 		}
-		public int[] Palette { get; set; }
+		public uint[] Palette { get; set; }
 		public byte[] Indexes { get; }
 		#region IModel
 		public int SizeX { get; }

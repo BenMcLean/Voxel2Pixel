@@ -9,7 +9,7 @@
 		/// Draws a triangle 3 high and 2 wide
 		/// </summary>
 		/// <param name="right">Points right if true, else points left</param>
-		void Triangle(int x, int y, bool right, int color);
+		void Triangle(int x, int y, bool right, uint color);
 		/// <summary>
 		/// Draws a triangle 3 high and 2 wide, representing the visible vertical face of voxel
 		/// </summary>
