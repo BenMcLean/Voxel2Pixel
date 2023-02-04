@@ -836,6 +836,26 @@ namespace Voxel2Pixel.Draw
 						voxel: voxel);
 			}
 			#endregion Isometric top left
+			#region Isometric top right
+			for (int pixelX = modelSizeX2 + 2, pixelY = 2;
+				pixelX < pixelWidth && pixelY < modelSizeY2;
+				pixelX += 4, pixelY += 4)
+			{
+				int halfX = pixelX / 2,
+					halfY = pixelY / 2,
+					voxelX = model.SizeX - 1 - (halfY - halfX + model.SizeX) / 2,
+					voxelY = model.SizeY - 1 - (halfX + halfY - model.SizeX + 1) / 2,
+					voxelZ = model.SizeZ - 1;
+				if (model.IsInside(voxelX, voxelY, voxelZ)
+					&& model.At(voxelX, voxelY, voxelZ) is byte voxel
+					&& voxel != 0)
+					renderer.TriangleVerticalFace(
+						x: pixelX,
+						y: pixelY,
+						right: true,
+						voxel: voxel);
+			}
+			#endregion Isometric top right
 		}
 		#endregion Isometric
 	}
