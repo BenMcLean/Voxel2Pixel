@@ -84,7 +84,7 @@ namespace Voxel2PixelTest
 				scaleX: 16,
 				scaleY: 16,
 				width: width,
-				frameDelay: 20,
+				frameDelay: 50,
 				frames: frames.ToArray())
 				.SaveAsGif("SizeTest.gif");
 		}
