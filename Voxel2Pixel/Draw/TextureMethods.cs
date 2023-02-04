@@ -761,12 +761,12 @@ namespace Voxel2Pixel.Draw
 		public static uint Color(byte r, byte g, byte b, byte a) => (uint)(r << 24 | g << 16 | b << 8 | a);
 		public static uint LerpColor(this uint startColor, uint endColor, float change)
 		{
-			uint sA = startColor & 0xFF, sB = startColor >> 8 & 0xFF, sG = startColor >> 16 & 0xFF, sR = startColor >> 24 & 0xFF,
-				eA = endColor & 0xFF, eB = endColor >> 8 & 0xFF, eG = endColor >> 16 & 0xFF, eR = endColor >> 24 & 0xFF;
-			return ((uint)(sR + change * (eR - sR)) & 0xFF) << 24
-				| ((uint)(sG + change * (eG - sG)) & 0xFF) << 16
-				| ((uint)(sB + change * (eB - sB)) & 0xFF) << 8
-				| (uint)(sA + change * (eA - sA)) & 0xFF;
+			int sA = (int)startColor & 0xFF, sB = (int)startColor >> 8 & 0xFF, sG = (int)startColor >> 16 & 0xFF, sR = (int)startColor >> 24 & 0xFF,
+				eA = (int)endColor & 0xFF, eB = (int)endColor >> 8 & 0xFF, eG = (int)endColor >> 16 & 0xFF, eR = (int)endColor >> 24 & 0xFF;
+			return (uint)(((int)(sR + change * (eR - sR)) & 0xFF) << 24
+				| ((int)(sG + change * (eG - sG)) & 0xFF) << 16
+				| ((int)(sB + change * (eB - sB)) & 0xFF) << 8
+				| (int)(sA + change * (eA - sA)) & 0xFF);
 		}
 		/// <param name="index">Palette indexes (one byte per pixel)</param>
 		/// <param name="palette">256 rgba8888 color values</param>
