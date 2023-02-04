@@ -19,7 +19,7 @@ namespace Voxel2Pixel.Model
 		public int SizeZ { get; set; } = 1;
 		public byte? At(int x, int y, int z) => IsInside(x, y, z) ? Indexes[y * SizeX + x] : (byte?)null;
 		public bool IsInside(int x, int y, int z) => !IsOutside(x, y, z);
-		public bool IsOutside(int x, int y, int z) => x < 0 || y < 0 || x >= SizeX || y >= SizeY;
+		public bool IsOutside(int x, int y, int z) => x < 0 || y < 0 || z < 0 || x >= SizeX || y >= SizeY || z >= SizeZ;
 		#endregion IModel
 	}
 }
