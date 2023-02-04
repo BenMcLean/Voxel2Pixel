@@ -566,30 +566,29 @@ namespace Voxel2Pixel.Draw
 			// To move one y- in voxels is x + 2, y + 2 in pixels.
 			// To move one z+ in voxels is y - 4 in pixels.
 			// To move one z- in voxels is y + 4 in pixels.
-			// 12
-			//1122
-			//0123
-			//0033
-			//0  3
-			bool[] spots = new bool[4];
 			int modelSizeX2 = model.SizeX * 2,
 				modelSizeY2 = model.SizeY * 2,
 				modelSizeZ4 = model.SizeZ * 4,
 				pixelWidth = modelSizeX2 + modelSizeY2,
 				pixelHeight = pixelWidth + modelSizeZ4;
 			bool evenSizeX = model.SizeX % 2 == 0;
+			bool[] tiles = new bool[4];
 			#region Isometric local functions
-			void Spot(int spot, Face face, int x, int y, byte voxel)
+			void Tile(int tile, Face face, int x, int y, byte voxel)
 			{
-				if (!spots[spot])
+				// 12
+				//1122
+				//0123
+				//0033
+				//0  3
+				if (!tiles[tile])
 				{
-					Tri(
-						right: spot % 2 == 0,
+					Tri(right: tile % 2 == 0,
 						face: face,
-						x: x + (spot < 2 ? 0 : 2),
-						y: y + (spot == 0 || spot == 3 ? 2 : 0),
+						x: x + (tile < 2 ? 0 : 2),
+						y: y + (tile == 0 || tile == 3 ? 2 : 0),
 						voxel: voxel);
-					spots[spot] = true;
+					tiles[tile] = true;
 				}
 			}
 			void Tri(bool right, Face face, int x, int y, byte voxel)
@@ -649,73 +648,73 @@ namespace Voxel2Pixel.Draw
 						startZ = startAtTop ? model.SizeZ - 1
 							: startAtLeft ? model.SizeZ - 2 - (halfY - halfX - model.SizeX) / 2
 							: model.SizeY + model.SizeZ - (halfY + halfX - model.SizeX - 1) / 2 - 3;
-					Array.Clear(spots, 0, spots.Length);
+					Array.Clear(tiles, 0, tiles.Length);
 					for (int voxelX = startX, voxelY = startY, voxelZ = startZ;
-							voxelX <= model.SizeX && voxelY <= model.SizeY && voxelZ >= 0 && spots.Any(@bool => !@bool);
+							voxelX <= model.SizeX && voxelY <= model.SizeY && voxelZ >= 0 && tiles.Any(@bool => !@bool);
 							voxelX++, voxelY++, voxelZ--)
 					{
-						if ((!spots[0] || !spots[1])
+						if ((!tiles[0] || !tiles[1])
 							&& model.IsInside(voxelX - 1, voxelY, voxelZ + 1)
 							&& model.At(voxelX - 1, voxelY, voxelZ + 1) is byte xMinus1zPlus1
 							&& xMinus1zPlus1 != 0)
 						{
-							Spot(spot: 0,
+							Tile(tile: 0,
 								face: Face.Right,
 								x: pixelX,
 								y: pixelY,
 								voxel: xMinus1zPlus1);
-							Spot(spot: 1,
+							Tile(tile: 1,
 								face: Face.Right,
 								x: pixelX,
 								y: pixelY,
 								voxel: xMinus1zPlus1);
 						}
-						if ((!spots[2] || !spots[3])
+						if ((!tiles[2] || !tiles[3])
 							&& model.IsInside(voxelX, voxelY - 1, voxelZ + 1)
 							&& model.At(voxelX, voxelY - 1, voxelZ + 1) is byte yMinus1zPlus1
 							&& yMinus1zPlus1 != 0)
 						{
-							Spot(spot: 2,
+							Tile(tile: 2,
 								face: Face.Left,
 								x: pixelX,
 								y: pixelY,
 								voxel: yMinus1zPlus1);
-							Spot(spot: 3,
+							Tile(tile: 3,
 								face: Face.Left,
 								x: pixelX,
 								y: pixelY,
 								voxel: yMinus1zPlus1);
 						}
-						if ((!spots[1] || !spots[2])
+						if ((!tiles[1] || !tiles[2])
 							&& model.IsInside(voxelX, voxelY, voxelZ + 1)
 							&& model.At(voxelX, voxelY, voxelZ + 1) is byte zPlus1
 							&& zPlus1 != 0)
 						{
-							Spot(spot: 1,
+							Tile(tile: 1,
 								face: Face.Left,
 								x: pixelX,
 								y: pixelY,
 								voxel: zPlus1);
-							Spot(spot: 2,
+							Tile(tile: 2,
 								face: Face.Right,
 								x: pixelX,
 								y: pixelY,
 								voxel: zPlus1);
 						}
-						if (!spots[0]
+						if (!tiles[0]
 							&& model.IsInside(voxelX - 1, voxelY, voxelZ)
 							&& model.At(voxelX - 1, voxelY, voxelZ) is byte xMinus1
 							&& xMinus1 != 0)
-							Spot(spot: 0,
+							Tile(tile: 0,
 								face: Face.Vertical,
 								x: pixelX,
 								y: pixelY,
 								voxel: xMinus1);
-						if (!spots[3]
+						if (!tiles[3]
 							&& model.IsInside(voxelX, voxelY - 1, voxelZ)
 							&& model.At(voxelX, voxelY - 1, voxelZ) is byte yMinus1
 							&& yMinus1 != 0)
-							Spot(spot: 3,
+							Tile(tile: 3,
 								face: Face.Vertical,
 								x: pixelX,
 								y: pixelY,
@@ -724,90 +723,90 @@ namespace Voxel2Pixel.Draw
 							&& model.At(voxelX, voxelY, voxelZ) is byte voxel
 							&& voxel != 0)
 						{
-							Spot(spot: 0,
+							Tile(tile: 0,
 								face: Face.Left,
 								x: pixelX,
 								y: pixelY,
 								voxel: voxel);
-							Spot(spot: 1,
+							Tile(tile: 1,
 								face: Face.Vertical,
 								x: pixelX,
 								y: pixelY,
 								voxel: voxel);
-							Spot(spot: 2,
+							Tile(tile: 2,
 								face: Face.Vertical,
 								x: pixelX,
 								y: pixelY,
 								voxel: voxel);
-							Spot(spot: 3,
+							Tile(tile: 3,
 								face: Face.Right,
 								x: pixelX,
 								y: pixelY,
 								voxel: voxel);
 							break;
 						}
-						if ((!spots[0] || !spots[1])
+						if ((!tiles[0] || !tiles[1])
 							&& model.IsInside(voxelX, voxelY + 1, voxelZ)
 							&& model.At(voxelX, voxelY + 1, voxelZ) is byte yPlus1
 							&& yPlus1 != 0)
 						{
-							Spot(spot: 0,
+							Tile(tile: 0,
 								face: Face.Right,
 								x: pixelX,
 								y: pixelY,
 								voxel: yPlus1);
-							Spot(spot: 1,
+							Tile(tile: 1,
 								face: Face.Right,
 								x: pixelX,
 								y: pixelY,
 								voxel: yPlus1);
 						}
-						if ((!spots[2] || !spots[3])
+						if ((!tiles[2] || !tiles[3])
 							&& model.IsInside(voxelX + 1, voxelY, voxelZ)
 							&& model.At(voxelX + 1, voxelY, voxelZ) is byte xPlus1
 							&& xPlus1 != 0)
 						{
-							Spot(spot: 2,
+							Tile(tile: 2,
 								face: Face.Left,
 								x: pixelX,
 								y: pixelY,
 								voxel: xPlus1);
-							Spot(spot: 3,
+							Tile(tile: 3,
 								face: Face.Left,
 								x: pixelX,
 								y: pixelY,
 								voxel: xPlus1);
 						}
-						if ((!spots[1] || !spots[2])
+						if ((!tiles[1] || !tiles[2])
 							&& model.IsInside(voxelX + 1, voxelY + 1, voxelZ)
 							&& model.At(voxelX + 1, voxelY + 1, voxelZ) is byte xPlus1yPlus1
 							&& xPlus1yPlus1 != 0)
 						{
-							Spot(spot: 1,
+							Tile(tile: 1,
 								face: Face.Left,
 								x: pixelX,
 								y: pixelY,
 								voxel: xPlus1yPlus1);
-							Spot(spot: 2,
+							Tile(tile: 2,
 								face: Face.Right,
 								x: pixelX,
 								y: pixelY,
 								voxel: xPlus1yPlus1);
 						}
-						if (!spots[0]
+						if (!tiles[0]
 							&& model.IsInside(voxelX, voxelY + 1, voxelZ - 1)
 							&& model.At(voxelX, voxelY + 1, voxelZ - 1) is byte yPlus1zMinus1
 							&& yPlus1zMinus1 != 0)
-							Spot(spot: 0,
+							Tile(tile: 0,
 								face: Face.Vertical,
 								x: pixelX,
 								y: pixelY,
 								voxel: yPlus1zMinus1);
-						if (!spots[3]
+						if (!tiles[3]
 							&& model.IsInside(voxelX + 1, voxelY, voxelZ - 1)
 							&& model.At(voxelX + 1, voxelY, voxelZ - 1) is byte xPlus1zMinus1
 							&& xPlus1zMinus1 != 0)
-							Spot(spot: 3,
+							Tile(tile: 3,
 								face: Face.Vertical,
 								x: pixelX,
 								y: pixelY,
