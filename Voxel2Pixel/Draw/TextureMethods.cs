@@ -7,9 +7,13 @@ using System.Text;
 namespace Voxel2Pixel.Draw
 {
 	/// <summary>
+	/// These methods assume rgba8888 a.k.a. rgba32 color, stored Big-Endian.
+	/// That means every four bytes represent one pixel.
+	/// A texture is a byte array of size = wdith * 4 * height.
+	/// width is max x, height is max y.
+	/// x+ is right, y+ is down.
 	/// Methods that start with "Draw" modify the original array. Other methods return a copy.
-	/// x is width, y is height
-	/// x+ is right, y+ is down
+	/// Sometimes bitwise operations are hard to follow:
 	/// (i << 2 == i * 4)
 	/// (i >> 2 == i / 4) when i is a positive integer
 	/// </summary>
