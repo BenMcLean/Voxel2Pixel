@@ -17,7 +17,7 @@ namespace Voxel2Pixel.Draw
 	/// (i << 2 == i * 4)
 	/// (i >> 2 == i / 4) when i is a positive integer
 	/// </summary>
-	public static class TextureMethods
+	public static class PixelDraw
 	{
 		//TODO: DrawTriangle
 		//TODO: DrawLine

@@ -46,7 +46,7 @@ namespace Voxel2Pixel.Model
 		}
 		private VoxReader.Interfaces.IModel model;
 		public byte[][][] Voxels;
-		public static uint Color(VoxReader.Color color) => TextureMethods.Color(
+		public static uint Color(VoxReader.Color color) => PixelDraw.Color(
 			r: color.R,
 			g: color.G,
 			b: color.B,

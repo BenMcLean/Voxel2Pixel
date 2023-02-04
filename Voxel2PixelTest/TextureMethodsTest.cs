@@ -1,7 +1,7 @@
 using SixLabors.ImageSharp;
 using Voxel2Pixel.Draw;
 using Xunit;
-using static Voxel2Pixel.Draw.TextureMethods;
+using static Voxel2Pixel.Draw.PixelDraw;
 
 namespace Voxel2PixelTest
 {
