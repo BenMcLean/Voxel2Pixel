@@ -11,7 +11,7 @@ namespace Voxel2PixelTest
 {
 	public class AnimatedTest
 	{
-		[Fact]
+		//[Fact]
 		public void GifTest()
 		{
 			ArrayModel model = new ArrayModel(

@@ -572,6 +572,13 @@ namespace Voxel2Pixel.Draw
 			//0033
 			//0  3
 			bool[] spots = new bool[4];
+			int modelSizeX2 = model.SizeX * 2,
+				modelSizeY2 = model.SizeY * 2,
+				modelSizeZ4 = model.SizeZ * 4,
+				pixelWidth = modelSizeX2 + modelSizeY2,
+				pixelHeight = pixelWidth + modelSizeZ4;
+			bool evenSizeX = model.SizeX % 2 == 0;
+			#region Isometric local functions
 			void Spot(int spot, Face face, int x, int y, byte voxel)
 			{
 				if (!spots[spot])
@@ -612,12 +619,8 @@ namespace Voxel2Pixel.Draw
 						break;
 				}
 			}
-			int modelSizeX2 = model.SizeX * 2,
-				modelSizeY2 = model.SizeY * 2,
-				modelSizeZ4 = model.SizeZ * 4,
-				pixelWidth = modelSizeX2 + modelSizeY2,
-				pixelHeight = pixelWidth + modelSizeZ4;
-			bool evenSizeX = model.SizeX % 2 == 0;
+			#endregion Isometric local functions
+			#region Isometric main tiled area
 			for (int pixelY = 0; pixelY < pixelHeight - 2; pixelY += 4)
 			{
 				int pixelStartX = pixelY < modelSizeX2 + modelSizeZ4 ?
@@ -812,6 +815,27 @@ namespace Voxel2Pixel.Draw
 					}
 				}
 			}
+			#endregion Isometric main tiled area
+			#region Isometric top left
+			for (int pixelX = evenSizeX ? 0 : 2, pixelY = modelSizeX2 - (evenSizeX ? 2 : 4);
+				pixelX < modelSizeX2 && pixelY > 1;
+				pixelX += 4, pixelY -= 4)
+			{
+				int halfX = pixelX / 2,
+					halfY = pixelY / 2,
+					voxelX = model.SizeX - 1 - (halfY - halfX + model.SizeX) / 2,
+					voxelY = model.SizeY - 1 - (halfX + halfY - model.SizeX + 1) / 2,
+					voxelZ = model.SizeZ - 1;
+				if (model.IsInside(voxelX, voxelY, voxelZ)
+					&& model.At(voxelX, voxelY, voxelZ) is byte voxel
+					&& voxel != 0)
+					renderer.TriangleVerticalFace(
+						x: pixelX,
+						y: pixelY,
+						right: false,
+						voxel: voxel);
+			}
+			#endregion Isometric top left
 		}
 		#endregion Isometric
 	}
