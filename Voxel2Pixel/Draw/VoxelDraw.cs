@@ -823,11 +823,9 @@ namespace Voxel2Pixel.Draw
 			{
 				int halfX = pixelX / 2,
 					halfY = pixelY / 2,
-					voxelX = model.SizeX - 1 - (halfY - halfX + model.SizeX) / 2,
-					voxelY = model.SizeY - 1 - (halfX + halfY - model.SizeX + 1) / 2,
-					voxelZ = model.SizeZ - 1;
-				if (model.IsInside(voxelX, voxelY, voxelZ)
-					&& model.At(voxelX, voxelY, voxelZ) is byte voxel
+					voxelX = model.SizeX - 1 - (halfY - halfX + model.SizeX) / 2;
+				if (model.IsInside(voxelX, model.SizeY - 1, model.SizeZ - 1)
+					&& model.At(voxelX, model.SizeY - 1, model.SizeZ - 1) is byte voxel
 					&& voxel != 0)
 					renderer.TriangleVerticalFace(
 						x: pixelX,
@@ -843,11 +841,9 @@ namespace Voxel2Pixel.Draw
 			{
 				int halfX = pixelX / 2,
 					halfY = pixelY / 2,
-					voxelX = model.SizeX - 1 - (halfY - halfX + model.SizeX) / 2,
-					voxelY = model.SizeY - 1 - (halfX + halfY - model.SizeX + 1) / 2,
-					voxelZ = model.SizeZ - 1;
-				if (model.IsInside(voxelX, voxelY, voxelZ)
-					&& model.At(voxelX, voxelY, voxelZ) is byte voxel
+					voxelY = model.SizeY - 1 - (halfX + halfY - model.SizeX + 1) / 2;
+				if (model.IsInside(model.SizeX - 1, voxelY, model.SizeZ - 1)
+					&& model.At(model.SizeX - 1, voxelY, model.SizeZ - 1) is byte voxel
 					&& voxel != 0)
 					renderer.TriangleVerticalFace(
 						x: pixelX,
@@ -861,13 +857,9 @@ namespace Voxel2Pixel.Draw
 				pixelX < modelSizeY2 && pixelY < pixelHeight;
 				pixelX += 4, pixelY += 4)
 			{
-				//int halfX = pixelX / 2,
-				//	halfY = pixelY / 2,
-				//	voxelX = model.SizeX - 1 - (halfY - halfX + model.SizeX) / 2,
-				//	voxelY = model.SizeY - 1 - (halfX + halfY - model.SizeX + 1) / 2,
-				//	voxelZ = model.SizeZ - 1;
-				//if (model.IsInside(voxelX, voxelY, voxelZ)
-				//	&& model.At(voxelX, voxelY, voxelZ) is byte voxel
+				int voxelY = model.SizeY - 1 - pixelX / 2;
+				//if (model.IsInside(0, voxelY, model.SizeZ - 1)
+				//	&& model.At(0, voxelY, model.SizeZ - 1) is byte voxel
 				//	&& voxel != 0)
 				//	renderer.TriangleVerticalFace(
 				if (pixelX >= 2)
