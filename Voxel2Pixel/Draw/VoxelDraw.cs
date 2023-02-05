@@ -854,26 +854,30 @@ namespace Voxel2Pixel.Draw
 				pixelX += 4, pixelY += 4)
 			{
 				int voxelY = model.SizeY - 1 - pixelX / 2;
-				//if (model.IsInside(0, voxelY, model.SizeZ - 1)
-				//	&& model.At(0, voxelY, model.SizeZ - 1) is byte voxel
-				//	&& voxel != 0)
-				//	renderer.TriangleVerticalFace(
-				if (pixelX >= 2)
-					renderer.Triangle(
+				if (pixelX >= 2
+					&& model.IsInside(0, voxelY + 1, model.SizeZ - 1)
+					&& model.At(0, voxelY + 1, model.SizeZ - 1) is byte leftVoxel
+					&& leftVoxel != 0)
+					renderer.TriangleLeftFace(
 						x: pixelX - 2,
 						y: pixelY,
 						right: false,
-						color: 0xFFFF00FF);
-				renderer.Triangle(
-					x: pixelX,
-					y: pixelY,
-					right: true,
-					color: 0x00FFFFFF);
-				renderer.Triangle(
-					x: pixelX,
-					y: pixelY + 2,
-					right: false,
-					color: 0xFF00FFFF);
+						voxel: leftVoxel);
+				if (model.IsInside(0, voxelY, model.SizeZ - 1)
+					&& model.At(0, voxelY, model.SizeZ - 1) is byte voxel
+					&& voxel != 0)
+				{
+					renderer.TriangleLeftFace(
+						x: pixelX,
+						y: pixelY,
+						right: true,
+						voxel: voxel);
+					renderer.TriangleLeftFace(
+						x: pixelX,
+						y: pixelY + 2,
+						right: false,
+						voxel: voxel);
+				}
 			}
 			#endregion Isometric bottom left edge
 			#region Isometric bottom right edge
@@ -884,8 +888,7 @@ namespace Voxel2Pixel.Draw
 				//int halfX = pixelX / 2,
 				//	halfY = pixelY / 2,
 				//	voxelX = model.SizeX - 1 - (halfY - halfX + model.SizeX) / 2,
-				//	voxelY = model.SizeY - 1 - (halfX + halfY - model.SizeX + 1) / 2,
-				//	voxelZ = model.SizeZ - 1;
+				//	voxelY = model.SizeY - 1 - (halfX + halfY - model.SizeX + 1) / 2;
 				//if (model.IsInside(voxelX, voxelY, voxelZ)
 				//	&& model.At(voxelX, voxelY, voxelZ) is byte voxel
 				//	&& voxel != 0)
