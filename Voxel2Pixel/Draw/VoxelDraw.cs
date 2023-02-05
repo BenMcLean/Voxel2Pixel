@@ -855,16 +855,16 @@ namespace Voxel2Pixel.Draw
 			{
 				int voxelY = model.SizeY - 1 - pixelX / 2;
 				if (pixelX >= 2
-					&& model.IsInside(0, voxelY + 1, model.SizeZ - 1)
-					&& model.At(0, voxelY + 1, model.SizeZ - 1) is byte leftVoxel
+					&& model.IsInside(0, voxelY + 1, 0)
+					&& model.At(0, voxelY + 1, 0) is byte leftVoxel
 					&& leftVoxel != 0)
 					renderer.TriangleLeftFace(
 						x: pixelX - 2,
 						y: pixelY,
 						right: false,
 						voxel: leftVoxel);
-				if (model.IsInside(0, voxelY, model.SizeZ - 1)
-					&& model.At(0, voxelY, model.SizeZ - 1) is byte voxel
+				if (model.IsInside(0, voxelY, 0)
+					&& model.At(0, voxelY, 0) is byte voxel
 					&& voxel != 0)
 				{
 					renderer.TriangleLeftFace(
@@ -885,29 +885,31 @@ namespace Voxel2Pixel.Draw
 				pixelX < pixelWidth;
 				pixelX += 4, pixelY -= 4)
 			{
-				//int halfX = pixelX / 2,
-				//	halfY = pixelY / 2,
-				//	voxelX = model.SizeX - 1 - (halfY - halfX + model.SizeX) / 2,
-				//	voxelY = model.SizeY - 1 - (halfX + halfY - model.SizeX + 1) / 2;
-				//if (model.IsInside(voxelX, voxelY, voxelZ)
-				//	&& model.At(voxelX, voxelY, voxelZ) is byte voxel
-				//	&& voxel != 0)
-				renderer.Triangle(
-					x: pixelX,
-					y: pixelY,
-					right: false,
-					color: 0x00FFFFFF);
-				renderer.Triangle(
-					x: pixelX,
-					y: pixelY + 2,
-					right: true,
-					color: 0xFF00FFFF);
-				if (pixelX < pixelWidth - 2)
-					renderer.Triangle(
+				int voxelX = pixelX / 2 - model.SizeY;
+				if (pixelX < pixelWidth - 2
+					&& model.IsInside(voxelX + 1, 0, 0)
+					&& model.At(voxelX + 1, 0, 0) is byte rightVoxel
+					&& rightVoxel != 0)
+					renderer.TriangleRightFace(
 						x: pixelX + 2,
 						y: pixelY,
 						right: true,
-						color: 0xFFFF00FF);
+						voxel: rightVoxel);
+				if (model.IsInside(voxelX, 0, 0)
+					&& model.At(voxelX, 0, 0) is byte voxel
+					&& voxel != 0)
+				{
+					renderer.TriangleRightFace(
+						x: pixelX,
+						y: pixelY,
+						right: false,
+						voxel: voxel);
+					renderer.TriangleRightFace(
+						x: pixelX,
+						y: pixelY + 2,
+						right: true,
+						voxel: voxel);
+				}
 			}
 			#endregion Isometric bottom right edge
 			#region Isometric origin
