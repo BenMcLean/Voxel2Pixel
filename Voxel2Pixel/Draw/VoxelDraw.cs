@@ -889,9 +889,9 @@ namespace Voxel2Pixel.Draw
 			}
 			#endregion Isometric bottom left edge
 			#region Isometric bottom right edge
-			for (int pixelX = modelSizeY2 + (evenSizeX != evenSizeY ? 0 : 2), pixelY = pixelHeight - (evenSizeY ? 6 : 0);
+			for (int pixelX = modelSizeY2 + (evenSizeX != evenSizeY ? 0 : 2), pixelY = modelSizeX2 + modelSizeZ4 + modelSizeY2 - (evenSizeX != evenSizeY ? 6 : 8);
 				pixelX < pixelWidth;
-				pixelX += 4)//, pixelY -= 4)
+				pixelX += 4, pixelY -= 4)
 			{
 				//int halfX = pixelX / 2,
 				//	halfY = pixelY / 2,
@@ -905,7 +905,18 @@ namespace Voxel2Pixel.Draw
 					x: pixelX,
 					y: pixelY,
 					right: false,
-					color: evenSizeY ? 0xFFFFFFFF : 0x000000FF);
+					color: 0x00FFFFFF);
+				renderer.Triangle(
+					x: pixelX,
+					y: pixelY + 2,
+					right: true,
+					color: 0xFF00FFFF);
+				if (pixelX < pixelWidth - 2)
+					renderer.Triangle(
+						x: pixelX + 2,
+						y: pixelY,
+						right: true,
+						color: 0xFFFF00FF);
 			}
 			#endregion Isometric bottom right edge
 		}
