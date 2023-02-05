@@ -919,6 +919,23 @@ namespace Voxel2Pixel.Draw
 						color: 0xFFFF00FF);
 			}
 			#endregion Isometric bottom right edge
+			#region Isometric origin
+			if (evenSizeX == evenSizeY
+				&& model.At(0, 0, 0) is byte origin
+				&& origin != 0)
+			{
+				renderer.TriangleLeftFace(
+					x: modelSizeY2 - 2,
+					y: pixelHeight - 4,
+					right: false,
+					voxel: origin);
+				renderer.TriangleRightFace(
+					x: modelSizeY2,
+					y: pixelHeight - 4,
+					right: true,
+					voxel: origin);
+			}
+			#endregion Isometric origin
 		}
 		#endregion Isometric
 	}
