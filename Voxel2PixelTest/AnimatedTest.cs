@@ -73,7 +73,7 @@ namespace Voxel2PixelTest
 							IVoxelColor = iVoxelColor,
 						};
 						VoxelDraw.Iso(
-							model: new ArrayModel(ArrayModelTest.RainbowBox(
+							model: new ArrayModel(ArrayModelTest.AltRainbowBox(
 								sizeX: sizeX,
 								sizeY: sizeY,
 								sizeZ: sizeZ)),

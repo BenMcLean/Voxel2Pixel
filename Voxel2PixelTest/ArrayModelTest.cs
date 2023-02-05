@@ -78,6 +78,37 @@ namespace Voxel2PixelTest
 			}
 			return model;
 		}
+		public static byte[][][] AltRainbowBox(int sizeX, int sizeY, int sizeZ)
+		{
+			byte[][][] model = ArrayModel.MakeModel(sizeX, sizeY, sizeZ);
+			model[0][3][0] = 1;
+			model[3][0][0] = 1;
+			for (int x = 1; x < sizeX; x++)
+			{
+				byte voxel = (byte)((sizeX - 1 - x) % Rainbow.Count + 1);
+				model[x][1][0] = voxel;
+				model[x][sizeY - 1][0] = voxel;
+				model[x][1][sizeZ - 1] = voxel;
+				model[x][sizeY - 1][sizeZ - 1] = voxel;
+			}
+			for (int y = 1; y < sizeY - 1; y++)
+			{
+				byte voxel = (byte)((sizeY - 1 - y) % Rainbow.Count + 1);
+				model[1][y][0] = voxel;
+				model[sizeX - 1][y][0] = voxel;
+				model[1][y][sizeZ - 1] = voxel;
+				model[sizeX - 1][y][sizeZ - 1] = voxel;
+			}
+			for (int z = 1; z < sizeZ - 1; z++)
+			{
+				byte voxel = (byte)((sizeZ - 1 - z) % Rainbow.Count + 1);
+				model[1][1][z] = voxel;
+				model[sizeX - 1][1][z] = voxel;
+				model[1][sizeY - 1][z] = voxel;
+				model[sizeX - 1][sizeY - 1][z] = voxel;
+			}
+			return model;
+		}
 		public static byte[][][] SmallerRainbowBox(int sizeX, int sizeY, int sizeZ)
 		{
 			byte[][][] model = ArrayModel.MakeModel(sizeX, sizeY, sizeZ);
