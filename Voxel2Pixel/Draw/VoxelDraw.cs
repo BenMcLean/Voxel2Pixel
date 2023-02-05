@@ -821,9 +821,7 @@ namespace Voxel2Pixel.Draw
 				pixelX < modelSizeX2 && pixelY > 1;
 				pixelX += 4, pixelY -= 4)
 			{
-				int halfX = pixelX / 2,
-					halfY = pixelY / 2,
-					voxelX = model.SizeX - 1 - (halfY - halfX + model.SizeX) / 2;
+				int voxelX = model.SizeX - 1 - (pixelY / 2 - pixelX / 2 + model.SizeX) / 2;
 				if (model.IsInside(voxelX, model.SizeY - 1, model.SizeZ - 1)
 					&& model.At(voxelX, model.SizeY - 1, model.SizeZ - 1) is byte voxel
 					&& voxel != 0)
@@ -839,9 +837,7 @@ namespace Voxel2Pixel.Draw
 				pixelX < pixelWidth && pixelY < modelSizeY2;
 				pixelX += 4, pixelY += 4)
 			{
-				int halfX = pixelX / 2,
-					halfY = pixelY / 2,
-					voxelY = model.SizeY - 1 - (halfX + halfY - model.SizeX + 1) / 2;
+				int voxelY = model.SizeY - 1 - (pixelX / 2 + pixelY / 2 - model.SizeX + 1) / 2;
 				if (model.IsInside(model.SizeX - 1, voxelY, model.SizeZ - 1)
 					&& model.At(model.SizeX - 1, voxelY, model.SizeZ - 1) is byte voxel
 					&& voxel != 0)
