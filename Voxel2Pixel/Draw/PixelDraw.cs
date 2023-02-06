@@ -658,7 +658,9 @@ namespace Voxel2Pixel.Draw
 		}
 		public static byte[] TransparentCrop(this byte[] texture, out int cutLeft, out int cutTop, out int croppedWidth, out int croppedHeight, byte threshold = 128, int width = 0)
 		{
-			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
+			if (width < 1)
+				width = (int)(Math.Sqrt(texture.Length >> 2));
+			int xSide = width << 2,
 				indexTop, indexBottom;
 			for (indexTop = 3; indexTop < texture.Length && texture[indexTop] < threshold; indexTop += 4) { }
 			cutTop = indexTop / xSide;
