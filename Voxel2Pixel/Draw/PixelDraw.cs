@@ -625,7 +625,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="y">upper left corner of selection</param>
 		/// <param name="croppedWidth">width of selection</param>
 		/// <param name="croppedHeight">height of selection</param>
-		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <param name="width">width of source texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data of width croppedWidth or smaller if x is smaller than zero or if x + croppedWidth extends outside the source texture</returns>
 		public static byte[] Crop(this byte[] texture, int x, int y, int croppedWidth, int croppedHeight, int width = 0)
 		{
@@ -656,6 +656,17 @@ namespace Voxel2Pixel.Draw
 				Array.Copy(texture, y1, cropped, y2, croppedWidth);
 			return cropped;
 		}
+		/// <summary>
+		/// Cuts off all edge rows and columns with an alpha channel lower than the threshold
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data of source image</param>
+		/// <param name="cutLeft">number of columns of pixels that have been removed form the left side</param>
+		/// <param name="cutTop">number of rows of pixels that have been removed from the top</param>
+		/// <param name="croppedWidth">width of returned texture</param>
+		/// <param name="croppedHeight">height of returned texture</param>
+		/// <param name="threshold">alpha channel lower than this will be evaluated as transparent</param>
+		/// <param name="width">width of source texture or 0 to assume square texture</param>
+		/// <returns>cropped texture</returns>
 		public static byte[] TransparentCrop(this byte[] texture, out int cutLeft, out int cutTop, out int croppedWidth, out int croppedHeight, byte threshold = 128, int width = 0)
 		{
 			if (width < 1)
