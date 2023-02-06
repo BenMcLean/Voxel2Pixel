@@ -656,6 +656,32 @@ namespace Voxel2Pixel.Draw
 				Array.Copy(texture, y1, cropped, y2, croppedWidth);
 			return cropped;
 		}
+		public static byte[] TransparentCrop(this byte[] texture, out int cutTop, out int cutLeft, out int croppedWidth, out int croppedHeight, byte threshold = 128, int width = 0)
+		{
+			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
+				height = texture.Length / xSide,
+				indexTop, indexBottom;
+			for (indexTop = 3; indexTop < texture.Length && texture[indexTop] < threshold; indexTop += 4) { }
+			cutTop = indexTop / xSide;
+			indexTop = cutTop * xSide;
+			for (indexBottom = texture.Length - 1; indexBottom > indexTop && texture[indexBottom] < threshold; indexBottom -= 4) { }
+			int cutBottom = indexBottom / xSide + 1;
+			//indexBottom = cutBottom * xSide;
+			//int indexLeft = 0, indexRight = xSide;
+			//for (int index = indexTop; index < indexBottom; index += xSide)
+			//{
+
+			//}
+			cutLeft = 0;
+			croppedWidth = width;
+			croppedHeight = cutBottom - cutTop;
+			return texture.Crop(
+				x: 0,
+				y: cutTop,
+				croppedWidth: width,
+				croppedHeight: croppedHeight,
+				width: width);
+		}
 		/// <summary>
 		/// Makes a new texture and copies the old texture to its upper left corner
 		/// </summary>
