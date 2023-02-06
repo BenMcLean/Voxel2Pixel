@@ -554,11 +554,7 @@ namespace Voxel2Pixel.Draw
 		#region Isometric
 		public static int IsoWidth(IModel model) => 2 * (model.SizeX + model.SizeY);
 		public static int IsoHeight(IModel model) => 2 * (model.SizeX + model.SizeY) + 4 * model.SizeZ - 1;
-		private enum Face
-		{
-			Vertical, Left, Right,
-		};
-		public static void Iso(IModel model, ITriangleRenderer renderer)
+		public static void IsoLocate(out int pixelX, out int pixelY, IModel model, int voxelX = 0, int voxelY = 0, int voxelZ = 0)
 		{
 			// To move one x+ in voxels is x + 2, y - 2 in pixels.
 			// To move one x- in voxels is x - 2, y + 2 in pixels.
@@ -566,6 +562,15 @@ namespace Voxel2Pixel.Draw
 			// To move one y- in voxels is x + 2, y + 2 in pixels.
 			// To move one z+ in voxels is y - 4 in pixels.
 			// To move one z- in voxels is y + 4 in pixels.
+			pixelX = 2 * (model.SizeY + voxelX - voxelY);
+			pixelY = IsoHeight(model) - 2 * (voxelX + voxelY) - 4 * voxelZ - 5;
+		}
+		private enum Face
+		{
+			Vertical, Left, Right,
+		};
+		public static void Iso(IModel model, ITriangleRenderer renderer)
+		{
 			int modelSizeX2 = model.SizeX * 2,
 				modelSizeY2 = model.SizeY * 2,
 				modelSizeZ4 = model.SizeZ * 4,

@@ -72,12 +72,24 @@ namespace Voxel2PixelTest
 							Width = width,
 							IVoxelColor = iVoxelColor,
 						};
-						VoxelDraw.Iso(
-							model: new ArrayModel(ArrayModelTest.RainbowBox(
+						IModel model = new ArrayModel(ArrayModelTest.RainbowBox(
 								sizeX: sizeX,
 								sizeY: sizeY,
-								sizeZ: sizeZ)),
+								sizeZ: sizeZ));
+						VoxelDraw.Iso(
+							model: model,
 							renderer: arrayRenderer);
+						VoxelDraw.IsoLocate(
+							out int pixelX,
+							out int pixelY,
+							model: model,
+							voxelX: 0,
+							voxelY: 0,
+							voxelZ: model.SizeZ - 1);
+						arrayRenderer.Rect(
+							x: pixelX,
+							y: pixelY,
+							color: 0xFFFFFFFF);
 						frames.Add(arrayRenderer.Image);
 					}
 			ImageMaker.AnimatedGifScaled(
