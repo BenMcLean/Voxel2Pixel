@@ -858,11 +858,18 @@ namespace Voxel2Pixel.Draw
 					&& model.IsInside(0, voxelY + 1, 0)
 					&& model.At(0, voxelY + 1, 0) is byte leftVoxel
 					&& leftVoxel != 0)
+				{
 					renderer.TriangleLeftFace(
 						x: pixelX - 2,
 						y: pixelY,
 						right: false,
 						voxel: leftVoxel);
+					renderer.TriangleRightFace(
+						x: pixelX,
+						y: pixelY,
+						right: true,
+						voxel: leftVoxel);
+				}
 				if (model.IsInside(0, voxelY, 0)
 					&& model.At(0, voxelY, 0) is byte voxel
 					&& voxel != 0)
@@ -890,11 +897,18 @@ namespace Voxel2Pixel.Draw
 					&& model.IsInside(voxelX + 1, 0, 0)
 					&& model.At(voxelX + 1, 0, 0) is byte rightVoxel
 					&& rightVoxel != 0)
+				{
+					renderer.TriangleLeftFace(
+						x: pixelX,
+						y: pixelY,
+						right: false,
+						voxel: rightVoxel);
 					renderer.TriangleRightFace(
 						x: pixelX + 2,
 						y: pixelY,
 						right: true,
 						voxel: rightVoxel);
+				}
 				if (model.IsInside(voxelX, 0, 0)
 					&& model.At(voxelX, 0, 0) is byte voxel
 					&& voxel != 0)
