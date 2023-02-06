@@ -669,17 +669,17 @@ namespace Voxel2Pixel.Draw
 			int cutBottom = indexBottom / xSide + 1;
 			indexBottom = cutBottom * xSide;
 			int indexLeft = xSide, indexRight = 0;
-			for (int index = indexTop; index < indexBottom; index += xSide)
+			for (int indexRow = indexTop; indexRow < indexBottom; indexRow += xSide)
 			{
 				int left;
-				for (left = 3; left < indexLeft && texture[index + left] < threshold; left += 4) { }
+				for (left = 3; left < indexLeft && texture[indexRow + left] < threshold; left += 4) { }
 				indexLeft = Math.Min(indexLeft, left);
 				int right;
-				for (right = xSide - 1; right > indexRight && texture[index + right] < threshold; right -= 4) { }
+				for (right = xSide - 1; right > indexRight && texture[indexRow + right] < threshold; right -= 4) { }
 				indexRight = Math.Max(indexRight, right);
 			}
-			cutLeft = indexLeft / 4;
-			croppedWidth = width - (xSide - indexRight) / 4 - cutLeft;
+			cutLeft = indexLeft >> 2;
+			croppedWidth = width - ((xSide - indexRight) >> 2) - cutLeft;
 			croppedHeight = cutBottom - cutTop;
 			return texture.Crop(
 				x: cutLeft,
