@@ -656,7 +656,7 @@ namespace Voxel2Pixel.Draw
 				Array.Copy(texture, y1, cropped, y2, croppedWidth);
 			return cropped;
 		}
-		public static byte[] TransparentCrop(this byte[] texture, out int cutTop, out int cutLeft, out int croppedWidth, out int croppedHeight, byte threshold = 128, int width = 0)
+		public static byte[] TransparentCrop(this byte[] texture, out int cutLeft, out int cutTop, out int croppedWidth, out int croppedHeight, byte threshold = 128, int width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				indexTop, indexBottom;
@@ -672,12 +672,12 @@ namespace Voxel2Pixel.Draw
 				int left;
 				for (left = 3; left < indexLeft && texture[index + left] < threshold; left += 4) { }
 				indexLeft = Math.Min(indexLeft, left);
-				//int right;
-				//for (right = xSide - 1; right > 0 && texture[index + right] < threshold; right -= 4) { }
-				//indexRight = Math.Max(indexRight, right);
+				int right;
+				for (right = xSide - 1; right > indexRight && texture[index + right] < threshold; right -= 4) { }
+				indexRight = Math.Max(indexRight, right);
 			}
 			cutLeft = indexLeft / 4;
-			croppedWidth = width - indexRight / 4 - cutLeft;
+			croppedWidth = width - (xSide - indexRight) / 4 - cutLeft;
 			croppedHeight = cutBottom - cutTop;
 			return texture.Crop(
 				x: cutLeft,
