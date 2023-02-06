@@ -634,18 +634,18 @@ namespace Voxel2Pixel.Draw
 				croppedWidth += x;
 				x = 0;
 			}
-			if (croppedWidth < 1) throw new InvalidDataException("croppedWidth < 1. Was: \"" + croppedWidth + "\"");
+			if (croppedWidth < 1) throw new ArgumentException("croppedWidth < 1. Was: \"" + croppedWidth + "\"");
 			if (y < 0)
 			{
 				croppedHeight += y;
 				y = 0;
 			}
-			if (croppedHeight < 1) throw new InvalidDataException("croppedHeight < 1. Was: \"" + croppedHeight + "\"");
+			if (croppedHeight < 1) throw new ArgumentException("croppedHeight < 1. Was: \"" + croppedHeight + "\"");
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
 			x <<= 2; // x *= 4;
-			if (x > xSide) throw new InvalidDataException("x > xSide. x: \"" + x + "\", xSide: \"" + xSide + "\"");
+			if (x > xSide) throw new ArgumentException("x > xSide. x: \"" + x + "\", xSide: \"" + xSide + "\"");
 			int ySide = (width < 1 ? xSide : texture.Length / width) >> 2;
-			if (y > ySide) throw new InvalidDataException("y > ySide. y: \"" + y + "\", ySide: \"" + ySide + "\"");
+			if (y > ySide) throw new ArgumentException("y > ySide. y: \"" + y + "\", ySide: \"" + ySide + "\"");
 			if (y + croppedHeight > ySide)
 				croppedHeight = ySide - y;
 			croppedWidth <<= 2; // croppedWidth *= 4;
