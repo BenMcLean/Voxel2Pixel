@@ -732,7 +732,7 @@ namespace Voxel2Pixel.Draw
 			}
 			for (int x = 0; x < width; x++)
 				for (int y = 0; y < height; y++)
-					if (texture[Index(x, y)].A() < 128)
+					if (texture[Index(x, y)].A() < threshold)
 					{
 						neighbors.Clear();
 						Add(x - 1, y);
@@ -753,6 +753,23 @@ namespace Voxel2Pixel.Draw
 								result[Index(x, y)] = 0;
 						}
 					}
+			return result;
+		}
+		public static byte[] Border(this byte[] texture, int width = 0, uint color = 0x000000FF, byte threshold = 128) => Border(texture, width, threshold, color.R(), color.G(), color.B(), color.A());
+		private static byte[] Border(this byte[] texture, int width = 0, byte threshold = 128, params byte[] rgba)
+		{
+			if (width < 1)
+				width = (int)(Math.Sqrt(texture.Length >> 2));
+			int xSide = width << 2;
+			byte[] result = new byte[texture.Length];
+			Array.Copy(texture, result, result.Length);
+			for (int index = 3; index < texture.Length; index += 4)
+				if (texture[index] < threshold && (
+					(index - xSide > 0 && texture[index - xSide] >= threshold)
+					|| (index + 4 < texture.Length && texture[index + 4] >= threshold)
+					|| (index + xSide < texture.Length && texture[index + xSide] >= threshold)
+					|| (index > 3 && texture[index - 4] >= threshold)))
+					Array.Copy(rgba, 0, result, index - 3, 4);
 			return result;
 		}
 		/// <summary>
