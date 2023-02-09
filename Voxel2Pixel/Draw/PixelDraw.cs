@@ -699,6 +699,62 @@ namespace Voxel2Pixel.Draw
 				croppedHeight: croppedHeight,
 				width: width);
 		}
+		public static byte[] TransparentBorder(byte[] texture, byte threshold = 128, int width = 0) => UInt2ByteArray(TransparentBorder(Byte2UIntArray(texture), threshold, width));
+		public static uint[] TransparentBorder(uint[] texture, byte threshold = 128, int width = 0)
+		{
+			if (width < 1)
+				width = (int)Math.Sqrt(texture.Length);
+			uint[] result = new uint[texture.Length];
+			Array.Copy(texture, result, result.Length);
+			int height = texture.Length / width;
+			int Index(int x, int y) => x * width + y;
+			List<uint> neighbors = new List<uint>(9);
+			void Add(int x, int y)
+			{
+				if (x >= 0 && y >= 0 && x < width && y < height
+					&& texture[Index(x, y)] is uint pixel
+					&& pixel.A() >= threshold)
+					neighbors.Add(pixel);
+			}
+			uint Average()
+			{
+				int count = neighbors.Count();
+				if (count == 1)
+					return neighbors.First() & 0xFFFFFF00u;
+				int r = 0, g = 0, b = 0;
+				foreach (uint color in neighbors)
+				{
+					r += color.R();
+					g += color.G();
+					b += color.B();
+				}
+				return Color((byte)(r / count), (byte)(g / count), (byte)(b / count), 0);
+			}
+			for (int x = 0; x < width; x++)
+				for (int y = 0; y < height; y++)
+					if (texture[Index(x, y)].A() < 128)
+					{
+						neighbors.Clear();
+						Add(x - 1, y);
+						Add(x + 1, y);
+						Add(x, y - 1);
+						Add(x, y + 1);
+						if (neighbors.Count > 0)
+							result[Index(x, y)] = Average();
+						else
+						{
+							Add(x - 1, y - 1);
+							Add(x + 1, y - 1);
+							Add(x - 1, y + 1);
+							Add(x + 1, y + 1);
+							if (neighbors.Count > 0)
+								result[Index(x, y)] = Average();
+							else // Make non-border transparent pixels transparent black
+								result[Index(x, y)] = 0;
+						}
+					}
+			return result;
+		}
 		/// <summary>
 		/// Makes a new texture and copies the old texture to its upper left corner
 		/// </summary>
