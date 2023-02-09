@@ -602,21 +602,21 @@ namespace Voxel2Pixel.Draw
 				switch (face)
 				{
 					case Face.Vertical:
-						renderer.TriangleVerticalFace(
+						renderer.TriVertical(
 							x: x,
 							y: y,
 							right: right,
 							voxel: voxel);
 						break;
 					case Face.Left:
-						renderer.TriangleLeftFace(
+						renderer.TriLeft(
 							x: x,
 							y: y,
 							right: right,
 							voxel: voxel);
 						break;
 					case Face.Right:
-						renderer.TriangleRightFace(
+						renderer.TriRight(
 							x: x,
 							y: y,
 							right: right,
@@ -830,7 +830,7 @@ namespace Voxel2Pixel.Draw
 				if (model.IsInside(voxelX, model.SizeY - 1, model.SizeZ - 1)
 					&& model.At(voxelX, model.SizeY - 1, model.SizeZ - 1) is byte voxel
 					&& voxel != 0)
-					renderer.TriangleVerticalFace(
+					renderer.TriVertical(
 						x: pixelX,
 						y: pixelY,
 						right: false,
@@ -846,7 +846,7 @@ namespace Voxel2Pixel.Draw
 				if (model.IsInside(model.SizeX - 1, voxelY, model.SizeZ - 1)
 					&& model.At(model.SizeX - 1, voxelY, model.SizeZ - 1) is byte voxel
 					&& voxel != 0)
-					renderer.TriangleVerticalFace(
+					renderer.TriVertical(
 						x: pixelX,
 						y: pixelY,
 						right: true,
@@ -864,12 +864,12 @@ namespace Voxel2Pixel.Draw
 					&& model.At(0, voxelY + 1, 0) is byte leftVoxel
 					&& leftVoxel != 0)
 				{
-					renderer.TriangleLeftFace(
+					renderer.TriLeft(
 						x: pixelX - 2,
 						y: pixelY,
 						right: false,
 						voxel: leftVoxel);
-					renderer.TriangleRightFace(
+					renderer.TriRight(
 						x: pixelX,
 						y: pixelY,
 						right: true,
@@ -879,12 +879,12 @@ namespace Voxel2Pixel.Draw
 					&& model.At(0, voxelY, 0) is byte voxel
 					&& voxel != 0)
 				{
-					renderer.TriangleLeftFace(
+					renderer.TriLeft(
 						x: pixelX,
 						y: pixelY,
 						right: true,
 						voxel: voxel);
-					renderer.TriangleLeftFace(
+					renderer.TriLeft(
 						x: pixelX,
 						y: pixelY + 2,
 						right: false,
@@ -903,12 +903,12 @@ namespace Voxel2Pixel.Draw
 					&& model.At(voxelX + 1, 0, 0) is byte rightVoxel
 					&& rightVoxel != 0)
 				{
-					renderer.TriangleLeftFace(
+					renderer.TriLeft(
 						x: pixelX,
 						y: pixelY,
 						right: false,
 						voxel: rightVoxel);
-					renderer.TriangleRightFace(
+					renderer.TriRight(
 						x: pixelX + 2,
 						y: pixelY,
 						right: true,
@@ -918,12 +918,12 @@ namespace Voxel2Pixel.Draw
 					&& model.At(voxelX, 0, 0) is byte voxel
 					&& voxel != 0)
 				{
-					renderer.TriangleRightFace(
+					renderer.TriRight(
 						x: pixelX,
 						y: pixelY,
 						right: false,
 						voxel: voxel);
-					renderer.TriangleRightFace(
+					renderer.TriRight(
 						x: pixelX,
 						y: pixelY + 2,
 						right: true,
@@ -936,12 +936,12 @@ namespace Voxel2Pixel.Draw
 				&& model.At(0, 0, 0) is byte origin
 				&& origin != 0)
 			{
-				renderer.TriangleLeftFace(
+				renderer.TriLeft(
 					x: modelSizeY2 - 2,
 					y: pixelHeight - 4,
 					right: false,
 					voxel: origin);
-				renderer.TriangleRightFace(
+				renderer.TriRight(
 					x: modelSizeY2,
 					y: pixelHeight - 4,
 					right: true,

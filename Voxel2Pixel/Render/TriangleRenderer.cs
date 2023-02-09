@@ -9,7 +9,7 @@ namespace Voxel2Pixel.Render
 	{
 		public IVoxelColor IVoxelColor { get; set; }
 		#region ITriangleRenderer
-		public void Triangle(int x, int y, bool right, uint color)
+		public void Tri(int x, int y, bool right, uint color)
 		{
 			if (right)
 			{
@@ -44,9 +44,9 @@ namespace Voxel2Pixel.Render
 					color: color);
 			}
 		}
-		public void TriangleVerticalFace(int x, int y, bool right, byte voxel) => Triangle(x, y, right, IVoxelColor.VerticalFace(voxel));
-		public void TriangleLeftFace(int x, int y, bool right, byte voxel) => Triangle(x, y, right, IVoxelColor.LeftFace(voxel));
-		public void TriangleRightFace(int x, int y, bool right, byte voxel) => Triangle(x, y, right, IVoxelColor.RightFace(voxel));
+		public void TriVertical(int x, int y, bool right, byte voxel) => Tri(x, y, right, IVoxelColor.VerticalFace(voxel));
+		public void TriLeft(int x, int y, bool right, byte voxel) => Tri(x, y, right, IVoxelColor.LeftFace(voxel));
+		public void TriRight(int x, int y, bool right, byte voxel) => Tri(x, y, right, IVoxelColor.RightFace(voxel));
 		#endregion ITriangleRenderer
 		#region IRectangleRenderer
 		public abstract void Rect(int x, int y, uint color, int sizeX = 1, int sizeY = 1);
