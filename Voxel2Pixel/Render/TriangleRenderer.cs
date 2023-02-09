@@ -3,7 +3,7 @@
 namespace Voxel2Pixel.Render
 {
 	/// <summary>
-	/// Provides a default implementation of ITriangleRenderer by calling IRectangleRenderer, which is left abstract.
+	/// Provides a default implementation of ITriangleRenderer by calling IRectangleRenderer, while leaving the Rect method abstract.
 	/// </summary>
 	public abstract class TriangleRenderer : IRectangleRenderer, ITriangleRenderer
 	{
@@ -50,9 +50,27 @@ namespace Voxel2Pixel.Render
 		#endregion ITriangleRenderer
 		#region IRectangleRenderer
 		public abstract void Rect(int x, int y, uint color, int sizeX = 1, int sizeY = 1);
-		public abstract void RectVertical(int x, int y, byte voxel, int sizeX = 1, int sizeY = 1);
-		public abstract void RectLeft(int x, int y, byte voxel, int sizeX = 1, int sizeY = 1);
-		public abstract void RectRight(int x, int y, byte voxel, int sizeX = 1, int sizeY = 1);
+		public void RectLeft(int x, int y, byte voxel, int sizeX = 1, int sizeY = 1) =>
+			Rect(
+				x: x,
+				y: y,
+				color: IVoxelColor.LeftFace(voxel),
+				sizeX: sizeX,
+				sizeY: sizeY);
+		public void RectRight(int x, int y, byte voxel, int sizeX = 1, int sizeY = 1) =>
+			Rect(
+				x: x,
+				y: y,
+				color: IVoxelColor.RightFace(voxel),
+				sizeX: sizeX,
+				sizeY: sizeY);
+		public void RectVertical(int x, int y, byte voxel, int sizeX = 1, int sizeY = 1) =>
+			Rect(
+				x: x,
+				y: y,
+				color: IVoxelColor.VerticalFace(voxel),
+				sizeX: sizeX,
+				sizeY: sizeY);
 		#endregion IRectangleRenderer
 	}
 }
