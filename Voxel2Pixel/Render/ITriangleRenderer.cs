@@ -3,7 +3,7 @@
 	/// <summary>
 	/// An ITriangleRenderer draws triangles where each triangle represents half of one of the diamonds making up one of the three visible faces of a voxel cube from an isometric perspective
 	/// </summary>
-	public interface ITriangleRenderer : IVoxelRenderer
+	public interface ITriangleRenderer
 	{
 		/// <summary>
 		/// Draws a triangle 3 high and 2 wide
