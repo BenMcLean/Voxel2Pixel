@@ -47,7 +47,7 @@ namespace Voxel2PixelTest
 				bytes: arrayRenderer.Image)
 				.SaveAsPng("CropNo.png");
 			byte[] cropped = arrayRenderer.Image
-				.Border(width)
+				.Outline(width)
 				.TransparentCrop(
 				out _,
 				out _,

@@ -699,8 +699,8 @@ namespace Voxel2Pixel.Draw
 				croppedHeight: croppedHeight,
 				width: width);
 		}
-		public static byte[] TransparentBorder(byte[] texture, byte threshold = 128, int width = 0) => UInt2ByteArray(TransparentBorder(Byte2UIntArray(texture), threshold, width));
-		public static uint[] TransparentBorder(uint[] texture, byte threshold = 128, int width = 0)
+		public static byte[] TransparentOutline(byte[] texture, byte threshold = 128, int width = 0) => UInt2ByteArray(TransparentOutline(Byte2UIntArray(texture), threshold, width));
+		public static uint[] TransparentOutline(uint[] texture, byte threshold = 128, int width = 0)
 		{
 			if (width < 1)
 				width = (int)Math.Sqrt(texture.Length);
@@ -755,21 +755,22 @@ namespace Voxel2Pixel.Draw
 					}
 			return result;
 		}
-		public static byte[] Border(this byte[] texture, int width = 0, uint color = 0x000000FF, byte threshold = 128) => Border(texture, width, threshold, color.R(), color.G(), color.B(), color.A());
-		private static byte[] Border(this byte[] texture, int width = 0, byte threshold = 128, params byte[] rgba)
+		public static byte[] Outline(this byte[] texture, int width = 0, uint color = 0x000000FF, byte threshold = 128) => Outline(texture, width, threshold, color.R(), color.G(), color.B(), color.A());
+		private static byte[] Outline(this byte[] texture, int width = 0, byte threshold = 128, params byte[] rgba)
 		{
 			if (width < 1)
 				width = (int)(Math.Sqrt(texture.Length >> 2));
 			int xSide = width << 2;
 			byte[] result = new byte[texture.Length];
 			Array.Copy(texture, result, result.Length);
-			for (int index = 3; index < texture.Length; index += 4)
-				if (texture[index] < threshold && (
-					(index - xSide > 0 && texture[index - xSide] >= threshold)
-					|| (index + 4 < texture.Length && texture[index + 4] >= threshold)
-					|| (index + xSide < texture.Length && texture[index + xSide] >= threshold)
-					|| (index > 3 && texture[index - 4] >= threshold)))
-					Array.Copy(rgba, 0, result, index - 3, 4);
+			for (int rowIndex = 0; rowIndex < texture.Length; rowIndex += xSide)
+				for (int index = 3; index < xSide; index += 4)
+					if (texture[rowIndex + index] < threshold && (
+						(rowIndex > 0 && texture[rowIndex + index - xSide] >= threshold)
+						|| (index + 4 < xSide && texture[rowIndex + index + 4] >= threshold)
+						|| (rowIndex + index + xSide < texture.Length && texture[rowIndex + index + xSide] >= threshold)
+						|| (index > 3 && texture[rowIndex + index - 4] >= threshold)))
+						Array.Copy(rgba, 0, result, rowIndex + index - 3, 4);
 			return result;
 		}
 		/// <summary>
