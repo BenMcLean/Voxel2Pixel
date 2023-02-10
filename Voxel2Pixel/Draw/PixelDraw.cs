@@ -149,8 +149,8 @@ namespace Voxel2Pixel.Draw
 		/// <param name="y">upper left corner of where to insert</param>
 		/// <param name="insert">raw rgba888 pixel data to insert</param>
 		/// <param name="insertWidth">width of insert or 0 to assume square texture</param>
-		/// <param name="threshold">only draws pixel if alpha is higher than or equal to threshold</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
+		/// <param name="threshold">only draws pixel if alpha is higher than or equal to threshold</param>
 		/// <returns>same texture with insert drawn</returns>
 		public static byte[] DrawTransparentInsert(this byte[] texture, int x, int y, byte[] insert, int insertWidth = 0, int width = 0, byte threshold = 128)
 		{
@@ -664,8 +664,8 @@ namespace Voxel2Pixel.Draw
 		/// <param name="cutTop">number of rows of pixels that have been removed from the top</param>
 		/// <param name="croppedWidth">width of returned texture</param>
 		/// <param name="croppedHeight">height of returned texture</param>
-		/// <param name="threshold">alpha channel lower than this will be evaluated as transparent</param>
 		/// <param name="width">width of source texture or 0 to assume square texture</param>
+		/// <param name="threshold">alpha channel lower than this will be evaluated as transparent</param>
 		/// <returns>cropped texture</returns>
 		public static byte[] TransparentCrop(this byte[] texture, out int cutLeft, out int cutTop, out int croppedWidth, out int croppedHeight, int width = 0, byte threshold = 128)
 		{
@@ -772,6 +772,70 @@ namespace Voxel2Pixel.Draw
 						|| (index > 3 && texture[rowIndex + index - 4] >= threshold)))
 						Array.Copy(rgba, 0, result, rowIndex + index - 3, 4);
 			return result;
+		}
+		/// <summary>
+		/// Adds a 1 pixel wide transparent border around the edges of a texture only if the edges aren't already transparent
+		/// </summary>
+		/// <param name="texture">raw rgba8888 pixel data of source image</param>
+		/// <param name="result">new texture with transparent border or null if unnecessary</param>
+		/// <param name="addLeft">pixels added to the top in result</param>
+		/// <param name="addTop">pixels added to the top in result</param>
+		/// <param name="resultWidth">width of result or 0 if unnecessary</param>
+		/// <param name="resultHeight">height of result or 0 if unnecessary</param>
+		/// <param name="width">width of source texture or 0 to assume square texture</param>
+		/// <param name="threshold">alpha channel lower than this will be evaluated as transparent</param>
+		/// <returns>true if making a new texture was necessary</returns>
+		public static bool NeedsTransparentBorder(byte[] texture, out byte[] result, out int addLeft, out int addTop, out int resultWidth, out int resultHeight, int width = 0, byte threshold = 128)
+		{
+			addLeft = 0;
+			addTop = 0;
+			if (width < 1)
+				width = (int)(Math.Sqrt(texture.Length >> 2));
+			int height = texture.Length / width,
+				xSide = width << 2;
+			resultWidth = width;
+			resultHeight = height;
+			for (int index = 3; index < xSide; index += 4)
+				if (texture[index] >= threshold)
+				{
+					addTop++;
+					resultHeight++;
+					break;
+				}
+			for (int index = texture.Length - xSide + 3; index < texture.Length; index += 4)
+				if (texture[index] >= threshold)
+				{
+					resultHeight++;
+					break;
+				}
+			for (int index = 3; index < texture.Length; index += xSide)
+				if (texture[index] >= threshold)
+				{
+					addLeft++;
+					resultWidth++;
+					break;
+				}
+			for (int index = xSide - 1; index < texture.Length; index += xSide)
+				if (texture[index] >= threshold)
+				{
+					resultWidth++;
+					break;
+				}
+			if (width == resultWidth && height == resultHeight)
+			{
+				resultWidth = 0;
+				resultHeight = 0;
+				result = null;
+				return false;
+			}
+			result = new byte[resultWidth * 4 * resultHeight]
+				.DrawInsert(
+					x: addTop,
+					y: addLeft,
+					insert: texture,
+					insertWidth: width,
+					width: resultWidth);
+			return true;
 		}
 		/// <summary>
 		/// Makes a new texture and copies the old texture to its upper left corner
