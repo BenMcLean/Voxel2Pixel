@@ -152,7 +152,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="threshold">only draws pixel if alpha is higher than or equal to threshold</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>same texture with insert drawn</returns>
-		public static byte[] DrawTransparentInsert(this byte[] texture, int x, int y, byte[] insert, int insertWidth = 0, byte threshold = 128, int width = 0)
+		public static byte[] DrawTransparentInsert(this byte[] texture, int x, int y, byte[] insert, int insertWidth = 0, int width = 0, byte threshold = 128)
 		{
 			int insertX = 0, insertY = 0;
 			if (x < 0)
@@ -667,7 +667,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="threshold">alpha channel lower than this will be evaluated as transparent</param>
 		/// <param name="width">width of source texture or 0 to assume square texture</param>
 		/// <returns>cropped texture</returns>
-		public static byte[] TransparentCrop(this byte[] texture, out int cutLeft, out int cutTop, out int croppedWidth, out int croppedHeight, byte threshold = 128, int width = 0)
+		public static byte[] TransparentCrop(this byte[] texture, out int cutLeft, out int cutTop, out int croppedWidth, out int croppedHeight, int width = 0, byte threshold = 128)
 		{
 			if (width < 1)
 				width = (int)(Math.Sqrt(texture.Length >> 2));
@@ -699,8 +699,8 @@ namespace Voxel2Pixel.Draw
 				croppedHeight: croppedHeight,
 				width: width);
 		}
-		public static byte[] TransparentOutline(byte[] texture, byte threshold = 128, int width = 0) => UInt2ByteArray(TransparentOutline(Byte2UIntArray(texture), threshold, width));
-		public static uint[] TransparentOutline(uint[] texture, byte threshold = 128, int width = 0)
+		public static byte[] TransparentOutline(byte[] texture, int width = 0, byte threshold = 128) => UInt2ByteArray(TransparentOutline(Byte2UIntArray(texture), width, threshold));
+		public static uint[] TransparentOutline(uint[] texture, int width = 0, byte threshold = 128)
 		{
 			if (width < 1)
 				width = (int)Math.Sqrt(texture.Length);
@@ -806,7 +806,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="yFactor">number of times to tile vertically</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data of newWidth = width * xFactor</returns>
-		public static byte[] Tile(this byte[] texture, int xFactor = 2, int yFactor = 2, int width = 0)
+		public static byte[] Tile(this byte[] texture, int width = 0, int xFactor = 2, int yFactor = 2)
 		{
 			if (xFactor < 1 || yFactor < 1 || xFactor < 2 && yFactor < 2) return (byte[])texture.Clone();
 			byte[] tiled = new byte[texture.Length * xFactor * yFactor];
