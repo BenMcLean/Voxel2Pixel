@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System;
+using System.Linq;
 
 namespace Voxel2Pixel.Model
 {
@@ -390,5 +391,35 @@ namespace Voxel2Pixel.Model
 		}
 		public ITurnable Reset() => SOUTH0;
 		#endregion ITurntable
+		/// <param name="index">index 0 for x, 1 for y, 2 for z</param>
+		/// <returns>if selected rotation is negative, return -1, otherwise return 1</returns>
+		public int Step(int index) => Rotation[index] >> 31 | 1;
+		public int StepX => Step(0);
+		public int StepY => Step(1);
+		public int StepZ => Step(2);
+		/// <summary>
+		/// Flips the bits in rot if rot is negative, leaves it alone if positive. Where x, y, and z correspond to elements 0, 1, and 2 in a rotation array, if those axes are reversed we use 0, or -1, for x, and likewise -2 and -3 for y and z when reversed.
+		/// </summary>
+		public static int FlipBits(int rot) => rot ^ rot >> 31; // (rot ^ rot >> 31) is roughly equal to (rot < 0 ? -1 - rot : rot)
+		public int Affected(int axis) => FlipBits(Rotation[axis]);
+		public static Turner Get(params int[] rotation) => Values
+			.Where(value => value.Rotation[0] == rotation[0]
+				&& value.Rotation[1] == rotation[1]
+				&& value.Rotation[2] == rotation[2])
+			.FirstOrDefault()
+			?? throw new ArgumentException("Rotation array " + string.Join(", ", rotation) + " does not correspond to a rotation.");
+		/// <summary>
+		/// Does a reverse lookup on the rotation array for the axis affected by the rotation
+		/// </summary>
+		/// <param name="axis">axis 0 or -1 for x, 1 or -2 for y, 2 or -3 for z</param>
+		/// <returns>Which axis the specified axis was before the rotation. 0 for x, 1 for y, 2 for z.</returns>
+		public int ReverseLookup(int axis)
+		{
+			int index = FlipBits(axis);
+			for (int rot = 0; rot < 3; rot++)
+				if (index == Affected(rot))
+					return rot;
+			throw new ArgumentException("Invalid axis: \"" + axis + "\".");
+		}
 	}
 }
