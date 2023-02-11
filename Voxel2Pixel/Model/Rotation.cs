@@ -427,5 +427,16 @@ namespace Voxel2Pixel.Model
 					return rot;
 			throw new ArgumentException("Invalid axis: \"" + axis + "\".");
 		}
+		public int Turn(int axis, params int[] coordinates)
+		{
+			int index = ReverseLookup(axis);
+			return coordinates[index] * Step(index);
+		}
+		public void Turn(out int x, out int y, out int z, params int[] coordinates)
+		{
+			x = Turn(0, coordinates);
+			y = Turn(1, coordinates);
+			z = Turn(2, coordinates);
+		}
 	}
 }
