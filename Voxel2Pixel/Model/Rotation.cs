@@ -59,9 +59,10 @@ namespace Voxel2Pixel.Model
 		public bool Down() => Down(this);
 		public static bool Down(Turner turner) => turner == DOWN0 || turner == DOWN1 || turner == DOWN2 || turner == DOWN3;
 		#region ITurnable
-		public ITurnable CounterX()
+		public ITurnable CounterX() => CounterX(Value);
+		public static Turner CounterX(int value)
 		{
-			switch (Value)
+			switch (value)
 			{
 				default:
 				case 0://SOUTH0:
@@ -114,9 +115,10 @@ namespace Voxel2Pixel.Model
 					return DOWN2;
 			}
 		}
-		public ITurnable CounterY()
+		public ITurnable CounterY() => CounterY(Value);
+		public static Turner CounterY(int value)
 		{
-			switch (Value)
+			switch (value)
 			{
 				default:
 				case 0://SOUTH0:
@@ -169,9 +171,10 @@ namespace Voxel2Pixel.Model
 					return WEST2;
 			}
 		}
-		public ITurnable CounterZ()
+		public ITurnable CounterZ() => CounterZ(Value);
+		public static Turner CounterZ(int value)
 		{
-			switch (Value)
+			switch (value)
 			{
 				default:
 				case 0://SOUTH0:
@@ -224,9 +227,10 @@ namespace Voxel2Pixel.Model
 					return SOUTH1;
 			}
 		}
-		public ITurnable ClockX()
+		public ITurnable ClockX() => ClockX(Value);
+		public static Turner ClockX(int value)
 		{
-			switch (Value)
+			switch (value)
 			{
 				default:
 				case 0://SOUTH0:
@@ -279,9 +283,10 @@ namespace Voxel2Pixel.Model
 					return DOWN0;
 			}
 		}
-		public ITurnable ClockY()
+		public ITurnable ClockY() => ClockY(Value);
+		public static Turner ClockY(int value)
 		{
-			switch (Value)
+			switch (value)
 			{
 				default:
 				case 0://SOUTH0:
@@ -334,9 +339,10 @@ namespace Voxel2Pixel.Model
 					return EAST0;
 			}
 		}
-		public ITurnable ClockZ()
+		public ITurnable ClockZ() => ClockZ(Value);
+		public static Turner ClockZ(int value)
 		{
-			switch (Value)
+			switch (value)
 			{
 				default:
 				case 0://SOUTH0:
