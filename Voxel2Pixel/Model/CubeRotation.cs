@@ -4,42 +4,47 @@ using System.Linq;
 
 namespace Voxel2Pixel.Model
 {
-	public class Turner : ITurnable
+	/// <summary>
+	/// There are only 24 possible orientations achievable by 90 degree rotations around coordinate axis, which form the rotation group of a cube, also known as the chiral octahedral symmetry group.
+	/// http://www.ams.org/samplings/feature-column/fcarc-cubes7
+	/// https://en.wikipedia.org/wiki/Octahedral_symmetry#Chiral_octahedral_symmetry
+	/// </summary>
+	public class CubeRotation : ITurnable
 	{
 		#region Instances
-		public static readonly Turner
-			SOUTH0 = new Turner(0, "SOUTH0", -1, 1, 2),
-			SOUTH1 = new Turner(1, "SOUTH1", -1, 2, -2),
-			SOUTH2 = new Turner(2, "SOUTH2", -1, -2, -3),
-			SOUTH3 = new Turner(3, "SOUTH3", -1, -3, 1),
-			WEST0 = new Turner(4, "WEST0", -2, -1, 2),
-			WEST1 = new Turner(5, "WEST1", -2, 2, 0),
-			WEST2 = new Turner(6, "WEST2", -2, 0, -3),
-			WEST3 = new Turner(7, "WEST3", -2, -3, -1),
-			NORTH0 = new Turner(8, "NORTH0", 0, -2, 2),
-			NORTH1 = new Turner(9, "NORTH1", 0, 2, 1),
-			NORTH2 = new Turner(10, "NORTH2", 0, 1, -3),
-			NORTH3 = new Turner(11, "NORTH3", 0, -3, -2),
-			EAST0 = new Turner(12, "EAST0", 1, 0, 2),
-			EAST1 = new Turner(13, "EAST1", 1, 2, -1),
-			EAST2 = new Turner(14, "EAST2", 1, -1, -3),
-			EAST3 = new Turner(15, "EAST3", 1, -3, 0),
-			UP0 = new Turner(16, "UP0", -3, -2, 0),
-			UP1 = new Turner(17, "UP1", -3, 0, 1),
-			UP2 = new Turner(18, "UP2", -3, 1, -1),
-			UP3 = new Turner(19, "UP3", -3, -1, -2),
-			DOWN0 = new Turner(20, "DOWN0", 2, -2, -1),
-			DOWN1 = new Turner(21, "DOWN1", 2, -1, 1),
-			DOWN2 = new Turner(22, "DOWN2", 2, 1, 0),
-			DOWN3 = new Turner(23, "DOWN3", 2, 0, -2);
-		public static readonly ReadOnlyCollection<Turner> Values = Array.AsReadOnly(new Turner[] { SOUTH0, SOUTH1, SOUTH2, SOUTH3, WEST0, WEST1, WEST2, WEST3, NORTH0, NORTH1, NORTH2, NORTH3, EAST0, EAST1, EAST2, EAST3, UP0, UP1, UP2, UP3, DOWN0, DOWN1, DOWN2, DOWN3 });
+		public static readonly CubeRotation
+			SOUTH0 = new CubeRotation(0, "SOUTH0", -1, 1, 2),
+			SOUTH1 = new CubeRotation(1, "SOUTH1", -1, 2, -2),
+			SOUTH2 = new CubeRotation(2, "SOUTH2", -1, -2, -3),
+			SOUTH3 = new CubeRotation(3, "SOUTH3", -1, -3, 1),
+			WEST0 = new CubeRotation(4, "WEST0", -2, -1, 2),
+			WEST1 = new CubeRotation(5, "WEST1", -2, 2, 0),
+			WEST2 = new CubeRotation(6, "WEST2", -2, 0, -3),
+			WEST3 = new CubeRotation(7, "WEST3", -2, -3, -1),
+			NORTH0 = new CubeRotation(8, "NORTH0", 0, -2, 2),
+			NORTH1 = new CubeRotation(9, "NORTH1", 0, 2, 1),
+			NORTH2 = new CubeRotation(10, "NORTH2", 0, 1, -3),
+			NORTH3 = new CubeRotation(11, "NORTH3", 0, -3, -2),
+			EAST0 = new CubeRotation(12, "EAST0", 1, 0, 2),
+			EAST1 = new CubeRotation(13, "EAST1", 1, 2, -1),
+			EAST2 = new CubeRotation(14, "EAST2", 1, -1, -3),
+			EAST3 = new CubeRotation(15, "EAST3", 1, -3, 0),
+			UP0 = new CubeRotation(16, "UP0", -3, -2, 0),
+			UP1 = new CubeRotation(17, "UP1", -3, 0, 1),
+			UP2 = new CubeRotation(18, "UP2", -3, 1, -1),
+			UP3 = new CubeRotation(19, "UP3", -3, -1, -2),
+			DOWN0 = new CubeRotation(20, "DOWN0", 2, -2, -1),
+			DOWN1 = new CubeRotation(21, "DOWN1", 2, -1, 1),
+			DOWN2 = new CubeRotation(22, "DOWN2", 2, 1, 0),
+			DOWN3 = new CubeRotation(23, "DOWN3", 2, 0, -2);
+		public static readonly ReadOnlyCollection<CubeRotation> Values = Array.AsReadOnly(new CubeRotation[] { SOUTH0, SOUTH1, SOUTH2, SOUTH3, WEST0, WEST1, WEST2, WEST3, NORTH0, NORTH1, NORTH2, NORTH3, EAST0, EAST1, EAST2, EAST3, UP0, UP1, UP2, UP3, DOWN0, DOWN1, DOWN2, DOWN3 });
 		#endregion Instances
 		#region Data members
 		public readonly int Value;
 		public readonly string Name;
 		public readonly ReadOnlyCollection<int> Rotation;
 		#endregion Data members
-		private Turner(int value, string name, params int[] rotation)
+		private CubeRotation(int value, string name, params int[] rotation)
 		{
 			Value = value;
 			Name = name;
@@ -47,20 +52,20 @@ namespace Voxel2Pixel.Model
 		}
 		public override string ToString() => Name;
 		public bool South() => South(this);
-		public static bool South(Turner turner) => turner == SOUTH0 || turner == SOUTH1 || turner == SOUTH2 || turner == SOUTH3;
+		public static bool South(CubeRotation turner) => turner == SOUTH0 || turner == SOUTH1 || turner == SOUTH2 || turner == SOUTH3;
 		public bool West() => West(this);
-		public static bool West(Turner turner) => turner == WEST0 || turner == WEST1 || turner == WEST2 || turner == WEST3;
+		public static bool West(CubeRotation turner) => turner == WEST0 || turner == WEST1 || turner == WEST2 || turner == WEST3;
 		public bool North() => North(this);
-		public static bool North(Turner turner) => turner == NORTH0 || turner == NORTH1 || turner == NORTH2 || turner == NORTH3;
+		public static bool North(CubeRotation turner) => turner == NORTH0 || turner == NORTH1 || turner == NORTH2 || turner == NORTH3;
 		public bool East() => East(this);
-		public static bool East(Turner turner) => turner == EAST0 || turner == EAST1 || turner == EAST2 || turner == EAST3;
+		public static bool East(CubeRotation turner) => turner == EAST0 || turner == EAST1 || turner == EAST2 || turner == EAST3;
 		public bool Up() => Up(this);
-		public static bool Up(Turner turner) => turner == UP0 || turner == UP1 || turner == UP2 || turner == UP3;
+		public static bool Up(CubeRotation turner) => turner == UP0 || turner == UP1 || turner == UP2 || turner == UP3;
 		public bool Down() => Down(this);
-		public static bool Down(Turner turner) => turner == DOWN0 || turner == DOWN1 || turner == DOWN2 || turner == DOWN3;
+		public static bool Down(CubeRotation turner) => turner == DOWN0 || turner == DOWN1 || turner == DOWN2 || turner == DOWN3;
 		#region ITurnable
 		public ITurnable CounterX() => CounterX(Value);
-		public static Turner CounterX(int value)
+		public static CubeRotation CounterX(int value)
 		{
 			switch (value)
 			{
@@ -116,7 +121,7 @@ namespace Voxel2Pixel.Model
 			}
 		}
 		public ITurnable CounterY() => CounterY(Value);
-		public static Turner CounterY(int value)
+		public static CubeRotation CounterY(int value)
 		{
 			switch (value)
 			{
@@ -172,7 +177,7 @@ namespace Voxel2Pixel.Model
 			}
 		}
 		public ITurnable CounterZ() => CounterZ(Value);
-		public static Turner CounterZ(int value)
+		public static CubeRotation CounterZ(int value)
 		{
 			switch (value)
 			{
@@ -228,7 +233,7 @@ namespace Voxel2Pixel.Model
 			}
 		}
 		public ITurnable ClockX() => ClockX(Value);
-		public static Turner ClockX(int value)
+		public static CubeRotation ClockX(int value)
 		{
 			switch (value)
 			{
@@ -284,7 +289,7 @@ namespace Voxel2Pixel.Model
 			}
 		}
 		public ITurnable ClockY() => ClockY(Value);
-		public static Turner ClockY(int value)
+		public static CubeRotation ClockY(int value)
 		{
 			switch (value)
 			{
@@ -340,7 +345,7 @@ namespace Voxel2Pixel.Model
 			}
 		}
 		public ITurnable ClockZ() => ClockZ(Value);
-		public static Turner ClockZ(int value)
+		public static CubeRotation ClockZ(int value)
 		{
 			switch (value)
 			{
@@ -408,7 +413,7 @@ namespace Voxel2Pixel.Model
 		/// </summary>
 		public static int FlipBits(int rot) => rot ^ rot >> 31; // (rot ^ rot >> 31) is roughly equal to (rot < 0 ? -1 - rot : rot)
 		public int Affected(int axis) => FlipBits(Rotation[axis]);
-		public static Turner Get(params int[] rotation) => Values
+		public static CubeRotation Get(params int[] rotation) => Values
 			.Where(value => value.Rotation[0] == rotation[0]
 				&& value.Rotation[1] == rotation[1]
 				&& value.Rotation[2] == rotation[2])
@@ -427,16 +432,16 @@ namespace Voxel2Pixel.Model
 					return rot;
 			throw new ArgumentException("Invalid axis: \"" + axis + "\".");
 		}
-		public int Turn(int axis, params int[] coordinates)
+		public int Rotate(int axis, params int[] coordinates)
 		{
 			int index = ReverseLookup(axis);
 			return coordinates[index] * Step(index);
 		}
-		public void Turn(out int x, out int y, out int z, params int[] coordinates)
+		public void Rotate(out int x, out int y, out int z, params int[] coordinates)
 		{
-			x = Turn(0, coordinates);
-			y = Turn(1, coordinates);
-			z = Turn(2, coordinates);
+			x = Rotate(0, coordinates);
+			y = Rotate(1, coordinates);
+			z = Rotate(2, coordinates);
 		}
 	}
 }
