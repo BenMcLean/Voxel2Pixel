@@ -705,6 +705,27 @@ namespace Voxel2Pixel.Draw
 			croppedWidth = width - ((xSide - indexRight) >> 2) - cutLeft;
 			croppedHeight = cutBottom - cutTop;
 		}
+		public static byte[] TransparentCropPlusOne(this byte[] texture, out int cutLeft, out int cutTop, out int croppedWidth, out int croppedHeight, int width = 0, byte threshold = 128)
+		{
+			if (width < 1)
+				width = (int)(Math.Sqrt(texture.Length >> 2));
+			TransparentCropInfo(texture, out cutLeft, out cutTop, out croppedWidth, out croppedHeight, width, threshold);
+			cutLeft--;
+			cutTop--;
+			croppedWidth += 2;
+			croppedHeight += 2;
+			return new byte[croppedWidth * 4 * croppedHeight]
+				.DrawInsert(
+					x: 1,
+					y: 1,
+					insert: texture.Crop(
+						x: cutLeft + 1,
+						y: cutTop + 1,
+						croppedWidth: croppedWidth - 2,
+						croppedHeight: croppedHeight - 2,
+						width: width),
+					insertWidth: croppedWidth - 2);
+		}
 		public static byte[] TransparentOutline(byte[] texture, int width = 0, byte threshold = 128) => UInt2ByteArray(TransparentOutline(Byte2UIntArray(texture), width, threshold));
 		public static uint[] TransparentOutline(uint[] texture, int width = 0, byte threshold = 128)
 		{
