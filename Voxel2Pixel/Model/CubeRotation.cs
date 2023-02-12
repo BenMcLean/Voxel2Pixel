@@ -40,12 +40,12 @@ namespace Voxel2Pixel.Model
 		public static readonly ReadOnlyCollection<CubeRotation> Values = Array.AsReadOnly(new CubeRotation[] { SOUTH0, SOUTH1, SOUTH2, SOUTH3, WEST0, WEST1, WEST2, WEST3, NORTH0, NORTH1, NORTH2, NORTH3, EAST0, EAST1, EAST2, EAST3, UP0, UP1, UP2, UP3, DOWN0, DOWN1, DOWN2, DOWN3 });
 		#endregion Instances
 		#region Data members
-		public readonly int Value;
+		public readonly byte Value;
 		public readonly string Name;
 		public readonly ReadOnlyCollection<int> Rotation;
 		#endregion Data members
 		#region CubeRotation
-		private CubeRotation(int value, string name, params int[] rotation)
+		private CubeRotation(byte value, string name, params int[] rotation)
 		{
 			Value = value;
 			Name = name;
@@ -72,7 +72,7 @@ namespace Voxel2Pixel.Model
 		#endregion Sides
 		#region ITurnable
 		public ITurnable CounterX() => CounterX(Value);
-		public static CubeRotation CounterX(int value)
+		public static CubeRotation CounterX(byte value)
 		{
 			switch (value)
 			{
@@ -128,7 +128,7 @@ namespace Voxel2Pixel.Model
 			}
 		}
 		public ITurnable CounterY() => CounterY(Value);
-		public static CubeRotation CounterY(int value)
+		public static CubeRotation CounterY(byte value)
 		{
 			switch (value)
 			{
@@ -184,7 +184,7 @@ namespace Voxel2Pixel.Model
 			}
 		}
 		public ITurnable CounterZ() => CounterZ(Value);
-		public static CubeRotation CounterZ(int value)
+		public static CubeRotation CounterZ(byte value)
 		{
 			switch (value)
 			{
@@ -240,7 +240,7 @@ namespace Voxel2Pixel.Model
 			}
 		}
 		public ITurnable ClockX() => ClockX(Value);
-		public static CubeRotation ClockX(int value)
+		public static CubeRotation ClockX(byte value)
 		{
 			switch (value)
 			{
@@ -296,7 +296,7 @@ namespace Voxel2Pixel.Model
 			}
 		}
 		public ITurnable ClockY() => ClockY(Value);
-		public static CubeRotation ClockY(int value)
+		public static CubeRotation ClockY(byte value)
 		{
 			switch (value)
 			{
@@ -352,7 +352,7 @@ namespace Voxel2Pixel.Model
 			}
 		}
 		public ITurnable ClockZ() => ClockZ(Value);
-		public static CubeRotation ClockZ(int value)
+		public static CubeRotation ClockZ(byte value)
 		{
 			switch (value)
 			{
