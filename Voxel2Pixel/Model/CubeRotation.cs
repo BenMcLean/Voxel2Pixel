@@ -57,18 +57,12 @@ namespace Voxel2Pixel.Model
 		public bool Equals(CubeRotation other) => Value == other?.Value;
 		#endregion CubeRotation
 		#region Sides
-		public bool South() => South(this);
-		public static bool South(CubeRotation turner) => turner == SOUTH0 || turner == SOUTH1 || turner == SOUTH2 || turner == SOUTH3;
-		public bool West() => West(this);
-		public static bool West(CubeRotation turner) => turner == WEST0 || turner == WEST1 || turner == WEST2 || turner == WEST3;
-		public bool North() => North(this);
-		public static bool North(CubeRotation turner) => turner == NORTH0 || turner == NORTH1 || turner == NORTH2 || turner == NORTH3;
-		public bool East() => East(this);
-		public static bool East(CubeRotation turner) => turner == EAST0 || turner == EAST1 || turner == EAST2 || turner == EAST3;
-		public bool Up() => Up(this);
-		public static bool Up(CubeRotation turner) => turner == UP0 || turner == UP1 || turner == UP2 || turner == UP3;
-		public bool Down() => Down(this);
-		public static bool Down(CubeRotation turner) => turner == DOWN0 || turner == DOWN1 || turner == DOWN2 || turner == DOWN3;
+		public bool South => Value < 4;
+		public bool West => Value > 3 && Value < 8;
+		public bool North => Value > 7 && Value < 12;
+		public bool East => Value > 11 && Value < 16;
+		public bool Up => Value > 15 && Value < 20;
+		public bool Down => Value > 19;
 		#endregion Sides
 		#region ITurnable
 		public ITurnable CounterX() => CounterX(Value);
