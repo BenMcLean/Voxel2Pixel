@@ -9,7 +9,7 @@ namespace Voxel2Pixel.Model
 	/// http://www.ams.org/samplings/feature-column/fcarc-cubes7
 	/// https://en.wikipedia.org/wiki/Octahedral_symmetry#Chiral_octahedral_symmetry
 	/// </summary>
-	public struct CubeRotation : ITurnable
+	public sealed class CubeRotation : ITurnable
 	{
 		#region Instances
 		public static readonly CubeRotation
@@ -416,8 +416,9 @@ namespace Voxel2Pixel.Model
 		/// </summary>
 		public static int FlipBits(int rot) => rot ^ rot >> 31; // (rot ^ rot >> 31) is roughly equal to (rot < 0 ? -1 - rot : rot)
 		public int Affected(int axis) => FlipBits(Rotation[axis]);
-		public static CubeRotation Get(params int[] rotation) => Values
-			.FirstOrDefault(value => value.Rotation[0] == rotation[0]
+		public static CubeRotation Get(params int[] rotation) =>
+			Values.FirstOrDefault(value =>
+				value.Rotation[0] == rotation[0]
 				&& value.Rotation[1] == rotation[1]
 				&& value.Rotation[2] == rotation[2]);
 		/// <summary>
