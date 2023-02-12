@@ -9,7 +9,7 @@ namespace Voxel2Pixel.Model
 	/// http://www.ams.org/samplings/feature-column/fcarc-cubes7
 	/// https://en.wikipedia.org/wiki/Octahedral_symmetry#Chiral_octahedral_symmetry
 	/// </summary>
-	public class CubeRotation : ITurnable
+	public struct CubeRotation : ITurnable
 	{
 		#region Instances
 		public static readonly CubeRotation
@@ -52,9 +52,10 @@ namespace Voxel2Pixel.Model
 			Rotation = Array.AsReadOnly(rotation);
 		}
 		public override string ToString() => Name;
-		public static bool operator ==(CubeRotation obj1, CubeRotation obj2) => obj1?.Equals(obj2) ?? false;
+		public static bool operator ==(CubeRotation obj1, CubeRotation obj2) => obj1.Equals(obj2);
 		public static bool operator !=(CubeRotation obj1, CubeRotation obj2) => !(obj1 == obj2);
-		public bool Equals(CubeRotation other) => Value == other?.Value;
+		public override bool Equals(object other) => other is CubeRotation cubeRotation && Value == cubeRotation.Value;
+		public override int GetHashCode() => Value;
 		#endregion CubeRotation
 		#region Sides
 		public bool South => Value < 4;
@@ -416,11 +417,9 @@ namespace Voxel2Pixel.Model
 		public static int FlipBits(int rot) => rot ^ rot >> 31; // (rot ^ rot >> 31) is roughly equal to (rot < 0 ? -1 - rot : rot)
 		public int Affected(int axis) => FlipBits(Rotation[axis]);
 		public static CubeRotation Get(params int[] rotation) => Values
-			.Where(value => value.Rotation[0] == rotation[0]
+			.FirstOrDefault(value => value.Rotation[0] == rotation[0]
 				&& value.Rotation[1] == rotation[1]
-				&& value.Rotation[2] == rotation[2])
-			.FirstOrDefault()
-			?? throw new ArgumentException("Rotation array " + string.Join(", ", rotation) + " does not correspond to a rotation.");
+				&& value.Rotation[2] == rotation[2]);
 		/// <summary>
 		/// Does a reverse lookup on the rotation array for the axis affected by the rotation
 		/// </summary>
