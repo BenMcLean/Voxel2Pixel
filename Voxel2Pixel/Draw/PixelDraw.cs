@@ -671,6 +671,18 @@ namespace Voxel2Pixel.Draw
 		{
 			if (width < 1)
 				width = (int)(Math.Sqrt(texture.Length >> 2));
+			TransparentCropInfo(texture, out cutLeft, out cutTop, out croppedWidth, out croppedHeight, width, threshold);
+			return texture.Crop(
+				x: cutLeft,
+				y: cutTop,
+				croppedWidth: croppedWidth,
+				croppedHeight: croppedHeight,
+				width: width);
+		}
+		public static void TransparentCropInfo(this byte[] texture, out int cutLeft, out int cutTop, out int croppedWidth, out int croppedHeight, int width = 0, byte threshold = 128)
+		{
+			if (width < 1)
+				width = (int)(Math.Sqrt(texture.Length >> 2));
 			int xSide = width << 2,
 				indexTop, indexBottom;
 			for (indexTop = 3; indexTop < texture.Length && texture[indexTop] < threshold; indexTop += 4) { }
@@ -692,12 +704,6 @@ namespace Voxel2Pixel.Draw
 			cutLeft = indexLeft >> 2;
 			croppedWidth = width - ((xSide - indexRight) >> 2) - cutLeft;
 			croppedHeight = cutBottom - cutTop;
-			return texture.Crop(
-				x: cutLeft,
-				y: cutTop,
-				croppedWidth: croppedWidth,
-				croppedHeight: croppedHeight,
-				width: width);
 		}
 		public static byte[] TransparentOutline(byte[] texture, int width = 0, byte threshold = 128) => UInt2ByteArray(TransparentOutline(Byte2UIntArray(texture), width, threshold));
 		public static uint[] TransparentOutline(uint[] texture, int width = 0, byte threshold = 128)
@@ -753,24 +759,6 @@ namespace Voxel2Pixel.Draw
 								result[Index(x, y)] = 0;
 						}
 					}
-			return result;
-		}
-		public static byte[] Outline(this byte[] texture, int width = 0, uint color = 0x000000FF, byte threshold = 128) => Outline(texture, width, threshold, color.R(), color.G(), color.B(), color.A());
-		private static byte[] Outline(this byte[] texture, int width = 0, byte threshold = 128, params byte[] rgba)
-		{
-			if (width < 1)
-				width = (int)(Math.Sqrt(texture.Length >> 2));
-			int xSide = width << 2;
-			byte[] result = new byte[texture.Length];
-			Array.Copy(texture, result, result.Length);
-			for (int rowIndex = 0; rowIndex < texture.Length; rowIndex += xSide)
-				for (int index = 3; index < xSide; index += 4)
-					if (texture[rowIndex + index] < threshold && (
-						(rowIndex > 0 && texture[rowIndex + index - xSide] >= threshold)
-						|| (index + 4 < xSide && texture[rowIndex + index + 4] >= threshold)
-						|| (rowIndex + index + xSide < texture.Length && texture[rowIndex + index + xSide] >= threshold)
-						|| (index > 3 && texture[rowIndex + index - 4] >= threshold)))
-						Array.Copy(rgba, 0, result, rowIndex + index - 3, 4);
 			return result;
 		}
 		/// <summary>
@@ -836,6 +824,24 @@ namespace Voxel2Pixel.Draw
 					insertWidth: width,
 					width: resultWidth);
 			return true;
+		}
+		public static byte[] Outline(this byte[] texture, int width = 0, uint color = 0x000000FF, byte threshold = 128) => Outline(texture, width, threshold, color.R(), color.G(), color.B(), color.A());
+		private static byte[] Outline(this byte[] texture, int width = 0, byte threshold = 128, params byte[] rgba)
+		{
+			if (width < 1)
+				width = (int)(Math.Sqrt(texture.Length >> 2));
+			int xSide = width << 2;
+			byte[] result = new byte[texture.Length];
+			Array.Copy(texture, result, result.Length);
+			for (int rowIndex = 0; rowIndex < texture.Length; rowIndex += xSide)
+				for (int index = 3; index < xSide; index += 4)
+					if (texture[rowIndex + index] < threshold && (
+						(rowIndex > 0 && texture[rowIndex + index - xSide] >= threshold)
+						|| (index + 4 < xSide && texture[rowIndex + index + 4] >= threshold)
+						|| (rowIndex + index + xSide < texture.Length && texture[rowIndex + index + xSide] >= threshold)
+						|| (index > 3 && texture[rowIndex + index - 4] >= threshold)))
+						Array.Copy(rgba, 0, result, rowIndex + index - 3, 4);
+			return result;
 		}
 		/// <summary>
 		/// Makes a new texture and copies the old texture to its upper left corner

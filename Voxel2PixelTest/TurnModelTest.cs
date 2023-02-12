@@ -1,4 +1,5 @@
 ﻿using SixLabors.ImageSharp;
+using System;
 using System.Collections.Generic;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
@@ -19,11 +20,12 @@ namespace Voxel2PixelTest
 			{
 				Model = voxModel,
 			};
-			int width = VoxelDraw.IsoWidth(model),
-				height = VoxelDraw.IsoHeight(model);
+			int width = Math.Max(VoxelDraw.IsoWidth(model), VoxelDraw.IsoHeight(model)),
+				height = width;
 			List<byte[]> frames = new List<byte[]>();
-			for (int frame = 0; frame < 4; frame++)
+			foreach (CubeRotation cubeRotation in CubeRotation.Values)
 			{
+				model.CubeRotation = cubeRotation;
 				ArrayRenderer arrayRenderer = new ArrayRenderer
 				{
 					Image = new byte[width * 4 * height],
@@ -32,7 +34,6 @@ namespace Voxel2PixelTest
 				};
 				VoxelDraw.Iso(model, arrayRenderer);
 				frames.Add(arrayRenderer.Image);
-				model.ClockZ();
 			}
 			ImageMaker.AnimatedGifScaled(
 				scaleX: 16,
