@@ -13,7 +13,7 @@ namespace Voxel2Pixel.Model
 	{
 		#region Instances
 		public static readonly CubeRotation
-			SOUTH0 = new CubeRotation(0, "SOUTH0", -1, 1, 2),
+			SOUTH0 = new CubeRotation(0, "SOUTH0", 0, 1, 2),
 			SOUTH1 = new CubeRotation(1, "SOUTH1", -1, 2, -2),
 			SOUTH2 = new CubeRotation(2, "SOUTH2", -1, -2, -3),
 			SOUTH3 = new CubeRotation(3, "SOUTH3", -1, -3, 1),
@@ -44,6 +44,7 @@ namespace Voxel2Pixel.Model
 		public readonly string Name;
 		public readonly ReadOnlyCollection<int> Rotation;
 		#endregion Data members
+		#region CubeRotation
 		private CubeRotation(int value, string name, params int[] rotation)
 		{
 			Value = value;
@@ -51,6 +52,11 @@ namespace Voxel2Pixel.Model
 			Rotation = Array.AsReadOnly(rotation);
 		}
 		public override string ToString() => Name;
+		public static bool operator ==(CubeRotation obj1, CubeRotation obj2) => obj1?.Equals(obj2) ?? false;
+		public static bool operator !=(CubeRotation obj1, CubeRotation obj2) => !(obj1 == obj2);
+		public bool Equals(CubeRotation other) => Value == other?.Value;
+		#endregion CubeRotation
+		#region Sides
 		public bool South() => South(this);
 		public static bool South(CubeRotation turner) => turner == SOUTH0 || turner == SOUTH1 || turner == SOUTH2 || turner == SOUTH3;
 		public bool West() => West(this);
@@ -63,6 +69,7 @@ namespace Voxel2Pixel.Model
 		public static bool Up(CubeRotation turner) => turner == UP0 || turner == UP1 || turner == UP2 || turner == UP3;
 		public bool Down() => Down(this);
 		public static bool Down(CubeRotation turner) => turner == DOWN0 || turner == DOWN1 || turner == DOWN2 || turner == DOWN3;
+		#endregion Sides
 		#region ITurnable
 		public ITurnable CounterX() => CounterX(Value);
 		public static CubeRotation CounterX(int value)
@@ -402,6 +409,7 @@ namespace Voxel2Pixel.Model
 		}
 		public ITurnable Reset() => SOUTH0;
 		#endregion ITurntable
+		#region Rotate
 		/// <param name="index">index 0 for x, 1 for y, 2 for z</param>
 		/// <returns>if selected rotation is negative, return -1, otherwise return 1</returns>
 		public int Step(int index) => Rotation[index] >> 31 | 1;
@@ -443,5 +451,6 @@ namespace Voxel2Pixel.Model
 			y = Rotate(1, coordinates);
 			z = Rotate(2, coordinates);
 		}
+		#endregion Rotate
 	}
 }
