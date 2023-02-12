@@ -6,6 +6,20 @@ namespace Voxel2PixelTest
 	public class CubeRotationTest
 	{
 		[Fact]
+		public void CoordinateTest()
+		{
+			CubeRotation cubeRotation = CubeRotation.SOUTH0;
+			cubeRotation.Rotate(out int x, out int y, out int z, 1, 1, 1);
+			Assert.True(x == 1);
+			Assert.True(y == 1);
+			Assert.True(z == 1);
+			cubeRotation = (CubeRotation)cubeRotation.ClockZ();
+			cubeRotation.Rotate(out x, out y, out z, 1, 1, 1);
+			Assert.True(x == 1);
+			Assert.True(y == -1);
+			Assert.True(z == 1);
+		}
+		[Fact]
 		public void RelationshipTest()
 		{
 			foreach (CubeRotation cubeRotation in CubeRotation.Values)

@@ -8,12 +8,20 @@ namespace Voxel2Pixel.Model
 	/// There are only 24 possible orientations achievable by 90 degree rotations around coordinate axis, which form the rotation group of a cube, also known as the chiral octahedral symmetry group.
 	/// http://www.ams.org/samplings/feature-column/fcarc-cubes7
 	/// https://en.wikipedia.org/wiki/Octahedral_symmetry#Chiral_octahedral_symmetry
+	/// In 3D space for voxels, I'm following the MagicaVoxel convention, which is Z+up, right-handed, so X+ means east/right, Y+ means forwards/north and Z+ means up.
 	/// </summary>
 	public sealed class CubeRotation : ITurnable
 	{
 		#region Instances
+		private const int
+			plusX = 0,
+			plusY = 1,
+			plusZ = 2,
+			minusX = -1,
+			minusY = -2,
+			minusZ = -3;
 		public static readonly CubeRotation
-			SOUTH0 = new CubeRotation(0, "SOUTH0", 0, 1, 2),
+			SOUTH0 = new CubeRotation(0, "SOUTH0", plusX, plusY, plusZ),
 			SOUTH1 = new CubeRotation(1, "SOUTH1", -1, 2, -2),
 			SOUTH2 = new CubeRotation(2, "SOUTH2", -1, -2, -3),
 			SOUTH3 = new CubeRotation(3, "SOUTH3", -1, -3, 1),
@@ -25,7 +33,7 @@ namespace Voxel2Pixel.Model
 			NORTH1 = new CubeRotation(9, "NORTH1", 0, 2, 1),
 			NORTH2 = new CubeRotation(10, "NORTH2", 0, 1, -3),
 			NORTH3 = new CubeRotation(11, "NORTH3", 0, -3, -2),
-			EAST0 = new CubeRotation(12, "EAST0", 1, 0, 2),
+			EAST0 = new CubeRotation(12, "EAST0", -2, 0, 2),
 			EAST1 = new CubeRotation(13, "EAST1", 1, 2, -1),
 			EAST2 = new CubeRotation(14, "EAST2", 1, -1, -3),
 			EAST3 = new CubeRotation(15, "EAST3", 1, -3, 0),
@@ -73,53 +81,53 @@ namespace Voxel2Pixel.Model
 			{
 				default:
 				case 0://SOUTH0:
-					return SOUTH3;
-				case 1://SOUTH1:
-					return SOUTH0;
-				case 2://SOUTH2:
-					return SOUTH1;
-				case 3://SOUTH3:
-					return SOUTH2;
-				case 4://WEST0:
-					return WEST3;
-				case 5://WEST1:
-					return WEST0;
-				case 6://WEST2:
-					return WEST1;
-				case 7://WEST3:
-					return WEST2;
-				case 8://NORTH0:
-					return NORTH3;
-				case 9://NORTH1:
-					return NORTH0;
-				case 10://NORTH2:
-					return NORTH1;
-				case 11://NORTH3:
-					return NORTH2;
-				case 12://EAST0:
-					return EAST3;
-				case 13://EAST1:
-					return EAST0;
-				case 14://EAST2:
-					return EAST1;
-				case 15://EAST3:
-					return EAST2;
-				case 16://UP0:
-					return UP3;
-				case 17://UP1:
-					return UP0;
-				case 18://UP2:
-					return UP1;
-				case 19://UP3:
-					return UP2;
-				case 20://DOWN0:
-					return DOWN3;
-				case 21://DOWN1:
-					return DOWN0;
-				case 22://DOWN2:
-					return DOWN1;
-				case 23://DOWN3:
 					return DOWN2;
+				case 1://SOUTH1:
+					return WEST1;
+				case 2://SOUTH2:
+					return UP0;
+				case 3://SOUTH3:
+					return EAST3;
+				case 4://WEST0:
+					return DOWN1;
+				case 5://WEST1:
+					return NORTH1;
+				case 6://WEST2:
+					return UP1;
+				case 7://WEST3:
+					return SOUTH3;
+				case 8://NORTH0:
+					return DOWN0;
+				case 9://NORTH1:
+					return EAST1;
+				case 10://NORTH2:
+					return UP2;
+				case 11://NORTH3:
+					return WEST3;
+				case 12://EAST0:
+					return DOWN3;
+				case 13://EAST1:
+					return SOUTH1;
+				case 14://EAST2:
+					return UP3;
+				case 15://EAST3:
+					return NORTH3;
+				case 16://UP0:
+					return NORTH0;
+				case 17://UP1:
+					return EAST0;
+				case 18://UP2:
+					return SOUTH0;
+				case 19://UP3:
+					return WEST0;
+				case 20://DOWN0:
+					return SOUTH2;
+				case 21://DOWN1:
+					return EAST2;
+				case 22://DOWN2:
+					return NORTH2;
+				case 23://DOWN3:
+					return WEST2;
 			}
 		}
 		public ITurnable CounterY() => CounterY(Value);
@@ -129,53 +137,53 @@ namespace Voxel2Pixel.Model
 			{
 				default:
 				case 0://SOUTH0:
-					return DOWN2;
-				case 1://SOUTH1:
-					return WEST1;
-				case 2://SOUTH2:
-					return UP0;
-				case 3://SOUTH3:
-					return EAST3;
-				case 4://WEST0:
-					return DOWN1;
-				case 5://WEST1:
-					return NORTH1;
-				case 6://WEST2:
-					return UP1;
-				case 7://WEST3:
 					return SOUTH3;
-				case 8://NORTH0:
-					return DOWN0;
-				case 9://NORTH1:
-					return EAST1;
-				case 10://NORTH2:
-					return UP2;
-				case 11://NORTH3:
-					return WEST3;
-				case 12://EAST0:
-					return DOWN3;
-				case 13://EAST1:
-					return SOUTH1;
-				case 14://EAST2:
-					return UP3;
-				case 15://EAST3:
-					return NORTH3;
-				case 16://UP0:
-					return NORTH0;
-				case 17://UP1:
-					return EAST0;
-				case 18://UP2:
+				case 1://SOUTH1:
 					return SOUTH0;
-				case 19://UP3:
-					return WEST0;
-				case 20://DOWN0:
+				case 2://SOUTH2:
+					return SOUTH1;
+				case 3://SOUTH3:
 					return SOUTH2;
-				case 21://DOWN1:
-					return EAST2;
-				case 22://DOWN2:
-					return NORTH2;
-				case 23://DOWN3:
+				case 4://WEST0:
+					return WEST3;
+				case 5://WEST1:
+					return WEST0;
+				case 6://WEST2:
+					return WEST1;
+				case 7://WEST3:
 					return WEST2;
+				case 8://NORTH0:
+					return NORTH3;
+				case 9://NORTH1:
+					return NORTH0;
+				case 10://NORTH2:
+					return NORTH1;
+				case 11://NORTH3:
+					return NORTH2;
+				case 12://EAST0:
+					return EAST3;
+				case 13://EAST1:
+					return EAST0;
+				case 14://EAST2:
+					return EAST1;
+				case 15://EAST3:
+					return EAST2;
+				case 16://UP0:
+					return UP3;
+				case 17://UP1:
+					return UP0;
+				case 18://UP2:
+					return UP1;
+				case 19://UP3:
+					return UP2;
+				case 20://DOWN0:
+					return DOWN3;
+				case 21://DOWN1:
+					return DOWN0;
+				case 22://DOWN2:
+					return DOWN1;
+				case 23://DOWN3:
+					return DOWN2;
 			}
 		}
 		public ITurnable CounterZ() => CounterZ(Value);
@@ -241,53 +249,53 @@ namespace Voxel2Pixel.Model
 			{
 				default:
 				case 0://SOUTH0:
-					return SOUTH1;
-				case 1://SOUTH1:
-					return SOUTH2;
-				case 2://SOUTH2:
-					return SOUTH3;
-				case 3://SOUTH3:
-					return SOUTH0;
-				case 4://WEST0:
-					return WEST1;
-				case 5://WEST1:
-					return WEST2;
-				case 6://WEST2:
-					return WEST3;
-				case 7://WEST3:
-					return WEST0;
-				case 8://NORTH0:
-					return NORTH1;
-				case 9://NORTH1:
-					return NORTH2;
-				case 10://NORTH2:
-					return NORTH3;
-				case 11://NORTH3:
-					return NORTH0;
-				case 12://EAST0:
-					return EAST1;
-				case 13://EAST1:
-					return EAST2;
-				case 14://EAST2:
-					return EAST3;
-				case 15://EAST3:
-					return EAST0;
-				case 16://UP0:
-					return UP1;
-				case 17://UP1:
 					return UP2;
-				case 18://UP2:
-					return UP3;
-				case 19://UP3:
-					return UP0;
-				case 20://DOWN0:
-					return DOWN1;
-				case 21://DOWN1:
-					return DOWN2;
-				case 22://DOWN2:
-					return DOWN3;
-				case 23://DOWN3:
+				case 1://SOUTH1:
+					return EAST1;
+				case 2://SOUTH2:
 					return DOWN0;
+				case 3://SOUTH3:
+					return WEST3;
+				case 4://WEST0:
+					return UP3;
+				case 5://WEST1:
+					return SOUTH1;
+				case 6://WEST2:
+					return DOWN3;
+				case 7://WEST3:
+					return NORTH3;
+				case 8://NORTH0:
+					return UP0;
+				case 9://NORTH1:
+					return WEST1;
+				case 10://NORTH2:
+					return DOWN2;
+				case 11://NORTH3:
+					return EAST3;
+				case 12://EAST0:
+					return UP1;
+				case 13://EAST1:
+					return NORTH1;
+				case 14://EAST2:
+					return DOWN1;
+				case 15://EAST3:
+					return SOUTH3;
+				case 16://UP0:
+					return SOUTH2;
+				case 17://UP1:
+					return WEST2;
+				case 18://UP2:
+					return NORTH2;
+				case 19://UP3:
+					return EAST2;
+				case 20://DOWN0:
+					return NORTH0;
+				case 21://DOWN1:
+					return WEST0;
+				case 22://DOWN2:
+					return SOUTH0;
+				case 23://DOWN3:
+					return EAST0;
 			}
 		}
 		public ITurnable ClockY() => ClockY(Value);
@@ -297,53 +305,53 @@ namespace Voxel2Pixel.Model
 			{
 				default:
 				case 0://SOUTH0:
-					return UP2;
-				case 1://SOUTH1:
-					return EAST1;
-				case 2://SOUTH2:
-					return DOWN0;
-				case 3://SOUTH3:
-					return WEST3;
-				case 4://WEST0:
-					return UP3;
-				case 5://WEST1:
 					return SOUTH1;
-				case 6://WEST2:
-					return DOWN3;
-				case 7://WEST3:
-					return NORTH3;
-				case 8://NORTH0:
-					return UP0;
-				case 9://NORTH1:
-					return WEST1;
-				case 10://NORTH2:
-					return DOWN2;
-				case 11://NORTH3:
-					return EAST3;
-				case 12://EAST0:
-					return UP1;
-				case 13://EAST1:
-					return NORTH1;
-				case 14://EAST2:
-					return DOWN1;
-				case 15://EAST3:
-					return SOUTH3;
-				case 16://UP0:
+				case 1://SOUTH1:
 					return SOUTH2;
-				case 17://UP1:
-					return WEST2;
-				case 18://UP2:
-					return NORTH2;
-				case 19://UP3:
-					return EAST2;
-				case 20://DOWN0:
-					return NORTH0;
-				case 21://DOWN1:
-					return WEST0;
-				case 22://DOWN2:
+				case 2://SOUTH2:
+					return SOUTH3;
+				case 3://SOUTH3:
 					return SOUTH0;
-				case 23://DOWN3:
+				case 4://WEST0:
+					return WEST1;
+				case 5://WEST1:
+					return WEST2;
+				case 6://WEST2:
+					return WEST3;
+				case 7://WEST3:
+					return WEST0;
+				case 8://NORTH0:
+					return NORTH1;
+				case 9://NORTH1:
+					return NORTH2;
+				case 10://NORTH2:
+					return NORTH3;
+				case 11://NORTH3:
+					return NORTH0;
+				case 12://EAST0:
+					return EAST1;
+				case 13://EAST1:
+					return EAST2;
+				case 14://EAST2:
+					return EAST3;
+				case 15://EAST3:
 					return EAST0;
+				case 16://UP0:
+					return UP1;
+				case 17://UP1:
+					return UP2;
+				case 18://UP2:
+					return UP3;
+				case 19://UP3:
+					return UP0;
+				case 20://DOWN0:
+					return DOWN1;
+				case 21://DOWN1:
+					return DOWN2;
+				case 22://DOWN2:
+					return DOWN3;
+				case 23://DOWN3:
+					return DOWN0;
 			}
 		}
 		public ITurnable ClockZ() => ClockZ(Value);
