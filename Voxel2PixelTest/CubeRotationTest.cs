@@ -67,6 +67,8 @@ namespace Voxel2PixelTest
 			TestRotation(1, 2, 3, (CubeRotation)c.ClockY(), clockY);
 			TestRotation(1, 2, 3, (CubeRotation)c.ClockY().ClockY(), clockY, clockY);
 			TestRotation(1, 2, 3, (CubeRotation)c.CounterY(), counterY);
+			TestRotation(1, 2, 3, (CubeRotation)c.CounterZ(), counterZ);
+			TestRotation(1, 2, 3, (CubeRotation)c.CounterZ().ClockY(), counterZ, clockY);
 		}
 		[Fact]
 		public void RelationshipTest()
