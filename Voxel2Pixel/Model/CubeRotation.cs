@@ -415,7 +415,7 @@ namespace Voxel2Pixel.Model
 		#region Rotate
 		/// <param name="index">index 0 for x, 1 for y, 2 for z</param>
 		/// <returns>if selected rotation is negative, return -1, otherwise return 1</returns>
-		public int Step(int index) => Rotation[index] >> 31 | 1;
+		public int Step(int index) => Rotation[FlipBits(index)] >> 31 | 1;
 		public int StepX => Step(0);
 		public int StepY => Step(1);
 		public int StepZ => Step(2);
@@ -445,7 +445,7 @@ namespace Voxel2Pixel.Model
 		public int Rotate(int axis, params int[] coordinates)
 		{
 			int index = ReverseLookup(axis);
-			return coordinates[index] * Step(index);
+			return coordinates[index] * Step(axis);
 		}
 		public void Rotate(out int x, out int y, out int z, params int[] coordinates)
 		{
