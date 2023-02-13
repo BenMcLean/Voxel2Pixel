@@ -14,10 +14,10 @@ namespace Voxel2PixelTest
 			Assert.True(y == 1);
 			Assert.True(z == 1);
 			cubeRotation = (CubeRotation)cubeRotation.ClockZ();
-			cubeRotation.Rotate(out x, out y, out z, 1, 1, 1);
-			Assert.True(x == 1);
-			Assert.True(y == -1);
-			Assert.True(z == 1);
+			cubeRotation.Rotate(out x, out y, out z, 1, 2, 3);
+			Assert.True(x == -2);
+			Assert.True(y == 1);
+			Assert.True(z == 3);
 		}
 		[Fact]
 		public void RelationshipTest()
