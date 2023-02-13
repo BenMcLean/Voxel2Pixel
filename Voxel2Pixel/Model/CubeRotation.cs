@@ -38,13 +38,13 @@ namespace Voxel2Pixel.Model
 			EAST2 = new CubeRotation(14, "EAST2", yMinus, xMinus, zMinus),
 			EAST3 = new CubeRotation(15, "EAST3", yMinus, zMinus, xPlus),
 			UP0 = new CubeRotation(16, "UP0", xPlus, zPlus, yMinus),
-			UP1 = new CubeRotation(17, "UP1", -3, 0, 1),
-			UP2 = new CubeRotation(18, "UP2", -3, 1, -1),
-			UP3 = new CubeRotation(19, "UP3", -3, -1, -2),
+			UP1 = new CubeRotation(17, "UP1", zMinus, xPlus, yMinus),
+			UP2 = new CubeRotation(18, "UP2", xMinus, zMinus, yMinus),
+			UP3 = new CubeRotation(19, "UP3", zPlus, xMinus, yMinus),
 			DOWN0 = new CubeRotation(20, "DOWN0", xPlus, zMinus, yPlus),
-			DOWN1 = new CubeRotation(21, "DOWN1", 2, -1, 1),
-			DOWN2 = new CubeRotation(22, "DOWN2", 2, 1, 0),
-			DOWN3 = new CubeRotation(23, "DOWN3", 2, 0, -2);
+			DOWN1 = new CubeRotation(21, "DOWN1", zMinus, xMinus, yPlus),
+			DOWN2 = new CubeRotation(22, "DOWN2", xMinus, zPlus, yPlus),
+			DOWN3 = new CubeRotation(23, "DOWN3", zPlus, xPlus, yPlus);
 		public static readonly ReadOnlyCollection<CubeRotation> Values = Array.AsReadOnly(new CubeRotation[] { SOUTH0, SOUTH1, SOUTH2, SOUTH3, WEST0, WEST1, WEST2, WEST3, NORTH0, NORTH1, NORTH2, NORTH3, EAST0, EAST1, EAST2, EAST3, UP0, UP1, UP2, UP3, DOWN0, DOWN1, DOWN2, DOWN3 });
 		#endregion Instances
 		#region Data members
