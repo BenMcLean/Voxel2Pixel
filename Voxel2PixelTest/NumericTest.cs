@@ -8,27 +8,27 @@ namespace Voxel2PixelTest
 	{
 		private readonly ITestOutputHelper output;
 		public NumericTest(ITestOutputHelper output) => this.output = output;
-		public static readonly Matrix4x4 rotX = new Matrix4x4(
+		public static readonly Matrix4x4 clockX = new Matrix4x4(
 				1, 0, 0, 0,
 				0, 0, -1, 0,
 				0, 1, 0, 0,
 				0, 0, 0, 1),
-			rotY = new Matrix4x4(
+			clockY = new Matrix4x4(
 				0, 0, -1, 0,
 				0, 1, 0, 0,
 				1, 0, 0, 0,
 				0, 0, 0, 1),
-			rotZ = new Matrix4x4(
+			clockZ = new Matrix4x4(
 				0, -1, 0, 0,
 				1, 0, 0, 0,
 				0, 0, 1, 0,
 				0, 0, 0, 1),
-			inverseX, inverseY, inverseZ;
+			counterX, counterY, counterZ;
 		static NumericTest()
 		{
-			Matrix4x4.Invert(rotX, out inverseX);
-			Matrix4x4.Invert(rotY, out inverseY);
-			Matrix4x4.Invert(rotZ, out inverseZ);
+			Matrix4x4.Invert(clockX, out counterX);
+			Matrix4x4.Invert(clockY, out counterY);
+			Matrix4x4.Invert(clockZ, out counterZ);
 		}
 		[Fact]
 		public void Test()
@@ -38,7 +38,7 @@ namespace Voxel2PixelTest
 				2, 0, 0, 0,
 				3, 0, 0, 0,
 				0, 0, 0, 0),
-				result = rotZ * coords;
+				result = clockZ * coords;
 			output.WriteLine(string.Join(", ", result.M11, result.M21, result.M31));
 		}
 	}
