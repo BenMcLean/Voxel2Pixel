@@ -30,6 +30,19 @@ namespace Voxel2PixelTest
 			Matrix4x4.Invert(clockY, out counterY);
 			Matrix4x4.Invert(clockZ, out counterZ);
 		}
+		private void Rotate(out int outX, out int outY, out int outZ, int x, int y, int z, params Matrix4x4[] rotations)
+		{
+			Matrix4x4 coords = new Matrix4x4(
+				x, 0, 0, 0,
+				y, 0, 0, 0,
+				z, 0, 0, 0,
+				0, 0, 0, 0);
+			foreach (Matrix4x4 rotation in rotations)
+				coords = rotation * coords;
+			outX = (int)coords.M11;
+			outY = (int)coords.M21;
+			outZ = (int)coords.M31;
+		}
 		[Fact]
 		public void Test()
 		{
@@ -39,7 +52,10 @@ namespace Voxel2PixelTest
 				3, 0, 0, 0,
 				0, 0, 0, 0),
 				result = clockZ * coords;
-			output.WriteLine(string.Join(", ", result.M11, result.M21, result.M31));
+			Rotate(out int x, out int y, out int z, 1, 2, 3, clockZ);
+			Assert.True(result.M11 == x);
+			Assert.True(result.M21 == y);
+			Assert.True(result.M31 == z);
 		}
 	}
 }
