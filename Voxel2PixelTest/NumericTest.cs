@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using Voxel2Pixel.Model;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -42,20 +43,23 @@ namespace Voxel2PixelTest
 			outX = (int)coords.M11;
 			outY = (int)coords.M21;
 			outZ = (int)coords.M31;
+			output.WriteLine(string.Join(", ", outX, outY, outZ));
+		}
+		private void TestRotation(int x, int y, int z, CubeRotation cubeRotation, params Matrix4x4[] rotations)
+		{
+			output.WriteLine("Testing " + cubeRotation.Name);
+			Rotate(out int x1, out int y1, out int z1, x, y, z, rotations);
+			cubeRotation.Rotate(out int x2, out int y2, out int z2, x, y, z);
+			Assert.True(x1 == x2);
+			Assert.True(y1 == y2);
+			Assert.True(z1 == z2);
 		}
 		[Fact]
 		public void Test()
 		{
-			Matrix4x4 coords = new Matrix4x4(
-				1, 0, 0, 0,
-				2, 0, 0, 0,
-				3, 0, 0, 0,
-				0, 0, 0, 0),
-				result = clockZ * coords;
-			Rotate(out int x, out int y, out int z, 1, 2, 3, clockZ);
-			Assert.True(result.M11 == x);
-			Assert.True(result.M21 == y);
-			Assert.True(result.M31 == z);
+			CubeRotation c = CubeRotation.SOUTH0;
+			TestRotation(1, 2, 3, c, Matrix4x4.Identity);
+			TestRotation(1, 2, 3, (CubeRotation)c.ClockZ(), clockZ);
 		}
 	}
 }
