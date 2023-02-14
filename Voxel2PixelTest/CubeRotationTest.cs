@@ -69,13 +69,25 @@ namespace Voxel2PixelTest
 			TestRotation(x, y, z, "SOUTH2", (CubeRotation)c.ClockY().ClockY(), clockY, clockY);
 			TestRotation(x, y, z, "SOUTH3", (CubeRotation)c.CounterY(), counterY);
 			TestRotation(x, y, z, "WEST0", (CubeRotation)c.CounterZ(), counterZ);
-			//TestRotation(x, y, z, "WEST1", (CubeRotation)c.CounterZ().ClockY(), counterZ, clockY);
+			TestRotation(x, y, z, "WEST1", (CubeRotation)c.CounterZ().ClockY(), counterZ, clockY);
 			TestRotation(x, y, z, "WEST2", (CubeRotation)c.CounterZ().ClockY().ClockY(), counterX, clockY, clockY);
 			TestRotation(x, y, z, "WEST3", (CubeRotation)c.CounterZ().CounterY(), counterZ, counterY);
 			TestRotation(x, y, z, "NORTH0", (CubeRotation)c.ClockZ().ClockZ(), clockZ, clockZ);
 			TestRotation(x, y, z, "NORTH1", (CubeRotation)c.CounterY().ClockZ().ClockZ(), counterY, clockZ, clockZ);
 			TestRotation(x, y, z, "NORTH2", (CubeRotation)c.ClockX().ClockX(), clockX, clockX);
 			TestRotation(x, y, z, "NORTH3", (CubeRotation)c.ClockY().ClockZ().ClockZ(), clockY, clockZ, clockZ);
+			TestRotation(x, y, z, "EAST0", (CubeRotation)c.ClockZ(), clockZ);
+			TestRotation(x, y, z, "EAST1", (CubeRotation)c.ClockZ().ClockY(), clockZ, clockY);
+			TestRotation(x, y, z, "EAST2", (CubeRotation)c.ClockZ().ClockY().ClockY(), clockZ, clockY, clockY);
+			TestRotation(x, y, z, "EAST3", (CubeRotation)c.ClockZ().CounterY(), clockZ, counterY);
+			//TestRotation(x, y, z, "UP0", (CubeRotation)c.ClockX().CounterZ().CounterZ(), clockX, counterZ, counterZ);
+			//TestRotation(x, y, z, "UP1", (CubeRotation)c.CounterX().ClockZ(), counterX, clockZ);
+			//TestRotation(x, y, z, "UP2", (CubeRotation)c.CounterX(), counterX);
+			//TestRotation(x, y, z, "UP3", (CubeRotation)c.CounterX().ClockZ(), counterX, clockZ);
+			//TestRotation(x, y, z, "DOWN0", (CubeRotation)c.ClockX().ClockZ().ClockZ(), clockX, clockZ, clockZ);
+			//TestRotation(x, y, z, "DOWN1", (CubeRotation)c.ClockX().ClockZ(), clockX, clockZ);
+			//TestRotation(x, y, z, "DOWN2", (CubeRotation)c.ClockX(), clockX);
+			//TestRotation(x, y, z, "DOWN3", (CubeRotation)c.ClockX().CounterZ(), clockX, counterZ);
 		}
 		[Fact]
 		public void RelationshipTest()
