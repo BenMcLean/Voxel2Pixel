@@ -39,7 +39,12 @@ namespace Voxel2PixelTest
 				z, 0, 0, 0,
 				0, 0, 0, 0);
 			foreach (Matrix4x4 rotation in rotations)
+			{
 				coords = rotation * coords;
+				coords.M11 = (int)coords.M11;
+				coords.M21 = (int)coords.M21;
+				coords.M31 = (int)coords.M31;
+			}
 			outX = (int)coords.M11;
 			outY = (int)coords.M21;
 			outZ = (int)coords.M31;
@@ -69,7 +74,7 @@ namespace Voxel2PixelTest
 			TestRotation(x, y, z, "SOUTH2", (CubeRotation)c.ClockY().ClockY(), clockY, clockY);
 			TestRotation(x, y, z, "SOUTH3", (CubeRotation)c.CounterY(), counterY);
 			TestRotation(x, y, z, "WEST0", (CubeRotation)c.CounterZ(), counterZ);
-			//TestRotation(x, y, z, "WEST1", (CubeRotation)c.CounterZ().ClockY(), counterZ, clockY);
+			TestRotation(x, y, z, "WEST1", (CubeRotation)c.CounterZ().ClockY(), counterZ, clockY);
 			TestRotation(x, y, z, "WEST2", (CubeRotation)c.CounterZ().ClockY().ClockY(), counterZ, clockY, clockY);
 			TestRotation(x, y, z, "WEST3", (CubeRotation)c.CounterZ().CounterY(), counterZ, counterY);
 			TestRotation(x, y, z, "NORTH0", (CubeRotation)c.ClockZ().ClockZ(), clockZ, clockZ);

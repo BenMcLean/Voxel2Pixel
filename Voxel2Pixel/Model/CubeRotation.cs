@@ -28,7 +28,7 @@ namespace Voxel2Pixel.Model
 			WEST0 = new CubeRotation(4, "WEST0", yPlus, xMinus, zPlus),
 			WEST1 = new CubeRotation(5, "WEST1", zMinus, xMinus, yPlus),
 			WEST2 = new CubeRotation(6, "WEST2", yMinus, xMinus, zMinus),
-			WEST3 = new CubeRotation(7, "WEST3", yPlus, zMinus, xMinus),
+			WEST3 = new CubeRotation(7, "WEST3", zPlus, xMinus, yMinus),
 			NORTH0 = new CubeRotation(8, "NORTH0", xMinus, yMinus, zPlus),
 			NORTH1 = new CubeRotation(9, "NORTH1", zMinus, yMinus, xMinus),
 			NORTH2 = new CubeRotation(10, "NORTH2", xPlus, yMinus, zMinus),
@@ -442,11 +442,7 @@ namespace Voxel2Pixel.Model
 					return rot;
 			throw new ArgumentException("Invalid axis: \"" + axis + "\".");
 		}
-		public int Rotate(int axis, params int[] coordinates)
-		{
-			int index = ReverseLookup(axis);
-			return coordinates[index] * Step(axis);
-		}
+		public int Rotate(int axis, params int[] coordinates) => coordinates[Affected(axis)] * Step(axis);
 		public void Rotate(out int x, out int y, out int z, params int[] coordinates)
 		{
 			x = Rotate(0, coordinates);
