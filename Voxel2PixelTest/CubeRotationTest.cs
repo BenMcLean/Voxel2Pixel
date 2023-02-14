@@ -55,9 +55,9 @@ namespace Voxel2PixelTest
 				+ ". Matrix4x4: "
 				+ string.Join(", ", x2, y2, z2) + ".");
 			Assert.Equal(name, cubeRotation.Name);
-			Assert.True(x1 == x2);
-			Assert.True(y1 == y2);
-			Assert.True(z1 == z2);
+			Assert.Equal(x1, x2);
+			Assert.Equal(y1, y2);
+			Assert.Equal(z1, z2);
 		}
 		[Fact]
 		public void MatrixTest()
