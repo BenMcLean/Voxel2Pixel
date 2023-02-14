@@ -43,9 +43,8 @@ namespace Voxel2PixelTest
 			outX = (int)coords.M11;
 			outY = (int)coords.M21;
 			outZ = (int)coords.M31;
-			//output.WriteLine(string.Join(", ", outX, outY, outZ));
 		}
-		private void TestRotation(int x, int y, int z, CubeRotation cubeRotation, params Matrix4x4[] rotations)
+		private void TestRotation(int x, int y, int z, string name, CubeRotation cubeRotation, params Matrix4x4[] rotations)
 		{
 			cubeRotation.Rotate(out int x1, out int y1, out int z1, x, y, z);
 			Rotate(out int x2, out int y2, out int z2, x, y, z, rotations);
@@ -54,7 +53,8 @@ namespace Voxel2PixelTest
 				+ ". " + cubeRotation.Name + ": "
 				+ string.Join(", ", x1, y1, z1)
 				+ ". Matrix4x4: "
-				+ string.Join(", ", x2, y2, z2));
+				+ string.Join(", ", x2, y2, z2) + ".");
+			Assert.Equal(name, cubeRotation.Name);
 			Assert.True(x1 == x2);
 			Assert.True(y1 == y2);
 			Assert.True(z1 == z2);
@@ -63,12 +63,16 @@ namespace Voxel2PixelTest
 		public void MatrixTest()
 		{
 			CubeRotation c = CubeRotation.SOUTH0;
-			TestRotation(1, 2, 3, c, Matrix4x4.Identity);
-			TestRotation(1, 2, 3, (CubeRotation)c.ClockY(), clockY);
-			TestRotation(1, 2, 3, (CubeRotation)c.ClockY().ClockY(), clockY, clockY);
-			TestRotation(1, 2, 3, (CubeRotation)c.CounterY(), counterY);
-			TestRotation(1, 2, 3, (CubeRotation)c.CounterZ(), counterZ);
-			TestRotation(1, 2, 3, (CubeRotation)c.CounterZ().ClockY(), counterZ, clockY);
+			int x = 1, y = 2, z = 3;
+			TestRotation(x, y, z, "SOUTH0", c, Matrix4x4.Identity);
+			TestRotation(x, y, z, "SOUTH1", (CubeRotation)c.ClockY(), clockY);
+			TestRotation(x, y, z, "SOUTH2", (CubeRotation)c.ClockY().ClockY(), clockY, clockY);
+			TestRotation(x, y, z, "SOUTH3", (CubeRotation)c.CounterY(), counterY);
+			TestRotation(x, y, z, "WEST0", (CubeRotation)c.CounterZ(), counterZ);
+			//TestRotation(x, y, z, "WEST1", (CubeRotation)c.CounterZ().ClockY(), counterZ, clockY);
+			TestRotation(x, y, z, "WEST2", (CubeRotation)c.CounterZ().ClockY().ClockY(), counterX, clockY, clockY);
+			TestRotation(x, y, z, "WEST3", (CubeRotation)c.CounterZ().CounterY(), counterZ, counterY);
+			TestRotation(x, y, z, "NORTH0", (CubeRotation)c.ClockZ().ClockZ(), clockZ, clockZ);
 		}
 		[Fact]
 		public void RelationshipTest()
