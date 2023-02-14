@@ -27,7 +27,7 @@ namespace Voxel2Pixel.Model
 			SOUTH3 = new CubeRotation(3, "SOUTH3", zPlus, yPlus, xMinus),
 			WEST0 = new CubeRotation(4, "WEST0", yPlus, xMinus, zPlus),
 			WEST1 = new CubeRotation(5, "WEST1", zMinus, xMinus, yPlus),
-			WEST2 = new CubeRotation(6, "WEST2", xMinus, zPlus, yPlus),
+			WEST2 = new CubeRotation(6, "WEST2", yMinus, xMinus, zMinus),
 			WEST3 = new CubeRotation(7, "WEST3", yPlus, zMinus, xMinus),
 			NORTH0 = new CubeRotation(8, "NORTH0", xMinus, yMinus, zPlus),
 			NORTH1 = new CubeRotation(9, "NORTH1", zMinus, yMinus, xMinus),
