@@ -40,12 +40,7 @@ namespace Voxel2PixelTest
 				z, 0, 0, 0,
 				0, 0, 0, 0);
 			foreach (Matrix4x4 rotation in rotations)
-			{
 				coords = rotation * coords;
-				coords.M11 = (int)coords.M11;
-				coords.M21 = (int)coords.M21;
-				coords.M31 = (int)coords.M31;
-			}
 			outX = (int)coords.M11;
 			outY = (int)coords.M21;
 			outZ = (int)coords.M31;
