@@ -85,10 +85,10 @@ namespace Voxel2PixelTest
 			TestRotation(x, y, z, "EAST1", (CubeRotation)c.ClockZ().ClockY(), clockZ, clockY);
 			TestRotation(x, y, z, "EAST2", (CubeRotation)c.ClockZ().ClockY().ClockY(), clockZ, clockY, clockY);
 			TestRotation(x, y, z, "EAST3", (CubeRotation)c.ClockZ().CounterY(), clockZ, counterY);
-			//TestRotation(x, y, z, "UP0", (CubeRotation)c.ClockX().CounterZ().CounterZ(), clockX, counterZ, counterZ);
-			//TestRotation(x, y, z, "UP1", (CubeRotation)c.CounterX().ClockZ(), counterX, clockZ);
-			//TestRotation(x, y, z, "UP2", (CubeRotation)c.CounterX(), counterX);
-			//TestRotation(x, y, z, "UP3", (CubeRotation)c.CounterX().ClockZ(), counterX, clockZ);
+			TestRotation(x, y, z, "UP0", (CubeRotation)c.ClockX().ClockY().ClockY(), clockX, clockY, clockY);
+			TestRotation(x, y, z, "UP1", (CubeRotation)c.ClockX().CounterY(), clockX, counterY);
+			TestRotation(x, y, z, "UP2", (CubeRotation)c.ClockX(), clockX);
+			TestRotation(x, y, z, "UP3", (CubeRotation)c.ClockX().ClockY(), clockX, clockY);
 			//TestRotation(x, y, z, "DOWN0", (CubeRotation)c.ClockX().ClockZ().ClockZ(), clockX, clockZ, clockZ);
 			//TestRotation(x, y, z, "DOWN1", (CubeRotation)c.ClockX().ClockZ(), clockX, clockZ);
 			//TestRotation(x, y, z, "DOWN2", (CubeRotation)c.ClockX(), clockX);
