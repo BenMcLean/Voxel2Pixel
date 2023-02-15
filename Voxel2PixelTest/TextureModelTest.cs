@@ -39,7 +39,7 @@ namespace Voxel2PixelTest
 				bytes: arrayRenderer.Image)
 				.SaveAsPng("TextureModel.png");
 		}
-		public byte[] TestTexture(int width, int height) =>
+		public static byte[] TestTexture(int width, int height) =>
 			new byte[16] {
 				255,0,0,255,
 				0,255,0,255,

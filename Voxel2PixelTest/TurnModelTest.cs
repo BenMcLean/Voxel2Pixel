@@ -14,11 +14,18 @@ namespace Voxel2PixelTest
 		[Fact]
 		public void ArrayRendererTest()
 		{
-			VoxModel voxModel = new VoxModel(@"..\..\..\Sora.vox");
-			IVoxelColor voxelColor = new NaiveDimmer(voxModel.Palette);
+			//VoxModel sourceModel = new VoxModel(@"..\..\..\Sora.vox");
+			//IVoxelColor voxelColor = new NaiveDimmer(voxModel.Palette);
+			int testTextureWidth = 10, testTextureHeight = 32;
+			byte[] testTexture = TextureModelTest.TestTexture(testTextureWidth, testTextureHeight);
+			TextureModel sourceModel = new TextureModel(testTexture, testTextureWidth)
+			{
+				SizeZ = 1,
+			};
+			IVoxelColor voxelColor = new NaiveDimmer(sourceModel.Palette);
 			TurnModel model = new TurnModel
 			{
-				Model = voxModel,
+				Model = sourceModel,
 			};
 			int width = Math.Max(VoxelDraw.IsoWidth(model), VoxelDraw.IsoHeight(model)),
 				height = width;

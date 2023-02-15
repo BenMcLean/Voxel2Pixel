@@ -11,7 +11,7 @@ namespace Voxel2PixelTest
 {
 	public class AnimatedTest
 	{
-		//[Fact]
+		[Fact]
 		public void GifTest()
 		{
 			ArrayModel model = new ArrayModel(
@@ -43,9 +43,7 @@ namespace Voxel2PixelTest
 						model.Voxels[randomX][randomY][randomZ] = 0;
 						model.Voxels[x][y][z] = 2;
 					}
-			ImageMaker.AnimatedGifScaled(
-				scaleX: 16,
-				scaleY: 16,
+			ImageMaker.AnimatedGif(
 				width: width,
 				frames: frames.ToArray())
 				.SaveAsGif("AnimatedTest.gif");
@@ -53,10 +51,12 @@ namespace Voxel2PixelTest
 		[Fact]
 		public void SizeTest()
 		{
-			EmptyModel empty = new EmptyModel(
-				sizeX: 8,
-				sizeY: 8,
-				sizeZ: 8);
+			EmptyModel empty = new EmptyModel
+			{
+				SizeX = 8,
+				SizeY = 8,
+				SizeZ = 8,
+			};
 			int width = VoxelDraw.IsoWidth(empty),
 				height = VoxelDraw.IsoHeight(empty),
 				start = 6;
