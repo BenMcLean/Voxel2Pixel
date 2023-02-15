@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 using Voxel2Pixel.Model;
 using Xunit;
 using Xunit.Abstractions;
@@ -77,6 +78,19 @@ namespace Voxel2PixelTest
 			Assert.Equal(x1, x2);
 			Assert.Equal(y1, y2);
 			Assert.Equal(z1, z2);
+			TurnModel turnModel = new TurnModel
+			{
+				Model = new EmptyModel
+				{
+					SizeX = Math.Abs(x),
+					SizeY = Math.Abs(y),
+					SizeZ = Math.Abs(z),
+				},
+				CubeRotation = cubeRotation,
+			};
+			Assert.Equal(turnModel.SizeX, Math.Abs(x1));
+			Assert.Equal(turnModel.SizeY, Math.Abs(y1));
+			Assert.Equal(turnModel.SizeZ, Math.Abs(z1));
 		}
 		private void Test24(int x = 1, int y = 2, int z = 3)
 		{
