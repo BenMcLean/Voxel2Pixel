@@ -2,14 +2,13 @@
 using System.Numerics;
 using Voxel2Pixel.Model;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Voxel2PixelTest
 {
 	public class CuberotationTest
 	{
-		//private readonly ITestOutputHelper output;
-		//public CuberotationTest(ITestOutputHelper output) => this.output = output;
+		//private readonly Xunit.Abstractions.ITestOutputHelper output;
+		//public CuberotationTest(Xunit.Abstractions.ITestOutputHelper output) => this.output = output;
 		public static readonly Matrix4x4 clockX = new Matrix4x4(
 				1, 0, 0, 0,
 				0, 0, -1, 0,
@@ -32,7 +31,7 @@ namespace Voxel2PixelTest
 			Matrix4x4.Invert(clockY, out counterY);
 			Matrix4x4.Invert(clockZ, out counterZ);
 		}
-		private void Rotate(out int outX, out int outY, out int outZ, int x, int y, int z, params Matrix4x4[] rotations)
+		private static void Rotate(out int outX, out int outY, out int outZ, int x, int y, int z, params Matrix4x4[] rotations)
 		{
 			Matrix4x4 coords = new Matrix4x4(
 				x, 0, 0, 0,
