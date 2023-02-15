@@ -424,24 +424,14 @@ namespace Voxel2Pixel.Model
 		/// </summary>
 		public static int FlipBits(int rot) => rot ^ rot >> 31; // (rot ^ rot >> 31) is roughly equal to (rot < 0 ? -1 - rot : rot)
 		public int Affected(int axis) => FlipBits(Rotation[axis]);
+		public int AffectedX => Affected(0);
+		public int AffectedY => Affected(1);
+		public int AffectedZ => Affected(2);
 		public static CubeRotation Get(params int[] rotation) =>
 			Values.FirstOrDefault(value =>
 				value.Rotation[0] == rotation[0]
 				&& value.Rotation[1] == rotation[1]
 				&& value.Rotation[2] == rotation[2]);
-		/// <summary>
-		/// Does a reverse lookup on the rotation array for the axis affected by the rotation
-		/// </summary>
-		/// <param name="axis">axis 0 or -1 for x, 1 or -2 for y, 2 or -3 for z</param>
-		/// <returns>Which axis the specified axis was before the rotation. 0 for x, 1 for y, 2 for z.</returns>
-		public int ReverseLookup(int axis)
-		{
-			int index = FlipBits(axis);
-			for (int rot = 0; rot < 3; rot++)
-				if (index == Affected(rot))
-					return rot;
-			throw new ArgumentException("Invalid axis: \"" + axis + "\".");
-		}
 		public int Rotate(int axis, params int[] coordinates) => coordinates[Affected(axis)] * Step(axis);
 		public void Rotate(out int x, out int y, out int z, params int[] coordinates)
 		{
