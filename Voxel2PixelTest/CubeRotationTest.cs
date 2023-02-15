@@ -89,10 +89,10 @@ namespace Voxel2PixelTest
 			TestRotation(x, y, z, "UP1", (CubeRotation)c.ClockX().CounterY(), clockX, counterY);
 			TestRotation(x, y, z, "UP2", (CubeRotation)c.ClockX(), clockX);
 			TestRotation(x, y, z, "UP3", (CubeRotation)c.ClockX().ClockY(), clockX, clockY);
-			//TestRotation(x, y, z, "DOWN0", (CubeRotation)c.ClockX().ClockZ().ClockZ(), clockX, clockZ, clockZ);
-			//TestRotation(x, y, z, "DOWN1", (CubeRotation)c.ClockX().ClockZ(), clockX, clockZ);
-			//TestRotation(x, y, z, "DOWN2", (CubeRotation)c.ClockX(), clockX);
-			//TestRotation(x, y, z, "DOWN3", (CubeRotation)c.ClockX().CounterZ(), clockX, counterZ);
+			TestRotation(x, y, z, "DOWN0", (CubeRotation)c.ClockX().ClockZ().ClockZ(), clockX, clockZ, clockZ);
+			TestRotation(x, y, z, "DOWN1", (CubeRotation)c.CounterX().CounterY(), counterX, counterY);
+			TestRotation(x, y, z, "DOWN2", (CubeRotation)c.CounterX(), counterX);
+			TestRotation(x, y, z, "DOWN3", (CubeRotation)c.CounterX().ClockY(), counterX, clockY);
 		}
 		[Fact]
 		public void RelationshipTest()

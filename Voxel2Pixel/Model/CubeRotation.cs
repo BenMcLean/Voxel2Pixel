@@ -41,10 +41,10 @@ namespace Voxel2Pixel.Model
 			UP1 = new CubeRotation(17, "UP1", yPlus, zMinus, xMinus),
 			UP2 = new CubeRotation(18, "UP2", xPlus, zMinus, yPlus),
 			UP3 = new CubeRotation(19, "UP3", yMinus, zMinus, xPlus),
-			DOWN0 = new CubeRotation(20, "DOWN0", xPlus, zMinus, yPlus),
-			DOWN1 = new CubeRotation(21, "DOWN1", zMinus, xMinus, yPlus),
-			DOWN2 = new CubeRotation(22, "DOWN2", xMinus, zPlus, yPlus),
-			DOWN3 = new CubeRotation(23, "DOWN3", zPlus, xPlus, yPlus);
+			DOWN0 = new CubeRotation(20, "DOWN0", xMinus, zPlus, yPlus),
+			DOWN1 = new CubeRotation(21, "DOWN1", yMinus, zPlus, xMinus),
+			DOWN2 = new CubeRotation(22, "DOWN2", xPlus, zPlus, yMinus),
+			DOWN3 = new CubeRotation(23, "DOWN3", yPlus, zPlus, xPlus);
 		public static readonly ReadOnlyCollection<CubeRotation> Values = Array.AsReadOnly(new CubeRotation[] { SOUTH0, SOUTH1, SOUTH2, SOUTH3, WEST0, WEST1, WEST2, WEST3, NORTH0, NORTH1, NORTH2, NORTH3, EAST0, EAST1, EAST2, EAST3, UP0, UP1, UP2, UP3, DOWN0, DOWN1, DOWN2, DOWN3 });
 		#endregion Instances
 		#region Data members
