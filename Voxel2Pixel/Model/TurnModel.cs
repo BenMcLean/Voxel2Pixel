@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 
 namespace Voxel2Pixel.Model
 {
@@ -34,7 +33,7 @@ namespace Voxel2Pixel.Model
 			}
 		}
 		public int Start(int axis) =>
-			CubeRotation.Rotation[CubeRotation.FlipBits(axis)] is int rot && rot < 0 ?
+			CubeRotation.Step(axis) < 1 ?
 				RotatedSize(axis) - 1// when rot is negative, we need to go from the end of the axis, not the start
 				: 0;
 		public int StartX => Start(0);
@@ -46,11 +45,34 @@ namespace Voxel2Pixel.Model
 		public int SizeZ => RotatedSize(2);
 		public bool IsInside(int x, int y, int z) => !IsOutside(x, y, z);
 		public bool IsOutside(int x, int y, int z) => x < 0 || y < 0 || z < 0 || x >= SizeX || y >= SizeY || z >= SizeZ;
-		public byte? At(int x, int y, int z)
+		public int Rotate(int axis, params int[] coordinates) =>
+			CubeRotation.Rotate(axis, coordinates) +
+			(CubeRotation.Step(axis) < 1 ?
+				ModelSize(axis) - 1
+				: 0);
+		public void Rotate(out int x, out int y, out int z, params int[] coordinates)
 		{
-			CubeRotation.Rotate(out int x2, out int y2, out int z2, x, y, z);
-			return Model.At(StartX + x2, StartY + y2, StartZ + z2);
+			x = Rotate(0, coordinates);
+			y = Rotate(1, coordinates);
+			z = Rotate(2, coordinates);
 		}
+		//{
+		//	int affected = CubeRotation.Affected(axis),
+		//		step = CubeRotation.Step(axis);
+		//	return step < 1 ?
+		//		ModelSize(affected) - 1 - coordinates[affected]
+		//		: coordinates[affected];
+		//}
+		public static int MessWith(int @int) => @int / 2 + (@int % 2);
+		public byte? At(out int x, out int y, out int z, params int[] coordinates)
+		{
+			//for (int i = 0; i < 3; i++)
+			//	coordinates[i] -= MessWith(ModelSize(i));
+			Rotate(out x, out y, out z, coordinates);
+			//int sizeX = SizeX, sizeY = SizeY, sizeZ = SizeZ;
+			return Model.At(x, y, z);
+		}
+		public byte? At(int x, int y, int z) => At(out _, out _, out _, x, y, z);
 		#endregion IModel
 		#region ITurnable
 		public ITurnable CounterX()
