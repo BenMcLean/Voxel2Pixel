@@ -16,6 +16,31 @@
 			}
 			return model;
 		}
+		public ArrayModel DrawBox(byte voxel)
+		{
+			for (int x = 0; x < SizeX; x++)
+			{
+				Voxels[x][0][0] = voxel;
+				Voxels[x][SizeY - 1][0] = voxel;
+				Voxels[x][0][SizeZ - 1] = voxel;
+				Voxels[x][SizeY - 1][SizeZ - 1] = voxel;
+			}
+			for (int y = 1; y < SizeY - 1; y++)
+			{
+				Voxels[0][y][0] = voxel;
+				Voxels[SizeX - 1][y][0] = voxel;
+				Voxels[0][y][SizeZ - 1] = voxel;
+				Voxels[SizeX - 1][y][SizeZ - 1] = voxel;
+			}
+			for (int z = 1; z < SizeZ - 1; z++)
+			{
+				Voxels[0][0][z] = voxel;
+				Voxels[SizeX - 1][0][z] = voxel;
+				Voxels[0][SizeY - 1][z] = voxel;
+				Voxels[SizeX - 1][SizeY - 1][z] = voxel;
+			}
+			return this;
+		}
 		#region IModel
 		public int SizeX => Voxels.Length;
 		public int SizeY => Voxels[0].Length;
