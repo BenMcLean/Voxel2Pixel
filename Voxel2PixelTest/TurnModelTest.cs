@@ -25,16 +25,21 @@ namespace Voxel2PixelTest
 			//	SizeZ = 1,
 			//};
 			//IVoxelColor voxelColor = new NaiveDimmer(sourceModel.Palette);
-			TurnModel model = new TurnModel
+			TurnModel turnModel = new TurnModel
 			{
 				Model = sourceModel,
+			};
+			BoxModel model = new BoxModel
+			{
+				Model = turnModel,
+				Voxel = 4,
 			};
 			int width = Math.Max(VoxelDraw.IsoWidth(model), VoxelDraw.IsoHeight(model)),
 				height = width;
 			List<byte[]> frames = new List<byte[]>();
 			foreach (CubeRotation cubeRotation in CubeRotation.Values)
 			{
-				model.CubeRotation = cubeRotation;
+				turnModel.CubeRotation = cubeRotation;
 				ArrayRenderer arrayRenderer = new ArrayRenderer
 				{
 					Image = new byte[width * 4 * height],
