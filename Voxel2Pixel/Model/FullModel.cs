@@ -2,6 +2,7 @@
 {
 	public class FullModel : EmptyModel
 	{
-		public override byte? At(int x, int y, int z) => 1;
+		public byte Voxel { get; set; } = 1;
+		public override byte? At(int x, int y, int z) => Voxel;
 	}
 }
