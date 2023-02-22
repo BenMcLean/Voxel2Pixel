@@ -274,7 +274,7 @@ namespace Voxel2Pixel.Draw
 					int startX = Math.Max(pixelX - model.SizeY + 1, 0),
 						startY = Math.Max(model.SizeY - 1 - pixelX, 0),
 						voxelZ = model.SizeZ - 1 - pixelY;
-					if (pixelX + 2 >= pixelWidth + 1
+					if (pixelX >= pixelWidth - 1
 						&& model.At(model.SizeX - 1, 0, voxelZ) is byte rightEdge
 						&& rightEdge != 0)
 					{
@@ -285,7 +285,7 @@ namespace Voxel2Pixel.Draw
 						continue;
 					}
 					for (int voxelX = startX, voxelY = startY;
-						 voxelX <= model.SizeX && voxelY <= model.SizeY;
+						 voxelX <= model.SizeX && voxelY <= model.SizeY && !(leftDone && rightDone);
 						 voxelX++, voxelY++)
 					{
 						if (!leftDone
@@ -392,7 +392,7 @@ namespace Voxel2Pixel.Draw
 					int startX = Math.Max(pixelX - model.SizeY + 1, 0),
 						startY = Math.Max(model.SizeY - 1 - pixelX, 0),
 						voxelZ = model.SizeZ - 1 - pixelY;
-					if (pixelX + 2 >= pixelWidth + 1
+					if (pixelX >= pixelWidth - 1
 						&& model.At(model.SizeX - 1, 0, voxelZ) is byte rightEdge
 						&& rightEdge != 0)
 					{
@@ -406,7 +406,7 @@ namespace Voxel2Pixel.Draw
 						continue;
 					}
 					for (int voxelX = startX, voxelY = startY;
-						 voxelX <= model.SizeX && voxelY <= model.SizeY;
+						 voxelX <= model.SizeX && voxelY <= model.SizeY && !(leftDone && rightDone);
 						 voxelX++, voxelY++)
 					{
 						if (!leftDone
@@ -485,7 +485,7 @@ namespace Voxel2Pixel.Draw
 						continue;
 					}
 					for (int voxelY = startY, voxelZ = startZ;
-						voxelY < model.SizeY && voxelZ >= 0;
+						voxelY < model.SizeY && voxelZ >= 0 && !(higher && lower);
 						voxelY++, voxelZ--)
 					{
 						if (voxelZ < model.SizeZ - 1
