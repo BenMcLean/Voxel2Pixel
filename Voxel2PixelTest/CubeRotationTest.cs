@@ -127,5 +127,27 @@ namespace Voxel2PixelTest
 				Assert.Equal(cubeRotation, (CubeRotation)cubeRotation.ClockZ().ClockZ().ClockZ().ClockZ());
 			}
 		}
+		[Fact]
+		public void FlipBitsTest()
+		{
+			Assert.Equal(
+				expected: 0,
+				actual: CubeRotation.FlipBits(-1));
+			Assert.Equal(
+				expected: 0,
+				actual: CubeRotation.FlipBits(0));
+			Assert.Equal(
+				expected: 1,
+				actual: CubeRotation.FlipBits(-2));
+			Assert.Equal(
+				expected: 1,
+				actual: CubeRotation.FlipBits(1));
+			Assert.Equal(
+				expected: 2,
+				actual: CubeRotation.FlipBits(-3));
+			Assert.Equal(
+				expected: 2,
+				actual: CubeRotation.FlipBits(2));
+		}
 	}
 }
