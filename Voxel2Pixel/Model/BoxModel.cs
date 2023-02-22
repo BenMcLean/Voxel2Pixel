@@ -1,5 +1,4 @@
-﻿
-namespace Voxel2Pixel.Model
+﻿namespace Voxel2Pixel.Model
 {
 	public class BoxModel : ContainerModel
 	{

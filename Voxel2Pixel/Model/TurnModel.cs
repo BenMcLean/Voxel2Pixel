@@ -19,14 +19,14 @@ namespace Voxel2Pixel.Model
 		{
 			switch (index)
 			{
-				case 0:
-				case -1:
+				case CubeRotation.xPlus:
+				case CubeRotation.xMinus:
 					return Model.SizeX;
-				case 1:
-				case -2:
+				case CubeRotation.yPlus:
+				case CubeRotation.yMinus:
 					return Model.SizeY;
-				case 2:
-				case -3:
+				case CubeRotation.zPlus:
+				case CubeRotation.zMinus:
 					return Model.SizeZ;
 				default:
 					throw new ArgumentException("Invalid index: \"" + index + "\"");
@@ -34,7 +34,7 @@ namespace Voxel2Pixel.Model
 		}
 		public int Start(int axis) =>
 			CubeRotation.Step(axis) < 1 ?
-				RotatedSize(axis) - 1// when rot is negative, we need to go from the end of the axis, not the start
+				ModelSize(axis) - 1
 				: 0;
 		public int StartX => Start(0);
 		public int StartY => Start(1);
@@ -45,34 +45,18 @@ namespace Voxel2Pixel.Model
 		public int SizeZ => RotatedSize(2);
 		public bool IsInside(int x, int y, int z) => !IsOutside(x, y, z);
 		public bool IsOutside(int x, int y, int z) => x < 0 || y < 0 || z < 0 || x >= SizeX || y >= SizeY || z >= SizeZ;
-		public int Rotate(int axis, params int[] coordinates) =>
-			CubeRotation.Rotate(axis, coordinates) +
-			(CubeRotation.Step(axis) < 1 ?
-				ModelSize(axis) - 1
-				: 0);
+		public int Rotate(int axis, params int[] coordinates) => CubeRotation.Rotate(axis, coordinates) + Start(axis);
 		public void Rotate(out int x, out int y, out int z, params int[] coordinates)
 		{
 			x = Rotate(0, coordinates);
 			y = Rotate(1, coordinates);
 			z = Rotate(2, coordinates);
 		}
-		//{
-		//	int affected = CubeRotation.Affected(axis),
-		//		step = CubeRotation.Step(axis);
-		//	return step < 1 ?
-		//		ModelSize(affected) - 1 - coordinates[affected]
-		//		: coordinates[affected];
-		//}
-		public static int MessWith(int @int) => @int / 2 + (@int % 2);
-		public byte? At(out int x, out int y, out int z, params int[] coordinates)
+		public byte? At(int x, int y, int z)
 		{
-			//for (int i = 0; i < 3; i++)
-			//	coordinates[i] -= MessWith(ModelSize(i));
-			Rotate(out x, out y, out z, coordinates);
-			//int sizeX = SizeX, sizeY = SizeY, sizeZ = SizeZ;
-			return Model.At(x, y, z);
+			Rotate(out int x1, out int y1, out int z1, x, y, z);
+			return Model.At(x1, y1, z1);
 		}
-		public byte? At(int x, int y, int z) => At(out _, out _, out _, x, y, z);
 		#endregion IModel
 		#region ITurnable
 		public ITurnable CounterX()

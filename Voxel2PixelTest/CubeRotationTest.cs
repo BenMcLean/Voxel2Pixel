@@ -47,14 +47,14 @@ namespace Voxel2PixelTest
 		[Fact]
 		public void MatrixTest()
 		{
-			Test24(-1, -2, -3);
-			Test24(1, -2, -3);
-			Test24(-1, 2, -3);
-			Test24(1, 2, -3);
-			Test24(-1, -2, 3);
-			Test24(1, -2, 3);
-			Test24(-1, 2, 3);
-			Test24(1, 2, 3);
+			Test24(-11, -22, -33);
+			Test24(11, -22, -33);
+			Test24(-11, 22, -33);
+			Test24(11, 22, -33);
+			Test24(-11, -22, 33);
+			Test24(11, -22, 33);
+			Test24(-11, 22, 33);
+			Test24(11, 22, 33);
 		}
 		private void TestRotation(int x, int y, int z, string name, CubeRotation cubeRotation, params Matrix4x4[] rotations)
 		{

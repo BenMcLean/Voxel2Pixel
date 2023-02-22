@@ -13,7 +13,7 @@ namespace Voxel2Pixel.Model
 	public sealed class CubeRotation : ITurnable
 	{
 		#region Instances
-		private const int
+		public const int
 			xPlus = 0,
 			yPlus = 1,
 			zPlus = 2,

@@ -14,7 +14,7 @@ namespace Voxel2PixelTest
 		[Fact]
 		public void ArrayRendererTest()
 		{
-			//ArrayModel sourceModel = new ArrayModel(ArrayModelTest.RainbowBox(6, 7, 8));
+			//ArrayModel sourceModel = new ArrayModel(ArrayModelTest.RainbowBox(5, 6, 7));
 			//IVoxelColor voxelColor = new NaiveDimmer(ArrayModelTest.RainbowPalette);
 			VoxModel sourceModel = (VoxModel)new VoxModel(@"..\..\..\Sora.vox").DrawBox(1);
 			IVoxelColor voxelColor = new NaiveDimmer(sourceModel.Palette);
@@ -33,6 +33,7 @@ namespace Voxel2PixelTest
 			{
 				Model = turnModel,
 				Voxel = 4,
+				Overwrite = false,
 			};
 			int width = Math.Max(VoxelDraw.IsoWidth(model), VoxelDraw.IsoHeight(model)),
 				height = width;
