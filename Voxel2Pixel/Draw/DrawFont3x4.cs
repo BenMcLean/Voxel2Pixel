@@ -126,7 +126,12 @@ namespace Voxel2Pixel.Draw
 		{
 			if (width < 1)
 				width = (int)Math.Sqrt(texture.Length >> 2);
-			if (x < 0 || y < 0 || x + 3 > width || y > (texture.Length / width >> 2))
+			if (@char < 32
+				|| @char > 127
+				|| x < 0
+				|| y < 0
+				|| x + 3 > width
+				|| y > (texture.Length / width >> 2))
 				return texture;
 			ushort glyph = Glyphs3x4[@char - 32];
 			int xSide = width << 2,
