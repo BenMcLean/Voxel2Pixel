@@ -141,7 +141,8 @@ namespace Voxel2Pixel.Draw
 		{
 			if (width < 1)
 				width = (int)Math.Sqrt(texture.Length >> 2);
-			if (@char < 32
+			if (rgba.Length < 4
+				|| @char < 32
 				|| @char > 127
 				|| x < 0
 				|| y < 0
