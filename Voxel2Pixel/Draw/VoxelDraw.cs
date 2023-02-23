@@ -470,10 +470,6 @@ namespace Voxel2Pixel.Draw
 			for (int pixelX = 0; pixelX < model.SizeX; pixelX++)
 				for (int pixelY = 0; pixelY <= pixelHeight; pixelY += 2)
 				{
-					int startY = Math.Max(model.SizeY - 1 - pixelY, 0),
-						startZ = model.SizeZ - 1 - Math.Max(pixelY + 1 - model.SizeY, 0);
-					bool higher = false,
-						lower = false;
 					if (pixelY + 2 > pixelHeight
 						&& model.At(pixelX, 0, 0) is byte bottomEdge
 						&& bottomEdge != 0)
@@ -484,11 +480,16 @@ namespace Voxel2Pixel.Draw
 							voxel: bottomEdge);
 						continue;
 					}
+					int startY = Math.Max(model.SizeY - 1 - pixelY, 0),
+						startZ = model.SizeZ - 1 - Math.Max(pixelY + 1 - model.SizeY, 0);
+					bool higher = false,
+						lower = false;
 					for (int voxelY = startY, voxelZ = startZ;
 						voxelY < model.SizeY && voxelZ >= 0 && !(higher && lower);
 						voxelY++, voxelZ--)
 					{
-						if (voxelZ < model.SizeZ - 1
+						if (!higher
+							&& voxelZ < model.SizeZ - 1
 							&& model.At(pixelX, voxelY, voxelZ + 1) is byte voxelAbove
 							&& voxelAbove != 0)
 						{
@@ -498,7 +499,8 @@ namespace Voxel2Pixel.Draw
 								voxel: voxelAbove);
 							higher = true;
 						}
-						if (voxelY > 0
+						if (!lower
+							&& voxelY > 0
 							&& model.At(pixelX, voxelY - 1, voxelZ) is byte voxelFront
 							&& voxelFront != 0)
 						{
