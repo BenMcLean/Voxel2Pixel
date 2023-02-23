@@ -126,9 +126,13 @@ namespace Voxel2Pixel.Draw
 		{
 			if (width < 1)
 				width = (int)Math.Sqrt(texture.Length >> 2);
+			if (x < 0 || y < 0 || x + 3 > width || y > (texture.Length / width >> 2))
+				return texture;
 			ushort glyph = Glyphs3x4[@char - 32];
 			int xSide = width << 2,
 				start = y * xSide + (x << 2);
+			if (start + 11 > texture.Length)
+				return texture;
 			if ((glyph & 0b1000000000000000) != 0)
 				Array.Copy(
 					sourceArray: rgba,
@@ -150,14 +154,16 @@ namespace Voxel2Pixel.Draw
 					destinationArray: texture,
 					destinationIndex: start + 8,
 					length: 4);
-			if ((glyph & 0b0001000000000000) != 0)
-				Array.Copy(
-					sourceArray: rgba,
-					sourceIndex: 0,
-					destinationArray: texture,
-					destinationIndex: start + 12,
-					length: 4);
+			//if ((glyph & 0b0001000000000000) != 0)
+			//	Array.Copy(
+			//		sourceArray: rgba,
+			//		sourceIndex: 0,
+			//		destinationArray: texture,
+			//		destinationIndex: start + 12,
+			//		length: 4);
 			start += xSide;
+			if (start + 11 > texture.Length)
+				return texture;
 			if ((glyph & 0b0000100000000000) != 0)
 				Array.Copy(
 					sourceArray: rgba,
@@ -179,14 +185,16 @@ namespace Voxel2Pixel.Draw
 					destinationArray: texture,
 					destinationIndex: start + 8,
 					length: 4);
-			if ((glyph & 0b0000000100000000) != 0)
-				Array.Copy(
-					sourceArray: rgba,
-					sourceIndex: 0,
-					destinationArray: texture,
-					destinationIndex: start + 12,
-					length: 4);
+			//if ((glyph & 0b0000000100000000) != 0)
+			//	Array.Copy(
+			//		sourceArray: rgba,
+			//		sourceIndex: 0,
+			//		destinationArray: texture,
+			//		destinationIndex: start + 12,
+			//		length: 4);
 			start += xSide;
+			if (start + 11 > texture.Length)
+				return texture;
 			if ((glyph & 0b0000000010000000) != 0)
 				Array.Copy(
 					sourceArray: rgba,
@@ -208,14 +216,16 @@ namespace Voxel2Pixel.Draw
 					destinationArray: texture,
 					destinationIndex: start + 8,
 					length: 4);
-			if ((glyph & 0b0000000000010000) != 0)
-				Array.Copy(
-					sourceArray: rgba,
-					sourceIndex: 0,
-					destinationArray: texture,
-					destinationIndex: start + 12,
-					length: 4);
+			//if ((glyph & 0b0000000000010000) != 0)
+			//	Array.Copy(
+			//		sourceArray: rgba,
+			//		sourceIndex: 0,
+			//		destinationArray: texture,
+			//		destinationIndex: start + 12,
+			//		length: 4);
 			start += xSide;
+			if (start + 11 > texture.Length)
+				return texture;
 			if ((glyph & 0b0000000000001000) != 0)
 				Array.Copy(
 					sourceArray: rgba,
@@ -237,13 +247,13 @@ namespace Voxel2Pixel.Draw
 					destinationArray: texture,
 					destinationIndex: start + 8,
 					length: 4);
-			if ((glyph & 0b0000000000000001) != 0)
-				Array.Copy(
-					sourceArray: rgba,
-					sourceIndex: 0,
-					destinationArray: texture,
-					destinationIndex: start + 12,
-					length: 4);
+			//if ((glyph & 0b0000000000000001) != 0)
+			//	Array.Copy(
+			//		sourceArray: rgba,
+			//		sourceIndex: 0,
+			//		destinationArray: texture,
+			//		destinationIndex: start + 12,
+			//		length: 4);
 			return texture;
 		}
 		public static byte[] Draw3x4(this byte[] texture, string @string, int width = 0, int x = 0, int y = 0, uint color = 0xFFFFFFFF) => Draw3x4(texture, @string, width, x, y, (byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color);

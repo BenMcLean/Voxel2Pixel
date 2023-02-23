@@ -16,6 +16,12 @@ namespace Voxel2PixelTest
 					width: width,
 					x: 0,
 					y: 0);
+			//for (char c = (char)0x20; c <= (char)0x7F; c++)
+			//	texture.Draw3x4(
+			//		@char: c,
+			//		width: width,
+			//		x: 0,
+			//		y: 0);
 			ImageMaker.Png(
 				scaleX: 16,
 				scaleY: 16,
