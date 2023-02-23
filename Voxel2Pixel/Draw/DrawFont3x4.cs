@@ -121,6 +121,21 @@ namespace Voxel2Pixel.Draw
 			0x6C00, // 0x7E ~ 011 110 000
 			0xA4A4  // 0x7F   101 010 101 010 // Alternative: Could even have a "full" 4x4 checkerboard
 		});
+		public static byte[] Draw3x4(this byte[] texture, string @string, int width = 0, int x = 0, int y = 0, uint color = 0xFFFFFFFF) => Draw3x4(texture, @string, width, x, y, (byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color);
+		public static byte[] Draw3x4(this byte[] texture, string @string, int width = 0, int x = 0, int y = 0, params byte[] rgba)
+		{
+			foreach (char @char in @string)
+			{
+				texture.Draw3x4(
+					@char: @char,
+					width: width,
+					x: x,
+					y: y,
+					rgba: rgba);
+				x += 4;
+			}
+			return texture;
+		}
 		public static byte[] Draw3x4(this byte[] texture, char @char, int width = 0, int x = 0, int y = 0, uint color = 0xFFFFFFFF) => Draw3x4(texture, @char, width, x, y, (byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color);
 		public static byte[] Draw3x4(this byte[] texture, char @char, int width = 0, int x = 0, int y = 0, params byte[] rgba)
 		{
@@ -259,21 +274,6 @@ namespace Voxel2Pixel.Draw
 			//		destinationArray: texture,
 			//		destinationIndex: start + 12,
 			//		length: 4);
-			return texture;
-		}
-		public static byte[] Draw3x4(this byte[] texture, string @string, int width = 0, int x = 0, int y = 0, uint color = 0xFFFFFFFF) => Draw3x4(texture, @string, width, x, y, (byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color);
-		public static byte[] Draw3x4(this byte[] texture, string @string, int width = 0, int x = 0, int y = 0, params byte[] rgba)
-		{
-			foreach (char @char in @string)
-			{
-				texture.Draw3x4(
-					@char: @char,
-					width: width,
-					x: x,
-					y: y,
-					rgba: rgba);
-				x += 4;
-			}
 			return texture;
 		}
 	}
