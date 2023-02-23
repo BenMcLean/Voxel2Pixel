@@ -12,7 +12,7 @@ namespace Voxel2PixelTest
 			int width = 4, height = 4;
 			byte[] texture = new byte[width * 4 * height]
 				.Draw3x4(
-					@char: 'A',
+					@char: 'q',
 					width: width,
 					x: 0,
 					y: 0);

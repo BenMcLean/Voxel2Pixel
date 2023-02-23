@@ -215,6 +215,35 @@ namespace Voxel2Pixel.Draw
 					destinationArray: texture,
 					destinationIndex: start + 12,
 					length: 4);
+			start += xSide;
+			if ((glyph & 0b0000000000001000) != 0)
+				Array.Copy(
+					sourceArray: rgba,
+					sourceIndex: 0,
+					destinationArray: texture,
+					destinationIndex: start,
+					length: 4);
+			if ((glyph & 0b0000000000000100) != 0)
+				Array.Copy(
+					sourceArray: rgba,
+					sourceIndex: 0,
+					destinationArray: texture,
+					destinationIndex: start + 4,
+					length: 4);
+			if ((glyph & 0b0000000000000010) != 0)
+				Array.Copy(
+					sourceArray: rgba,
+					sourceIndex: 0,
+					destinationArray: texture,
+					destinationIndex: start + 8,
+					length: 4);
+			if ((glyph & 0b0000000000000001) != 0)
+				Array.Copy(
+					sourceArray: rgba,
+					sourceIndex: 0,
+					destinationArray: texture,
+					destinationIndex: start + 12,
+					length: 4);
 			return texture;
 		}
 	}
