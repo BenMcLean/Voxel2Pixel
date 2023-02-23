@@ -20,7 +20,7 @@ namespace Voxel2Pixel.Draw
 		public static readonly ReadOnlyCollection<ushort> Glyphs3x4 = Array.AsReadOnly(new ushort[]
 		{           // Hex    [1] [2] [3] [4] Scanlines
 			0x0000, // 0x20
-			0x4400, // 0x21 ! 010 010 000
+			0x4404, // 0x21 ! 010 010 000 010
 			0xAA00, // 0x22 " 101 101 000
 			0xAEE0, // 0x23 # 101 111 111
 			0x64C4, // 0x24 $ 011 010 110 010
@@ -244,6 +244,21 @@ namespace Voxel2Pixel.Draw
 					destinationArray: texture,
 					destinationIndex: start + 12,
 					length: 4);
+			return texture;
+		}
+		public static byte[] Draw3x4(this byte[] texture, string @string, int width = 0, int x = 0, int y = 0, uint color = 0xFFFFFFFF) => Draw3x4(texture, @string, width, x, y, (byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color);
+		public static byte[] Draw3x4(this byte[] texture, string @string, int width = 0, int x = 0, int y = 0, params byte[] rgba)
+		{
+			foreach (char @char in @string)
+			{
+				texture.Draw3x4(
+					@char: @char,
+					width: width,
+					x: x,
+					y: y,
+					rgba: rgba);
+				x += 4;
+			}
 			return texture;
 		}
 	}
