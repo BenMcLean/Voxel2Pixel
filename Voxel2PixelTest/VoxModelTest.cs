@@ -83,11 +83,6 @@ namespace Voxel2PixelTest
 				IVoxelColor = voxelColor,
 			};
 			VoxelDraw.Diagonal(model, arrayRenderer);
-			arrayRenderer.Image.Draw3x4(
-				@char: 'A',
-				width: arrayRenderer.Width,
-				x: 0,
-				y: 0);
 			ImageMaker.Png(
 				scaleX: 16,
 				scaleY: 16,
