@@ -36,7 +36,7 @@ namespace Voxel2PixelTest
 				Overwrite = false,
 			};
 			int width = Math.Max(VoxelDraw.IsoWidth(model), VoxelDraw.IsoHeight(model)),
-				height = width;
+				height = width + 4;
 			List<byte[]> frames = new List<byte[]>();
 			foreach (CubeRotation cubeRotation in CubeRotation.Values)
 			{
@@ -48,6 +48,11 @@ namespace Voxel2PixelTest
 					IVoxelColor = voxelColor,
 				};
 				VoxelDraw.Iso(model, arrayRenderer);
+				arrayRenderer.Image.Draw3x4(
+					@string: cubeRotation.Name + ": " + string.Join(", ", model.SizeX, model.SizeY, model.SizeZ),
+					width: width,
+					x: 0,
+					y: height - 4);
 				frames.Add(arrayRenderer.Image);
 			}
 			ImageMaker.AnimatedGifScaled(
@@ -55,7 +60,7 @@ namespace Voxel2PixelTest
 				scaleY: 16,
 				width: width,
 				frames: frames.ToArray(),
-				frameDelay: 100)
+				frameDelay: 150)
 			.SaveAsGif("TurnModelTest.gif");
 		}
 		[Fact]
