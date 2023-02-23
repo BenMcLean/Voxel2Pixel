@@ -61,5 +61,39 @@ namespace Voxel2PixelTest
 				bytes: cropped)
 				.SaveAsPng("CropYes.png");
 		}
+		[Fact]
+		public void VoxelDrawTest()
+		{
+			//VoxModel voxModel = (VoxModel)new VoxModel(@"..\..\..\Sora.vox").DrawBox(1);
+			//VoxModel voxModel = new VoxModel(@"..\..\..\Sora.vox");
+			//IVoxelColor voxelColor = new NaiveDimmer(voxModel.Palette);
+			//TurnModel model = new TurnModel
+			//{
+			//	Model = voxModel,
+			//	CubeRotation = CubeRotation.SOUTH0,
+			//};
+			ArrayModel model = new ArrayModel(ArrayModelTest.RainbowBox(7, 4, 7));
+			IVoxelColor voxelColor = new NaiveDimmer(ArrayModelTest.RainbowPalette);
+			int width = VoxelDraw.DiagonalWidth(model) + 2,
+				height = VoxelDraw.DiagonalHeight(model) + 2;
+			ArrayRenderer arrayRenderer = new ArrayRenderer
+			{
+				Image = new byte[width * 4 * height],
+				Width = width,
+				IVoxelColor = voxelColor,
+			};
+			VoxelDraw.Diagonal(model, arrayRenderer);
+			arrayRenderer.Image.Draw3x4(
+				@char: 'A',
+				width: arrayRenderer.Width,
+				x: 0,
+				y: 0);
+			ImageMaker.Png(
+				scaleX: 16,
+				scaleY: 16,
+				width: width,
+				bytes: arrayRenderer.Image)
+				.SaveAsPng("VoxelDrawTest.png");
+		}
 	}
 }
