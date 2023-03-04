@@ -966,6 +966,10 @@ namespace Voxel2Pixel.Draw
 			n |= n >> 16;
 			return ++n; // increment `n` and return
 		}
+		public static int Height(int length, int width = 0) =>
+			width > 0 ?
+				length / width >> 2
+				: (int)Math.Sqrt(length >> 2);
 		public static byte R(this uint color) => (byte)(color >> 24);
 		public static byte G(this uint color) => (byte)(color >> 16);
 		public static byte B(this uint color) => (byte)(color >> 8);
