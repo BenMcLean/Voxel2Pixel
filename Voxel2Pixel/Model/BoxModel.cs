@@ -19,11 +19,13 @@
 		public override byte? At(int x, int y, int z) =>
 			Overwrite ?
 				IsBorder(x, y, z) ?
-					Voxel
+					IsInside(x, y, z) ?
+						Voxel
+						: (byte)0
 					: Model.At(x, y, z)
 				: Model.At(x, y, z) is byte voxel && voxel != 0 ?
 					voxel
-					: IsBorder(x, y, z) ?
+					: IsInside(x, y, z) && IsBorder(x, y, z) ?
 						Voxel
 						: (byte)0;
 		#endregion IModel
