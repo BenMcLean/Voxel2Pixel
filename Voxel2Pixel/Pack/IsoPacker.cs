@@ -50,6 +50,7 @@ namespace Voxel2Pixel.Pack
 				ArrayRenderer arrayRenderer = new ArrayRenderer
 				{
 					Image = new byte[width * 4 * VoxelDraw.AboveHeight(turnModel)],
+					Width = width,
 					IVoxelColor = voxelColor,
 				};
 				VoxelDraw.Above(
@@ -70,6 +71,7 @@ namespace Voxel2Pixel.Pack
 				arrayRenderer = new ArrayRenderer
 				{
 					Image = new byte[width * 4 * VoxelDraw.IsoHeight(turnModel)],
+					Width = width,
 					IVoxelColor = voxelColor,
 				};
 				VoxelDraw.Iso(
@@ -86,7 +88,7 @@ namespace Voxel2Pixel.Pack
 				//.Outline(
 				//	width: widths[i + 1],
 				//	color: 0x000000FF);
-				turnModel.ClockZ();
+				turnModel.CounterZ();
 			}
 		}
 	}

@@ -874,8 +874,8 @@ namespace Voxel2Pixel.Draw
 		/// <returns>new raw rgba8888 pixel data of width newWidth</returns>
 		public static byte[] Resize(this byte[] texture, int newWidth, int newHeight, int width = 0)
 		{
-			if (newWidth < 1) throw new InvalidDataException("newWidth cannot be smaller than 1. Was: \"" + newWidth + "\"");
-			if (newHeight < 1) throw new InvalidDataException("newHeight cannot be smaller than 1. Was: \"" + newHeight + "\"");
+			if (newWidth < 1) throw new ArgumentOutOfRangeException("newWidth cannot be smaller than 1. Was: \"" + newWidth + "\"");
+			if (newHeight < 1) throw new ArgumentOutOfRangeException("newHeight cannot be smaller than 1. Was: \"" + newHeight + "\"");
 			newWidth <<= 2; // newWidth *= 4;
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
 			byte[] resized = new byte[newWidth * newHeight];

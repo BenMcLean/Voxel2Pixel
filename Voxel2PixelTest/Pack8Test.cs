@@ -1,5 +1,7 @@
 ﻿using SixLabors.ImageSharp;
+using System.Linq;
 using Voxel2Pixel.Color;
+using Voxel2Pixel.Draw;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Pack;
 using Xunit;
@@ -21,6 +23,28 @@ namespace Voxel2PixelTest
 				width: width,
 				bytes: texture)
 			.SaveAsPng("Pack8Test.png");
+		}
+		[Fact]
+		public void IsoSpritesTest()
+		{
+			VoxModel model = new VoxModel(@"..\..\..\Sora.vox");
+			IsoPacker.IsoSprites(
+				model: model,
+				voxelColor: new NaiveDimmer(model.Palette),
+				sprites: out byte[][] sprites,
+				widths: out int[] widths);
+			int width = widths.Max(),
+				height = Enumerable.Range(0, sprites.Length).Select(i => PixelDraw.Height(sprites[i].Length, widths[i])).Max();
+			ImageMaker.AnimatedGif(
+				width: width,
+				frames: Enumerable.Range(0, sprites.Length)
+					.Select(i => sprites[i].Resize(
+						newWidth: width,
+						newHeight: height,
+						width: widths[i]))
+					.ToArray(),
+				frameDelay: 100)
+			.SaveAsGif("IsoSpritesTest.gif");
 		}
 	}
 }
