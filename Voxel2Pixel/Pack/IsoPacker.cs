@@ -46,7 +46,7 @@ namespace Voxel2Pixel.Pack
 			};
 			for (int i = 0; i < sprites.Length; i += 2)
 			{
-				int width = VoxelDraw.AboveWidth(turnModel) * 4;
+				int width = VoxelDraw.AboveWidth(turnModel) * 5;
 				ArrayRenderer arrayRenderer = new ArrayRenderer
 				{
 					Image = new byte[width * 4 * VoxelDraw.AboveHeight(turnModel) * 4],
@@ -57,7 +57,7 @@ namespace Voxel2Pixel.Pack
 				{
 					RectangleRenderer = arrayRenderer,
 					IVoxelColor = voxelColor,
-					ScaleX = 4,
+					ScaleX = 5,
 					ScaleY = 4,
 				};
 				VoxelDraw.Above(
