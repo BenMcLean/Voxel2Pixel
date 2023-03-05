@@ -51,12 +51,12 @@ namespace Voxel2Pixel.Pack
 				{
 					Image = new byte[width * 4 * VoxelDraw.AboveHeight(turnModel) * 4],
 					Width = width,
-					IVoxelColor = voxelColor,
+					VoxelColor = voxelColor,
 				};
 				OffsetRenderer renderer = new OffsetRenderer
 				{
 					RectangleRenderer = arrayRenderer,
-					IVoxelColor = voxelColor,
+					VoxelColor = voxelColor,
 					ScaleX = 5,
 					ScaleY = 4,
 				};
@@ -78,12 +78,12 @@ namespace Voxel2Pixel.Pack
 				{
 					Image = new byte[width * 4 * VoxelDraw.IsoHeight(turnModel)],
 					Width = width,
-					IVoxelColor = voxelColor,
+					VoxelColor = voxelColor,
 				};
 				renderer = new OffsetRenderer
 				{
 					RectangleRenderer = arrayRenderer,
-					IVoxelColor = voxelColor,
+					VoxelColor = voxelColor,
 					ScaleX = 2,
 					ScaleY = 1,
 				};

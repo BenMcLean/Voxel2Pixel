@@ -25,7 +25,7 @@ namespace Voxel2PixelTest
 			{
 				Image = new byte[width * 4 * height],
 				Width = width,
-				IVoxelColor = new NaiveDimmer(RainbowPalette),
+				VoxelColor = new NaiveDimmer(RainbowPalette),
 			};
 			VoxelDraw.Iso(model, arrayRenderer);
 			ImageMaker.Png(

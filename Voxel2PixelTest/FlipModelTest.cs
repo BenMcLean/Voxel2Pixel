@@ -28,7 +28,7 @@ namespace Voxel2PixelTest
 				{
 					Image = new byte[width * 4 * height],
 					Width = width,
-					IVoxelColor = voxelColor,
+					VoxelColor = voxelColor,
 				};
 				VoxelDraw.Iso(model, arrayRenderer);
 				frames.Add(arrayRenderer.Image);
