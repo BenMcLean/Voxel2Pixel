@@ -35,7 +35,9 @@ namespace Voxel2PixelTest
 				widths: out int[] widths);
 			int width = widths.Max(),
 				height = Enumerable.Range(0, sprites.Length).Select(i => PixelDraw.Height(sprites[i].Length, widths[i])).Max();
-			ImageMaker.AnimatedGif(
+			ImageMaker.AnimatedGifScaled(
+				scaleX: 4,
+				scaleY: 4,
 				width: width,
 				frames: Enumerable.Range(0, sprites.Length)
 					.Select(i => sprites[i].Resize(

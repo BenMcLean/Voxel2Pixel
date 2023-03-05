@@ -46,10 +46,10 @@ namespace Voxel2Pixel.Pack
 			};
 			for (int i = 0; i < sprites.Length; i += 2)
 			{
-				int width = VoxelDraw.AboveWidth(turnModel) * 3;
+				int width = VoxelDraw.AboveWidth(turnModel) * 4;
 				ArrayRenderer arrayRenderer = new ArrayRenderer
 				{
-					Image = new byte[width * 4 * VoxelDraw.AboveHeight(turnModel) * 3],
+					Image = new byte[width * 4 * VoxelDraw.AboveHeight(turnModel) * 4],
 					Width = width,
 					IVoxelColor = voxelColor,
 				};
@@ -57,8 +57,8 @@ namespace Voxel2Pixel.Pack
 				{
 					RectangleRenderer = arrayRenderer,
 					IVoxelColor = voxelColor,
-					ScaleX = 3,
-					ScaleY = 3,
+					ScaleX = 4,
+					ScaleY = 4,
 				};
 				VoxelDraw.Above(
 					model: turnModel,
@@ -73,7 +73,7 @@ namespace Voxel2Pixel.Pack
 					.Outline(
 						width: widths[i],
 						color: 0x000000FF);
-				width = VoxelDraw.IsoWidth(turnModel);
+				width = VoxelDraw.IsoWidth(turnModel) * 2;
 				arrayRenderer = new ArrayRenderer
 				{
 					Image = new byte[width * 4 * VoxelDraw.IsoHeight(turnModel)],
@@ -84,8 +84,8 @@ namespace Voxel2Pixel.Pack
 				{
 					RectangleRenderer = arrayRenderer,
 					IVoxelColor = voxelColor,
-					//ScaleX = 1,
-					//ScaleY = 1,
+					ScaleX = 2,
+					ScaleY = 1,
 				};
 				VoxelDraw.Iso(
 					model: turnModel,
