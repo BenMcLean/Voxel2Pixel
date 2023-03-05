@@ -411,7 +411,7 @@ namespace Voxel2Pixel.Model
 			}
 		}
 		public ITurnable Reset() => SOUTH0;
-		#endregion ITurntable
+		#endregion ITurnable
 		#region Rotate
 		/// <param name="index">index 0 for x, 1 for y, 2 for z</param>
 		/// <returns>if selected rotation is negative, return -1, otherwise return 1</returns>
