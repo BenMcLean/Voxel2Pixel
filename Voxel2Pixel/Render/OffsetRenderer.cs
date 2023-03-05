@@ -10,8 +10,8 @@
 		#region IRectangleRenderer
 		public override void Rect(int x, int y, uint color, int sizeX = 1, int sizeY = 1) =>
 			RectangleRenderer.Rect(
-				x: x + OffsetX,
-				y: y + OffsetY,
+				x: x * ScaleX + OffsetX,
+				y: y * ScaleY + OffsetY,
 				color: color,
 				sizeX: sizeX * ScaleX,
 				sizeY: sizeY * ScaleY);

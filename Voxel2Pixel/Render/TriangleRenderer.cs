@@ -7,7 +7,7 @@ namespace Voxel2Pixel.Render
 	/// </summary>
 	public abstract class TriangleRenderer : IRectangleRenderer, ITriangleRenderer
 	{
-		public IVoxelColor IVoxelColor { get; set; }
+		public virtual IVoxelColor IVoxelColor { get; set; }
 		#region ITriangleRenderer
 		public void Tri(int x, int y, bool right, uint color)
 		{
