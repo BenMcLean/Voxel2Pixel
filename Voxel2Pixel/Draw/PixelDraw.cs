@@ -70,8 +70,10 @@ namespace Voxel2Pixel.Draw
 		/// <param name="y">upper left corner of rectangle</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>same texture with rectangle drawn</returns>
-		public static byte[] DrawRectangle(this byte[] texture, byte red, byte green, byte blue, byte alpha, int x, int y, int rectWidth, int rectHeight, int width = 0)
+		public static byte[] DrawRectangle(this byte[] texture, byte red, byte green, byte blue, byte alpha, int x, int y, int rectWidth = 1, int rectHeight = 1, int width = 0)
 		{
+			if (rectWidth == 1 && rectHeight == 1)
+				return texture.DrawPixel(red, green, blue, alpha, x, y, width);
 			if (rectHeight < 1) rectHeight = rectWidth;
 			if (x < 0)
 			{
@@ -137,7 +139,7 @@ namespace Voxel2Pixel.Draw
 			if (xSide == insertXside && x == 0 && insertX == 0)
 				Array.Copy(insert, insertY * insertXside, texture, y * xSide, Math.Min(insert.Length - insertY * insertXside + insertX, texture.Length - y * xSide));
 			else
-				for (int y1 = y * xSide + x, y2 = insertY * insertXside + insertX; y1 < texture.Length && y2 < insert.Length; y1 += xSide, y2 += insertXside)
+				for (int y1 = y * xSide + x, y2 = insertY * insertXside + insertX; y1 + actualInsertXside < texture.Length && y2 < insert.Length; y1 += xSide, y2 += insertXside)
 					Array.Copy(insert, y2, texture, y1, actualInsertXside);
 			return texture;
 		}
@@ -724,7 +726,8 @@ namespace Voxel2Pixel.Draw
 						croppedWidth: croppedWidth - 2,
 						croppedHeight: croppedHeight - 2,
 						width: width),
-					insertWidth: croppedWidth - 2);
+					insertWidth: croppedWidth - 2,
+					width: croppedWidth);
 		}
 		public static byte[] TransparentOutline(byte[] texture, int width = 0, byte threshold = 128) => UInt2ByteArray(TransparentOutline(Byte2UIntArray(texture), width, threshold));
 		public static uint[] TransparentOutline(uint[] texture, int width = 0, byte threshold = 128)

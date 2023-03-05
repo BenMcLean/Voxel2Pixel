@@ -56,17 +56,16 @@ namespace Voxel2Pixel.Pack
 				VoxelDraw.Above(
 					model: turnModel,
 					renderer: arrayRenderer);
-				sprites[i] = arrayRenderer.Image;
-				widths[i] = width;
-				//.TransparentCropPlusOne(
-				//	cutTop: out _,
-				//	cutLeft: out _,
-				//	croppedWidth: out widths[i],
-				//	croppedHeight: out _,
-				//	width: width)
-				//.Outline(
-				//	width: widths[i],
-				//	color: 0x000000FF);
+				sprites[i] = arrayRenderer.Image
+					.TransparentCropPlusOne(
+						cutTop: out _,
+						cutLeft: out _,
+						croppedWidth: out widths[i],
+						croppedHeight: out _,
+						width: width)
+					.Outline(
+						width: widths[i],
+						color: 0x000000FF);
 				width = VoxelDraw.IsoWidth(turnModel);
 				arrayRenderer = new ArrayRenderer
 				{
@@ -77,17 +76,16 @@ namespace Voxel2Pixel.Pack
 				VoxelDraw.Iso(
 					model: turnModel,
 					renderer: arrayRenderer);
-				sprites[i + 1] = arrayRenderer.Image;
-				widths[i + 1] = width;
-				//.TransparentCropPlusOne(
-				//	cutTop: out _,
-				//	cutLeft: out _,
-				//	croppedWidth: out widths[i + 1],
-				//	croppedHeight: out _,
-				//	width: width)
-				//.Outline(
-				//	width: widths[i + 1],
-				//	color: 0x000000FF);
+				sprites[i + 1] = arrayRenderer.Image
+					.TransparentCropPlusOne(
+						cutTop: out _,
+						cutLeft: out _,
+						croppedWidth: out widths[i + 1],
+						croppedHeight: out _,
+						width: width)
+					.Outline(
+						width: widths[i + 1],
+						color: 0x000000FF);
 				turnModel.CounterZ();
 			}
 		}
