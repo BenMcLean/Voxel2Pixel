@@ -11,7 +11,7 @@ namespace Voxel2Pixel.Pack
 	[DataContract]
 	[Serializable]
 	[XmlRoot("TextureAtlas")]
-	public class TextureAtlas //: IXmlSerializable
+	public class TextureAtlas
 	{
 		[DataMember]
 		[XmlAttribute("imagePath")]
@@ -21,7 +21,6 @@ namespace Voxel2Pixel.Pack
 		[XmlRoot("SubTexture")]
 		public class SubTexture
 		{
-			public SubTexture() { }
 			[DataMember]
 			[XmlAttribute("name")]
 			public string Name { get; set; }
@@ -38,5 +37,8 @@ namespace Voxel2Pixel.Pack
 			[XmlAttribute("height")]
 			public int Height { get; set; }
 		}
+		[DataMember]
+		[XmlElement("SubTexture")]
+		public SubTexture[] SubTextures { get; set; }
 	}
 }
