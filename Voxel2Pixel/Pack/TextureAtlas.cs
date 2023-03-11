@@ -36,6 +36,26 @@ namespace Voxel2Pixel.Pack
 			[DataMember]
 			[XmlAttribute("height")]
 			public int Height { get; set; }
+			#region Expansion beyond Kenney's format
+			[DataContract]
+			[Serializable]
+			[XmlRoot("Point")]
+			public class Point
+			{
+				[DataMember]
+				[XmlAttribute("name")]
+				public string Name { get; set; }
+				[DataMember]
+				[XmlAttribute("x")]
+				public int X { get; set; }
+				[DataMember]
+				[XmlAttribute("y")]
+				public int Y { get; set; }
+			}
+			[DataMember]
+			[XmlElement("Point")]
+			public Point[] Points { get; set; }
+			#endregion Expansion beyond Kenney's format
 		}
 		[DataMember]
 		[XmlElement("SubTexture")]
