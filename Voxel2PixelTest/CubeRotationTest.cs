@@ -37,7 +37,7 @@ namespace Voxel2PixelTest
 				x, 0, 0, 0,
 				y, 0, 0, 0,
 				z, 0, 0, 0,
-				0, 0, 0, 0);
+				1, 0, 0, 0);
 			foreach (Matrix4x4 rotation in rotations)
 				coords = rotation * coords;
 			outX = (int)coords.M11;

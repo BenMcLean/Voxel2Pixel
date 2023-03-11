@@ -28,8 +28,8 @@ namespace Voxel2PixelTest
 			};
 			VoxelDraw.Iso(model, tinyTriangleRenderer);
 			ImageMaker.Png(
-				scaleX: 32,
-				scaleY: 32,
+				//scaleX: 32,
+				//scaleY: 32,
 				width: width,
 				bytes: arrayRenderer.Image)
 				.SaveAsPng("TinyTriangleRendererTest.png");
