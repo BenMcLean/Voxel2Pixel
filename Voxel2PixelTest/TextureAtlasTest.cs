@@ -1,8 +1,6 @@
 ﻿using System.IO;
-using System.Linq;
 using System.Text;
 using System.Xml;
-using System.Xml.Linq;
 using System.Xml.Serialization;
 using Voxel2Pixel.Pack;
 using Xunit;
@@ -51,13 +49,12 @@ namespace Voxel2PixelTest
 			XmlWriter xmlWriter = XmlWriter.Create(stringBuilder, settings);
 			XmlSerializer xmlSerializer = new XmlSerializer(typeof(TextureAtlas));
 			xmlSerializer.Serialize(xmlWriter, textureAtlas, emptyNamespaces);
-			string xml = stringBuilder.ToString();
 			Assert.Equal(
 				expected: @"<TextureAtlas imagePath=""thin_double.png"">
 	<SubTexture name=""pattern_0000.png"" x=""1024"" y=""1024"" width=""512"" height=""512"" />
 	<SubTexture name=""pattern_0001.png"" x=""2048"" y=""2048"" width=""512"" height=""512"" />
 </TextureAtlas>",
-				actual: xml);
+				actual: stringBuilder.ToString());
 		}
 		[Fact]
 		public void SubTextureTest()
@@ -69,7 +66,7 @@ namespace Voxel2PixelTest
 				OmitXmlDeclaration = true,
 				IndentChars = "\t",
 			};
-			TextureAtlas.SubTexture subTexture = new TextureAtlas.SubTexture
+			SubTexture subTexture = new SubTexture
 			{
 				Name = "pattern_0000.png",
 				X = 1024,
@@ -84,7 +81,7 @@ namespace Voxel2PixelTest
 			string xml = stringBuilder.ToString();
 			Assert.Equal(
 				expected: "<SubTexture name=\"pattern_0000.png\" x=\"1024\" y=\"1024\" width=\"512\" height=\"512\" />",
-				actual: XDocument.Parse(xml).Root.ToString());
+				actual: xml);
 			SubTexture subTexture2 = (SubTexture)xmlSerializer.Deserialize(new StringReader(xml));
 			Assert.Equal(
 				expected: subTexture.Name,
