@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Voxel2PixelTest
 {
-	public class CuberotationTest
+	public class CubeRotationTest
 	{
 		//private readonly Xunit.Abstractions.ITestOutputHelper output;
 		//public CuberotationTest(Xunit.Abstractions.ITestOutputHelper output) => this.output = output;
@@ -25,7 +25,7 @@ namespace Voxel2PixelTest
 				0, 0, 1, 0,
 				0, 0, 0, 1),
 			counterX, counterY, counterZ;
-		static CuberotationTest()
+		static CubeRotationTest()
 		{
 			Matrix4x4.Invert(clockX, out counterX);
 			Matrix4x4.Invert(clockY, out counterY);

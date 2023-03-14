@@ -96,10 +96,10 @@ namespace Voxel2Pixel.Pack
 					voxelX: turnedX,
 					voxelY: turnedY,
 					voxelZ: turnedZ);
-				origins[i][0] -= cutLeft;
-				origins[i][1] -= cutTop;
 				origins[i][0] *= offsetRenderer.ScaleX;
 				origins[i][1] *= offsetRenderer.ScaleY;
+				origins[i][0] -= cutLeft - 2;
+				origins[i][1] -= cutTop;
 				width = VoxelDraw.IsoWidth(turnModel) << 1;
 				arrayRenderer = new Array2xRenderer
 				{

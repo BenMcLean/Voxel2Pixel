@@ -13,7 +13,7 @@ namespace Voxel2PixelTest
 		[Fact]
 		public void Test()
 		{
-			VoxModel model = new VoxModel(@"..\..\..\Sora.vox");
+			VoxModel model = (VoxModel)new VoxModel(@"..\..\..\Sora.vox").DrawBox(1);
 			byte[] texture = IsoPacker.Pack8(
 				model: model,
 				voxelColor: new NaiveDimmer(model.Palette),
@@ -46,7 +46,7 @@ namespace Voxel2PixelTest
 						newHeight: height,
 						width: widths[i]))
 					.ToArray(),
-				frameDelay: 100)
+				frameDelay: 200)
 			.SaveAsGif("IsoSpritesTest.gif");
 		}
 	}
