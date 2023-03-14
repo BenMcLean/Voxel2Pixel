@@ -53,7 +53,7 @@ namespace Voxel2Pixel.Pack
 					Width = width,
 					VoxelColor = voxelColor,
 				};
-				OffsetRenderer renderer = new OffsetRenderer
+				OffsetRenderer offsetRenderer = new OffsetRenderer
 				{
 					RectangleRenderer = arrayRenderer,
 					VoxelColor = voxelColor,
@@ -62,7 +62,7 @@ namespace Voxel2Pixel.Pack
 				};
 				VoxelDraw.Above(
 					model: turnModel,
-					renderer: renderer);
+					renderer: offsetRenderer);
 				sprites[i] = arrayRenderer.Image
 					.TransparentCropPlusOne(
 						cutTop: out _,
@@ -74,22 +74,15 @@ namespace Voxel2Pixel.Pack
 						width: widths[i],
 						color: 0x000000FF);
 				width = VoxelDraw.IsoWidth(turnModel) * 2;
-				arrayRenderer = new ArrayRenderer
+				arrayRenderer = new Array2xRenderer
 				{
 					Image = new byte[width * 4 * VoxelDraw.IsoHeight(turnModel)],
 					Width = width,
 					VoxelColor = voxelColor,
 				};
-				renderer = new OffsetRenderer
-				{
-					RectangleRenderer = arrayRenderer,
-					VoxelColor = voxelColor,
-					ScaleX = 2,
-					ScaleY = 1,
-				};
 				VoxelDraw.Iso(
 					model: turnModel,
-					renderer: renderer);
+					renderer: arrayRenderer);
 				sprites[i + 1] = arrayRenderer.Image
 					.TransparentCropPlusOne(
 						cutTop: out _,
