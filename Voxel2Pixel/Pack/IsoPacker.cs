@@ -15,7 +15,8 @@ namespace Voxel2Pixel.Pack
 				model: model,
 				voxelColor: voxelColor,
 				sprites: out byte[][] sprites,
-				widths: out int[] widths);
+				widths: out int[] widths,
+				origins: out int[][] origins);
 			packingRectangles = Enumerable.Range(0, sprites.Length)
 				.Select(i => new PackingRectangle(
 					x: 0,
@@ -36,16 +37,30 @@ namespace Voxel2Pixel.Pack
 					width: width);
 			return texture;
 		}
-		public static void IsoSprites(IModel model, IVoxelColor voxelColor, out byte[][] sprites, out int[] widths)
+		public static void IsoSprites(IModel model, IVoxelColor voxelColor, out byte[][] sprites, out int[] widths, out int[][] origins, int originX = -1, int originY = -1, int originZ = -1)
 		{
+			if (originX < 0)
+				originX = model.SizeX >> 1;
+			if (originY < 0)
+				originY = model.SizeY >> 1;
+			if (originZ < 0)
+				originZ = model.SizeZ >> 1;
 			sprites = new byte[8][];
 			widths = new int[sprites.Length];
+			origins = new int[sprites.Length][];
 			TurnModel turnModel = new TurnModel
 			{
 				Model = model,
 			};
 			for (int i = 0; i < sprites.Length; i += 2)
 			{
+				turnModel.Rotate(
+					x: out int turnedX,
+					y: out int turnedY,
+					z: out int turnedZ,
+					originX,
+					originY,
+					originZ);
 				int width = VoxelDraw.AboveWidth(turnModel) * 5;
 				ArrayRenderer arrayRenderer = new ArrayRenderer
 				{
@@ -65,15 +80,27 @@ namespace Voxel2Pixel.Pack
 					renderer: offsetRenderer);
 				sprites[i] = arrayRenderer.Image
 					.TransparentCropPlusOne(
-						cutTop: out _,
-						cutLeft: out _,
+						cutTop: out int cutTop,
+						cutLeft: out int cutLeft,
 						croppedWidth: out widths[i],
 						croppedHeight: out _,
 						width: width)
 					.Outline(
 						width: widths[i],
 						color: 0x000000FF);
-				width = VoxelDraw.IsoWidth(turnModel) * 2;
+				origins[i] = new int[2];
+				VoxelDraw.AboveLocate(
+					pixelX: out origins[i][0],
+					pixelY: out origins[i][1],
+					model: turnModel,
+					voxelX: turnedX,
+					voxelY: turnedY,
+					voxelZ: turnedZ);
+				origins[i][0] *= offsetRenderer.ScaleX;
+				origins[i][1] *= offsetRenderer.ScaleY;
+				origins[i][0] -= cutLeft;
+				origins[i][1] -= cutTop;
+				width = VoxelDraw.IsoWidth(turnModel) << 1;
 				arrayRenderer = new Array2xRenderer
 				{
 					Image = new byte[width * 4 * VoxelDraw.IsoHeight(turnModel)],
@@ -85,14 +112,25 @@ namespace Voxel2Pixel.Pack
 					renderer: arrayRenderer);
 				sprites[i + 1] = arrayRenderer.Image
 					.TransparentCropPlusOne(
-						cutTop: out _,
-						cutLeft: out _,
+						cutTop: out cutTop,
+						cutLeft: out cutLeft,
 						croppedWidth: out widths[i + 1],
 						croppedHeight: out _,
 						width: width)
 					.Outline(
 						width: widths[i + 1],
 						color: 0x000000FF);
+				origins[i + 1] = new int[2];
+				VoxelDraw.IsoLocate(
+					pixelX: out origins[i + 1][0],
+					pixelY: out origins[i + 1][1],
+					model: turnModel,
+					voxelX: turnedX,
+					voxelY: turnedY,
+					voxelZ: turnedZ);
+				origins[i + 1][0] <<= 1;
+				origins[i + 1][0] -= cutLeft;
+				origins[i + 1][1] -= cutTop;
 				turnModel.CounterZ();
 			}
 		}

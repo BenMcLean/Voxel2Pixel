@@ -32,7 +32,8 @@ namespace Voxel2PixelTest
 				model: model,
 				voxelColor: new NaiveDimmer(model.Palette),
 				sprites: out byte[][] sprites,
-				widths: out int[] widths);
+				widths: out int[] widths,
+				origins: out _);
 			int width = widths.Max(),
 				height = Enumerable.Range(0, sprites.Length).Select(i => PixelDraw.Height(sprites[i].Length, widths[i])).Max();
 			ImageMaker.AnimatedGifScaled(
