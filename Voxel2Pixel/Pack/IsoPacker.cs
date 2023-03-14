@@ -44,7 +44,7 @@ namespace Voxel2Pixel.Pack
 			if (originY < 0)
 				originY = model.SizeY >> 1;
 			if (originZ < 0)
-				originZ = model.SizeZ >> 1;
+				originZ = 0;
 			sprites = new byte[8][];
 			widths = new int[sprites.Length];
 			origins = new int[sprites.Length][];
@@ -96,10 +96,10 @@ namespace Voxel2Pixel.Pack
 					voxelX: turnedX,
 					voxelY: turnedY,
 					voxelZ: turnedZ);
-				origins[i][0] *= offsetRenderer.ScaleX;
-				origins[i][1] *= offsetRenderer.ScaleY;
 				origins[i][0] -= cutLeft;
 				origins[i][1] -= cutTop;
+				origins[i][0] *= offsetRenderer.ScaleX;
+				origins[i][1] *= offsetRenderer.ScaleY;
 				width = VoxelDraw.IsoWidth(turnModel) << 1;
 				arrayRenderer = new Array2xRenderer
 				{
@@ -133,6 +133,12 @@ namespace Voxel2Pixel.Pack
 				origins[i + 1][1] -= cutTop;
 				turnModel.CounterZ();
 			}
+			for (int i = 0; i < sprites.Length; i++)
+				sprites[i].DrawPixel(
+					color: 0x00FF00FF,
+					x: origins[i][0],
+					y: origins[i][1],
+					width: widths[i]);
 		}
 	}
 }
