@@ -66,6 +66,7 @@ namespace Voxel2PixelTest
 				sprites: out byte[][] sprites,
 				widths: out int[] widths,
 				origins: out int[][] origins);
+			//TODO: figure out width and height according to tallest sprite AFTER aligning to rightmost lowest origin point.
 			int width = widths.Max(),
 				height = Enumerable.Range(0, sprites.Length).Select(i => PixelDraw.Height(sprites[i].Length, widths[i])).Max() + 1,
 				originX = origins[1][0],
