@@ -130,7 +130,7 @@ namespace Voxel2Pixel.Pack
 					voxelZ: turnedZ);
 				origins[i + 1][0] <<= 1;
 				origins[i + 1][0] -= cutLeft;
-				origins[i + 1][1] -= cutTop;
+				origins[i + 1][1] -= cutTop - 5;
 				turnModel.CounterZ();
 			}
 			for (int i = 0; i < sprites.Length; i++)

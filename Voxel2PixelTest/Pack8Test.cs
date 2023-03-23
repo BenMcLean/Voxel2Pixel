@@ -52,10 +52,10 @@ namespace Voxel2PixelTest
 		[Fact]
 		public void PyramidTest()
 		{
-			ArrayModel model = new ArrayModel(Pyramid(17, 1));
+			ArrayModel model = new ArrayModel(Pyramid(17));
 			IsoPacker.IsoSprites(
 				model: model,
-				voxelColor: new NaiveDimmer(new uint[] { 0, 0x0000FFFF }),
+				voxelColor: new NaiveDimmer(ArrayModelTest.RainbowPalette),
 				sprites: out byte[][] sprites,
 				widths: out int[] widths,
 				origins: out _);
@@ -74,20 +74,23 @@ namespace Voxel2PixelTest
 				frameDelay: 200)
 			.SaveAsGif("PyramidTest.gif");
 		}
-		public static byte[][][] Pyramid(int width, byte voxel = 1)
+		public static byte[][][] Pyramid(int width, params byte[] colors)
 		{
+			if (colors is null || colors.Length < 1)
+				colors = Enumerable.Range(0, 256).Select(i => (byte)i).ToArray();
 			int halfWidth = width >> 1;
 			byte[][][] voxels = ArrayModel.MakeModel(width, width, halfWidth + 1);
-			for (int i = 0; i < halfWidth; i++)
+			voxels[0][0][0] = colors[1];
+			voxels[width - 1][0][0] = colors[2];
+			voxels[0][width - 1][0] = colors[3];
+			voxels[width - 1][width - 1][0] = colors[4];
+			for (int i = 0; i <= halfWidth; i++)
 			{
-				voxels[i][i][i] = voxel;
-				voxels[width - 1 - i][i][i] = voxel;
-				voxels[i][width - 1 - i][i] = voxel;
-				voxels[width - 1 - i][width - 1 - i][i] = voxel;
-				//voxels[i][i][i + 1] = voxel;
-				//voxels[width - 1 - i][i][i + 1] = voxel;
-				//voxels[i][width - 1 - i][i + 1] = voxel;
-				//voxels[width - 1 - i][width - 1 - i][i + 1] = voxel;
+				//voxels[i][i][i] = colors[1];
+				//voxels[width - 1 - i][i][i] = colors[2];
+				//voxels[i][width - 1 - i][i] = colors[3];
+				//voxels[width - 1 - i][width - 1 - i][i] = colors[4];
+				voxels[halfWidth][halfWidth][i] = colors[5];
 			}
 			return voxels;
 		}
