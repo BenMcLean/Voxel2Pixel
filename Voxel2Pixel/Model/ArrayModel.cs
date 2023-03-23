@@ -4,6 +4,14 @@
 	{
 		public ArrayModel(byte[][][] voxels) => Voxels = voxels;
 		public ArrayModel(int sizeX = 1, int sizeY = 1, int sizeZ = 1) : this(MakeModel(sizeX, sizeY, sizeZ)) { }
+		public ArrayModel(IModel model) : this(model.SizeX, model.SizeY, model.SizeZ)
+		{
+			for (int x = 0; x < SizeX; x++)
+				for (int y = 0; y < SizeY; y++)
+					for (int z = 0; z < SizeZ; z++)
+						if (model.At(x, y, z) is byte voxel)
+							Voxels[x][y][z] = voxel;
+		}
 		public byte[][][] Voxels;
 		public static byte[][][] MakeModel(int sizeX = 1, int sizeY = 1, int sizeZ = 1)
 		{
