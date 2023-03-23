@@ -28,52 +28,16 @@ namespace Voxel2PixelTest
 		public void IsoSpritesTest()
 		{
 			VoxModel model = new VoxModel(@"..\..\..\Sora.vox");
-			IsoPacker.IsoSprites(
+			Gif(
 				model: model,
 				voxelColor: new NaiveDimmer(model.Palette),
-				sprites: out byte[][] sprites,
-				widths: out int[] widths,
-				origins: out _);
-			int width = widths.Max(),
-				height = Enumerable.Range(0, sprites.Length).Select(i => PixelDraw.Height(sprites[i].Length, widths[i])).Max();
-			ImageMaker.AnimatedGifScaled(
-				scaleX: 4,
-				scaleY: 4,
-				width: width,
-				frames: Enumerable.Range(0, sprites.Length)
-					.Select(i => sprites[i].Resize(
-						newWidth: width,
-						newHeight: height,
-						width: widths[i]))
-					.ToArray(),
-				frameDelay: 200)
-			.SaveAsGif("IsoSpritesTest.gif");
+				path: "IsoSpritesTest.gif");
 		}
 		[Fact]
-		public void PyramidTest()
-		{
-			ArrayModel model = new ArrayModel(Pyramid(17));
-			IsoPacker.IsoSprites(
-				model: model,
-				voxelColor: new NaiveDimmer(ArrayModelTest.RainbowPalette),
-				sprites: out byte[][] sprites,
-				widths: out int[] widths,
-				origins: out _);
-			int width = widths.Max(),
-				height = Enumerable.Range(0, sprites.Length).Select(i => PixelDraw.Height(sprites[i].Length, widths[i])).Max();
-			ImageMaker.AnimatedGifScaled(
-				scaleX: 4,
-				scaleY: 4,
-				width: width,
-				frames: Enumerable.Range(0, sprites.Length)
-					.Select(i => sprites[i].Resize(
-						newWidth: width,
-						newHeight: height,
-						width: widths[i]))
-					.ToArray(),
-				frameDelay: 200)
-			.SaveAsGif("PyramidTest.gif");
-		}
+		public void PyramidTest() => Gif(
+			model: new ArrayModel(Pyramid(17)),
+			voxelColor: new NaiveDimmer(ArrayModelTest.RainbowPalette),
+			path: "PyramidTest.gif");
 		public static byte[][][] Pyramid(int width, params byte[] colors)
 		{
 			if (colors is null || colors.Length < 1)
@@ -93,6 +57,34 @@ namespace Voxel2PixelTest
 				voxels[halfWidth][halfWidth][i] = colors[5];
 			}
 			return voxels;
+		}
+		private static void Gif(IModel model, IVoxelColor voxelColor, string path)
+		{
+			IsoPacker.IsoSprites(
+				model: model,
+				voxelColor: voxelColor,
+				sprites: out byte[][] sprites,
+				widths: out int[] widths,
+				origins: out int[][] origins);
+			int width = widths.Max(),
+				height = Enumerable.Range(0, sprites.Length).Select(i => PixelDraw.Height(sprites[i].Length, widths[i])).Max() + 1,
+				originX = origins[1][0],
+				originY = origins[1][1] + 2;
+			ImageMaker.AnimatedGifScaled(
+				scaleX: 4,
+				scaleY: 4,
+				width: width,
+				frames: Enumerable.Range(0, sprites.Length)
+					.Select(frame => new byte[width * 4 * height]
+						.DrawInsert(
+							x: originX - origins[frame][0],
+							y: originY - origins[frame][1],
+							insert: sprites[frame],
+							insertWidth: widths[frame],
+							width: width))
+					.ToArray(),
+				frameDelay: 200)
+			.SaveAsGif(path);
 		}
 	}
 }
