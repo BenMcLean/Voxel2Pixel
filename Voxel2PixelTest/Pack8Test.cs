@@ -41,7 +41,7 @@ namespace Voxel2PixelTest
 		public static byte[][][] Pyramid(int width, params byte[] colors)
 		{
 			if (colors is null || colors.Length < 1)
-				colors = Enumerable.Range(0, 256).Select(i => (byte)i).ToArray();
+				colors = Enumerable.Range(0, 256).Cast<byte>().ToArray();
 			int halfWidth = width >> 1;
 			byte[][][] voxels = ArrayModel.MakeModel(width, width, halfWidth + 1);
 			voxels[0][0][0] = colors[1];
@@ -69,7 +69,7 @@ namespace Voxel2PixelTest
 		public static byte[][][] Pyramid2(int width, params byte[] colors)
 		{
 			if (colors is null || colors.Length < 1)
-				colors = Enumerable.Range(0, 256).Select(i => (byte)i).ToArray();
+				colors = Enumerable.Range(0, 256).Cast<byte>().ToArray();
 			int halfWidth = width >> 1;
 			byte[][][] voxels = ArrayModel.MakeModel(width, width, halfWidth + 1);
 			voxels[width - 1][0][0] = colors[2];
