@@ -2,11 +2,24 @@
 using System;
 using System.Linq;
 using static Voxel2Pixel.Draw.PixelDraw;
+using static Voxel2Pixel.Draw.DrawFont3x4;
 
 namespace Voxel2PixelTest
 {
 	public static class ImageMaker
 	{
+		public static byte[][] AddFrameNumbers(this byte[][] frames, int width = 0, uint color = 0xFFFFFFFF) => AddFrameNumbers(width, color, frames);
+		public static byte[][] AddFrameNumbers(int width = 0, uint color = 0xFFFFFFFF, params byte[][] frames)
+		{
+			for (int frame = 0; frame < frames.Length; frame++)
+				frames[frame].Draw3x4(
+					@string: frame.ToString(),
+					width: width,
+					x: 0,
+					y: Height(frames[frame].Length, width) - 4,
+					color: color);
+			return frames;
+		}
 		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> Png(int width = 0, params byte[] bytes)
 		{
 			if (width < 1)

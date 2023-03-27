@@ -85,9 +85,7 @@ namespace Voxel2Pixel.Pack
 						croppedWidth: out widths[i],
 						croppedHeight: out _,
 						width: width)
-					.Outline(
-						width: widths[i],
-						color: 0x000000FF);
+					.Outline(widths[i]);
 				origins[i] = new int[2];
 				VoxelDraw.AboveLocate(
 					pixelX: out origins[i][0],
@@ -117,9 +115,7 @@ namespace Voxel2Pixel.Pack
 						croppedWidth: out widths[i + 1],
 						croppedHeight: out _,
 						width: width)
-					.Outline(
-						width: widths[i + 1],
-						color: 0x000000FF);
+					.Outline(widths[i + 1]);
 				origins[i + 1] = new int[2];
 				VoxelDraw.IsoLocate(
 					pixelX: out origins[i + 1][0],
@@ -135,7 +131,7 @@ namespace Voxel2Pixel.Pack
 			}
 			for (int i = 0; i < sprites.Length; i++)
 				sprites[i].DrawPixel(
-					color: 0x00FF00FF,
+					color: 0x007700FF,
 					x: origins[i][0],
 					y: origins[i][1],
 					width: widths[i]);
