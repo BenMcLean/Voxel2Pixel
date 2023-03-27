@@ -63,8 +63,8 @@ namespace Voxel2PixelTest
 			model: new ArrayModel(Pyramid2(17)),
 			voxelColor: new NaiveDimmer(ArrayModelTest.RainbowPalette),
 			path: "Pyramid2Test.gif",
-			originX: 1,
-			originY: 1,
+			originX: 0,
+			originY: 0,
 			originZ: 0);
 		public static byte[][][] Pyramid2(int width, params byte[] colors)
 		{

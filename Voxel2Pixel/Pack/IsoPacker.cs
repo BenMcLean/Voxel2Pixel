@@ -61,6 +61,11 @@ namespace Voxel2Pixel.Pack
 					originX,
 					originY,
 					originZ);
+				if (i % 4 > 1)
+				{
+					turnedX = turnModel.SizeX - 1 - turnedX;
+					turnedY = turnModel.SizeY - 1 - turnedY;
+				}
 				int width = VoxelDraw.AboveWidth(turnModel) * 5;
 				ArrayRenderer arrayRenderer = new ArrayRenderer
 				{
