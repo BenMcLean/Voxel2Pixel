@@ -82,9 +82,15 @@ namespace Voxel2PixelTest
 				},
 				CubeRotation = cubeRotation,
 			};
-			Assert.Equal(turnModel.SizeX, Math.Abs(x1));
-			Assert.Equal(turnModel.SizeY, Math.Abs(y1));
-			Assert.Equal(turnModel.SizeZ, Math.Abs(z1));
+			Assert.Equal(
+				expected: Math.Abs(x1),
+				actual: turnModel.SizeX);
+			Assert.Equal(
+				expected: Math.Abs(y1),
+				actual: turnModel.SizeY);
+			Assert.Equal(
+				expected: Math.Abs(z1),
+				actual: turnModel.SizeZ);
 		}
 		private void Test24(int x = 1, int y = 2, int z = 3)
 		{

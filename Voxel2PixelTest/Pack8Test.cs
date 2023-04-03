@@ -60,26 +60,27 @@ namespace Voxel2PixelTest
 		}
 		[Fact]
 		public void Pyramid2Test() => Gif(
-			model: new ArrayModel(Pyramid2(17)),
+			model: new ArrayModel(Pyramid2(16, 4)),
 			voxelColor: new NaiveDimmer(ArrayModelTest.RainbowPalette),
 			path: "Pyramid2Test.gif",
 			originX: 0,
 			originY: 0,
 			originZ: 0);
-		public static byte[][][] Pyramid2(int width, params byte[] colors)
+		public static byte[][][] Pyramid2(int width, params byte[] colors) => Pyramid2(width, width, colors);
+		public static byte[][][] Pyramid2(int width, int depth, params byte[] colors)
 		{
 			if (colors is null || colors.Length < 1)
 				colors = Enumerable.Range(0, 256).Select(i => (byte)i).ToArray();
 			int halfWidth = width >> 1;
-			byte[][][] voxels = ArrayModel.MakeModel(width, width, halfWidth + 1);
+			byte[][][] voxels = ArrayModel.MakeModel(width, depth, halfWidth + 1);
 			voxels[width - 1][0][0] = colors[2];
-			voxels[0][width - 1][0] = colors[3];
-			voxels[width - 1][width - 1][0] = colors[4];
+			voxels[0][depth - 1][0] = colors[3];
+			voxels[width - 1][depth - 1][0] = colors[4];
 			for (int i = 0; i <= halfWidth; i++)
 				voxels[0][0][i] = colors[1];
 			return voxels;
 		}
-		private static void Gif(IModel model, IVoxelColor voxelColor, string path, int originX = -1, int originY = -1, int originZ = -1)
+		private static void Gif(IModel model, IVoxelColor voxelColor, string path, int originX = -1, int originY = -1, int originZ = -1, int frameDelay = 150)
 		{
 			IsoPacker.IsoSprites(
 				model: model,
@@ -114,7 +115,7 @@ namespace Voxel2PixelTest
 							width: width))
 					.ToArray()
 					.AddFrameNumbers(width),
-				frameDelay: 200)
+				frameDelay: frameDelay)
 			.SaveAsGif(path);
 		}
 	}
