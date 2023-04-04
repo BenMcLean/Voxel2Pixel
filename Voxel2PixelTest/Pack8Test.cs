@@ -64,7 +64,7 @@ namespace Voxel2PixelTest
 			voxelColor: new NaiveDimmer(ArrayModelTest.RainbowPalette),
 			path: "Pyramid2Test.gif",
 			originX: 0,
-			originY: 0,
+			originY: 3,
 			originZ: 0);
 		public static byte[][][] Pyramid2(int width, params byte[] colors) => Pyramid2(width, width, colors);
 		public static byte[][][] Pyramid2(int width, int depth, params byte[] colors)
@@ -101,7 +101,7 @@ namespace Voxel2PixelTest
 					.Select(i => PixelDraw.Height(sprites[i].Length, widths[i])
 						+ pixelOriginY - origins[i][1]
 						).Max() + 1;
-			ImageMaker.AnimatedGifScaled(
+			ImageMaker.AnimatedGif(
 				scaleX: 4,
 				scaleY: 4,
 				width: width,

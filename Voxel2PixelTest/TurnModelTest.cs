@@ -55,7 +55,7 @@ namespace Voxel2PixelTest
 					y: height - 4);
 				frames.Add(arrayRenderer.Image);
 			}
-			ImageMaker.AnimatedGifScaled(
+			ImageMaker.AnimatedGif(
 				scaleX: 16,
 				scaleY: 16,
 				width: width,
@@ -96,7 +96,7 @@ namespace Voxel2PixelTest
 				VoxelDraw.Iso(model, arrayRenderer);
 				frames.Add(arrayRenderer.Image);
 			}
-			ImageMaker.AnimatedGifScaled(
+			ImageMaker.AnimatedGif(
 				scaleX: 16,
 				scaleY: 16,
 				width: width,

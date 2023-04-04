@@ -48,7 +48,7 @@ namespace Voxel2PixelTest
 			addFrame();
 			model.Set(true, true, true);
 			addFrame();
-			ImageMaker.AnimatedGifScaled(
+			ImageMaker.AnimatedGif(
 				scaleX: 16,
 				scaleY: 16,
 				width: width,

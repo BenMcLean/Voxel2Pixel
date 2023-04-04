@@ -92,7 +92,7 @@ namespace Voxel2PixelTest
 							color: 0xFFFFFFFF);
 						frames.Add(arrayRenderer.Image);
 					}
-			ImageMaker.AnimatedGifScaled(
+			ImageMaker.AnimatedGif(
 				scaleX: 16,
 				scaleY: 16,
 				width: width,

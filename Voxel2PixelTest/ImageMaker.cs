@@ -8,8 +8,7 @@ namespace Voxel2PixelTest
 {
 	public static class ImageMaker
 	{
-		public static byte[][] AddFrameNumbers(this byte[][] frames, int width = 0, uint color = 0xFFFFFFFF) => AddFrameNumbers(width, color, frames);
-		public static byte[][] AddFrameNumbers(int width = 0, uint color = 0xFFFFFFFF, params byte[][] frames)
+		public static byte[][] AddFrameNumbers(this byte[][] frames, int width = 0, uint color = 0xFFFFFFFF)
 		{
 			for (int frame = 0; frame < frames.Length; frame++)
 				frames[frame].Draw3x4(
@@ -40,7 +39,7 @@ namespace Voxel2PixelTest
 				width: width * scaleX,
 				height: (bytes.Length / width >> 2) * scaleY);
 		}
-		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGifScaled(int scaleX, int scaleY, int width = 0, int frameDelay = 25, ushort repeatCount = 0, params byte[][] frames) => AnimatedGif(
+		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(int scaleX, int scaleY, int width = 0, int frameDelay = 25, ushort repeatCount = 0, params byte[][] frames) => AnimatedGif(
 			width: width * scaleX,
 			frameDelay: frameDelay,
 			repeatCount: repeatCount,

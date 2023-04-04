@@ -61,11 +61,6 @@ namespace Voxel2Pixel.Pack
 					originX,
 					originY,
 					originZ);
-				if (i % 4 > 1)
-				{
-					turnedX = turnModel.SizeX - 1 - turnedX;
-					turnedY = turnModel.SizeY - 1 - turnedY;
-				}
 				int width = VoxelDraw.AboveWidth(turnModel) * 5;
 				ArrayRenderer arrayRenderer = new ArrayRenderer
 				{
@@ -90,7 +85,10 @@ namespace Voxel2Pixel.Pack
 						croppedWidth: out widths[i],
 						croppedHeight: out _,
 						width: width)
-					.Outline(widths[i]);
+					.Outline(widths[i])
+					.Draw3x4(
+						@string: string.Join(",", turnedX, turnedY, turnedZ),
+						width: widths[i]);
 				origins[i] = new int[2];
 				VoxelDraw.AboveLocate(
 					pixelX: out origins[i][0],
@@ -120,7 +118,10 @@ namespace Voxel2Pixel.Pack
 						croppedWidth: out widths[i + 1],
 						croppedHeight: out _,
 						width: width)
-					.Outline(widths[i + 1]);
+					.Outline(widths[i + 1])
+					.Draw3x4(
+						@string: string.Join(",", turnedX, turnedY, turnedZ),
+						width: widths[i + 1]);
 				origins[i + 1] = new int[2];
 				VoxelDraw.IsoLocate(
 					pixelX: out origins[i + 1][0],
@@ -136,7 +137,7 @@ namespace Voxel2Pixel.Pack
 			}
 			for (int i = 0; i < sprites.Length; i++)
 				sprites[i].DrawPixel(
-					color: 0x007700FF,
+					color: 0xFFFFFFFF,
 					x: origins[i][0],
 					y: origins[i][1],
 					width: widths[i]);
