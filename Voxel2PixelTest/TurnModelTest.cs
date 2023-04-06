@@ -16,7 +16,8 @@ namespace Voxel2PixelTest
 		{
 			//ArrayModel sourceModel = new ArrayModel(ArrayModelTest.RainbowBox(5, 6, 7));
 			//IVoxelColor voxelColor = new NaiveDimmer(ArrayModelTest.RainbowPalette);
-			VoxModel sourceModel = (VoxModel)new VoxModel(@"..\..\..\Sora.vox").DrawBox(1);
+			VoxModel sourceModel = new VoxModel(@"..\..\..\Sora.vox");
+			sourceModel.Voxels.Box(1);
 			IVoxelColor voxelColor = new NaiveDimmer(sourceModel.Palette);
 			//int testTextureWidth = 10, testTextureHeight = 32;
 			//byte[] testTexture = TextureModelTest.TestTexture(testTextureWidth, testTextureHeight);
@@ -38,7 +39,18 @@ namespace Voxel2PixelTest
 			int width = Math.Max(VoxelDraw.IsoWidth(model), VoxelDraw.IsoHeight(model)),
 				height = width + 4;
 			List<byte[]> frames = new List<byte[]>();
-			foreach (CubeRotation cubeRotation in CubeRotation.Values)
+			CubeRotation[] rotations = new CubeRotation[]
+			{
+				CubeRotation.WEST1,
+				CubeRotation.WEST3,
+				CubeRotation.EAST1,
+				CubeRotation.EAST3,
+				CubeRotation.UP1,
+				CubeRotation.UP3,
+				CubeRotation.DOWN1,
+				CubeRotation.DOWN3,
+			};
+			foreach (CubeRotation cubeRotation in rotations)
 			{
 				turnModel.CubeRotation = cubeRotation;
 				ArrayRenderer arrayRenderer = new ArrayRenderer
@@ -66,7 +78,8 @@ namespace Voxel2PixelTest
 		[Fact]
 		public void OffsetModelTest()
 		{
-			VoxModel sourceModel = (VoxModel)new VoxModel(@"..\..\..\Sora.vox").DrawBox(1);
+			VoxModel sourceModel = new VoxModel(@"..\..\..\Sora.vox");
+			sourceModel.Voxels.Box(1);
 			IVoxelColor voxelColor = new NaiveDimmer(sourceModel.Palette);
 			TurnModel turnModel = new TurnModel
 			{

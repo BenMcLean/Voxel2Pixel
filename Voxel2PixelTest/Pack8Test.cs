@@ -13,7 +13,8 @@ namespace Voxel2PixelTest
 		[Fact]
 		public void Test()
 		{
-			VoxModel model = (VoxModel)new VoxModel(@"..\..\..\Sora.vox").DrawBox(1);
+			VoxModel model = new VoxModel(@"..\..\..\Sora.vox");
+			model.Voxels.Box(1);
 			byte[] texture = IsoPacker.Pack8(
 				model: model,
 				voxelColor: new NaiveDimmer(model.Palette),
@@ -43,7 +44,7 @@ namespace Voxel2PixelTest
 			if (colors is null || colors.Length < 1)
 				colors = Enumerable.Range(0, 256).Select(i => (byte)i).ToArray();
 			int halfWidth = width >> 1;
-			byte[][][] voxels = ArrayModel.MakeModel(width, width, halfWidth + 1);
+			byte[][][] voxels = Bytes3D.Initialize(width, width, halfWidth + 1);
 			voxels[0][0][0] = colors[1];
 			voxels[width - 1][0][0] = colors[2];
 			voxels[0][width - 1][0] = colors[3];
@@ -72,7 +73,7 @@ namespace Voxel2PixelTest
 			if (colors is null || colors.Length < 1)
 				colors = Enumerable.Range(0, 256).Select(i => (byte)i).ToArray();
 			int halfWidth = width >> 1;
-			byte[][][] voxels = ArrayModel.MakeModel(width, depth, halfWidth + 1);
+			byte[][][] voxels = Bytes3D.Initialize(width, depth, halfWidth + 1);
 			voxels[width - 1][0][0] = colors[2];
 			voxels[0][depth - 1][0] = colors[3];
 			voxels[width - 1][depth - 1][0] = colors[4];
