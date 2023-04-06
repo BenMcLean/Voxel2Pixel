@@ -1,6 +1,6 @@
 ﻿namespace Voxel2Pixel.Model
 {
-	public class ArrayModel : IModel
+	public class ArrayModel : IModel, ITurnable
 	{
 		public ArrayModel(byte[][][] voxels) => Voxels = voxels;
 		public ArrayModel(int sizeX = 1, int sizeY = 1, int sizeZ = 1) : this(MakeModel(sizeX, sizeY, sizeZ)) { }
@@ -57,5 +57,92 @@
 		public bool IsInside(int x, int y, int z) => !IsOutside(x, y, z);
 		public bool IsOutside(int x, int y, int z) => x < 0 || y < 0 || z < 0 || x >= SizeX || y >= SizeY || z >= SizeZ;
 		#endregion IModel
+		#region ITurnable
+		public ITurnable CounterX()
+		{
+			Voxels = CounterX(Voxels);
+			return this;
+		}
+		public static byte[][][] CounterX(byte[][][] inputArray)
+		{
+			byte[][][] outputArray = MakeModel(inputArray[0].Length, inputArray.Length, inputArray[0][0].Length);
+			for (int x = 0; x < inputArray.Length; x++)
+				for (int y = 0; y < inputArray[0].Length; y++)
+					for (int z = 0; z < inputArray[0][0].Length; z++)
+						outputArray[inputArray[0].Length - 1 - y][x][z] = inputArray[x][y][z];
+			return outputArray;
+		}
+		public ITurnable CounterY()
+		{
+			Voxels = CounterY(Voxels);
+			return this;
+		}
+		public static byte[][][] CounterY(byte[][][] inputArray)
+		{
+			byte[][][] outputArray = MakeModel(inputArray[0].Length, inputArray.Length, inputArray[0][0].Length);
+			for (int x = 0; x < inputArray.Length; x++)
+				for (int y = 0; y < inputArray[0].Length; y++)
+					for (int z = 0; z < inputArray[0][0].Length; z++)
+						outputArray[x][y][inputArray[0][0].Length - 1 - z] = inputArray[x][y][z];
+			return outputArray;
+		}
+		public ITurnable CounterZ()
+		{
+			Voxels = CounterZ(Voxels);
+			return this;
+		}
+		public static byte[][][] CounterZ(byte[][][] inputArray)
+		{
+			byte[][][] outputArray = MakeModel(inputArray[0][0].Length, inputArray.Length, inputArray[0].Length);
+			for (int x = 0; x < inputArray.Length; x++)
+				for (int y = 0; y < inputArray[0].Length; y++)
+					for (int z = 0; z < inputArray[0][0].Length; z++)
+						outputArray[inputArray[0][0].Length - 1 - z][y][x] = inputArray[x][y][z];
+			return outputArray;
+		}
+		public ITurnable ClockX()
+		{
+			Voxels = ClockX(Voxels);
+			return this;
+		}
+		public static byte[][][] ClockX(byte[][][] inputArray)
+		{
+			byte[][][] outputArray = MakeModel(inputArray[0].Length, inputArray.Length, inputArray[0][0].Length);
+			for (int x = 0; x < inputArray.Length; x++)
+				for (int y = 0; y < inputArray[0].Length; y++)
+					for (int z = 0; z < inputArray[0][0].Length; z++)
+						outputArray[y][inputArray.Length - 1 - x][z] = inputArray[x][y][z];
+			return outputArray;
+		}
+		public ITurnable ClockY()
+		{
+			Voxels = ClockY(Voxels);
+			return this;
+		}
+		public static byte[][][] ClockY(byte[][][] inputArray)
+		{
+			byte[][][] outputArray = MakeModel(inputArray[0].Length, inputArray.Length, inputArray[0][0].Length);
+			for (int x = 0; x < inputArray.Length; x++)
+				for (int y = 0; y < inputArray[0].Length; y++)
+					for (int z = 0; z < inputArray[0][0].Length; z++)
+						outputArray[x][y][inputArray[0][0].Length - 1 - z] = inputArray[z][y][x];
+			return outputArray;
+		}
+		public ITurnable ClockZ()
+		{
+			Voxels = ClockZ(Voxels);
+			return this;
+		}
+		public static byte[][][] ClockZ(byte[][][] inputArray)
+		{
+			byte[][][] outputArray = MakeModel(inputArray[0].Length, inputArray[0][0].Length, inputArray.Length);
+			for (int x = 0; x < inputArray.Length; x++)
+				for (int y = 0; y < inputArray[0].Length; y++)
+					for (int z = 0; z < inputArray[0][0].Length; z++)
+						outputArray[z][y][inputArray.Length - 1 - x] = inputArray[x][y][z];
+			return outputArray;
+		}
+		public ITurnable Reset() => throw new System.NotImplementedException();
+		#endregion ITurnable
 	}
 }
