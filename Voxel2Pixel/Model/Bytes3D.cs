@@ -21,14 +21,12 @@ namespace Voxel2Pixel.Model
 				return null;
 			byte[][][] outputArray = new byte[inputArray.Length][][];
 			for (int x = 0; x < inputArray.Length; x++)
-			{
 				if (inputArray[x] is null)
 					outputArray[x] = null;
 				else
 				{
 					outputArray[x] = new byte[inputArray[x].Length][];
 					for (int y = 0; y < inputArray[x].Length; y++)
-					{
 						if (inputArray[x][y] is null)
 							outputArray[x][y] = null;
 						else
@@ -36,9 +34,7 @@ namespace Voxel2Pixel.Model
 							outputArray[x][y] = new byte[inputArray[x][y].Length];
 							Array.Copy(inputArray[x][y], outputArray[x][y], inputArray[x][y].Length);
 						}
-					}
 				}
-			}
 			return outputArray;
 		}
 		public static byte[][][] Box(this byte[][][] voxels, byte voxel)
@@ -71,53 +67,53 @@ namespace Voxel2Pixel.Model
 		{
 			byte[][][] outputArray = Initialize(inputArray[0].Length, inputArray.Length, inputArray[0][0].Length);
 			for (int x = 0; x < inputArray.Length; x++)
-				for (int y = 0; y < inputArray[0].Length; y++)
-					for (int z = 0; z < inputArray[0][0].Length; z++)
-						outputArray[inputArray[0].Length - 1 - y][x][z] = inputArray[x][y][z];
+				for (int y = 0; y < inputArray[x].Length; y++)
+					for (int z = 0; z < inputArray[x][y].Length; z++)
+						outputArray[inputArray[x].Length - 1 - y][x][z] = inputArray[x][y][z];
 			return outputArray;
 		}
 		public static byte[][][] CounterY(this byte[][][] inputArray)
 		{
 			byte[][][] outputArray = Initialize(inputArray[0].Length, inputArray.Length, inputArray[0][0].Length);
 			for (int x = 0; x < inputArray.Length; x++)
-				for (int y = 0; y < inputArray[0].Length; y++)
-					for (int z = 0; z < inputArray[0][0].Length; z++)
-						outputArray[x][y][inputArray[0][0].Length - 1 - z] = inputArray[x][y][z];
+				for (int y = 0; y < inputArray[x].Length; y++)
+					for (int z = 0; z < inputArray[x][y].Length; z++)
+						outputArray[x][y][inputArray[x][y].Length - 1 - z] = inputArray[x][y][z];
 			return outputArray;
 		}
 		public static byte[][][] CounterZ(this byte[][][] inputArray)
 		{
 			byte[][][] outputArray = Initialize(inputArray[0][0].Length, inputArray.Length, inputArray[0].Length);
 			for (int x = 0; x < inputArray.Length; x++)
-				for (int y = 0; y < inputArray[0].Length; y++)
-					for (int z = 0; z < inputArray[0][0].Length; z++)
-						outputArray[inputArray[0][0].Length - 1 - z][y][x] = inputArray[x][y][z];
+				for (int y = 0; y < inputArray[x].Length; y++)
+					for (int z = 0; z < inputArray[x][y].Length; z++)
+						outputArray[inputArray[x][y].Length - 1 - z][y][x] = inputArray[x][y][z];
 			return outputArray;
 		}
 		public static byte[][][] ClockX(this byte[][][] inputArray)
 		{
 			byte[][][] outputArray = Initialize(inputArray[0].Length, inputArray.Length, inputArray[0][0].Length);
 			for (int x = 0; x < inputArray.Length; x++)
-				for (int y = 0; y < inputArray[0].Length; y++)
-					for (int z = 0; z < inputArray[0][0].Length; z++)
-						outputArray[y][inputArray.Length - 1 - x][z] = inputArray[x][y][z];
+				for (int y = 0; y < inputArray[x].Length; y++)
+					for (int z = 0; z < inputArray[x][y].Length; z++)
+						outputArray[y][inputArray[x].Length - 1 - x][z] = inputArray[x][y][z];
 			return outputArray;
 		}
 		public static byte[][][] ClockY(this byte[][][] inputArray)
 		{
 			byte[][][] outputArray = Initialize(inputArray[0].Length, inputArray.Length, inputArray[0][0].Length);
 			for (int x = 0; x < inputArray.Length; x++)
-				for (int y = 0; y < inputArray[0].Length; y++)
-					for (int z = 0; z < inputArray[0][0].Length; z++)
-						outputArray[x][y][inputArray[0][0].Length - 1 - z] = inputArray[z][y][x];
+				for (int y = 0; y < inputArray[x].Length; y++)
+					for (int z = 0; z < inputArray[x][y].Length; z++)
+						outputArray[x][y][inputArray[x][y].Length - 1 - z] = inputArray[z][y][x];
 			return outputArray;
 		}
 		public static byte[][][] ClockZ(this byte[][][] inputArray)
 		{
 			byte[][][] outputArray = Initialize(inputArray[0].Length, inputArray[0][0].Length, inputArray.Length);
 			for (int x = 0; x < inputArray.Length; x++)
-				for (int y = 0; y < inputArray[0].Length; y++)
-					for (int z = 0; z < inputArray[0][0].Length; z++)
+				for (int y = 0; y < inputArray[x].Length; y++)
+					for (int z = 0; z < inputArray[x][y].Length; z++)
 						outputArray[z][y][inputArray.Length - 1 - x] = inputArray[x][y][z];
 			return outputArray;
 		}
