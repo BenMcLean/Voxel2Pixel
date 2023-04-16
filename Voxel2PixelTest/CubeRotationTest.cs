@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Numerics;
 using Voxel2Pixel.Model;
 using Xunit;
@@ -13,6 +14,32 @@ namespace Voxel2PixelTest
 		{
 			NONE, CLOCKX, CLOCKY, CLOCKZ, COUNTERX, COUNTERY, COUNTERZ
 		}
+		public static readonly Dictionary<string, Turn[]> Turns = new Dictionary<string, Turn[]> {
+				{ "SOUTH0", new Turn[] {Turn.NONE} },
+				{ "SOUTH1", new Turn[] {Turn.CLOCKY} },
+				{ "SOUTH2", new Turn[] {Turn.CLOCKY, Turn.CLOCKY} },
+				{ "SOUTH3", new Turn[] {Turn.COUNTERY} },
+				{ "WEST0", new Turn[] {Turn.COUNTERZ} },
+				{ "WEST1", new Turn[] {Turn.COUNTERZ, Turn.CLOCKY} },
+				{ "WEST2", new Turn[] {Turn.COUNTERZ, Turn.CLOCKY, Turn.CLOCKY} },
+				{ "WEST3", new Turn[] {Turn.COUNTERZ, Turn.COUNTERY} },
+				{ "NORTH0", new Turn[] {Turn.CLOCKZ, Turn.CLOCKZ} },
+				{ "NORTH1", new Turn[] {Turn.COUNTERY, Turn.CLOCKZ, Turn.CLOCKZ} },
+				{ "NORTH2", new Turn[] {Turn.CLOCKX, Turn.CLOCKX} },
+				{ "NORTH3", new Turn[] {Turn.CLOCKY, Turn.CLOCKZ, Turn.CLOCKZ} },
+				{ "EAST0", new Turn[] {Turn.CLOCKZ} },
+				{ "EAST1", new Turn[] {Turn.CLOCKZ, Turn.CLOCKY} },
+				{ "EAST2", new Turn[] {Turn.CLOCKZ, Turn.CLOCKY, Turn.CLOCKY} },
+				{ "EAST3", new Turn[] {Turn.CLOCKZ, Turn.COUNTERY} },
+				{ "UP0", new Turn[] {Turn.CLOCKX, Turn.CLOCKY, Turn.CLOCKY} },
+				{ "UP1", new Turn[] {Turn.CLOCKX, Turn.COUNTERY} },
+				{ "UP2", new Turn[] {Turn.CLOCKX} },
+				{ "UP3", new Turn[] {Turn.CLOCKX, Turn.CLOCKY} },
+				{ "DOWN0", new Turn[] {Turn.CLOCKX, Turn.CLOCKZ, Turn.CLOCKZ} },
+				{ "DOWN1", new Turn[] {Turn.COUNTERX, Turn.COUNTERY} },
+				{ "DOWN2", new Turn[] {Turn.COUNTERX} },
+				{ "DOWN3", new Turn[] {Turn.COUNTERX, Turn.CLOCKY} },
+			};
 		public static ITurnable MakeTurn(ITurnable turnable, Turn turn)
 		{
 			switch (turn)
@@ -33,13 +60,13 @@ namespace Voxel2PixelTest
 					return turnable;
 			}
 		}
-		public static CubeRotation Cube(params Turn[] turns)
+		public static ITurnable MakeTurns(ITurnable turnable, params Turn[] turns)
 		{
-			CubeRotation cubeRotation = CubeRotation.SOUTH0;
 			foreach (Turn turn in turns)
-				cubeRotation = (CubeRotation)MakeTurn(cubeRotation, turn);
-			return cubeRotation;
+				turnable = MakeTurn(turnable, turn);
+			return turnable;
 		}
+		public static CubeRotation Cube(params Turn[] turns) => (CubeRotation)MakeTurns(CubeRotation.SOUTH0, turns);
 		public static Matrix4x4 Matrix(Turn turn)
 		{
 			switch (turn)
@@ -96,30 +123,8 @@ namespace Voxel2PixelTest
 		}
 		private void Test24(int x = 1, int y = 2, int z = 3)
 		{
-			TestRotation(x, y, z, "SOUTH0", Turn.NONE);
-			TestRotation(x, y, z, "SOUTH1", Turn.CLOCKY);
-			TestRotation(x, y, z, "SOUTH2", Turn.CLOCKY, Turn.CLOCKY);
-			TestRotation(x, y, z, "SOUTH3", Turn.COUNTERY);
-			TestRotation(x, y, z, "WEST0", Turn.COUNTERZ);
-			TestRotation(x, y, z, "WEST1", Turn.COUNTERZ, Turn.CLOCKY);
-			TestRotation(x, y, z, "WEST2", Turn.COUNTERZ, Turn.CLOCKY, Turn.CLOCKY);
-			TestRotation(x, y, z, "WEST3", Turn.COUNTERZ, Turn.COUNTERY);
-			TestRotation(x, y, z, "NORTH0", Turn.CLOCKZ, Turn.CLOCKZ);
-			TestRotation(x, y, z, "NORTH1", Turn.COUNTERY, Turn.CLOCKZ, Turn.CLOCKZ);
-			TestRotation(x, y, z, "NORTH2", Turn.CLOCKX, Turn.CLOCKX);
-			TestRotation(x, y, z, "NORTH3", Turn.CLOCKY, Turn.CLOCKZ, Turn.CLOCKZ);
-			TestRotation(x, y, z, "EAST0", Turn.CLOCKZ);
-			TestRotation(x, y, z, "EAST1", Turn.CLOCKZ, Turn.CLOCKY);
-			TestRotation(x, y, z, "EAST2", Turn.CLOCKZ, Turn.CLOCKY, Turn.CLOCKY);
-			TestRotation(x, y, z, "EAST3", Turn.CLOCKZ, Turn.COUNTERY);
-			TestRotation(x, y, z, "UP0", Turn.CLOCKX, Turn.CLOCKY, Turn.CLOCKY);
-			TestRotation(x, y, z, "UP1", Turn.CLOCKX, Turn.COUNTERY);
-			TestRotation(x, y, z, "UP2", Turn.CLOCKX);
-			TestRotation(x, y, z, "UP3", Turn.CLOCKX, Turn.CLOCKY);
-			TestRotation(x, y, z, "DOWN0", Turn.CLOCKX, Turn.CLOCKZ, Turn.CLOCKZ);
-			TestRotation(x, y, z, "DOWN1", Turn.COUNTERX, Turn.COUNTERY);
-			TestRotation(x, y, z, "DOWN2", Turn.COUNTERX);
-			TestRotation(x, y, z, "DOWN3", Turn.COUNTERX, Turn.CLOCKY);
+			foreach (KeyValuePair<string, Turn[]> orientation in Turns)
+				TestRotation(x, y, z, orientation.Key, orientation.Value);
 		}
 		private void TestRotation(int x, int y, int z, string name, params Turn[] turns)
 		{
