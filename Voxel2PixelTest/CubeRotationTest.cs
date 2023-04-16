@@ -9,6 +9,57 @@ namespace Voxel2PixelTest
 	{
 		//private readonly Xunit.Abstractions.ITestOutputHelper output;
 		//public CuberotationTest(Xunit.Abstractions.ITestOutputHelper output) => this.output = output;
+		public enum Turn
+		{
+			NONE, CLOCKX, CLOCKY, CLOCKZ, COUNTERX, COUNTERY, COUNTERZ
+		}
+		public static ITurnable MakeTurn(ITurnable turnable, Turn turn)
+		{
+			switch (turn)
+			{
+				case Turn.CLOCKX:
+					return turnable.ClockX();
+				case Turn.CLOCKY:
+					return turnable.ClockY();
+				case Turn.CLOCKZ:
+					return turnable.ClockZ();
+				case Turn.COUNTERX:
+					return turnable.CounterX();
+				case Turn.COUNTERY:
+					return turnable.CounterY();
+				case Turn.COUNTERZ:
+					return turnable.CounterZ();
+				default:
+					return turnable;
+			}
+		}
+		public static CubeRotation Cube(params Turn[] turns)
+		{
+			CubeRotation cubeRotation = CubeRotation.SOUTH0;
+			foreach (Turn turn in turns)
+				cubeRotation = (CubeRotation)MakeTurn(cubeRotation, turn);
+			return cubeRotation;
+		}
+		public static Matrix4x4 Matrix(Turn turn)
+		{
+			switch (turn)
+			{
+				case Turn.CLOCKX:
+					return clockX;
+				case Turn.CLOCKY:
+					return clockY;
+				case Turn.CLOCKZ:
+					return clockZ;
+				case Turn.COUNTERX:
+					return counterX;
+				case Turn.COUNTERY:
+					return counterY;
+				case Turn.COUNTERZ:
+					return counterZ;
+				default:
+					return Matrix4x4.Identity;
+			}
+		}
 		public static readonly Matrix4x4 clockX = new Matrix4x4(
 				1, 0, 0, 0,
 				0, 0, -1, 0,
@@ -45,36 +96,36 @@ namespace Voxel2PixelTest
 		}
 		private void Test24(int x = 1, int y = 2, int z = 3)
 		{
-			CubeRotation c = CubeRotation.SOUTH0;
-			TestRotation(x, y, z, "SOUTH0", c, Matrix4x4.Identity);
-			TestRotation(x, y, z, "SOUTH1", (CubeRotation)c.ClockY(), clockY);
-			TestRotation(x, y, z, "SOUTH2", (CubeRotation)c.ClockY().ClockY(), clockY, clockY);
-			TestRotation(x, y, z, "SOUTH3", (CubeRotation)c.CounterY(), counterY);
-			TestRotation(x, y, z, "WEST0", (CubeRotation)c.CounterZ(), counterZ);
-			TestRotation(x, y, z, "WEST1", (CubeRotation)c.CounterZ().ClockY(), counterZ, clockY);
-			TestRotation(x, y, z, "WEST2", (CubeRotation)c.CounterZ().ClockY().ClockY(), counterZ, clockY, clockY);
-			TestRotation(x, y, z, "WEST3", (CubeRotation)c.CounterZ().CounterY(), counterZ, counterY);
-			TestRotation(x, y, z, "NORTH0", (CubeRotation)c.ClockZ().ClockZ(), clockZ, clockZ);
-			TestRotation(x, y, z, "NORTH1", (CubeRotation)c.CounterY().ClockZ().ClockZ(), counterY, clockZ, clockZ);
-			TestRotation(x, y, z, "NORTH2", (CubeRotation)c.ClockX().ClockX(), clockX, clockX);
-			TestRotation(x, y, z, "NORTH3", (CubeRotation)c.ClockY().ClockZ().ClockZ(), clockY, clockZ, clockZ);
-			TestRotation(x, y, z, "EAST0", (CubeRotation)c.ClockZ(), clockZ);
-			TestRotation(x, y, z, "EAST1", (CubeRotation)c.ClockZ().ClockY(), clockZ, clockY);
-			TestRotation(x, y, z, "EAST2", (CubeRotation)c.ClockZ().ClockY().ClockY(), clockZ, clockY, clockY);
-			TestRotation(x, y, z, "EAST3", (CubeRotation)c.ClockZ().CounterY(), clockZ, counterY);
-			TestRotation(x, y, z, "UP0", (CubeRotation)c.ClockX().ClockY().ClockY(), clockX, clockY, clockY);
-			TestRotation(x, y, z, "UP1", (CubeRotation)c.ClockX().CounterY(), clockX, counterY);
-			TestRotation(x, y, z, "UP2", (CubeRotation)c.ClockX(), clockX);
-			TestRotation(x, y, z, "UP3", (CubeRotation)c.ClockX().ClockY(), clockX, clockY);
-			TestRotation(x, y, z, "DOWN0", (CubeRotation)c.ClockX().ClockZ().ClockZ(), clockX, clockZ, clockZ);
-			TestRotation(x, y, z, "DOWN1", (CubeRotation)c.CounterX().CounterY(), counterX, counterY);
-			TestRotation(x, y, z, "DOWN2", (CubeRotation)c.CounterX(), counterX);
-			TestRotation(x, y, z, "DOWN3", (CubeRotation)c.CounterX().ClockY(), counterX, clockY);
+			TestRotation(x, y, z, "SOUTH0", Turn.NONE);
+			TestRotation(x, y, z, "SOUTH1", Turn.CLOCKY);
+			TestRotation(x, y, z, "SOUTH2", Turn.CLOCKY, Turn.CLOCKY);
+			TestRotation(x, y, z, "SOUTH3", Turn.COUNTERY);
+			TestRotation(x, y, z, "WEST0", Turn.COUNTERZ);
+			TestRotation(x, y, z, "WEST1", Turn.COUNTERZ, Turn.CLOCKY);
+			TestRotation(x, y, z, "WEST2", Turn.COUNTERZ, Turn.CLOCKY, Turn.CLOCKY);
+			TestRotation(x, y, z, "WEST3", Turn.COUNTERZ, Turn.COUNTERY);
+			TestRotation(x, y, z, "NORTH0", Turn.CLOCKZ, Turn.CLOCKZ);
+			TestRotation(x, y, z, "NORTH1", Turn.COUNTERY, Turn.CLOCKZ, Turn.CLOCKZ);
+			TestRotation(x, y, z, "NORTH2", Turn.CLOCKX, Turn.CLOCKX);
+			TestRotation(x, y, z, "NORTH3", Turn.CLOCKY, Turn.CLOCKZ, Turn.CLOCKZ);
+			TestRotation(x, y, z, "EAST0", Turn.CLOCKZ);
+			TestRotation(x, y, z, "EAST1", Turn.CLOCKZ, Turn.CLOCKY);
+			TestRotation(x, y, z, "EAST2", Turn.CLOCKZ, Turn.CLOCKY, Turn.CLOCKY);
+			TestRotation(x, y, z, "EAST3", Turn.CLOCKZ, Turn.COUNTERY);
+			TestRotation(x, y, z, "UP0", Turn.CLOCKX, Turn.CLOCKY, Turn.CLOCKY);
+			TestRotation(x, y, z, "UP1", Turn.CLOCKX, Turn.COUNTERY);
+			TestRotation(x, y, z, "UP2", Turn.CLOCKX);
+			TestRotation(x, y, z, "UP3", Turn.CLOCKX, Turn.CLOCKY);
+			TestRotation(x, y, z, "DOWN0", Turn.CLOCKX, Turn.CLOCKZ, Turn.CLOCKZ);
+			TestRotation(x, y, z, "DOWN1", Turn.COUNTERX, Turn.COUNTERY);
+			TestRotation(x, y, z, "DOWN2", Turn.COUNTERX);
+			TestRotation(x, y, z, "DOWN3", Turn.COUNTERX, Turn.CLOCKY);
 		}
-		private void TestRotation(int x, int y, int z, string name, CubeRotation cubeRotation, params Matrix4x4[] rotations)
+		private void TestRotation(int x, int y, int z, string name, params Turn[] turns)
 		{
+			CubeRotation cubeRotation = Cube(turns);
 			cubeRotation.Rotate(out int x1, out int y1, out int z1, x, y, z);
-			Rotate(out int x2, out int y2, out int z2, x, y, z, rotations);
+			Rotate(out int x2, out int y2, out int z2, x, y, z, turns);
 			/*
 			output.WriteLine("Input: "
 				+ string.Join(", ", x, y, z)
@@ -107,15 +158,15 @@ namespace Voxel2PixelTest
 				expected: Math.Abs(z1),
 				actual: turnModel.SizeZ);
 		}
-		private static void Rotate(out int outX, out int outY, out int outZ, int x, int y, int z, params Matrix4x4[] rotations)
+		private static void Rotate(out int outX, out int outY, out int outZ, int x, int y, int z, params Turn[] turns)
 		{
 			Matrix4x4 coords = new Matrix4x4(
 				x, 0, 0, 0,
 				y, 0, 0, 0,
 				z, 0, 0, 0,
 				1, 0, 0, 0);
-			foreach (Matrix4x4 rotation in rotations)
-				coords = rotation * coords;
+			foreach (Turn turn in turns)
+				coords = Matrix(turn) * coords;
 			outX = (int)coords.M11;
 			outY = (int)coords.M21;
 			outZ = (int)coords.M31;
