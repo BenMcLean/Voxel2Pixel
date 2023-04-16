@@ -5,6 +5,7 @@ namespace Voxel2Pixel.Model
 	public class ArrayModel : IModel, ITurnable
 	{
 		public ArrayModel(byte[][][] voxels) => Voxels = voxels;
+		public ArrayModel(ArrayModel other) : this(other.Voxels.DeepCopy()) { }
 		public ArrayModel(int sizeX = 1, int sizeY = 1, int sizeZ = 1) : this(Bytes3D.Initialize(sizeX, sizeY, sizeZ)) { }
 		public ArrayModel(IModel model) : this(model.SizeX, model.SizeY, model.SizeZ)
 		{
@@ -14,9 +15,7 @@ namespace Voxel2Pixel.Model
 						if (model.At(x, y, z) is byte voxel)
 							Voxels[x][y][z] = voxel;
 		}
-		public byte[][][] Voxels;
-		protected ArrayModel(ArrayModel other) => new ArrayModel(other.Voxels.DeepCopy());
-		public ArrayModel Clone() => new ArrayModel(this);
+		public byte[][][] Voxels { get; set; }
 		#region IModel
 		public int SizeX => Voxels.Length;
 		public int SizeY => Voxels[0].Length;

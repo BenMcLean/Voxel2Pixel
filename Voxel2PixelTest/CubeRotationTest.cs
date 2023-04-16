@@ -14,7 +14,7 @@ namespace Voxel2PixelTest
 		{
 			NONE, CLOCKX, CLOCKY, CLOCKZ, COUNTERX, COUNTERY, COUNTERZ
 		}
-		public static readonly Dictionary<string, Turn[]> Turns = new Dictionary<string, Turn[]> {
+		public static readonly Dictionary<string, Turn[]> Orientations = new Dictionary<string, Turn[]> {
 				{ "SOUTH0", new Turn[] {Turn.NONE} },
 				{ "SOUTH1", new Turn[] {Turn.CLOCKY} },
 				{ "SOUTH2", new Turn[] {Turn.CLOCKY, Turn.CLOCKY} },
@@ -123,7 +123,7 @@ namespace Voxel2PixelTest
 		}
 		private void Test24(int x = 1, int y = 2, int z = 3)
 		{
-			foreach (KeyValuePair<string, Turn[]> orientation in Turns)
+			foreach (KeyValuePair<string, Turn[]> orientation in Orientations)
 				TestRotation(x, y, z, orientation.Key, orientation.Value);
 		}
 		private void TestRotation(int x, int y, int z, string name, params Turn[] turns)

@@ -5,7 +5,9 @@ using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Render;
+using VoxReader;
 using Xunit;
+using static Voxel2PixelTest.CubeRotationTest;
 
 namespace Voxel2PixelTest
 {
@@ -76,46 +78,48 @@ namespace Voxel2PixelTest
 			.SaveAsGif("TurnModelTest.gif");
 		}
 		[Fact]
-		public void OffsetModelTest()
+		public static void TestTest()
 		{
-			VoxModel sourceModel = new VoxModel(@"..\..\..\Sora.vox");
-			sourceModel.Voxels.Box(1);
-			IVoxelColor voxelColor = new NaiveDimmer(sourceModel.Palette);
+			byte[][][] bytes = ArrayModelTest.RainbowBox(4, 5, 6);
+			Assert.NotNull(bytes);
+			ArrayModel model = new ArrayModel(bytes);
+			Assert.NotNull(model.Voxels);
+			Assert.NotNull(new ArrayModel(model).Voxels);
 			TurnModel turnModel = new TurnModel
 			{
-				Model = sourceModel,
-				CubeRotation = CubeRotation.WEST1,
+				Model = new ArrayModel(model),
+				CubeRotation = CubeRotation.SOUTH0,
 			};
-			OffsetModel offsetModel = new OffsetModel
-			{
-				Model = turnModel,
-			};
-			BoxModel model = new BoxModel
-			{
-				Model = offsetModel,
-				Voxel = 4,
-			};
-			int width = Math.Max(VoxelDraw.IsoWidth(model), VoxelDraw.IsoHeight(model)),
-				height = width;
-			List<byte[]> frames = new List<byte[]>();
-			for (offsetModel.OffsetY = 0; offsetModel.OffsetY > -10; offsetModel.OffsetY--)
-			{
-				ArrayRenderer arrayRenderer = new ArrayRenderer
-				{
-					Image = new byte[width * 4 * height],
-					Width = width,
-					VoxelColor = voxelColor,
-				};
-				VoxelDraw.Iso(model, arrayRenderer);
-				frames.Add(arrayRenderer.Image);
-			}
-			ImageMaker.AnimatedGif(
-				scaleX: 16,
-				scaleY: 16,
-				width: width,
-				frames: frames.ToArray(),
-				frameDelay: 50)
-			.SaveAsGif("OffsetModelTest.gif");
+			Assert.NotNull(((ArrayModel)turnModel.Model).Voxels);
+			ArrayModel turned = (ArrayModel)MakeTurns(new ArrayModel(model), Turn.NONE);
 		}
+		[Fact]
+		public static void Test24()
+		{
+			ArrayModel model = new ArrayModel(ArrayModelTest.RainbowBox(4, 5, 6));
+			foreach (KeyValuePair<string, Turn[]> orientation in Orientations)
+				TestOrientation(model, orientation.Value);
+		}
+		public static bool IsEqual(IModel a, IModel b)
+		{
+			if (!a.SizeX.Equals(b.SizeX)
+				|| !a.SizeY.Equals(b.SizeY)
+				|| !a.SizeZ.Equals(b.SizeZ))
+				return false;
+			for (int x = 0; x < a.SizeX; x++)
+				for (int y = 0; y < a.SizeY; y++)
+					for (int z = 0; z < a.SizeZ; z++)
+						if (a.At(x, y, z) != b.At(x, y, z))
+							return false;
+			return true;
+		}
+		private static void TestOrientation(ArrayModel model, params Turn[] turns) =>
+			Assert.True(IsEqual(
+				new TurnModel
+				{
+					Model = new ArrayModel(model),
+					CubeRotation = Cube(turns),
+				},
+				(ArrayModel)MakeTurns(new ArrayModel(model), turns)));
 	}
 }
