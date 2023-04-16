@@ -101,11 +101,11 @@ namespace Voxel2Pixel.Model
 		}
 		public static byte[][][] ClockY(this byte[][][] inputArray)
 		{
-			byte[][][] outputArray = Initialize(inputArray[0].Length, inputArray.Length, inputArray[0][0].Length);
+			byte[][][] outputArray = Initialize(inputArray.Length, inputArray[0].Length, inputArray[0][0].Length);
 			for (int x = 0; x < inputArray.Length; x++)
 				for (int y = 0; y < inputArray[x].Length; y++)
 					for (int z = 0; z < inputArray[x][y].Length; z++)
-						outputArray[x][y][inputArray[x][y].Length - 1 - z] = inputArray[z][y][x];
+						outputArray[x][y][inputArray[x][y].Length - 1 - z] = inputArray[x][y][z];
 			return outputArray;
 		}
 		public static byte[][][] ClockZ(this byte[][][] inputArray)
