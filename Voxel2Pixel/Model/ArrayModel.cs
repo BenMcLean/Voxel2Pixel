@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Voxel2Pixel.Model
+﻿namespace Voxel2Pixel.Model
 {
 	public class ArrayModel : IModel, ITurnable
 	{

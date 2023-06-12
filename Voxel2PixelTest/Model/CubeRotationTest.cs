@@ -4,7 +4,7 @@ using System.Numerics;
 using Voxel2Pixel.Model;
 using Xunit;
 
-namespace Voxel2PixelTest
+namespace Voxel2PixelTest.Model
 {
 	public class CubeRotationTest
 	{

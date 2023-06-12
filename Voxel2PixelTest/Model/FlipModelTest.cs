@@ -6,7 +6,7 @@ using Voxel2Pixel.Model;
 using Voxel2Pixel.Render;
 using Xunit;
 
-namespace Voxel2PixelTest
+namespace Voxel2PixelTest.Model
 {
 	public class FlipModelTest
 	{

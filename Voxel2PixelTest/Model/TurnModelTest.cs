@@ -7,9 +7,9 @@ using Voxel2Pixel.Model;
 using Voxel2Pixel.Render;
 using VoxReader;
 using Xunit;
-using static Voxel2PixelTest.CubeRotationTest;
+using static Voxel2PixelTest.Model.CubeRotationTest;
 
-namespace Voxel2PixelTest
+namespace Voxel2PixelTest.Model
 {
 	public class TurnModelTest
 	{
@@ -41,18 +41,18 @@ namespace Voxel2PixelTest
 			int width = Math.Max(VoxelDraw.IsoWidth(model), VoxelDraw.IsoHeight(model)),
 				height = width + 4;
 			List<byte[]> frames = new List<byte[]>();
-			CubeRotation[] rotations = new CubeRotation[]
-			{
-				CubeRotation.WEST1,
-				CubeRotation.WEST3,
-				CubeRotation.EAST1,
-				CubeRotation.EAST3,
-				CubeRotation.UP1,
-				CubeRotation.UP3,
-				CubeRotation.DOWN1,
-				CubeRotation.DOWN3,
-			};
-			foreach (CubeRotation cubeRotation in rotations)
+			//CubeRotation[] rotations = new CubeRotation[]
+			//{
+			//	CubeRotation.WEST1,
+			//	CubeRotation.WEST3,
+			//	CubeRotation.EAST1,
+			//	CubeRotation.EAST3,
+			//	CubeRotation.UP1,
+			//	CubeRotation.UP3,
+			//	CubeRotation.DOWN1,
+			//	CubeRotation.DOWN3,
+			//};
+			foreach (CubeRotation cubeRotation in CubeRotation.Values)
 			{
 				turnModel.CubeRotation = cubeRotation;
 				ArrayRenderer arrayRenderer = new ArrayRenderer
@@ -113,13 +113,16 @@ namespace Voxel2PixelTest
 							return false;
 			return true;
 		}
-		private static void TestOrientation(ArrayModel model, params Turn[] turns) =>
-			Assert.True(IsEqual(
-				new TurnModel
-				{
-					Model = new ArrayModel(model),
-					CubeRotation = Cube(turns),
-				},
-				(ArrayModel)MakeTurns(new ArrayModel(model), turns)));
+		private static void TestOrientation(ArrayModel model, params Turn[] turns)
+		{
+			TurnModel turnModel = new TurnModel
+			{
+				Model = new ArrayModel(model),
+				CubeRotation = Cube(turns),
+			};
+			ArrayModel arrayModel = (ArrayModel)MakeTurns(new ArrayModel(model), turns);
+
+			Assert.True(IsEqual(turnModel, arrayModel));
+		}
 	}
 }

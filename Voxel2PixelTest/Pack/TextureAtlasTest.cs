@@ -6,7 +6,7 @@ using Voxel2Pixel.Pack;
 using Xunit;
 using static Voxel2Pixel.Pack.TextureAtlas;
 
-namespace Voxel2PixelTest
+namespace Voxel2PixelTest.Pack
 {
 	public class TextureAtlasTest
 	{
