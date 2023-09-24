@@ -18,7 +18,7 @@ namespace Voxel2PixelTest.Model
 		{
 			//ArrayModel sourceModel = new ArrayModel(ArrayModelTest.RainbowBox(5, 6, 7));
 			//IVoxelColor voxelColor = new NaiveDimmer(ArrayModelTest.RainbowPalette);
-			VoxModel sourceModel = new VoxModel(@"..\..\..\NumberCube.vox");
+			VoxModel sourceModel = new VoxModel(@"..\..\..\Sora.vox");
 			sourceModel.Voxels.Box<byte>(1);
 			IVoxelColor voxelColor = new NaiveDimmer(sourceModel.Palette);
 			//int testTextureWidth = 10, testTextureHeight = 32;
@@ -77,13 +77,13 @@ namespace Voxel2PixelTest.Model
 					width: width,
 					bytes: frames[frame])
 				.SaveAsPng(@".\NumberCube\NumberCube" + frame.ToString("00") + ".png");
-			//ImageMaker.AnimatedGif(
-			//	scaleX: 16,
-			//	scaleY: 16,
-			//	width: width,
-			//	frames: frames.ToArray(),
-			//	frameDelay: 150)
-			//.SaveAsGif("TurnModelTest.gif");
+			ImageMaker.AnimatedGif(
+				scaleX: 16,
+				scaleY: 16,
+				width: width,
+				frames: frames.ToArray(),
+				frameDelay: 150)
+			.SaveAsGif("TurnModelTest.gif");
 		}
 		[Fact]
 		public static void TestTest()

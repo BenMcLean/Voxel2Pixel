@@ -21,43 +21,45 @@ namespace Voxel2Pixel.Model
 			yMinus = -2,
 			zMinus = -3;
 		public static readonly CubeRotation
-			SOUTH0 = new CubeRotation(0, "SOUTH0", xPlus, yPlus, zPlus),
-			SOUTH1 = new CubeRotation(1, "SOUTH1", zMinus, yPlus, xPlus),
-			SOUTH2 = new CubeRotation(2, "SOUTH2", xMinus, yPlus, zMinus),
-			SOUTH3 = new CubeRotation(3, "SOUTH3", zPlus, yPlus, xMinus),
-			WEST0 = new CubeRotation(4, "WEST0", yPlus, xMinus, zPlus),
-			WEST1 = new CubeRotation(5, "WEST1", yPlus, zPlus, xPlus),
-			WEST2 = new CubeRotation(6, "WEST2", yPlus, xPlus, zMinus),
-			WEST3 = new CubeRotation(7, "WEST3", yPlus, zMinus, xMinus),
-			NORTH0 = new CubeRotation(8, "NORTH0", xMinus, yMinus, zPlus),
-			NORTH1 = new CubeRotation(9, "NORTH1", zPlus, yMinus, xPlus),
-			NORTH2 = new CubeRotation(10, "NORTH2", xPlus, yMinus, zMinus),
-			NORTH3 = new CubeRotation(11, "NORTH3", zMinus, yMinus, xMinus),
-			EAST0 = new CubeRotation(12, "EAST0", yMinus, xPlus, zPlus),
-			EAST1 = new CubeRotation(13, "EAST1", yMinus, zMinus, xPlus),
-			EAST2 = new CubeRotation(14, "EAST2", yMinus, xMinus, zMinus),
-			EAST3 = new CubeRotation(15, "EAST3", yMinus, zPlus, xMinus),
-			UP0 = new CubeRotation(16, "UP0", xPlus, zPlus, yMinus),
-			UP1 = new CubeRotation(17, "UP1", zMinus, xPlus, yMinus),
-			UP2 = new CubeRotation(18, "UP2", xMinus, zMinus, yMinus),
-			UP3 = new CubeRotation(19, "UP3", zPlus, xMinus, yMinus),
-			DOWN0 = new CubeRotation(20, "DOWN0", xPlus, zMinus, yPlus),
-			DOWN1 = new CubeRotation(21, "DOWN1", zMinus, xMinus, yPlus),
-			DOWN2 = new CubeRotation(22, "DOWN2", xMinus, zPlus, yPlus),
-			DOWN3 = new CubeRotation(23, "DOWN3", zPlus, xPlus, yPlus);
+			SOUTH0 = new CubeRotation(0, "SOUTH0", xPlus, yPlus, zPlus, 0, 1, 2),
+			SOUTH1 = new CubeRotation(1, "SOUTH1", zMinus, yPlus, xPlus, 2, 1, 0),
+			SOUTH2 = new CubeRotation(2, "SOUTH2", xMinus, yPlus, zMinus, 0, 1, 2),
+			SOUTH3 = new CubeRotation(3, "SOUTH3", zPlus, yPlus, xMinus, 2, 1, 0),
+			WEST0 = new CubeRotation(4, "WEST0", yPlus, xMinus, zPlus, 1, 0, 2),
+			WEST1 = new CubeRotation(5, "WEST1", yPlus, zPlus, xPlus, 2, 0, 1),
+			WEST2 = new CubeRotation(6, "WEST2", yPlus, xPlus, zMinus, 1, 0, 2),
+			WEST3 = new CubeRotation(7, "WEST3", yPlus, zMinus, xMinus, 2, 0, 1),
+			NORTH0 = new CubeRotation(8, "NORTH0", xMinus, yMinus, zPlus, 0, 1, 2),
+			NORTH1 = new CubeRotation(9, "NORTH1", zPlus, yMinus, xPlus, 2, 1, 0),
+			NORTH2 = new CubeRotation(10, "NORTH2", xPlus, yMinus, zMinus, 0, 1, 2),
+			NORTH3 = new CubeRotation(11, "NORTH3", zMinus, yMinus, xMinus, 2, 1, 0),
+			EAST0 = new CubeRotation(12, "EAST0", yMinus, xPlus, zPlus, 1, 0, 2),
+			EAST1 = new CubeRotation(13, "EAST1", yMinus, zMinus, xPlus, 2, 0, 1),
+			EAST2 = new CubeRotation(14, "EAST2", yMinus, xMinus, zMinus, 1, 0, 2),
+			EAST3 = new CubeRotation(15, "EAST3", yMinus, zPlus, xMinus, 2, 0, 1),
+			UP0 = new CubeRotation(16, "UP0", xPlus, zPlus, yMinus, 0, 2, 1),
+			UP1 = new CubeRotation(17, "UP1", zMinus, xPlus, yMinus, 1, 2, 0),
+			UP2 = new CubeRotation(18, "UP2", xMinus, zMinus, yMinus, 0, 2, 1),
+			UP3 = new CubeRotation(19, "UP3", zPlus, xMinus, yMinus, 1, 2, 0),
+			DOWN0 = new CubeRotation(20, "DOWN0", xPlus, zMinus, yPlus, 0, 2, 1),
+			DOWN1 = new CubeRotation(21, "DOWN1", zMinus, xMinus, yPlus, 1, 2, 0),
+			DOWN2 = new CubeRotation(22, "DOWN2", xMinus, zPlus, yPlus, 0, 2, 1),
+			DOWN3 = new CubeRotation(23, "DOWN3", zPlus, xPlus, yPlus, 1, 2, 0);
 		public static readonly ReadOnlyCollection<CubeRotation> Values = Array.AsReadOnly(new CubeRotation[] { SOUTH0, SOUTH1, SOUTH2, SOUTH3, WEST0, WEST1, WEST2, WEST3, NORTH0, NORTH1, NORTH2, NORTH3, EAST0, EAST1, EAST2, EAST3, UP0, UP1, UP2, UP3, DOWN0, DOWN1, DOWN2, DOWN3 });
 		#endregion Instances
 		#region Data members
 		public readonly byte Value;
 		public readonly string Name;
 		public readonly ReadOnlyCollection<int> Rotation;
+		public readonly ReadOnlyCollection<byte> Size;
 		#endregion Data members
 		#region CubeRotation
-		private CubeRotation(byte value, string name, params int[] rotation)
+		private CubeRotation(byte value, string name, int rot0, int rot1, int rot2, params byte[] size)
 		{
 			Value = value;
 			Name = name;
-			Rotation = Array.AsReadOnly(rotation);
+			Rotation = Array.AsReadOnly(new int[] { rot0, rot1, rot2 });
+			Size = Array.AsReadOnly(size);
 		}
 		public override string ToString() => Name;
 		public static bool operator ==(CubeRotation obj1, CubeRotation obj2) => obj1.Equals(obj2);
