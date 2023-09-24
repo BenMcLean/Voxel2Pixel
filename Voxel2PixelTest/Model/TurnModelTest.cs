@@ -1,6 +1,7 @@
 ﻿using SixLabors.ImageSharp;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Model;
@@ -62,19 +63,27 @@ namespace Voxel2PixelTest.Model
 				};
 				VoxelDraw.Iso(model, arrayRenderer);
 				arrayRenderer.Image.Draw3x4(
-					@string: cubeRotation.Name + ": " + string.Join(", ", model.SizeX, model.SizeY, model.SizeZ),
+					@string: cubeRotation.Value + " " + cubeRotation.Name + ": " + string.Join(", ", model.SizeX, model.SizeY, model.SizeZ),
 					width: width,
 					x: 0,
 					y: height - 4);
 				frames.Add(arrayRenderer.Image);
 			}
-			ImageMaker.AnimatedGif(
-				scaleX: 16,
-				scaleY: 16,
-				width: width,
-				frames: frames.ToArray(),
-				frameDelay: 150)
-			.SaveAsGif("TurnModelTest.gif");
+			Directory.CreateDirectory(@".\NumberCube");
+			for (int frame = 0; frame < frames.Count; frame++)
+				ImageMaker.Png(
+					scaleX: 16,
+					scaleY: 16,
+					width: width,
+					bytes: frames[frame])
+				.SaveAsPng(@".\NumberCube\NumberCube" + frame.ToString("00") + ".png");
+			//ImageMaker.AnimatedGif(
+			//	scaleX: 16,
+			//	scaleY: 16,
+			//	width: width,
+			//	frames: frames.ToArray(),
+			//	frameDelay: 150)
+			//.SaveAsGif("TurnModelTest.gif");
 		}
 		[Fact]
 		public static void TestTest()
