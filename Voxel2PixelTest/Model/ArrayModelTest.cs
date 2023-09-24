@@ -51,7 +51,7 @@ namespace Voxel2PixelTest.Model
 			.ToArray();
 		public static byte[][][] RainbowBox(int sizeX, int sizeY, int sizeZ)
 		{
-			byte[][][] model = Bytes3D.Initialize(sizeX, sizeY, sizeZ);
+			byte[][][] model = Bytes3D.Initialize<byte>(sizeX, sizeY, sizeZ);
 			for (int x = 0; x < sizeX; x++)
 			{
 				byte voxel = (byte)((sizeX - 1 - x) % Rainbow.Count + 1);
@@ -80,7 +80,7 @@ namespace Voxel2PixelTest.Model
 		}
 		public static byte[][][] AltRainbowBox(int sizeX, int sizeY, int sizeZ)
 		{
-			byte[][][] model = Bytes3D.Initialize(sizeX, sizeY, sizeZ);
+			byte[][][] model = Bytes3D.Initialize<byte>(sizeX, sizeY, sizeZ);
 			model[0][3][0] = 1;
 			model[3][0][0] = 1;
 			for (int x = 1; x < sizeX; x++)
@@ -111,7 +111,7 @@ namespace Voxel2PixelTest.Model
 		}
 		public static byte[][][] SmallerRainbowBox(int sizeX, int sizeY, int sizeZ)
 		{
-			byte[][][] model = Bytes3D.Initialize(sizeX, sizeY, sizeZ);
+			byte[][][] model = Bytes3D.Initialize<byte>(sizeX, sizeY, sizeZ);
 			for (int x = 1; x < sizeX - 1; x++)
 			{
 				byte voxel = (byte)(x % Rainbow.Count);

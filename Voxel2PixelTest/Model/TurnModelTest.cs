@@ -5,7 +5,6 @@ using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Render;
-using VoxReader;
 using Xunit;
 using static Voxel2PixelTest.Model.CubeRotationTest;
 
@@ -19,7 +18,7 @@ namespace Voxel2PixelTest.Model
 			//ArrayModel sourceModel = new ArrayModel(ArrayModelTest.RainbowBox(5, 6, 7));
 			//IVoxelColor voxelColor = new NaiveDimmer(ArrayModelTest.RainbowPalette);
 			VoxModel sourceModel = new VoxModel(@"..\..\..\Sora.vox");
-			sourceModel.Voxels.Box(1);
+			sourceModel.Voxels.Box<byte>(1);
 			IVoxelColor voxelColor = new NaiveDimmer(sourceModel.Palette);
 			//int testTextureWidth = 10, testTextureHeight = 32;
 			//byte[] testTexture = TextureModelTest.TestTexture(testTextureWidth, testTextureHeight);

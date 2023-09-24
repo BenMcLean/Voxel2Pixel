@@ -4,7 +4,7 @@
 	{
 		public ArrayModel(byte[][][] voxels) => Voxels = voxels;
 		public ArrayModel(ArrayModel other) : this(other.Voxels.DeepCopy()) { }
-		public ArrayModel(int sizeX = 1, int sizeY = 1, int sizeZ = 1) : this(Bytes3D.Initialize(sizeX, sizeY, sizeZ)) { }
+		public ArrayModel(int sizeX = 1, int sizeY = 1, int sizeZ = 1) : this(Bytes3D.Initialize<byte>(sizeX, sizeY, sizeZ)) { }
 		public ArrayModel(IModel model) : this(model.SizeX, model.SizeY, model.SizeZ)
 		{
 			for (int x = 0; x < SizeX; x++)

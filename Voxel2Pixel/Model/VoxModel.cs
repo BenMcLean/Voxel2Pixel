@@ -30,7 +30,7 @@ namespace Voxel2Pixel.Model
 			set
 			{
 				model = value;
-				Voxels = Bytes3D.Initialize(model.Size.X, model.Size.Y, model.Size.Z);
+				Voxels = Bytes3D.Initialize<byte>(model.Size.X, model.Size.Y, model.Size.Z);
 				foreach (VoxReader.Voxel voxel in Model.Voxels)
 					if (Array.IndexOf(Palette, Color(voxel.Color)) is int index
 						&& index > 0

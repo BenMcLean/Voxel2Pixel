@@ -4,40 +4,40 @@ namespace Voxel2Pixel.Model
 {
 	public static class Bytes3D
 	{
-		public static byte[][][] Initialize(int sizeX = 1, int sizeY = 1, int sizeZ = 1)
+		public static T[][][] Initialize<T>(int sizeX = 1, int sizeY = 1, int sizeZ = 1)
 		{
-			byte[][][] model = new byte[sizeX][][];
+			T[][][] model = new T[sizeX][][];
 			for (int x = 0; x < sizeX; x++)
 			{
-				model[x] = new byte[sizeY][];
+				model[x] = new T[sizeY][];
 				for (int y = 0; y < sizeY; y++)
-					model[x][y] = new byte[sizeZ];
+					model[x][y] = new T[sizeZ];
 			}
 			return model;
 		}
-		public static byte[][][] DeepCopy(this byte[][][] inputArray)
+		public static T[][][] DeepCopy<T>(this T[][][] inputArray)
 		{
 			if (inputArray is null)
 				return null;
-			byte[][][] outputArray = new byte[inputArray.Length][][];
+			T[][][] outputArray = new T[inputArray.Length][][];
 			for (int x = 0; x < inputArray.Length; x++)
 				if (inputArray[x] is null)
 					outputArray[x] = null;
 				else
 				{
-					outputArray[x] = new byte[inputArray[x].Length][];
+					outputArray[x] = new T[inputArray[x].Length][];
 					for (int y = 0; y < inputArray[x].Length; y++)
 						if (inputArray[x][y] is null)
 							outputArray[x][y] = null;
 						else
 						{
-							outputArray[x][y] = new byte[inputArray[x][y].Length];
+							outputArray[x][y] = new T[inputArray[x][y].Length];
 							Array.Copy(inputArray[x][y], outputArray[x][y], inputArray[x][y].Length);
 						}
 				}
 			return outputArray;
 		}
-		public static byte[][][] Box(this byte[][][] voxels, byte voxel)
+		public static T[][][] Box<T>(this T[][][] voxels, T voxel)
 		{
 			for (int x = 0; x < voxels.Length; x++)
 			{
@@ -63,54 +63,54 @@ namespace Voxel2Pixel.Model
 			return voxels;
 		}
 		#region Rotations
-		public static byte[][][] CounterX(this byte[][][] inputArray)
+		public static T[][][] CounterX<T>(this T[][][] inputArray)
 		{
-			byte[][][] outputArray = Initialize(inputArray[0].Length, inputArray.Length, inputArray[0][0].Length);
+			T[][][] outputArray = Initialize<T>(inputArray[0].Length, inputArray.Length, inputArray[0][0].Length);
 			for (int x = 0; x < inputArray.Length; x++)
 				for (int y = 0; y < inputArray[x].Length; y++)
 					for (int z = 0; z < inputArray[x][y].Length; z++)
 						outputArray[inputArray[x].Length - 1 - y][x][z] = inputArray[x][y][z];
 			return outputArray;
 		}
-		public static byte[][][] CounterY(this byte[][][] inputArray)
+		public static T[][][] CounterY<T>(this T[][][] inputArray)
 		{
-			byte[][][] outputArray = Initialize(inputArray[0].Length, inputArray.Length, inputArray[0][0].Length);
+			T[][][] outputArray = Initialize<T>(inputArray[0].Length, inputArray.Length, inputArray[0][0].Length);
 			for (int x = 0; x < inputArray.Length; x++)
 				for (int y = 0; y < inputArray[x].Length; y++)
 					for (int z = 0; z < inputArray[x][y].Length; z++)
 						outputArray[x][y][inputArray[x][y].Length - 1 - z] = inputArray[x][y][z];
 			return outputArray;
 		}
-		public static byte[][][] CounterZ(this byte[][][] inputArray)
+		public static T[][][] CounterZ<T>(this T[][][] inputArray)
 		{
-			byte[][][] outputArray = Initialize(inputArray[0][0].Length, inputArray.Length, inputArray[0].Length);
+			T[][][] outputArray = Initialize<T>(inputArray[0][0].Length, inputArray.Length, inputArray[0].Length);
 			for (int x = 0; x < inputArray.Length; x++)
 				for (int y = 0; y < inputArray[x].Length; y++)
 					for (int z = 0; z < inputArray[x][y].Length; z++)
 						outputArray[inputArray[x][y].Length - 1 - z][y][x] = inputArray[x][y][z];
 			return outputArray;
 		}
-		public static byte[][][] ClockX(this byte[][][] inputArray)
+		public static T[][][] ClockX<T>(this T[][][] inputArray)
 		{
-			byte[][][] outputArray = Initialize(inputArray[0].Length, inputArray.Length, inputArray[0][0].Length);
+			T[][][] outputArray = Initialize<T>(inputArray[0].Length, inputArray.Length, inputArray[0][0].Length);
 			for (int x = 0; x < inputArray.Length; x++)
 				for (int y = 0; y < inputArray[x].Length; y++)
 					for (int z = 0; z < inputArray[x][y].Length; z++)
 						outputArray[y][inputArray[x].Length - 1 - x][z] = inputArray[x][y][z];
 			return outputArray;
 		}
-		public static byte[][][] ClockY(this byte[][][] inputArray)
+		public static T[][][] ClockY<T>(this T[][][] inputArray)
 		{
-			byte[][][] outputArray = Initialize(inputArray.Length, inputArray[0].Length, inputArray[0][0].Length);
+			T[][][] outputArray = Initialize<T>(inputArray.Length, inputArray[0].Length, inputArray[0][0].Length);
 			for (int x = 0; x < inputArray.Length; x++)
 				for (int y = 0; y < inputArray[x].Length; y++)
 					for (int z = 0; z < inputArray[x][y].Length; z++)
 						outputArray[x][y][inputArray[x][y].Length - 1 - z] = inputArray[x][y][z];
 			return outputArray;
 		}
-		public static byte[][][] ClockZ(this byte[][][] inputArray)
+		public static T[][][] ClockZ<T>(this T[][][] inputArray)
 		{
-			byte[][][] outputArray = Initialize(inputArray[0].Length, inputArray[0][0].Length, inputArray.Length);
+			T[][][] outputArray = Initialize<T>(inputArray[0].Length, inputArray[0][0].Length, inputArray.Length);
 			for (int x = 0; x < inputArray.Length; x++)
 				for (int y = 0; y < inputArray[x].Length; y++)
 					for (int z = 0; z < inputArray[x][y].Length; z++)
