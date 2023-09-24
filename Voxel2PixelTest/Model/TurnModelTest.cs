@@ -17,7 +17,7 @@ namespace Voxel2PixelTest.Model
 		{
 			//ArrayModel sourceModel = new ArrayModel(ArrayModelTest.RainbowBox(5, 6, 7));
 			//IVoxelColor voxelColor = new NaiveDimmer(ArrayModelTest.RainbowPalette);
-			VoxModel sourceModel = new VoxModel(@"..\..\..\Sora.vox");
+			VoxModel sourceModel = new VoxModel(@"..\..\..\NumberCube.vox");
 			sourceModel.Voxels.Box<byte>(1);
 			IVoxelColor voxelColor = new NaiveDimmer(sourceModel.Palette);
 			//int testTextureWidth = 10, testTextureHeight = 32;

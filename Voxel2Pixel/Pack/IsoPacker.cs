@@ -142,5 +142,78 @@ namespace Voxel2Pixel.Pack
 					y: origins[i][1],
 					width: widths[i]);
 		}
+		public static void IsoSpritesUncut(IModel model, IVoxelColor voxelColor, out byte[][] sprites, out int[] widths, out int[][] origins, int originX = -1, int originY = -1, int originZ = -1)
+		{
+			if (originX < 0)
+				originX = model.SizeX >> 1;
+			if (originY < 0)
+				originY = model.SizeY >> 1;
+			if (originZ < 0)
+				originZ = 0;
+			sprites = new byte[8][];
+			widths = new int[sprites.Length];
+			origins = new int[sprites.Length][];
+			TurnModel turnModel = new TurnModel
+			{
+				Model = model,
+			};
+			for (int i = 0; i < sprites.Length; i += 2)
+			{
+				turnModel.Rotate(
+					x: out int turnedX,
+					y: out int turnedY,
+					z: out int turnedZ,
+					originX,
+					originY,
+					originZ);
+				int width = VoxelDraw.AboveWidth(turnModel);
+				ArrayRenderer arrayRenderer = new ArrayRenderer
+				{
+					Image = new byte[width * 4 * VoxelDraw.AboveHeight(turnModel)],
+					Width = width,
+					VoxelColor = voxelColor,
+				};
+				VoxelDraw.Above(
+					model: turnModel,
+					renderer: arrayRenderer);
+				sprites[i] = arrayRenderer.Image;
+				widths[i] = width;
+				origins[i] = new int[2];
+				VoxelDraw.AboveLocate(
+					pixelX: out origins[i][0],
+					pixelY: out origins[i][1],
+					model: turnModel,
+					voxelX: turnedX,
+					voxelY: turnedY,
+					voxelZ: turnedZ);
+				width = VoxelDraw.IsoWidth(turnModel);
+				arrayRenderer = new Array2xRenderer
+				{
+					Image = new byte[width * 4 * VoxelDraw.IsoHeight(turnModel)],
+					Width = width,
+					VoxelColor = voxelColor,
+				};
+				VoxelDraw.Iso(
+					model: turnModel,
+					renderer: arrayRenderer);
+				sprites[i + 1] = arrayRenderer.Image;
+				widths[i + 1] = width;
+				origins[i + 1] = new int[2];
+				VoxelDraw.IsoLocate(
+					pixelX: out origins[i + 1][0],
+					pixelY: out origins[i + 1][1],
+					model: turnModel,
+					voxelX: turnedX,
+					voxelY: turnedY,
+					voxelZ: turnedZ);
+				turnModel.CounterZ();
+			}
+			for (int i = 0; i < sprites.Length; i++)
+				sprites[i].DrawPixel(
+					color: 0xFFFFFFFF,
+					x: origins[i][0],
+					y: origins[i][1],
+					width: widths[i]);
+		}
 	}
 }
