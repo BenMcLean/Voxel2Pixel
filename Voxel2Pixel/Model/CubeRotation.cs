@@ -67,20 +67,20 @@ namespace Voxel2Pixel.Model
 		public override bool Equals(object other) => other is CubeRotation cubeRotation && Value == cubeRotation.Value;
 		public override int GetHashCode() => Value;
 		#endregion CubeRotation
-		#region Sides
+		#region Faces
 		public bool South => Value < 4;
 		public bool West => Value > 3 && Value < 8;
 		public bool North => Value > 7 && Value < 12;
 		public bool East => Value > 11 && Value < 16;
 		public bool Up => Value > 15 && Value < 20;
 		public bool Down => Value > 19;
-		#endregion Sides
+		#endregion Faces
 		#region ITurnable
 		public static readonly ReadOnlyCollection<ReadOnlyCollection<byte>> Clock = Array.AsReadOnly(new ReadOnlyCollection<byte>[] {
 				Array.AsReadOnly(new byte[] { 16, 5, 22, 15, 19, 9, 23, 3, 18, 13, 20, 7, 17, 1, 21, 11, 10, 6, 2, 14, 0, 4, 8, 12 }),//x axis
 				Array.AsReadOnly(new byte[] { 1, 2, 3, 0, 5, 6, 7, 4, 9, 10, 11, 8, 13, 14, 15, 12, 17, 18, 19, 16, 21, 22, 23, 20 }),//y axis
 				Array.AsReadOnly(new byte[] { 4, 21, 14, 19, 8, 22, 2, 18, 12, 23, 6, 17, 0, 20, 10, 16, 5, 1, 13, 9, 7, 11, 15, 3 })}),//z axis
-			Counter = Array.AsReadOnly(Clock.Select(a => Array.AsReadOnly(a.Select(e => (byte)a.IndexOf(e)).ToArray())).ToArray());
+			Counter = Array.AsReadOnly(Clock.Select(a => Array.AsReadOnly(Enumerable.Range(0, a.Count).Select(e => (byte)a.IndexOf((byte)e)).ToArray())).ToArray());
 		public ITurnable CounterX() => Values[Counter[0][Value]];
 		public ITurnable CounterY() => Values[Counter[1][Value]];
 		public ITurnable CounterZ() => Values[Counter[2][Value]];
