@@ -8,9 +8,9 @@ namespace Voxel2Pixel.Model
 	public class TurnModel : IModel, ITurnable
 	{
 		public IModel Model { get; set; }
-		public CubeRotation CubeRotation { get; set; } = CubeRotation.SOUTH0;
-		public int RotatedSize(int axis) => ModelSize(CubeRotation.Size[CubeRotation.FlipBits(axis)]);
-		//public int RotatedSize(int axis) => Math.Abs(CubeRotation.Rotate(axis, Model.SizeX, Model.SizeY, Model.SizeZ));
+		public CuboidOrientation CuboidOrientation { get; set; } = CuboidOrientation.SOUTH0;
+		public int RotatedSize(int axis) => ModelSize(CuboidOrientation.Size[CuboidOrientation.FlipBits(axis)]);
+		//public int RotatedSize(int axis) => Math.Abs(CuboidOrientation.Rotate(axis, Model.SizeX, Model.SizeY, Model.SizeZ));
 		/// <summary>
 		/// Allows treating the sizes of the underlying model as if they were in an array. Allows negative values for index, unlike an array, and will correctly treat the negative index that corresponds to a reversed axis as if it was the the corresponding non-reversed axis. This means -1 will be the same as 0, -2 the same as 1, and -3 the same as 2.
 		/// </summary>
@@ -20,21 +20,21 @@ namespace Voxel2Pixel.Model
 		{
 			switch (index)
 			{
-				case CubeRotation.xPlus:
-				case CubeRotation.xMinus:
+				case CuboidOrientation.xPlus:
+				case CuboidOrientation.xMinus:
 					return Model.SizeX;
-				case CubeRotation.yPlus:
-				case CubeRotation.yMinus:
+				case CuboidOrientation.yPlus:
+				case CuboidOrientation.yMinus:
 					return Model.SizeY;
-				case CubeRotation.zPlus:
-				case CubeRotation.zMinus:
+				case CuboidOrientation.zPlus:
+				case CuboidOrientation.zMinus:
 					return Model.SizeZ;
 				default:
 					throw new ArgumentException("Invalid index: \"" + index + "\"");
 			}
 		}
 		public int Start(int axis) =>
-			CubeRotation.Step(axis) < 1 ?
+			CuboidOrientation.Step(axis) < 1 ?
 				ModelSize(axis) - 1
 				: 0;
 		public int StartX => Start(0);
@@ -46,7 +46,7 @@ namespace Voxel2Pixel.Model
 		public int SizeZ => RotatedSize(2);
 		public bool IsInside(int x, int y, int z) => !IsOutside(x, y, z);
 		public bool IsOutside(int x, int y, int z) => x < 0 || y < 0 || z < 0 || x >= SizeX || y >= SizeY || z >= SizeZ;
-		public int Rotate(int axis, params int[] coordinates) => CubeRotation.Rotate(axis, coordinates) + Start(axis);
+		public int Rotate(int axis, params int[] coordinates) => CuboidOrientation.Rotate(axis, coordinates) + Start(axis);
 		public void Rotate(out int x, out int y, out int z, params int[] coordinates)
 		{
 			x = Rotate(0, coordinates);
@@ -62,37 +62,37 @@ namespace Voxel2Pixel.Model
 		#region ITurnable
 		public ITurnable CounterX()
 		{
-			CubeRotation = (CubeRotation)CubeRotation.CounterX();
+			CuboidOrientation = (CuboidOrientation)CuboidOrientation.CounterX();
 			return this;
 		}
 		public ITurnable CounterY()
 		{
-			CubeRotation = (CubeRotation)CubeRotation.CounterY();
+			CuboidOrientation = (CuboidOrientation)CuboidOrientation.CounterY();
 			return this;
 		}
 		public ITurnable CounterZ()
 		{
-			CubeRotation = (CubeRotation)CubeRotation.CounterZ();
+			CuboidOrientation = (CuboidOrientation)CuboidOrientation.CounterZ();
 			return this;
 		}
 		public ITurnable ClockX()
 		{
-			CubeRotation = (CubeRotation)CubeRotation.ClockX();
+			CuboidOrientation = (CuboidOrientation)CuboidOrientation.ClockX();
 			return this;
 		}
 		public ITurnable ClockY()
 		{
-			CubeRotation = (CubeRotation)CubeRotation.ClockY();
+			CuboidOrientation = (CuboidOrientation)CuboidOrientation.ClockY();
 			return this;
 		}
 		public ITurnable ClockZ()
 		{
-			CubeRotation = (CubeRotation)CubeRotation.ClockZ();
+			CuboidOrientation = (CuboidOrientation)CuboidOrientation.ClockZ();
 			return this;
 		}
 		public ITurnable Reset()
 		{
-			CubeRotation = CubeRotation.SOUTH0;
+			CuboidOrientation = CuboidOrientation.SOUTH0;
 			return this;
 		}
 		#endregion ITurnable

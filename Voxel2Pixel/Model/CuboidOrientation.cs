@@ -10,7 +10,7 @@ namespace Voxel2Pixel.Model
 	/// https://en.wikipedia.org/wiki/Octahedral_symmetry#Chiral_octahedral_symmetry
 	/// In 3D space for voxels, I'm following the MagicaVoxel convention, which is Z+up, right-handed, so X+ means east/right, Y+ means forwards/north and Z+ means up.
 	/// </summary>
-	public sealed class CubeRotation : ITurnable
+	public sealed class CuboidOrientation : ITurnable
 	{
 		#region Instances
 		public const int
@@ -20,32 +20,32 @@ namespace Voxel2Pixel.Model
 			xMinus = -1,
 			yMinus = -2,
 			zMinus = -3;
-		public static readonly CubeRotation
-			SOUTH0 = new CubeRotation(0, "SOUTH0", xPlus, yPlus, zPlus, 0, 1, 2),
-			SOUTH1 = new CubeRotation(1, "SOUTH1", zMinus, yPlus, xPlus, 2, 1, 0),
-			SOUTH2 = new CubeRotation(2, "SOUTH2", xMinus, yPlus, zMinus, 0, 1, 2),
-			SOUTH3 = new CubeRotation(3, "SOUTH3", zPlus, yPlus, xMinus, 2, 1, 0),
-			WEST0 = new CubeRotation(4, "WEST0", yPlus, xMinus, zPlus, 1, 0, 2),
-			WEST1 = new CubeRotation(5, "WEST1", yPlus, zPlus, xPlus, 2, 0, 1),
-			WEST2 = new CubeRotation(6, "WEST2", yPlus, xPlus, zMinus, 1, 0, 2),
-			WEST3 = new CubeRotation(7, "WEST3", yPlus, zMinus, xMinus, 2, 0, 1),
-			NORTH0 = new CubeRotation(8, "NORTH0", xMinus, yMinus, zPlus, 0, 1, 2),
-			NORTH1 = new CubeRotation(9, "NORTH1", zPlus, yMinus, xPlus, 2, 1, 0),
-			NORTH2 = new CubeRotation(10, "NORTH2", xPlus, yMinus, zMinus, 0, 1, 2),
-			NORTH3 = new CubeRotation(11, "NORTH3", zMinus, yMinus, xMinus, 2, 1, 0),
-			EAST0 = new CubeRotation(12, "EAST0", yMinus, xPlus, zPlus, 1, 0, 2),
-			EAST1 = new CubeRotation(13, "EAST1", yMinus, zMinus, xPlus, 2, 0, 1),
-			EAST2 = new CubeRotation(14, "EAST2", yMinus, xMinus, zMinus, 1, 0, 2),
-			EAST3 = new CubeRotation(15, "EAST3", yMinus, zPlus, xMinus, 2, 0, 1),
-			UP0 = new CubeRotation(16, "UP0", xPlus, zPlus, yMinus, 0, 2, 1),
-			UP1 = new CubeRotation(17, "UP1", zMinus, xPlus, yMinus, 1, 2, 0),
-			UP2 = new CubeRotation(18, "UP2", xMinus, zMinus, yMinus, 0, 2, 1),
-			UP3 = new CubeRotation(19, "UP3", zPlus, xMinus, yMinus, 1, 2, 0),
-			DOWN0 = new CubeRotation(20, "DOWN0", xPlus, zMinus, yPlus, 0, 2, 1),
-			DOWN1 = new CubeRotation(21, "DOWN1", zMinus, xMinus, yPlus, 1, 2, 0),
-			DOWN2 = new CubeRotation(22, "DOWN2", xMinus, zPlus, yPlus, 0, 2, 1),
-			DOWN3 = new CubeRotation(23, "DOWN3", zPlus, xPlus, yPlus, 1, 2, 0);
-		public static readonly ReadOnlyCollection<CubeRotation> Values = Array.AsReadOnly(new CubeRotation[] { SOUTH0, SOUTH1, SOUTH2, SOUTH3, WEST0, WEST1, WEST2, WEST3, NORTH0, NORTH1, NORTH2, NORTH3, EAST0, EAST1, EAST2, EAST3, UP0, UP1, UP2, UP3, DOWN0, DOWN1, DOWN2, DOWN3 });
+		public static readonly CuboidOrientation
+			SOUTH0 = new CuboidOrientation(0, "SOUTH0", xPlus, yPlus, zPlus, 0, 1, 2),
+			SOUTH1 = new CuboidOrientation(1, "SOUTH1", zMinus, yPlus, xPlus, 2, 1, 0),
+			SOUTH2 = new CuboidOrientation(2, "SOUTH2", xMinus, yPlus, zMinus, 0, 1, 2),
+			SOUTH3 = new CuboidOrientation(3, "SOUTH3", zPlus, yPlus, xMinus, 2, 1, 0),
+			WEST0 = new CuboidOrientation(4, "WEST0", yPlus, xMinus, zPlus, 1, 0, 2),
+			WEST1 = new CuboidOrientation(5, "WEST1", yPlus, zPlus, xPlus, 2, 0, 1),
+			WEST2 = new CuboidOrientation(6, "WEST2", yPlus, xPlus, zMinus, 1, 0, 2),
+			WEST3 = new CuboidOrientation(7, "WEST3", yPlus, zMinus, xMinus, 2, 0, 1),
+			NORTH0 = new CuboidOrientation(8, "NORTH0", xMinus, yMinus, zPlus, 0, 1, 2),
+			NORTH1 = new CuboidOrientation(9, "NORTH1", zPlus, yMinus, xPlus, 2, 1, 0),
+			NORTH2 = new CuboidOrientation(10, "NORTH2", xPlus, yMinus, zMinus, 0, 1, 2),
+			NORTH3 = new CuboidOrientation(11, "NORTH3", zMinus, yMinus, xMinus, 2, 1, 0),
+			EAST0 = new CuboidOrientation(12, "EAST0", yMinus, xPlus, zPlus, 1, 0, 2),
+			EAST1 = new CuboidOrientation(13, "EAST1", yMinus, zMinus, xPlus, 2, 0, 1),
+			EAST2 = new CuboidOrientation(14, "EAST2", yMinus, xMinus, zMinus, 1, 0, 2),
+			EAST3 = new CuboidOrientation(15, "EAST3", yMinus, zPlus, xMinus, 2, 0, 1),
+			TOP0 = new CuboidOrientation(16, "TOP0", xPlus, zPlus, yMinus, 0, 2, 1),
+			TOP1 = new CuboidOrientation(17, "TOP1", zMinus, xPlus, yMinus, 1, 2, 0),
+			TOP2 = new CuboidOrientation(18, "TOP2", xMinus, zMinus, yMinus, 0, 2, 1),
+			TOP3 = new CuboidOrientation(19, "TOP3", zPlus, xMinus, yMinus, 1, 2, 0),
+			BOTTOM0 = new CuboidOrientation(20, "BOTTOM0", xPlus, zMinus, yPlus, 0, 2, 1),
+			BOTTOM1 = new CuboidOrientation(21, "BOTTOM1", zMinus, xMinus, yPlus, 1, 2, 0),
+			BOTTOM2 = new CuboidOrientation(22, "BOTTOM2", xMinus, zPlus, yPlus, 0, 2, 1),
+			BOTTOM3 = new CuboidOrientation(23, "BOTTOM3", zPlus, xPlus, yPlus, 1, 2, 0);
+		public static readonly ReadOnlyCollection<CuboidOrientation> Values = Array.AsReadOnly(new CuboidOrientation[] { SOUTH0, SOUTH1, SOUTH2, SOUTH3, WEST0, WEST1, WEST2, WEST3, NORTH0, NORTH1, NORTH2, NORTH3, EAST0, EAST1, EAST2, EAST3, TOP0, TOP1, TOP2, TOP3, BOTTOM0, BOTTOM1, BOTTOM2, BOTTOM3 });
 		#endregion Instances
 		#region Data members
 		public readonly byte Value;
@@ -53,8 +53,8 @@ namespace Voxel2Pixel.Model
 		public readonly ReadOnlyCollection<int> Rotation;
 		public readonly ReadOnlyCollection<byte> Size;
 		#endregion Data members
-		#region CubeRotation
-		private CubeRotation(byte value, string name, int rot0, int rot1, int rot2, params byte[] size)
+		#region CuboidOrientation
+		private CuboidOrientation(byte value, string name, int rot0, int rot1, int rot2, params byte[] size)
 		{
 			Value = value;
 			Name = name;
@@ -62,18 +62,18 @@ namespace Voxel2Pixel.Model
 			Size = Array.AsReadOnly(size);
 		}
 		public override string ToString() => Name;
-		public static bool operator ==(CubeRotation obj1, CubeRotation obj2) => obj1.Equals(obj2);
-		public static bool operator !=(CubeRotation obj1, CubeRotation obj2) => !(obj1 == obj2);
-		public override bool Equals(object other) => other is CubeRotation cubeRotation && Value == cubeRotation.Value;
+		public static bool operator ==(CuboidOrientation obj1, CuboidOrientation obj2) => obj1.Equals(obj2);
+		public static bool operator !=(CuboidOrientation obj1, CuboidOrientation obj2) => !(obj1 == obj2);
+		public override bool Equals(object other) => other is CuboidOrientation cuboidOrientation && Value == cuboidOrientation.Value;
 		public override int GetHashCode() => Value;
-		#endregion CubeRotation
+		#endregion CuboidOrientation
 		#region Faces
 		public bool South => Value < 4;
 		public bool West => Value > 3 && Value < 8;
 		public bool North => Value > 7 && Value < 12;
 		public bool East => Value > 11 && Value < 16;
-		public bool Up => Value > 15 && Value < 20;
-		public bool Down => Value > 19;
+		public bool Top => Value > 15 && Value < 20;
+		public bool Bottom => Value > 19;
 		#endregion Faces
 		#region ITurnable
 		public static readonly ReadOnlyCollection<ReadOnlyCollection<byte>> Clock = Array.AsReadOnly(new ReadOnlyCollection<byte>[] {
@@ -104,7 +104,7 @@ namespace Voxel2Pixel.Model
 		public int AffectedX => Affected(0);
 		public int AffectedY => Affected(1);
 		public int AffectedZ => Affected(2);
-		public static CubeRotation Get(params int[] rotation) =>
+		public static CuboidOrientation Get(params int[] rotation) =>
 			Values.FirstOrDefault(value =>
 				value.Rotation[0] == rotation[0]
 				&& value.Rotation[1] == rotation[1]

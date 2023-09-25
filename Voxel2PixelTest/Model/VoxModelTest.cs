@@ -70,7 +70,7 @@ namespace Voxel2PixelTest.Model
 			//TurnModel model = new TurnModel
 			//{
 			//	Model = voxModel,
-			//	CubeRotation = CubeRotation.SOUTH0,
+			//	CuboidOrientation = CuboidOrientation.SOUTH0,
 			//};
 			ArrayModel model = new ArrayModel(ArrayModelTest.RainbowBox(7, 4, 7));
 			IVoxelColor voxelColor = new NaiveDimmer(ArrayModelTest.RainbowPalette);
