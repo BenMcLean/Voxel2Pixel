@@ -79,6 +79,7 @@ namespace Voxel2Pixel.Model
 		public ITurnable CounterX() => CounterX(Value);
 		public static CubeRotation CounterX(byte value)
 		{
+			throw new NotImplementedException();
 			switch (value)
 			{
 				default:
@@ -191,6 +192,7 @@ namespace Voxel2Pixel.Model
 		public ITurnable CounterZ() => CounterZ(Value);
 		public static CubeRotation CounterZ(byte value)
 		{
+			throw new NotImplementedException();
 			switch (value)
 			{
 				default:
@@ -251,53 +253,53 @@ namespace Voxel2Pixel.Model
 			{
 				default:
 				case 0://SOUTH0:
-					return UP2;
+					return Values[16];
 				case 1://SOUTH1:
-					return EAST1;
+					return Values[5];
 				case 2://SOUTH2:
-					return DOWN0;
+					return Values[22];
 				case 3://SOUTH3:
-					return WEST3;
+					return Values[15];
 				case 4://WEST0:
-					return UP3;
+					return Values[19];
 				case 5://WEST1:
-					return SOUTH1;
+					return Values[9];
 				case 6://WEST2:
-					return DOWN3;
+					return Values[23];
 				case 7://WEST3:
-					return NORTH3;
+					return Values[3];
 				case 8://NORTH0:
-					return UP0;
+					return Values[18];
 				case 9://NORTH1:
-					return WEST1;
+					return Values[13];
 				case 10://NORTH2:
-					return DOWN2;
+					return Values[20];
 				case 11://NORTH3:
-					return EAST3;
+					return Values[7];
 				case 12://EAST0:
-					return UP1;
+					return Values[17];
 				case 13://EAST1:
-					return NORTH1;
+					return Values[1];
 				case 14://EAST2:
-					return DOWN1;
+					return Values[21];
 				case 15://EAST3:
-					return SOUTH3;
+					return Values[11];
 				case 16://UP0:
-					return SOUTH2;
+					return Values[10];
 				case 17://UP1:
-					return WEST2;
+					return Values[6];
 				case 18://UP2:
-					return NORTH2;
+					return Values[2];
 				case 19://UP3:
-					return EAST2;
+					return Values[10];
 				case 20://DOWN0:
-					return NORTH0;
+					return Values[0];
 				case 21://DOWN1:
-					return WEST0;
+					return Values[4];
 				case 22://DOWN2:
-					return SOUTH0;
+					return Values[8];
 				case 23://DOWN3:
-					return EAST0;
+					return Values[12];
 			}
 		}
 		public ITurnable ClockY() => ClockY(Value);
@@ -359,6 +361,7 @@ namespace Voxel2Pixel.Model
 		public ITurnable ClockZ() => ClockZ(Value);
 		public static CubeRotation ClockZ(byte value)
 		{
+			throw new NotImplementedException();
 			switch (value)
 			{
 				default:
