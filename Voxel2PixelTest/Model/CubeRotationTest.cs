@@ -9,7 +9,7 @@ namespace Voxel2PixelTest.Model
 	public class CubeRotationTest
 	{
 		//private readonly Xunit.Abstractions.ITestOutputHelper output;
-		//public CuberotationTest(Xunit.Abstractions.ITestOutputHelper output) => this.output = output;
+		//public CubeRotationTest(Xunit.Abstractions.ITestOutputHelper output) => this.output = output;
 		public enum Turn
 		{
 			NONE, CLOCKX, CLOCKY, CLOCKZ, COUNTERX, COUNTERY, COUNTERZ
