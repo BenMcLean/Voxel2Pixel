@@ -187,6 +187,9 @@ namespace Voxel2PixelTest.Model
 				Assert.Equal(cubeRotation, (CubeRotation)cubeRotation.ClockX().ClockX().ClockX().ClockX());
 				Assert.Equal(cubeRotation, (CubeRotation)cubeRotation.ClockY().ClockY().ClockY().ClockY());
 				Assert.Equal(cubeRotation, (CubeRotation)cubeRotation.ClockZ().ClockZ().ClockZ().ClockZ());
+				Assert.Equal(cubeRotation, (CubeRotation)cubeRotation.ClockX().CounterX());
+				Assert.Equal(cubeRotation, (CubeRotation)cubeRotation.ClockY().CounterY());
+				Assert.Equal(cubeRotation, (CubeRotation)cubeRotation.ClockZ().CounterZ());
 			}
 		}
 		[Fact]
