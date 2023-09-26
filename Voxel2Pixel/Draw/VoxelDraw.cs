@@ -467,7 +467,7 @@ namespace Voxel2Pixel.Draw
 		public static void AboveLocate(out int pixelX, out int pixelY, IModel model, int voxelX = 0, int voxelY = 0, int voxelZ = 0)
 		{
 			pixelX = voxelX;
-			pixelY = AboveHeight(model) - voxelY - voxelZ;
+			pixelY = AboveHeight(model) - 1 - voxelY - voxelZ;
 		}
 		public static void Above(IModel model, IRectangleRenderer renderer)
 		{
