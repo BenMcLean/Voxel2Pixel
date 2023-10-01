@@ -67,7 +67,7 @@ namespace Voxel2Pixel.Model
 		}
 		#endregion Rotate
 		#region ReverseRotate
-		public int ReverseRotate(int axis, params int[] coordinates) => CuboidOrientation.ReverseRotate(axis, coordinates) + Start(axis);
+		public int ReverseRotate(int axis, params int[] coordinates) => CuboidOrientation.ReverseRotate(axis, coordinates) + Start(CuboidOrientation.ReverseAffected(axis));
 		public void ReverseRotate(out int x, out int y, out int z, params int[] coordinates)
 		{
 			x = ReverseRotate(0, coordinates);

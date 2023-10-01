@@ -8,10 +8,10 @@ using Xunit;
 
 namespace Voxel2PixelTest.Model
 {
-	public class MarkedModelTest
+	public class MarkerModelTest
 	{
 		[Fact]
-		public void AboveTest()
+		public void Above()
 		{
 			MarkerModel model = new MarkerModel
 			{
@@ -62,7 +62,7 @@ namespace Voxel2PixelTest.Model
 				width: width,
 				frames: frames.ToArray(),
 				frameDelay: 1)
-			.SaveAsGif("MarkedModelAboveTest.gif");
+			.SaveAsGif("MarkerModelAboveTest.gif");
 		}
 	}
 }
