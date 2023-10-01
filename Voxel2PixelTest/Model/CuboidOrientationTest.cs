@@ -51,14 +51,5 @@ namespace Voxel2PixelTest.Model
 				expected: 2,
 				actual: CuboidOrientation.FlipBits(2));
 		}
-		[Fact]
-		public void SizeTest()
-		{
-			foreach (CuboidOrientation cuboidOrientation in CuboidOrientation.Values)
-				for (int i = 0; i < 3; i++)
-					Assert.Equal(
-						expected: cuboidOrientation.Size[i],
-						actual: cuboidOrientation.ReverseAffected(i));
-		}
 	}
 }

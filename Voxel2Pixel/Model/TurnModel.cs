@@ -9,8 +9,7 @@ namespace Voxel2Pixel.Model
 	{
 		public IModel Model { get; set; }
 		public CuboidOrientation CuboidOrientation { get; set; } = CuboidOrientation.SOUTH0;
-		public int RotatedSize(int axis) => ModelSize(CuboidOrientation.Size[CuboidOrientation.FlipBits(axis)]);
-		//public int RotatedSize(int axis) => Math.Abs(CuboidOrientation.Rotate(axis, Model.SizeX, Model.SizeY, Model.SizeZ));
+		public int RotatedSize(int axis) => ModelSize(CuboidOrientation.ReverseAffected(axis));
 		/// <summary>
 		/// Allows treating the sizes of the underlying model as if they were in an array. Allows negative values for index, unlike an array, and will correctly treat the negative index that corresponds to a reversed axis as if it was the the corresponding non-reversed axis. This means -1 will be the same as 0, -2 the same as 1, and -3 the same as 2.
 		/// </summary>
