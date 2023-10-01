@@ -5,24 +5,21 @@ namespace Voxel2Pixel.Model
 	/// <summary>
 	/// Rotates models at 90 degree angles, including their sizes
 	/// </summary>
-	public class TurnModel : IModel, ITurnable
+	public class TurnModel : ContainerModel, ITurnable
 	{
-		#region Data members
-		public IModel Model { get; set; }
 		public CuboidOrientation CuboidOrientation { get; set; } = CuboidOrientation.SOUTH0;
-		#endregion Data members
-		#region IModel
-		public int SizeX => RotatedSize(0);
-		public int SizeY => RotatedSize(1);
-		public int SizeZ => RotatedSize(2);
-		public bool IsInside(int x, int y, int z) => !IsOutside(x, y, z);
-		public bool IsOutside(int x, int y, int z) => x < 0 || y < 0 || z < 0 || x >= SizeX || y >= SizeY || z >= SizeZ;
-		public byte? At(int x, int y, int z)
+		#region ContainerModel
+		public override int SizeX => RotatedSize(0);
+		public override int SizeY => RotatedSize(1);
+		public override int SizeZ => RotatedSize(2);
+		public override bool IsInside(int x, int y, int z) => !IsOutside(x, y, z);
+		public override bool IsOutside(int x, int y, int z) => x < 0 || y < 0 || z < 0 || x >= SizeX || y >= SizeY || z >= SizeZ;
+		public override byte? At(int x, int y, int z)
 		{
 			Rotate(out int x1, out int y1, out int z1, x, y, z);
 			return Model.At(x1, y1, z1);
 		}
-		#endregion IModel
+		#endregion ContainerModel
 		#region ITurnable
 		public ITurnable CounterX()
 		{
