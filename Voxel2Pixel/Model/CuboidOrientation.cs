@@ -12,6 +12,11 @@ namespace Voxel2Pixel.Model
 	/// </summary>
 	public sealed class CuboidOrientation : ITurnable
 	{
+		#region Data members
+		public readonly byte Value;
+		public readonly string Name;
+		public readonly ReadOnlyCollection<int> Rotation;
+		#endregion Data members
 		#region Instances
 		public const int
 			xPlus = 0,
@@ -47,11 +52,6 @@ namespace Voxel2Pixel.Model
 			BOTTOM3 = new CuboidOrientation(23, "BOTTOM3", zPlus, xPlus, yPlus);
 		public static readonly ReadOnlyCollection<CuboidOrientation> Values = Array.AsReadOnly(new CuboidOrientation[] { SOUTH0, SOUTH1, SOUTH2, SOUTH3, WEST0, WEST1, WEST2, WEST3, NORTH0, NORTH1, NORTH2, NORTH3, EAST0, EAST1, EAST2, EAST3, TOP0, TOP1, TOP2, TOP3, BOTTOM0, BOTTOM1, BOTTOM2, BOTTOM3 });
 		#endregion Instances
-		#region Data members
-		public readonly byte Value;
-		public readonly string Name;
-		public readonly ReadOnlyCollection<int> Rotation;
-		#endregion Data members
 		#region CuboidOrientation
 		private CuboidOrientation(byte value, string name, params int[] rotation)
 		{
@@ -88,16 +88,16 @@ namespace Voxel2Pixel.Model
 		public ITurnable Reset() => SOUTH0;
 		#endregion ITurnable
 		#region Rotate
+		/// <summary>
+		/// Flips the bits in rot if rot is negative, leaves it alone if positive. Where x, y, and z correspond to elements 0, 1, and 2 in a rotation array, if those axes are reversed we use 0, or -1, for x, and likewise -2 and -3 for y and z when reversed.
+		/// </summary>
+		public static int FlipBits(int rot) => rot ^ rot >> 31;//(rot ^ rot >> 31) is roughly equal to (rot < 0 ? -1 - rot : rot)
 		/// <param name="index">index 0 for x, 1 for y, 2 for z</param>
 		/// <returns>if selected rotation is negative, return -1, otherwise return 1</returns>
 		public int Step(int index) => Rotation[FlipBits(index)] >> 31 | 1;
 		public int StepX => Step(0);
 		public int StepY => Step(1);
 		public int StepZ => Step(2);
-		/// <summary>
-		/// Flips the bits in rot if rot is negative, leaves it alone if positive. Where x, y, and z correspond to elements 0, 1, and 2 in a rotation array, if those axes are reversed we use 0, or -1, for x, and likewise -2 and -3 for y and z when reversed.
-		/// </summary>
-		public static int FlipBits(int rot) => rot ^ rot >> 31; // (rot ^ rot >> 31) is roughly equal to (rot < 0 ? -1 - rot : rot)
 		public int Affected(int axis) => FlipBits(Rotation[axis]);
 		public int AffectedX => Affected(0);
 		public int AffectedY => Affected(1);
