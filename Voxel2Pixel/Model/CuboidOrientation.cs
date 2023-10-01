@@ -117,5 +117,26 @@ namespace Voxel2Pixel.Model
 			z = Rotate(2, coordinates);
 		}
 		#endregion Rotate
+		#region ReverseRotate
+		public int ReverseAffected(int axis)
+		{
+			axis = FlipBits(axis);
+			for (int i = 0; i < Rotation.Count; i++)
+				if (FlipBits(Rotation[i]) == axis)
+					return i;
+			throw new ArgumentException("Invalid axis value: " + axis);
+		}
+		public int ReverseRotate(int axis, params int[] coordinates)
+		{
+			axis = ReverseAffected(axis);
+			return coordinates[axis] * Step(axis);
+		}
+		public void ReverseRotate(out int x, out int y, out int z, params int[] coordinates)
+		{
+			x = ReverseRotate(0, coordinates);
+			y = ReverseRotate(1, coordinates);
+			z = ReverseRotate(2, coordinates);
+		}
+		#endregion ReverseRotate
 	}
 }
