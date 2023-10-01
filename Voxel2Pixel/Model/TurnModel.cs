@@ -53,7 +53,7 @@ namespace Voxel2Pixel.Model
 		}
 		public ITurnable Reset()
 		{
-			CuboidOrientation = CuboidOrientation.SOUTH0;
+			CuboidOrientation = (CuboidOrientation)CuboidOrientation.Reset();
 			return this;
 		}
 		#endregion ITurnable

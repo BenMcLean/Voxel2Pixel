@@ -1,4 +1,5 @@
 ﻿using SixLabors.ImageSharp;
+using System.IO;
 using System.Linq;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
@@ -11,6 +12,8 @@ namespace Voxel2PixelTest.Pack
 {
 	public class Pack8Test
 	{
+		#region Tests
+		/*
 		[Fact]
 		public void Test()
 		{
@@ -35,11 +38,37 @@ namespace Voxel2PixelTest.Pack
 				voxelColor: new NaiveDimmer(model.Palette),
 				path: "IsoSpritesTest.gif");
 		}
+		*/
 		[Fact]
 		public void PyramidTest() => Gif(
 			model: new ArrayModel(Pyramid(17)),
 			voxelColor: new NaiveDimmer(ArrayModelTest.RainbowPalette),
-			path: "PyramidTest.gif");
+			path: "PyramidTest.gif",
+			originX: 0,
+			originY: 0,
+			originZ: 0);
+		[Fact]
+		public void Pyramid2Test() => Gif(
+			model: new ArrayModel(Pyramid2(16, 4)),
+			voxelColor: new NaiveDimmer(ArrayModelTest.RainbowPalette),
+			path: "Pyramid2Test.gif",
+			originX: 0,
+			originY: 0,
+			originZ: 0);
+		[Fact]
+		public void NumberCubeTest()
+		{
+			VoxModel model = new VoxModel(@"..\..\..\NumberCube.vox");
+			Gif(
+				model: model,
+				voxelColor: new NaiveDimmer(model.Palette),
+				path: "NumberCubeTest.gif",
+				originX: 0,
+				originY: 0,
+				originZ: 0);
+		}
+		#endregion Tests
+		#region Model creation
 		public static byte[][][] Pyramid(int width, params byte[] colors)
 		{
 			if (colors is null || colors.Length < 1)
@@ -52,22 +81,14 @@ namespace Voxel2PixelTest.Pack
 			voxels[width - 1][width - 1][0] = colors[4];
 			for (int i = 0; i <= halfWidth; i++)
 			{
-				//voxels[i][i][i] = colors[1];
-				//voxels[width - 1 - i][i][i] = colors[2];
-				//voxels[i][width - 1 - i][i] = colors[3];
-				//voxels[width - 1 - i][width - 1 - i][i] = colors[4];
+				voxels[i][i][i] = colors[1];
+				voxels[width - 1 - i][i][i] = colors[2];
+				voxels[i][width - 1 - i][i] = colors[3];
+				voxels[width - 1 - i][width - 1 - i][i] = colors[4];
 				voxels[halfWidth][halfWidth][i] = colors[5];
 			}
 			return voxels;
 		}
-		[Fact]
-		public void Pyramid2Test() => Gif(
-			model: new ArrayModel(Pyramid2(16, 4)),
-			voxelColor: new NaiveDimmer(ArrayModelTest.RainbowPalette),
-			path: "Pyramid2Test.gif",
-			originX: 0,
-			originY: 3,
-			originZ: 0);
 		public static byte[][][] Pyramid2(int width, params byte[] colors) => Pyramid2(width, width, colors);
 		public static byte[][][] Pyramid2(int width, int depth, params byte[] colors)
 		{
@@ -82,10 +103,19 @@ namespace Voxel2PixelTest.Pack
 				voxels[0][0][i] = colors[1];
 			return voxels;
 		}
+		#endregion Model creation
+		#region process
 		private static void Gif(IModel model, IVoxelColor voxelColor, string path, int originX = -1, int originY = -1, int originZ = -1, int frameDelay = 150)
 		{
-			IsoPacker.IsoSpritesUncut(
-				model: model,
+			IsoPacker.Above4(
+				model: new MarkerModel
+				{
+					Model = model,
+					Voxel = 1,
+					X = originX,
+					Y = originY,
+					Z = originZ,
+				},
 				voxelColor: voxelColor,
 				sprites: out byte[][] sprites,
 				widths: out int[] widths,
@@ -103,6 +133,32 @@ namespace Voxel2PixelTest.Pack
 					.Select(i => PixelDraw.Height(sprites[i].Length, widths[i])
 						//+ pixelOriginY - origins[i][1]
 						).Max() + 1;
+			Directory.CreateDirectory(Path.GetFileNameWithoutExtension(path));
+			for (int i = 0; i < sprites.Length; i++)
+				ImageMaker.Png(
+					scaleX: 8,
+					scaleY: 8,
+					width: width,
+					bytes: new byte[width * 4 * height]
+						.DrawInsert(
+							x: 0,
+							y: 0,
+							insert: sprites[i],
+							insertWidth: widths[i],
+							width: width)
+						.Draw3x4(
+							@string: string.Join(",", origins[i]),
+							width: width,
+							x: 0,
+							y: 0,
+							color: 0x000000FF)
+						.DrawPixel(
+							color: 0xFF88FFFF,
+							x: origins[i][0],
+							y: origins[i][1],
+							width: width))
+					.SaveAsPng(Path.Combine(Path.GetFileNameWithoutExtension(path), i + ".png"));
+			return;
 			ImageMaker.AnimatedGif(
 				scaleX: 4,
 				scaleY: 4,
@@ -120,5 +176,6 @@ namespace Voxel2PixelTest.Pack
 				frameDelay: frameDelay)
 			.SaveAsGif(path);
 		}
+		#endregion process
 	}
 }

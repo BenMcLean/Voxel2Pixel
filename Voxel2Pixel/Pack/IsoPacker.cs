@@ -1,4 +1,5 @@
 ﻿using RectpackSharp;
+using System;
 using System.Linq;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
@@ -166,16 +167,23 @@ namespace Voxel2Pixel.Pack
 					originX,
 					originY,
 					originZ);
-				int width = VoxelDraw.AboveWidth(turnModel);
+				int width = VoxelDraw.AboveWidth(turnModel) * 5;
 				ArrayRenderer arrayRenderer = new ArrayRenderer
 				{
-					Image = new byte[width * 4 * VoxelDraw.AboveHeight(turnModel)],
+					Image = new byte[width * 16 * VoxelDraw.AboveHeight(turnModel)],
 					Width = width,
 					VoxelColor = voxelColor,
 				};
+				OffsetRenderer offsetRenderer = new OffsetRenderer
+				{
+					RectangleRenderer = arrayRenderer,
+					VoxelColor = voxelColor,
+					ScaleX = 5,
+					ScaleY = 4,
+				};
 				VoxelDraw.Above(
 					model: turnModel,
-					renderer: arrayRenderer);
+					renderer: offsetRenderer);
 				sprites[i] = arrayRenderer.Image;
 				widths[i] = width;
 				origins[i] = new int[2];
@@ -186,7 +194,9 @@ namespace Voxel2Pixel.Pack
 					voxelX: turnedX,
 					voxelY: turnedY,
 					voxelZ: turnedZ);
-				width = VoxelDraw.IsoWidth(turnModel);
+				origins[i][0] *= 5;
+				origins[i][1] = 0;
+				width = VoxelDraw.IsoWidth(turnModel) << 1;
 				arrayRenderer = new Array2xRenderer
 				{
 					Image = new byte[width * 4 * VoxelDraw.IsoHeight(turnModel)],
@@ -206,6 +216,7 @@ namespace Voxel2Pixel.Pack
 					voxelX: turnedX,
 					voxelY: turnedY,
 					voxelZ: turnedZ);
+				origins[i + 1][0] *= 2;
 				turnModel.CounterZ();
 			}
 			for (int i = 0; i < sprites.Length; i++)
@@ -214,6 +225,59 @@ namespace Voxel2Pixel.Pack
 					x: origins[i][0],
 					y: origins[i][1],
 					width: widths[i]);
+		}
+		public static void Above4(IModel model, IVoxelColor voxelColor, out byte[][] sprites, out int[] widths, out int[][] origins, int originX = -1, int originY = -1, int originZ = -1)
+		{
+			if (originX < 0)
+				originX = model.SizeX >> 1;
+			if (originY < 0)
+				originY = model.SizeY >> 1;
+			if (originZ < 0)
+				originZ = 0;
+			sprites = new byte[4][];
+			widths = new int[sprites.Length];
+			origins = new int[sprites.Length][];
+			TurnModel turnModel = new TurnModel
+			{
+				Model = model,
+			};
+			for (int i = 0; i < sprites.Length; i++)
+			{
+				int width = VoxelDraw.AboveWidth(turnModel);
+				ArrayRenderer arrayRenderer = new ArrayRenderer
+				{
+					Image = new byte[width * 4 * VoxelDraw.AboveHeight(turnModel)],
+					Width = width,
+					VoxelColor = voxelColor,
+				};
+				VoxelDraw.Above(
+					model: turnModel,
+					renderer: arrayRenderer);
+				sprites[i] = arrayRenderer.Image;
+				widths[i] = width;
+				turnModel.ReverseRotate(
+					x: out int turnedX,
+					y: out int turnedY,
+					z: out int turnedZ,
+					originX,
+					originY,
+					originZ);
+				origins[i] = new int[2];
+				VoxelDraw.AboveLocate(
+					pixelX: out origins[i][0],
+					pixelY: out origins[i][1],
+					model: turnModel,
+					voxelX: turnedX,
+					voxelY: turnedY,
+					voxelZ: turnedZ);
+				turnModel.CounterZ();
+			}
+			//for (int i = 0; i < sprites.Length; i++)
+			//	sprites[i].DrawPixel(
+			//		color: 0x888888FF,
+			//		x: origins[i][0],
+			//		y: origins[i][1],
+			//		width: widths[i]);
 		}
 	}
 }
