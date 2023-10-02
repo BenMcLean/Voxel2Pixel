@@ -1006,6 +1006,22 @@ namespace Voxel2Pixel.Draw
 			}
 			return scaled;
 		}
+		public static byte[][] UpscaleSprites(this byte[][] sprites, int[] widths, int[][] pixelOrigins, int xFactor, int yFactor, out int[] newWidths, out int[][] newPixelOrigins)
+		{
+			byte[][] newSprites = new byte[sprites.Length][];
+			newWidths = new int[widths.Length];
+			newPixelOrigins = new int[pixelOrigins.Length][];
+			for (int i = 0; i < sprites.Length; i++)
+			{
+				newSprites[i] = sprites[i].Upscale(
+					xFactor: xFactor,
+					yFactor: yFactor,
+					width: widths[i]);
+				newWidths[i] = widths[i] * xFactor;
+				newPixelOrigins[i] = new int[] { pixelOrigins[i][0] * xFactor, pixelOrigins[i][1] * yFactor };
+			}
+			return newSprites;
+		}
 		#endregion Image manipulation
 		#region Utilities
 		/// <summary>
