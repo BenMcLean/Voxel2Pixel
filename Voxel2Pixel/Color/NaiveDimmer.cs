@@ -2,7 +2,7 @@
 
 namespace Voxel2Pixel.Color
 {
-	public class NaiveDimmer : IVoxelColor, IDimmer
+	public class NaiveDimmer : IVoxelColorIso, IDimmer
 	{
 		public NaiveDimmer(uint[] palette)
 		{
@@ -19,7 +19,9 @@ namespace Voxel2Pixel.Color
 				Palette[4][color] = Palette[2][color].LerpColor(0xFFFFFFFF, 0.5f);
 			}
 		}
+		#region Data members
 		private uint[][] Palette { get; set; }
+		#endregion Data members
 		#region IDimmer
 		public uint Dark(byte voxel) => Dimmer(0, voxel);
 		public uint Dim(byte voxel) => Dimmer(1, voxel);
@@ -28,10 +30,11 @@ namespace Voxel2Pixel.Color
 		public uint Bright(byte voxel) => Dimmer(4, voxel);
 		public uint Dimmer(int brightness, byte voxel) => Palette[brightness][voxel];
 		#endregion IDimmer
-		#region IVoxelColor
-		public uint VerticalFace(byte voxel) => Light(voxel);
+		#region IVoxelColorIso
+		public bool Iso { get; set; } = true;
+		public uint VerticalFace(byte voxel) => Bright(voxel);
 		public uint LeftFace(byte voxel) => Dim(voxel);
-		public uint RightFace(byte voxel) => Medium(voxel);
-		#endregion IVoxelColor
+		public uint RightFace(byte voxel) => Iso ? Light(voxel) : Medium(voxel);
+		#endregion IVoxelColorIso
 	}
 }

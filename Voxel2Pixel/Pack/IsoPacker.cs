@@ -11,7 +11,7 @@ namespace Voxel2Pixel.Pack
 {
 	public static class IsoPacker
 	{
-		public static byte[] Pack8(IModel model, IVoxelColor voxelColor, out int width, out RectpackSharp.PackingRectangle[] packingRectangles)
+		public static byte[] Pack8(IModel model, IVoxelColorIso voxelColor, out int width, out RectpackSharp.PackingRectangle[] packingRectangles)
 		{
 			IsoSprites(
 				model: model,
@@ -39,7 +39,7 @@ namespace Voxel2Pixel.Pack
 					width: width);
 			return texture;
 		}
-		public static void IsoSprites(IModel model, IVoxelColor voxelColor, out byte[][] sprites, out int[] widths, out int[][] origins, int originX = -1, int originY = -1, int originZ = -1)
+		public static void IsoSprites(IModel model, IVoxelColorIso voxelColor, out byte[][] sprites, out int[] widths, out int[][] origins, int originX = -1, int originY = -1, int originZ = -1)
 		{
 			if (originX < 0)
 				originX = model.SizeX >> 1;
@@ -145,7 +145,7 @@ namespace Voxel2Pixel.Pack
 					width: widths[i]);
 		}
 		#region Above4
-		public static byte[][] Above4Raw(IModel model, IVoxelColor voxelColor, out int[] widths, out int[][] pixelOrigins, params int[] voxelOrigin)
+		public static byte[][] Above4Raw(IModel model, IVoxelColorIso voxelColor, out int[] widths, out int[][] pixelOrigins, params int[] voxelOrigin)
 		{
 			if (voxelOrigin is null || voxelOrigin.Length < 3)
 				voxelOrigin = new int[] { -1, -1, -1 };
@@ -193,7 +193,7 @@ namespace Voxel2Pixel.Pack
 			}
 			return sprites;
 		}
-		public static byte[][] Above4(IModel model, IVoxelColor voxelColor, out int[] widths, out int[][] pixelOrigins, params int[] voxelOrigin)
+		public static byte[][] Above4(IModel model, IVoxelColorIso voxelColor, out int[] widths, out int[][] pixelOrigins, params int[] voxelOrigin)
 		{
 			byte[][] rawSprites = Above4Raw(
 					model: model,
@@ -210,11 +210,11 @@ namespace Voxel2Pixel.Pack
 					newPixelOrigins: out int[][] upscaledPixelOrigins);
 			return upscaledSprites.CropSprites(
 				widths: upscaledWidths,
-				pixelOrigins: upscaledPixelOrigins,
+				pixelOrigins: upscaledPixelOrigins.Select(e => new int[] { e[0] + 2, e[1] + 3 }).ToArray(),
 				newWidths: out widths,
 				newPixelOrigins: out pixelOrigins);
 		}
-		public static byte[][] Above4Outlined(IModel model, IVoxelColor voxelColor, out int[] widths, out int[][] pixelOrigins, params int[] voxelOrigin)
+		public static byte[][] Above4Outlined(IModel model, IVoxelColorIso voxelColor, out int[] widths, out int[][] pixelOrigins, params int[] voxelOrigin)
 		{
 			byte[][] rawSprites = Above4Raw(
 					model: model,
@@ -231,7 +231,7 @@ namespace Voxel2Pixel.Pack
 					newPixelOrigins: out int[][] upscaledPixelOrigins);
 			return upscaledSprites.CropOutlineSprites(
 				widths: upscaledWidths,
-				pixelOrigins: upscaledPixelOrigins,
+				pixelOrigins: upscaledPixelOrigins.Select(e => new int[] { e[0] + 2, e[1] + 3 }).ToArray(),
 				newWidths: out widths,
 				newPixelOrigins: out pixelOrigins);
 		}
@@ -329,15 +329,17 @@ namespace Voxel2Pixel.Pack
 					result[z + y] = list[y][x];
 			return result;
 		}
-		public static byte[][] Iso8(IModel model, IVoxelColor voxelColor, out int[] widths, out int[][] pixelOrigins, params int[] voxelOrigin)
+		public static byte[][] Iso8(IModel model, IVoxelColorIso voxelColor, out int[] widths, out int[][] pixelOrigins, params int[] voxelOrigin)
 		{
+			voxelColor.Iso = false;
 			byte[][] aboveSprites = Above4(
 					model: model,
 					voxelColor: voxelColor,
 					widths: out int[] aboveWidths,
 					pixelOrigins: out int[][] abovePixelOrigins,
-					voxelOrigin: voxelOrigin),
-				isoSprites = Iso4(
+					voxelOrigin: voxelOrigin);
+			voxelColor.Iso = true;
+			byte[][] isoSprites = Iso4(
 					model: model,
 					voxelColor: voxelColor,
 					widths: out int[] isoWidths,
@@ -347,15 +349,17 @@ namespace Voxel2Pixel.Pack
 			pixelOrigins = CombineArrays(abovePixelOrigins, isoPixelOrigins);
 			return CombineArrays(aboveSprites, isoSprites);
 		}
-		public static byte[][] Iso8Outlined(IModel model, IVoxelColor voxelColor, out int[] widths, out int[][] pixelOrigins, params int[] voxelOrigin)
+		public static byte[][] Iso8Outlined(IModel model, IVoxelColorIso voxelColor, out int[] widths, out int[][] pixelOrigins, params int[] voxelOrigin)
 		{
+			voxelColor.Iso = false;
 			byte[][] aboveSprites = Above4Outlined(
 					model: model,
 					voxelColor: voxelColor,
 					widths: out int[] aboveWidths,
 					pixelOrigins: out int[][] abovePixelOrigins,
-					voxelOrigin: voxelOrigin),
-				isoSprites = Iso4Outlined(
+					voxelOrigin: voxelOrigin);
+			voxelColor.Iso = true;
+			byte[][] isoSprites = Iso4Outlined(
 					model: model,
 					voxelColor: voxelColor,
 					widths: out int[] isoWidths,
