@@ -23,7 +23,7 @@ namespace Voxel2Pixel.Draw
 						if (model.At(x, y, z) is byte voxel
 							&& voxel != 0)
 						{
-							renderer.RectRight(
+							renderer.RectFront(
 								x: x,
 								y: model.SizeZ - 1 - z,
 								voxel: voxel);
@@ -49,7 +49,7 @@ namespace Voxel2Pixel.Draw
 									voxel: voxel,
 									sizeX: scaleX,
 									sizeY: 1);
-								renderer.RectRight(
+								renderer.RectFront(
 									x: x * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY + 1,
 									voxel: voxel,
@@ -57,7 +57,7 @@ namespace Voxel2Pixel.Draw
 									sizeY: scaleY - 1);
 							}
 							else
-								renderer.RectRight(
+								renderer.RectFront(
 									x: x * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY,
 									voxel: voxel,
@@ -76,7 +76,7 @@ namespace Voxel2Pixel.Draw
 						if (model.At(x, y, z) is byte voxel
 							&& voxel != 0)
 						{
-							renderer.RectRight(
+							renderer.RectFront(
 								x: model.SizeY - 1 - y,
 								y: model.SizeZ - 1 - z,
 								voxel: voxel);
@@ -102,7 +102,7 @@ namespace Voxel2Pixel.Draw
 									voxel: voxel,
 									sizeX: scaleX,
 									sizeY: 1);
-								renderer.RectRight(
+								renderer.RectFront(
 									x: (model.SizeY - 1 - y) * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY + 1,
 									voxel: voxel,
@@ -110,7 +110,7 @@ namespace Voxel2Pixel.Draw
 									sizeY: scaleY - 1);
 							}
 							else
-								renderer.RectRight(
+								renderer.RectFront(
 									x: (model.SizeY - 1 - y) * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY,
 									voxel: voxel,
@@ -129,7 +129,7 @@ namespace Voxel2Pixel.Draw
 						if (model.At(x, y, z) is byte voxel
 							&& voxel != 0)
 						{
-							renderer.RectLeft(
+							renderer.RectFront(
 								x: model.SizeX - 1 - x,
 								y: model.SizeZ - 1 - z,
 								voxel: voxel);
@@ -155,7 +155,7 @@ namespace Voxel2Pixel.Draw
 									voxel: voxel,
 									sizeX: scaleX,
 									sizeY: 1);
-								renderer.RectRight(
+								renderer.RectFront(
 									x: (model.SizeX - 1 - x) * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY + 1,
 									voxel: voxel,
@@ -163,7 +163,7 @@ namespace Voxel2Pixel.Draw
 									sizeY: scaleY - 1);
 							}
 							else
-								renderer.RectRight(
+								renderer.RectFront(
 									x: (model.SizeX - 1 - x) * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY,
 									voxel: voxel,
@@ -182,7 +182,7 @@ namespace Voxel2Pixel.Draw
 						if (model.At(x, y, z) is byte voxel
 							&& voxel != 0)
 						{
-							renderer.RectLeft(
+							renderer.RectFront(
 								x: y,
 								y: model.SizeZ - 1 - z,
 								voxel: voxel);
@@ -208,7 +208,7 @@ namespace Voxel2Pixel.Draw
 									voxel: voxel,
 									sizeX: scaleX,
 									sizeY: 1);
-								renderer.RectRight(
+								renderer.RectFront(
 									x: y * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY + 1,
 									voxel: voxel,
@@ -216,7 +216,7 @@ namespace Voxel2Pixel.Draw
 									sizeY: scaleY - 1);
 							}
 							else
-								renderer.RectRight(
+								renderer.RectFront(
 									x: y * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY,
 									voxel: voxel,
@@ -235,7 +235,7 @@ namespace Voxel2Pixel.Draw
 						if (model.At(x, y, z) is byte voxel
 							&& voxel != 0)
 						{
-							renderer.RectTop(
+							renderer.RectFront(
 								x: x,
 								y: model.SizeY - 1 - y,
 								voxel: voxel);
@@ -252,7 +252,7 @@ namespace Voxel2Pixel.Draw
 						if (model.At(x, y, z) is byte voxel
 							&& voxel != 0)
 						{
-							renderer.RectTop(
+							renderer.RectFront(
 								x: x,
 								y: y,
 								voxel: voxel);
@@ -479,7 +479,7 @@ namespace Voxel2Pixel.Draw
 						&& model.At(pixelX, 0, 0) is byte bottomEdge
 						&& bottomEdge != 0)
 					{
-						renderer.RectRight(
+						renderer.RectFront(
 							x: pixelX,
 							y: pixelY,
 							voxel: bottomEdge);
@@ -498,7 +498,7 @@ namespace Voxel2Pixel.Draw
 							&& model.At(pixelX, voxelY, voxelZ + 1) is byte voxelAbove
 							&& voxelAbove != 0)
 						{
-							renderer.RectRight(
+							renderer.RectFront(
 								x: pixelX,
 								y: pixelY,
 								voxel: voxelAbove);
@@ -524,7 +524,7 @@ namespace Voxel2Pixel.Draw
 									y: pixelY,
 									voxel: voxel);
 							if (!lower)
-								renderer.RectRight(
+								renderer.RectFront(
 									x: pixelX,
 									y: pixelY + 1,
 									voxel: voxel);
@@ -535,7 +535,7 @@ namespace Voxel2Pixel.Draw
 							&& model.At(pixelX, voxelY + 1, voxelZ) is byte voxelBack
 							&& voxelBack != 0)
 						{
-							renderer.RectRight(
+							renderer.RectFront(
 								x: pixelX,
 								y: pixelY,
 								voxel: voxelBack);
