@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System;
 using System.Linq;
+using System.IO;
 
 namespace Voxel2Pixel.Model
 {
@@ -16,6 +17,7 @@ namespace Voxel2Pixel.Model
 		public readonly byte Value;
 		public readonly string Name;
 		public readonly ReadOnlyCollection<int> Rotation;
+		public readonly ReadOnlyCollection<byte> Reverse;
 		#endregion Data members
 		#region Instances
 		public const int
@@ -58,6 +60,14 @@ namespace Voxel2Pixel.Model
 			Value = value;
 			Name = name;
 			Rotation = Array.AsReadOnly(rotation);
+			byte ReverseLookup(int axis)
+			{
+				for (byte i = 0; i < Rotation.Count; i++)
+					if (FlipBits(Rotation[i]) == axis)
+						return i;
+				throw new InvalidDataException("This line should be unreachable.");
+			}
+			Reverse = Array.AsReadOnly(Enumerable.Range(0, 3).Select(i => ReverseLookup(i)).ToArray());
 		}
 		public override string ToString() => Name;
 		public static bool operator ==(CuboidOrientation obj1, CuboidOrientation obj2) => obj1.Equals(obj2);
@@ -116,17 +126,10 @@ namespace Voxel2Pixel.Model
 		}
 		#endregion Rotate
 		#region ReverseRotate
-		public int ReverseAffected(int axis)
-		{
-			axis = FlipBits(axis);
-			for (int i = 0; i < Rotation.Count; i++)
-				if (FlipBits(Rotation[i]) == axis)
-					return i;
-			throw new ArgumentException("Invalid axis value: " + axis);
-		}
-		public int ReverseAffectedX => ReverseAffected(0);
-		public int ReverseAffectedY => ReverseAffected(1);
-		public int ReverseAffectedZ => ReverseAffected(2);
+		public int ReverseAffected(int axis) => Reverse[FlipBits(axis)];
+		public int ReverseAffectedX => Reverse[0];
+		public int ReverseAffectedY => Reverse[1];
+		public int ReverseAffectedZ => Reverse[2];
 		public int ReverseRotate(int axis, params int[] coordinates)
 		{
 			axis = ReverseAffected(axis);
