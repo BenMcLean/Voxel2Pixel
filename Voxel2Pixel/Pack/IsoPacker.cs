@@ -1,5 +1,4 @@
 ﻿using RectpackSharp;
-using System;
 using System.Linq;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
@@ -290,8 +289,8 @@ namespace Voxel2Pixel.Pack
 			};
 			for (int i = 0; i < sprites.Length; i++)
 			{
-				int width = VoxelDraw.IsoWidth(turnModel);
-				ArrayRenderer arrayRenderer = new ArrayRenderer
+				int width = VoxelDraw.IsoWidth(turnModel) << 1;//*2
+				Array2xRenderer arrayRenderer = new Array2xRenderer
 				{
 					Image = new byte[width * 4 * VoxelDraw.IsoHeight(turnModel)],
 					Width = width,
@@ -317,6 +316,7 @@ namespace Voxel2Pixel.Pack
 					voxelX: turnedX,
 					voxelY: turnedY,
 					voxelZ: turnedZ);
+				origins[i][0] <<= 1;//*=2
 				turnModel.CounterZ();
 			}
 		}
