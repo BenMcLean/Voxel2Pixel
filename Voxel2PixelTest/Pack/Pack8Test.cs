@@ -1,5 +1,4 @@
 ﻿using SixLabors.ImageSharp;
-using System.IO;
 using System.Linq;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
@@ -107,7 +106,7 @@ namespace Voxel2PixelTest.Pack
 		#region process
 		private static void Above4(IModel model, IVoxelColor voxelColor, string path, int originX = -1, int originY = -1, int originZ = -1, int frameDelay = 150)
 		{
-			IsoPacker.Above4Uncropped(
+			IsoPacker.Above4Outlined(
 				model: new MarkerModel
 				{
 					Model = model,
@@ -191,7 +190,7 @@ namespace Voxel2PixelTest.Pack
 		}
 		private static void Iso4(IModel model, IVoxelColor voxelColor, string path, int originX = -1, int originY = -1, int originZ = -1, int frameDelay = 150)
 		{
-			IsoPacker.Iso4Uncropped(
+			IsoPacker.Iso4Outlined(
 				model: new MarkerModel
 				{
 					Model = model,
