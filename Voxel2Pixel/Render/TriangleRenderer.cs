@@ -44,17 +44,17 @@ namespace Voxel2Pixel.Render
 					color: color);
 			}
 		}
-		public virtual void TriVertical(int x, int y, bool right, byte voxel) => Tri(x, y, right, VoxelColor.VerticalFace(voxel));
+		public virtual void TriVertical(int x, int y, bool right, byte voxel) => Tri(x, y, right, VoxelColor.TopFace(voxel));
 		public virtual void TriLeft(int x, int y, bool right, byte voxel) => Tri(x, y, right, VoxelColor.LeftFace(voxel));
 		public virtual void TriRight(int x, int y, bool right, byte voxel) => Tri(x, y, right, VoxelColor.RightFace(voxel));
 		#endregion ITriangleRenderer
 		#region IRectangleRenderer
 		public abstract void Rect(int x, int y, uint color, int sizeX = 1, int sizeY = 1);
-		public virtual void RectLeft(int x, int y, byte voxel, int sizeX = 1, int sizeY = 1) =>
+		public virtual void RectTop(int x, int y, byte voxel, int sizeX = 1, int sizeY = 1) =>
 			Rect(
 				x: x,
 				y: y,
-				color: VoxelColor.LeftFace(voxel),
+				color: VoxelColor.TopFace(voxel),
 				sizeX: sizeX,
 				sizeY: sizeY);
 		public virtual void RectRight(int x, int y, byte voxel, int sizeX = 1, int sizeY = 1) =>
@@ -64,11 +64,18 @@ namespace Voxel2Pixel.Render
 				color: VoxelColor.RightFace(voxel),
 				sizeX: sizeX,
 				sizeY: sizeY);
-		public virtual void RectVertical(int x, int y, byte voxel, int sizeX = 1, int sizeY = 1) =>
+		public virtual void RectFront(int x, int y, byte voxel, int sizeX = 1, int sizeY = 1) =>
 			Rect(
 				x: x,
 				y: y,
-				color: VoxelColor.VerticalFace(voxel),
+				color: VoxelColor.FrontFace(voxel),
+				sizeX: sizeX,
+				sizeY: sizeY);
+		public virtual void RectLeft(int x, int y, byte voxel, int sizeX = 1, int sizeY = 1) =>
+			Rect(
+				x: x,
+				y: y,
+				color: VoxelColor.LeftFace(voxel),
 				sizeX: sizeX,
 				sizeY: sizeY);
 		#endregion IRectangleRenderer

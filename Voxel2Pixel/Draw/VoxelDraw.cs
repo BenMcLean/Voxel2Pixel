@@ -43,7 +43,7 @@ namespace Voxel2Pixel.Draw
 							if (z >= model.SizeZ - 1
 								|| model.At(x, y, z + 1) == 0)
 							{
-								renderer.RectVertical(
+								renderer.RectTop(
 									x: x * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY,
 									voxel: voxel,
@@ -96,7 +96,7 @@ namespace Voxel2Pixel.Draw
 							if (z >= model.SizeZ - 1
 								|| model.At(x, y, z + 1) == 0)
 							{
-								renderer.RectVertical(
+								renderer.RectTop(
 									x: (model.SizeY - 1 - y) * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY,
 									voxel: voxel,
@@ -149,7 +149,7 @@ namespace Voxel2Pixel.Draw
 							if (z >= model.SizeZ - 1
 								|| model.At(x, y, z + 1) == 0)
 							{
-								renderer.RectVertical(
+								renderer.RectTop(
 									x: (model.SizeX - 1 - x) * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY,
 									voxel: voxel,
@@ -202,7 +202,7 @@ namespace Voxel2Pixel.Draw
 							if (z >= model.SizeZ - 1
 								|| model.At(x, y, z + 1) == 0)
 							{
-								renderer.RectVertical(
+								renderer.RectTop(
 									x: y * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY,
 									voxel: voxel,
@@ -235,7 +235,7 @@ namespace Voxel2Pixel.Draw
 						if (model.At(x, y, z) is byte voxel
 							&& voxel != 0)
 						{
-							renderer.RectVertical(
+							renderer.RectTop(
 								x: x,
 								y: model.SizeY - 1 - y,
 								voxel: voxel);
@@ -252,7 +252,7 @@ namespace Voxel2Pixel.Draw
 						if (model.At(x, y, z) is byte voxel
 							&& voxel != 0)
 						{
-							renderer.RectVertical(
+							renderer.RectTop(
 								x: x,
 								y: y,
 								voxel: voxel);
@@ -337,7 +337,7 @@ namespace Voxel2Pixel.Draw
 			{
 				if (peek)
 				{
-					renderer.RectVertical(
+					renderer.RectTop(
 						x: x * scaleX,
 						y: y * scaleY,
 						voxel: voxel,
@@ -362,7 +362,7 @@ namespace Voxel2Pixel.Draw
 			{
 				if (peek)
 				{
-					renderer.RectVertical(
+					renderer.RectTop(
 						x: x * scaleX,
 						y: y * scaleY,
 						voxel: voxel,
@@ -509,7 +509,7 @@ namespace Voxel2Pixel.Draw
 							&& model.At(pixelX, voxelY - 1, voxelZ) is byte voxelFront
 							&& voxelFront != 0)
 						{
-							renderer.RectVertical(
+							renderer.RectTop(
 								x: pixelX,
 								y: pixelY + 1,
 								voxel: voxelFront);
@@ -519,7 +519,7 @@ namespace Voxel2Pixel.Draw
 							&& voxel != 0)
 						{
 							if (!higher)
-								renderer.RectVertical(
+								renderer.RectTop(
 									x: pixelX,
 									y: pixelY,
 									voxel: voxel);
@@ -546,7 +546,7 @@ namespace Voxel2Pixel.Draw
 							&& model.At(pixelX, voxelY, voxelZ - 1) is byte voxelBelow
 							&& voxelBelow != 0)
 						{
-							renderer.RectVertical(
+							renderer.RectTop(
 								x: pixelX,
 								y: pixelY + 1,
 								voxel: voxelBelow);

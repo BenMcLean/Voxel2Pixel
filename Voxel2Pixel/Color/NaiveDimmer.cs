@@ -2,7 +2,7 @@
 
 namespace Voxel2Pixel.Color
 {
-	public class NaiveDimmer : IVoxelColorIso, IDimmer
+	public class NaiveDimmer : IVoxelColor, IDimmer
 	{
 		public NaiveDimmer(uint[] palette)
 		{
@@ -30,11 +30,12 @@ namespace Voxel2Pixel.Color
 		public uint Bright(byte voxel) => Dimmer(4, voxel);
 		public uint Dimmer(int brightness, byte voxel) => Palette[brightness][voxel];
 		#endregion IDimmer
-		#region IVoxelColorIso
+		#region IVoxelColor
 		public bool Iso { get; set; } = true;
-		public uint VerticalFace(byte voxel) => Bright(voxel);
+		public uint TopFace(byte voxel) => Bright(voxel);
+		public uint RightFace(byte voxel) => Light(voxel);
+		public uint FrontFace(byte voxel) => Medium(voxel);
 		public uint LeftFace(byte voxel) => Dim(voxel);
-		public uint RightFace(byte voxel) => Iso ? Light(voxel) : Medium(voxel);
-		#endregion IVoxelColorIso
+		#endregion IVoxelColor
 	}
 }

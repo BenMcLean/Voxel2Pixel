@@ -87,7 +87,7 @@ namespace Voxel2PixelTest.Pack
 		}
 		#endregion Model creation
 		#region process
-		private static void Iso8(IModel model, IVoxelColorIso voxelColor, string path, int originX = -1, int originY = -1, int originZ = -1, int frameDelay = 150)
+		private static void Iso8(IModel model, IVoxelColor voxelColor, string path, int originX = -1, int originY = -1, int originZ = -1, int frameDelay = 150)
 		{
 			byte[][] sprites = IsoPacker.Iso8Outlined(
 				model: new MarkerModel

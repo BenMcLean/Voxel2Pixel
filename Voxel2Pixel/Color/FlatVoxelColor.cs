@@ -1,14 +1,15 @@
 ﻿namespace Voxel2Pixel.Color
 {
-	public class FlatVoxelColor : IVoxelColorIso
+	public class FlatVoxelColor : IVoxelColor
 	{
 		public FlatVoxelColor(uint[] palette) => Palette = palette;
 		public uint[] Palette { get; set; }
-		#region IVoxelColorIso
+		#region IVoxelColor
 		public bool Iso { get; set; } = true;
-		public uint LeftFace(byte voxel) => Palette[voxel];
+		public uint TopFace(byte voxel) => Palette[voxel];
 		public uint RightFace(byte voxel) => Palette[voxel];
-		public uint VerticalFace(byte voxel) => Palette[voxel];
-		#endregion IVoxelColorIso
+		public uint FrontFace(byte voxel) => Palette[voxel];
+		public uint LeftFace(byte voxel) => Palette[voxel];
+		#endregion IVoxelColor
 	}
 }

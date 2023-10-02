@@ -12,7 +12,7 @@ namespace Voxel2Pixel.Render
 				x: x / 2 + (right ? 0 : 1),
 				y: y / 4,
 				color: color);
-		public virtual void TriVertical(int x, int y, bool right, byte voxel) => Tri(x, y, right, VoxelColor.VerticalFace(voxel));
+		public virtual void TriVertical(int x, int y, bool right, byte voxel) => Tri(x, y, right, VoxelColor.TopFace(voxel));
 		public virtual void TriLeft(int x, int y, bool right, byte voxel) => Tri(x, y, right, VoxelColor.LeftFace(voxel));
 		public virtual void TriRight(int x, int y, bool right, byte voxel) => Tri(x, y, right, VoxelColor.RightFace(voxel));
 		#endregion ITriangleRenderer
