@@ -570,7 +570,7 @@ namespace Voxel2Pixel.Draw
 			// To move one z+ in voxels is y - 4 in pixels.
 			// To move one z- in voxels is y + 4 in pixels.
 			pixelX = 2 * (model.SizeY + voxelX - voxelY);
-			pixelY = IsoHeight(model) - 2 * (voxelX + voxelY) - 4 * voxelZ - 5;
+			pixelY = IsoHeight(model) - 2 * (voxelX + voxelY) - 4 * voxelZ - 1;
 		}
 		private enum Face
 		{

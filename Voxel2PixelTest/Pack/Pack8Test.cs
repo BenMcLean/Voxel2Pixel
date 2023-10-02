@@ -40,7 +40,7 @@ namespace Voxel2PixelTest.Pack
 		}
 		*/
 		[Fact]
-		public void PyramidTest() => Gif(
+		public void PyramidTest() => Iso4(
 			model: new ArrayModel(Pyramid(17)),
 			voxelColor: new NaiveDimmer(ArrayModelTest.RainbowPalette),
 			path: "PyramidTest.gif",
@@ -48,7 +48,7 @@ namespace Voxel2PixelTest.Pack
 			originY: 0,
 			originZ: 0);
 		[Fact]
-		public void Pyramid2Test() => Gif(
+		public void Pyramid2Test() => Iso4(
 			model: new ArrayModel(Pyramid2(16, 4)),
 			voxelColor: new NaiveDimmer(ArrayModelTest.RainbowPalette),
 			path: "Pyramid2Test.gif",
@@ -59,7 +59,7 @@ namespace Voxel2PixelTest.Pack
 		public void NumberCubeTest()
 		{
 			VoxModel model = new VoxModel(@"..\..\..\NumberCube.vox");
-			Gif(
+			Iso4(
 				model: model,
 				voxelColor: new NaiveDimmer(model.Palette),
 				path: "NumberCubeTest.gif",
@@ -105,9 +105,9 @@ namespace Voxel2PixelTest.Pack
 		}
 		#endregion Model creation
 		#region process
-		private static void Gif(IModel model, IVoxelColor voxelColor, string path, int originX = -1, int originY = -1, int originZ = -1, int frameDelay = 150)
+		private static void Above4(IModel model, IVoxelColor voxelColor, string path, int originX = -1, int originY = -1, int originZ = -1, int frameDelay = 150)
 		{
-			IsoPacker.Above4(
+			IsoPacker.Above4Uncut(
 				model: new MarkerModel
 				{
 					Model = model,
@@ -133,6 +133,7 @@ namespace Voxel2PixelTest.Pack
 					.Select(i => PixelDraw.Height(sprites[i].Length, widths[i])
 						//+ pixelOriginY - origins[i][1]
 						).Max() + 1;
+			/*
 			Directory.CreateDirectory(Path.GetFileNameWithoutExtension(path));
 			for (int i = 0; i < sprites.Length; i++)
 				ImageMaker.Png(
@@ -159,6 +160,7 @@ namespace Voxel2PixelTest.Pack
 							width: width))
 					.SaveAsPng(Path.Combine(Path.GetFileNameWithoutExtension(path), i + ".png"));
 			return;
+			*/
 			ImageMaker.AnimatedGif(
 				scaleX: 4,
 				scaleY: 4,
@@ -170,6 +172,101 @@ namespace Voxel2PixelTest.Pack
 							y: 0,
 							insert: sprites[frame],
 							insertWidth: widths[frame],
+							width: width)
+						.Draw3x4(
+							@string: string.Join(",", origins[frame]),
+							width: width,
+							x: 0,
+							y: 0,
+							color: 0x000000FF)
+						.DrawPixel(
+							color: 0xFF88FFFF,
+							x: origins[frame][0],
+							y: origins[frame][1],
+							width: width))
+					.ToArray()
+					.AddFrameNumbers(width),
+				frameDelay: frameDelay)
+			.SaveAsGif(path);
+		}
+		private static void Iso4(IModel model, IVoxelColor voxelColor, string path, int originX = -1, int originY = -1, int originZ = -1, int frameDelay = 150)
+		{
+			IsoPacker.Iso4Uncut(
+				model: new MarkerModel
+				{
+					Model = model,
+					Voxel = 1,
+					X = originX,
+					Y = originY,
+					Z = originZ,
+				},
+				voxelColor: voxelColor,
+				sprites: out byte[][] sprites,
+				widths: out int[] widths,
+				origins: out int[][] origins,
+				originX: originX,
+				originY: originY,
+				originZ: originZ);
+			int pixelOriginX = origins.Select(origin => origin[0]).Max(),
+				pixelOriginY = origins.Select(origin => origin[1]).Max() + 2,
+				width = Enumerable.Range(0, sprites.Length)
+					.Select(i => widths[i]
+						//+ pixelOriginX - origins[i][0]
+						).Max(),
+				height = Enumerable.Range(0, sprites.Length)
+					.Select(i => PixelDraw.Height(sprites[i].Length, widths[i])
+						//+ pixelOriginY - origins[i][1]
+						).Max() + 1;
+			/*
+			Directory.CreateDirectory(Path.GetFileNameWithoutExtension(path));
+			for (int i = 0; i < sprites.Length; i++)
+				ImageMaker.Png(
+					scaleX: 8,
+					scaleY: 8,
+					width: width,
+					bytes: new byte[width * 4 * height]
+						.DrawInsert(
+							x: 0,
+							y: 0,
+							insert: sprites[i],
+							insertWidth: widths[i],
+							width: width)
+						.Draw3x4(
+							@string: string.Join(",", origins[i]),
+							width: width,
+							x: 0,
+							y: 0,
+							color: 0x000000FF)
+						.DrawPixel(
+							color: 0xFF88FFFF,
+							x: origins[i][0],
+							y: origins[i][1],
+							width: width))
+					.SaveAsPng(Path.Combine(Path.GetFileNameWithoutExtension(path), i + ".png"));
+			return;
+			*/
+			ImageMaker.AnimatedGif(
+				scaleX: 4,
+				scaleY: 4,
+				width: width,
+				frames: Enumerable.Range(0, sprites.Length)
+					.Select(frame => new byte[width * 4 * height]
+						.DrawInsert(
+							x: 0,
+							y: 0,
+							insert: sprites[frame],
+							insertWidth: widths[frame],
+							width: width)
+						.Draw3x4(
+							@string: string.Join(",", origins[frame]),
+							width: width,
+							x: 0,
+							y: 0,
+							color: 0x000000FF)
+						.DrawPixel(
+							color: 0xFF88FFFF,
+							x: origins[frame][0],
+							y: origins[frame][1],
 							width: width))
 					.ToArray()
 					.AddFrameNumbers(width),
