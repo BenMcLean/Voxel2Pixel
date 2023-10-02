@@ -106,7 +106,7 @@ namespace Voxel2PixelTest.Pack
 		#region process
 		private static void Above4(IModel model, IVoxelColor voxelColor, string path, int originX = -1, int originY = -1, int originZ = -1, int frameDelay = 150)
 		{
-			IsoPacker.Above4Outlined(
+			byte[][] sprites = IsoPacker.Above4Outlined(
 				model: new MarkerModel
 				{
 					Model = model,
@@ -116,7 +116,6 @@ namespace Voxel2PixelTest.Pack
 					Z = originZ,
 				},
 				voxelColor: voxelColor,
-				sprites: out byte[][] sprites,
 				widths: out int[] widths,
 				pixelOrigins: out int[][] origins,
 				originX,
@@ -190,7 +189,7 @@ namespace Voxel2PixelTest.Pack
 		}
 		private static void Iso4(IModel model, IVoxelColor voxelColor, string path, int originX = -1, int originY = -1, int originZ = -1, int frameDelay = 150)
 		{
-			IsoPacker.Iso4Outlined(
+			byte[][] sprites = IsoPacker.Iso4Outlined(
 				model: new MarkerModel
 				{
 					Model = model,
@@ -200,7 +199,6 @@ namespace Voxel2PixelTest.Pack
 					Z = originZ,
 				},
 				voxelColor: voxelColor,
-				sprites: out byte[][] sprites,
 				widths: out int[] widths,
 				pixelOrigins: out int[][] origins,
 				originX,
@@ -274,7 +272,7 @@ namespace Voxel2PixelTest.Pack
 		}
 		private static void Iso8(IModel model, IVoxelColor voxelColor, string path, int originX = -1, int originY = -1, int originZ = -1, int frameDelay = 150)
 		{
-			IsoPacker.Iso8Outlined(
+			byte[][] sprites = IsoPacker.Iso8Outlined(
 				model: new MarkerModel
 				{
 					Model = model,
@@ -284,7 +282,6 @@ namespace Voxel2PixelTest.Pack
 					Z = originZ,
 				},
 				voxelColor: voxelColor,
-				sprites: out byte[][] sprites,
 				widths: out int[] widths,
 				pixelOrigins: out int[][] origins,
 				originX,

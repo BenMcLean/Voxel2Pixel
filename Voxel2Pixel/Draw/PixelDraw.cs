@@ -879,9 +879,9 @@ namespace Voxel2Pixel.Draw
 			newOrigin = new int[] { origin[0] - cutLeft, origin[1] - cutTop };
 			return result;
 		}
-		public static void CropSprites(this byte[][] sprites, int[] widths, int[][] pixelOrigins, out byte[][] newSprites, out int[] newWidths, out int[][] newPixelOrigins)
+		public static byte[][] CropSprites(this byte[][] sprites, int[] widths, int[][] pixelOrigins, out int[] newWidths, out int[][] newPixelOrigins)
 		{
-			newSprites = new byte[sprites.Length][];
+			byte[][] newSprites = new byte[sprites.Length][];
 			newWidths = new int[widths.Length];
 			newPixelOrigins = new int[pixelOrigins.Length][];
 			for (int i = 0; i < sprites.Length; i++)
@@ -892,6 +892,7 @@ namespace Voxel2Pixel.Draw
 					newOrigin: out newPixelOrigins[i],
 					origin: pixelOrigins[i]);
 			}
+			return newSprites;
 		}
 		public static byte[] CropOutlineSprite(this byte[] sprite, int width, out int newWidth, out int[] newOrigin, params int[] origin)
 		{
@@ -906,9 +907,9 @@ namespace Voxel2Pixel.Draw
 			newOrigin = new int[] { origin[0] - cutLeft, origin[1] - cutTop };
 			return result;
 		}
-		public static void CropOutlineSprites(this byte[][] sprites, int[] widths, int[][] pixelOrigins, out byte[][] newSprites, out int[] newWidths, out int[][] newPixelOrigins)
+		public static byte[][] CropOutlineSprites(this byte[][] sprites, int[] widths, int[][] pixelOrigins, out int[] newWidths, out int[][] newPixelOrigins)
 		{
-			newSprites = new byte[sprites.Length][];
+			byte[][] newSprites = new byte[sprites.Length][];
 			newWidths = new int[widths.Length];
 			newPixelOrigins = new int[pixelOrigins.Length][];
 			for (int i = 0; i < sprites.Length; i++)
@@ -919,6 +920,7 @@ namespace Voxel2Pixel.Draw
 					newOrigin: out newPixelOrigins[i],
 					origin: pixelOrigins[i]);
 			}
+			return newSprites;
 		}
 		/// <summary>
 		/// Makes a new texture and copies the old texture to its upper left corner
