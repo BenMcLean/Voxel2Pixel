@@ -107,7 +107,7 @@ namespace Voxel2PixelTest.Pack
 		#region process
 		private static void Above4(IModel model, IVoxelColor voxelColor, string path, int originX = -1, int originY = -1, int originZ = -1, int frameDelay = 150)
 		{
-			IsoPacker.Above4Uncut(
+			IsoPacker.Above4Uncropped(
 				model: new MarkerModel
 				{
 					Model = model,
@@ -119,10 +119,10 @@ namespace Voxel2PixelTest.Pack
 				voxelColor: voxelColor,
 				sprites: out byte[][] sprites,
 				widths: out int[] widths,
-				origins: out int[][] origins,
-				originX: originX,
-				originY: originY,
-				originZ: originZ);
+				pixelOrigins: out int[][] origins,
+				originX,
+				originY,
+				originZ);
 			int pixelOriginX = origins.Select(origin => origin[0]).Max(),
 				pixelOriginY = origins.Select(origin => origin[1]).Max() + 2,
 				width = Enumerable.Range(0, sprites.Length)
@@ -191,7 +191,7 @@ namespace Voxel2PixelTest.Pack
 		}
 		private static void Iso4(IModel model, IVoxelColor voxelColor, string path, int originX = -1, int originY = -1, int originZ = -1, int frameDelay = 150)
 		{
-			IsoPacker.Iso4Uncut(
+			IsoPacker.Iso4Uncropped(
 				model: new MarkerModel
 				{
 					Model = model,
@@ -203,10 +203,10 @@ namespace Voxel2PixelTest.Pack
 				voxelColor: voxelColor,
 				sprites: out byte[][] sprites,
 				widths: out int[] widths,
-				origins: out int[][] origins,
-				originX: originX,
-				originY: originY,
-				originZ: originZ);
+				pixelOrigins: out int[][] origins,
+				originX,
+				originY,
+				originZ);
 			int pixelOriginX = origins.Select(origin => origin[0]).Max(),
 				pixelOriginY = origins.Select(origin => origin[1]).Max() + 2,
 				width = Enumerable.Range(0, sprites.Length)

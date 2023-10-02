@@ -4,6 +4,7 @@ using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Render;
+using static Voxel2Pixel.Draw.PixelDraw;
 
 namespace Voxel2Pixel.Pack
 {
@@ -142,100 +143,20 @@ namespace Voxel2Pixel.Pack
 					y: origins[i][1],
 					width: widths[i]);
 		}
-		public static void IsoSpritesUncut(IModel model, IVoxelColor voxelColor, out byte[][] sprites, out int[] widths, out int[][] origins, int originX = -1, int originY = -1, int originZ = -1)
+		#region Above4
+		public static void Above4Uncropped(IModel model, IVoxelColor voxelColor, out byte[][] sprites, out int[] widths, out int[][] pixelOrigins, params int[] voxelOrigin)
 		{
-			if (originX < 0)
-				originX = model.SizeX >> 1;
-			if (originY < 0)
-				originY = model.SizeY >> 1;
-			if (originZ < 0)
-				originZ = 0;
-			sprites = new byte[8][];
-			widths = new int[sprites.Length];
-			origins = new int[sprites.Length][];
-			TurnModel turnModel = new TurnModel
-			{
-				Model = model,
-			};
-			for (int i = 0; i < sprites.Length; i += 2)
-			{
-				turnModel.Rotate(
-					x: out int turnedX,
-					y: out int turnedY,
-					z: out int turnedZ,
-					originX,
-					originY,
-					originZ);
-				int width = VoxelDraw.AboveWidth(turnModel) * 5;
-				ArrayRenderer arrayRenderer = new ArrayRenderer
-				{
-					Image = new byte[width * 16 * VoxelDraw.AboveHeight(turnModel)],
-					Width = width,
-					VoxelColor = voxelColor,
-				};
-				OffsetRenderer offsetRenderer = new OffsetRenderer
-				{
-					RectangleRenderer = arrayRenderer,
-					VoxelColor = voxelColor,
-					ScaleX = 5,
-					ScaleY = 4,
-				};
-				VoxelDraw.Above(
-					model: turnModel,
-					renderer: offsetRenderer);
-				sprites[i] = arrayRenderer.Image;
-				widths[i] = width;
-				origins[i] = new int[2];
-				VoxelDraw.AboveLocate(
-					pixelX: out origins[i][0],
-					pixelY: out origins[i][1],
-					model: turnModel,
-					voxelX: turnedX,
-					voxelY: turnedY,
-					voxelZ: turnedZ);
-				origins[i][0] *= 5;
-				origins[i][1] = 0;
-				width = VoxelDraw.IsoWidth(turnModel) << 1;
-				arrayRenderer = new Array2xRenderer
-				{
-					Image = new byte[width * 4 * VoxelDraw.IsoHeight(turnModel)],
-					Width = width,
-					VoxelColor = voxelColor,
-				};
-				VoxelDraw.Iso(
-					model: turnModel,
-					renderer: arrayRenderer);
-				sprites[i + 1] = arrayRenderer.Image;
-				widths[i + 1] = width;
-				origins[i + 1] = new int[2];
-				VoxelDraw.IsoLocate(
-					pixelX: out origins[i + 1][0],
-					pixelY: out origins[i + 1][1],
-					model: turnModel,
-					voxelX: turnedX,
-					voxelY: turnedY,
-					voxelZ: turnedZ);
-				origins[i + 1][0] *= 2;
-				turnModel.CounterZ();
-			}
-			for (int i = 0; i < sprites.Length; i++)
-				sprites[i].DrawPixel(
-					color: 0xFFFFFFFF,
-					x: origins[i][0],
-					y: origins[i][1],
-					width: widths[i]);
-		}
-		public static void Above4Uncut(IModel model, IVoxelColor voxelColor, out byte[][] sprites, out int[] widths, out int[][] origins, int originX = -1, int originY = -1, int originZ = -1)
-		{
-			if (originX < 0)
-				originX = model.SizeX >> 1;
-			if (originY < 0)
-				originY = model.SizeY >> 1;
-			if (originZ < 0)
-				originZ = 0;
+			if (voxelOrigin is null || voxelOrigin.Length < 3)
+				voxelOrigin = new int[] { -1, -1, -1 };
+			if (voxelOrigin[0] < 0)
+				voxelOrigin[0] = model.SizeX >> 1;
+			if (voxelOrigin[1] < 0)
+				voxelOrigin[1] = model.SizeY >> 1;
+			if (voxelOrigin[2] < 0)
+				voxelOrigin[2] = 0;
 			sprites = new byte[4][];
 			widths = new int[sprites.Length];
-			origins = new int[sprites.Length][];
+			pixelOrigins = new int[sprites.Length][];
 			TurnModel turnModel = new TurnModel
 			{
 				Model = model,
@@ -258,13 +179,11 @@ namespace Voxel2Pixel.Pack
 					x: out int turnedX,
 					y: out int turnedY,
 					z: out int turnedZ,
-					originX,
-					originY,
-					originZ);
-				origins[i] = new int[2];
+					coordinates: voxelOrigin);
+				pixelOrigins[i] = new int[2];
 				VoxelDraw.AboveLocate(
-					pixelX: out origins[i][0],
-					pixelY: out origins[i][1],
+					pixelX: out pixelOrigins[i][0],
+					pixelY: out pixelOrigins[i][1],
 					model: turnModel,
 					voxelX: turnedX,
 					voxelY: turnedY,
@@ -272,17 +191,53 @@ namespace Voxel2Pixel.Pack
 				turnModel.CounterZ();
 			}
 		}
-		public static void Iso4Uncut(IModel model, IVoxelColor voxelColor, out byte[][] sprites, out int[] widths, out int[][] origins, int originX = -1, int originY = -1, int originZ = -1)
+		public static void Above4(IModel model, IVoxelColor voxelColor, out byte[][] sprites, out int[] widths, out int[][] pixelOrigins, params int[] voxelOrigin)
 		{
-			if (originX < 0)
-				originX = model.SizeX >> 1;
-			if (originY < 0)
-				originY = model.SizeY >> 1;
-			if (originZ < 0)
-				originZ = 0;
+			Above4Uncropped(
+				model: model,
+				voxelColor: voxelColor,
+				out byte[][] rawSprites,
+				out int[] rawWidths,
+				out int[][] rawPixelOrigins,
+				voxelOrigin: voxelOrigin);
+			rawSprites.CropSprites(
+				widths: rawWidths,
+				pixelOrigins: rawPixelOrigins,
+				newSprites: out sprites,
+				newWidths: out widths,
+				newPixelOrigins: out pixelOrigins);
+		}
+		public static void Above4Outlined(IModel model, IVoxelColor voxelColor, out byte[][] sprites, out int[] widths, out int[][] pixelOrigins, params int[] voxelOrigin)
+		{
+			Above4Uncropped(
+				model: model,
+				voxelColor: voxelColor,
+				out byte[][] rawSprites,
+				out int[] rawWidths,
+				out int[][] rawPixelOrigins,
+				voxelOrigin: voxelOrigin);
+			rawSprites.CropOutlineSprites(
+				widths: rawWidths,
+				pixelOrigins: rawPixelOrigins,
+				newSprites: out sprites,
+				newWidths: out widths,
+				newPixelOrigins: out pixelOrigins);
+		}
+		#endregion Above4
+		#region Iso4
+		public static void Iso4Uncropped(IModel model, IVoxelColor voxelColor, out byte[][] sprites, out int[] widths, out int[][] pixelOrigins, params int[] voxelOrigin)
+		{
+			if (voxelOrigin is null || voxelOrigin.Length < 3)
+				voxelOrigin = new int[] { -1, -1, -1 };
+			if (voxelOrigin[0] < 0)
+				voxelOrigin[0] = model.SizeX >> 1;
+			if (voxelOrigin[1] < 0)
+				voxelOrigin[1] = model.SizeY >> 1;
+			if (voxelOrigin[2] < 0)
+				voxelOrigin[2] = 0;
 			sprites = new byte[4][];
 			widths = new int[sprites.Length];
-			origins = new int[sprites.Length][];
+			pixelOrigins = new int[sprites.Length][];
 			TurnModel turnModel = new TurnModel
 			{
 				Model = model,
@@ -305,20 +260,51 @@ namespace Voxel2Pixel.Pack
 					x: out int turnedX,
 					y: out int turnedY,
 					z: out int turnedZ,
-					originX,
-					originY,
-					originZ);
-				origins[i] = new int[2];
+					coordinates: voxelOrigin);
+				pixelOrigins[i] = new int[2];
 				VoxelDraw.IsoLocate(
-					pixelX: out origins[i][0],
-					pixelY: out origins[i][1],
+					pixelX: out pixelOrigins[i][0],
+					pixelY: out pixelOrigins[i][1],
 					model: turnModel,
 					voxelX: turnedX,
 					voxelY: turnedY,
 					voxelZ: turnedZ);
-				origins[i][0] <<= 1;//*=2
+				pixelOrigins[i][0] <<= 1;//*=2
 				turnModel.CounterZ();
 			}
 		}
+		public static void Iso4(IModel model, IVoxelColor voxelColor, out byte[][] sprites, out int[] widths, out int[][] pixelOrigins, params int[] voxelOrigin)
+		{
+			Iso4Uncropped(
+				model: model,
+				voxelColor: voxelColor,
+				out byte[][] rawSprites,
+				out int[] rawWidths,
+				out int[][] rawPixelOrigins,
+				voxelOrigin: voxelOrigin);
+			rawSprites.CropSprites(
+				widths: rawWidths,
+				pixelOrigins: rawPixelOrigins,
+				newSprites: out sprites,
+				newWidths: out widths,
+				newPixelOrigins: out pixelOrigins);
+		}
+		public static void Iso4Outlined(IModel model, IVoxelColor voxelColor, out byte[][] sprites, out int[] widths, out int[][] pixelOrigins, params int[] voxelOrigin)
+		{
+			Iso4Uncropped(
+				model: model,
+				voxelColor: voxelColor,
+				out byte[][] rawSprites,
+				out int[] rawWidths,
+				out int[][] rawPixelOrigins,
+				voxelOrigin: voxelOrigin);
+			rawSprites.CropOutlineSprites(
+				widths: rawWidths,
+				pixelOrigins: rawPixelOrigins,
+				newSprites: out sprites,
+				newWidths: out widths,
+				newPixelOrigins: out pixelOrigins);
+		}
+		#endregion Iso4
 	}
 }

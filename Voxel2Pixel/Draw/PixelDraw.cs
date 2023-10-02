@@ -867,6 +867,59 @@ namespace Voxel2Pixel.Draw
 						Array.Copy(rgba, 0, result, rowIndex + index - 3, 4);
 			return result;
 		}
+		public static byte[] CropSprite(this byte[] sprite, int width, out int newWidth, out int[] newOrigin, params int[] origin)
+		{
+			byte[] result = TransparentCrop(
+				texture: sprite,
+				cutLeft: out int cutLeft,
+				cutTop: out int cutTop,
+				croppedWidth: out newWidth,
+				croppedHeight: out _,
+				width: width);
+			newOrigin = new int[] { origin[0] - cutLeft, origin[1] - cutTop };
+			return result;
+		}
+		public static void CropSprites(this byte[][] sprites, int[] widths, int[][] pixelOrigins, out byte[][] newSprites, out int[] newWidths, out int[][] newPixelOrigins)
+		{
+			newSprites = new byte[sprites.Length][];
+			newWidths = new int[widths.Length];
+			newPixelOrigins = new int[pixelOrigins.Length][];
+			for (int i = 0; i < sprites.Length; i++)
+			{
+				newSprites[i] = sprites[i].CropSprite(
+					width: widths[i],
+					newWidth: out newWidths[i],
+					newOrigin: out newPixelOrigins[i],
+					origin: pixelOrigins[i]);
+			}
+		}
+		public static byte[] CropOutlineSprite(this byte[] sprite, int width, out int newWidth, out int[] newOrigin, params int[] origin)
+		{
+			byte[] result = TransparentCropPlusOne(
+				texture: sprite,
+				cutLeft: out int cutLeft,
+				cutTop: out int cutTop,
+				croppedWidth: out newWidth,
+				croppedHeight: out _,
+				width: width)
+				.Outline(newWidth);
+			newOrigin = new int[] { origin[0] - cutLeft, origin[1] - cutTop };
+			return result;
+		}
+		public static void CropOutlineSprites(this byte[][] sprites, int[] widths, int[][] pixelOrigins, out byte[][] newSprites, out int[] newWidths, out int[][] newPixelOrigins)
+		{
+			newSprites = new byte[sprites.Length][];
+			newWidths = new int[widths.Length];
+			newPixelOrigins = new int[pixelOrigins.Length][];
+			for (int i = 0; i < sprites.Length; i++)
+			{
+				newSprites[i] = sprites[i].CropOutlineSprite(
+					width: widths[i],
+					newWidth: out newWidths[i],
+					newOrigin: out newPixelOrigins[i],
+					origin: pixelOrigins[i]);
+			}
+		}
 		/// <summary>
 		/// Makes a new texture and copies the old texture to its upper left corner
 		/// </summary>
