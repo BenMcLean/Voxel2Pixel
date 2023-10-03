@@ -13,10 +13,10 @@ namespace Voxel2Pixel.Color
 					Palette[brightness] = new uint[Palette[2].Length];
 			for (int color = 0; color < Palette[2].Length; color++)
 			{
-				Palette[0][color] = Palette[2][color].LerpColor(0x000000FF, 0.5f);
-				Palette[1][color] = Palette[2][color].LerpColor(0x000000FF, 0.25f);
-				Palette[3][color] = Palette[2][color].LerpColor(0xFFFFFFFF, 0.25f);
-				Palette[4][color] = Palette[2][color].LerpColor(0xFFFFFFFF, 0.5f);
+				Palette[0][color] = Palette[2][color].LerpColor(0x000000FF, 0.3f);
+				Palette[1][color] = Palette[2][color].LerpColor(0x000000FF, 0.15f);
+				Palette[3][color] = Palette[2][color].LerpColor(0xFFFFFFFF, 0.15f);
+				Palette[4][color] = Palette[2][color].LerpColor(0xFFFFFFFF, 0.3f);
 			}
 		}
 		#region Data members

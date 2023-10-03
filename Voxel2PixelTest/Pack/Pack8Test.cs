@@ -22,19 +22,25 @@ namespace Voxel2PixelTest.Pack
 				path: "IsoSpritesTest.gif");
 		}
 		[Fact]
+		public void HazmatTest()
+		{
+			VoxModel model = new VoxModel(@"..\..\..\Hazmat.vox");
+			Iso8Gif(
+				model: model,
+				voxelColor: new NaiveDimmer(model.Palette),
+				path: "Hazmat.gif");
+		}
+		[Fact]
 		public void PyramidTest() => Iso8Gif(
 			model: new ArrayModel(Pyramid(17)),
 			voxelColor: new NaiveDimmer(ArrayModelTest.RainbowPalette),
-			path: "PyramidTest.gif",
-			originX: 0,
-			originY: 0,
-			originZ: 0);
+			path: "PyramidTest.gif");
 		[Fact]
 		public void Pyramid2Test() => Iso8Gif(
 			model: new ArrayModel(Pyramid2(16, 4)),
 			voxelColor: new NaiveDimmer(ArrayModelTest.RainbowPalette),
 			path: "Pyramid2Test.gif",
-			originX: 0,
+			originX: 5,
 			originY: 0,
 			originZ: 0);
 		[Fact]
@@ -103,7 +109,7 @@ namespace Voxel2PixelTest.Pack
 				originX,
 				originY,
 				originZ);
-			pixelOrigins = pixelOrigins.Iso8SouthWestPixelOrigins();
+			//pixelOrigins = pixelOrigins.Iso8SouthWestPixelOrigins();
 			int pixelOriginX = pixelOrigins.Select(origin => origin[0]).Max(),
 				pixelOriginY = pixelOrigins.Select(origin => origin[1]).Max() + 2,
 				width = Enumerable.Range(0, sprites.Length)
