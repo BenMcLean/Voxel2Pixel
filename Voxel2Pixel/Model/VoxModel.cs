@@ -17,7 +17,7 @@ namespace Voxel2Pixel.Model
 				destinationIndex: 1,
 				length: Math.Min(palette.Length, Palette.Length) - 1);
 			FileToVoxCore.Vox.VoxelData voxelData = model.VoxelFrames[frame];
-			Voxels = Bytes3D.Initialize<byte>(voxelData.VoxelsWide, voxelData.VoxelsTall, voxelData.VoxelsDeep);
+			Voxels = Array3D.Initialize<byte>(voxelData.VoxelsWide, voxelData.VoxelsTall, voxelData.VoxelsDeep);
 			for (int x = 0; x < SizeX; x++)
 				for (int y = 0; y < SizeY; y++)
 					for (int z = 0; z < SizeZ; z++)

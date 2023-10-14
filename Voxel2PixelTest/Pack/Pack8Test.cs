@@ -62,7 +62,7 @@ namespace Voxel2PixelTest.Pack
 			if (colors is null || colors.Length < 1)
 				colors = Enumerable.Range(0, 256).Select(i => (byte)i).ToArray();
 			int halfWidth = width >> 1;
-			byte[][][] voxels = Bytes3D.Initialize<byte>(width, width, halfWidth + 1);
+			byte[][][] voxels = Array3D.Initialize<byte>(width, width, halfWidth + 1);
 			voxels[0][0][0] = colors[1];
 			voxels[width - 1][0][0] = colors[2];
 			voxels[0][width - 1][0] = colors[3];
@@ -83,7 +83,7 @@ namespace Voxel2PixelTest.Pack
 			if (colors is null || colors.Length < 1)
 				colors = Enumerable.Range(0, 256).Select(i => (byte)i).ToArray();
 			int halfWidth = width >> 1;
-			byte[][][] voxels = Bytes3D.Initialize<byte>(width, depth, halfWidth + 1);
+			byte[][][] voxels = Array3D.Initialize<byte>(width, depth, halfWidth + 1);
 			voxels[width - 1][0][0] = colors[2];
 			voxels[0][depth - 1][0] = colors[3];
 			voxels[width - 1][depth - 1][0] = colors[4];

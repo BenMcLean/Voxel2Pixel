@@ -4,7 +4,7 @@
 	{
 		public ArrayModel(byte[][][] voxels) => Voxels = voxels;
 		public ArrayModel(ArrayModel other) : this(other.Voxels.DeepCopy()) { }
-		public ArrayModel(int sizeX = 1, int sizeY = 1, int sizeZ = 1) : this(Bytes3D.Initialize<byte>(sizeX, sizeY, sizeZ)) { }
+		public ArrayModel(int sizeX = 1, int sizeY = 1, int sizeZ = 1) : this(Array3D.Initialize<byte>(sizeX, sizeY, sizeZ)) { }
 		public ArrayModel(IModel model) : this(model.SizeX, model.SizeY, model.SizeZ)
 		{
 			for (int x = 0; x < SizeX; x++)
@@ -25,32 +25,32 @@
 		#region ITurnable
 		public ITurnable CounterX()
 		{
-			Voxels = Bytes3D.CounterX(Voxels);
+			Voxels = Array3D.CounterX(Voxels);
 			return this;
 		}
 		public ITurnable CounterY()
 		{
-			Voxels = Bytes3D.CounterY(Voxels);
+			Voxels = Array3D.CounterY(Voxels);
 			return this;
 		}
 		public ITurnable CounterZ()
 		{
-			Voxels = Bytes3D.CounterZ(Voxels);
+			Voxels = Array3D.CounterZ(Voxels);
 			return this;
 		}
 		public ITurnable ClockX()
 		{
-			Voxels = Bytes3D.ClockX(Voxels);
+			Voxels = Array3D.ClockX(Voxels);
 			return this;
 		}
 		public ITurnable ClockY()
 		{
-			Voxels = Bytes3D.ClockY(Voxels);
+			Voxels = Array3D.ClockY(Voxels);
 			return this;
 		}
 		public ITurnable ClockZ()
 		{
-			Voxels = Bytes3D.ClockZ(Voxels);
+			Voxels = Array3D.ClockZ(Voxels);
 			return this;
 		}
 		public ITurnable Reset() => throw new System.NotImplementedException();

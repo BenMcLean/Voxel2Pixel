@@ -2,7 +2,7 @@
 
 namespace Voxel2Pixel.Model
 {
-	public static class Bytes3D
+	public static class Array3D
 	{
 		public static T[][][] Initialize<T>(int sizeX = 1, int sizeY = 1, int sizeZ = 1)
 		{
