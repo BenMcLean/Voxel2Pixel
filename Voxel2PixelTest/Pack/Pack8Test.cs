@@ -24,7 +24,9 @@ namespace Voxel2PixelTest.Pack
 		[Fact]
 		public void HazmatTest()
 		{
-			VoxModel model = new VoxModel(@"..\..\..\Hazmat.vox");
+			VoxModel original = new VoxModel(@"..\..\..\Hazmat.vox");
+			VoxModel.Write("Hazmat.vox", original.Palette, original);
+			VoxModel model = new VoxModel("Hazmat.vox");
 			Iso8Gif(
 				model: model,
 				voxelColor: new NaiveDimmer(model.Palette),
