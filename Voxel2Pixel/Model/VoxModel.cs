@@ -48,11 +48,33 @@ namespace Voxel2Pixel.Model
 								z: z,
 								color: palette[voxel].Rgba2argb());
 		}
+		public static IEnumerable<FileToVoxCore.Schematics.Voxel> FileToVoxCoreVoxels2(IModel model, uint[] palette)
+		{
+			TurnModel turnModel = new TurnModel
+			{
+				Model = model,
+				CuboidOrientation = CuboidOrientation.BOTTOM3,
+			};
+			for (ushort x = 0; x < turnModel.SizeX; x++)
+				for (ushort y = 0; y < turnModel.SizeY; y++)
+					for (ushort z = 0; z < turnModel.SizeZ; z++)
+						if (turnModel.At(x, y, z) is byte voxel && voxel != 0)
+							yield return new FileToVoxCore.Schematics.Voxel(
+								x: x,
+								y: y,
+								z: z,
+								color: palette[voxel].Rgba2argb());
+		}
 		public static bool Write(string absolutePath, uint[] palette, IModel model) =>
 			new FileToVoxCore.Vox.VoxWriter().WriteModel(
 				absolutePath: absolutePath,
 				palette: palette.Skip(1).Select(@uint => Color(@uint)).ToList(),
 				schematic: new FileToVoxCore.Schematics.Schematic(FileToVoxCoreVoxels(model, palette).ToList()));
+		public static bool Write2(string absolutePath, uint[] palette, IModel model) =>
+			new FileToVoxCore.Vox.VoxWriter().WriteModel(
+				absolutePath: absolutePath,
+				palette: palette.Skip(1).Select(@uint => Color(@uint)).ToList(),
+				schematic: new FileToVoxCore.Schematics.Schematic(FileToVoxCoreVoxels2(model, palette).ToList()));
 		#endregion Write
 	}
 }

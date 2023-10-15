@@ -1,4 +1,5 @@
 ﻿using RectpackSharp;
+using System.Collections.Generic;
 using System.Linq;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
@@ -222,7 +223,29 @@ namespace Voxel2Pixel.Pack
 					result[z + y] = list[y][x];
 			return result;
 		}
-		public static byte[][] Iso8(IModel model, IVoxelColor voxelColor, out int[] widths, out int[][] pixelOrigins, params int[] voxelOrigin)
+		public static byte[][] Iso8(this IModel[] models, IVoxelColor voxelColor, out int[] widths, out int[][] pixelOrigins, params int[][] voxelOrigins) => Iso8(
+			models: models,
+			voxelColors: Enumerable.Range(0, models.Length).Select(e => voxelColor).ToArray(),
+			widths: out widths,
+			pixelOrigins: out pixelOrigins,
+			voxelOrigins: voxelOrigins);
+		public static byte[][] Iso8(this IModel[] models, IVoxelColor[] voxelColors, out int[] widths, out int[][] pixelOrigins, params int[][] voxelOrigins)
+		{
+			byte[][][] sprites = new byte[models.Length][][];
+			int[][] widths2 = new int[sprites.Length][];
+			int[][][] pixelOrigins2 = new int[sprites.Length][][];
+			for (int model = 0; model < models.Length; model++)
+				sprites[model] = Iso8(
+					model: models[model],
+					voxelColor: voxelColors[model],
+					widths: out widths2[model],
+					pixelOrigins: out pixelOrigins2[model],
+					voxelOrigin: voxelOrigins[model]);
+			widths = CombineArrays(widths2);
+			pixelOrigins = CombineArrays(pixelOrigins2);
+			return CombineArrays(sprites);
+		}
+		public static byte[][] Iso8(this IModel model, IVoxelColor voxelColor, out int[] widths, out int[][] pixelOrigins, params int[] voxelOrigin)
 		{
 			byte[][] aboveSprites = Above4(
 					model: model,
@@ -240,7 +263,7 @@ namespace Voxel2Pixel.Pack
 			pixelOrigins = CombineArrays(abovePixelOrigins, isoPixelOrigins);
 			return CombineArrays(aboveSprites, isoSprites);
 		}
-		public static byte[][] Iso8Outlined(IModel model, IVoxelColor voxelColor, out int[] widths, out int[][] pixelOrigins, params int[] voxelOrigin)
+		public static byte[][] Iso8Outlined(this IModel model, IVoxelColor voxelColor, out int[] widths, out int[][] pixelOrigins, params int[] voxelOrigin)
 		{
 			byte[][] aboveSprites = Above4Outlined(
 					model: model,
