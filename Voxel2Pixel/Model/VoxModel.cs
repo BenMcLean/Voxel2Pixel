@@ -6,9 +6,10 @@ namespace Voxel2Pixel.Model
 {
 	public class VoxModel : ArrayModel
 	{
+		#region Read
 		public VoxModel(FileToVoxCore.Vox.VoxModel model, int frame = 0)
 		{
-			uint[] palette = model.Palette.Take(255).Select(color => Color(color)).ToArray();
+			uint[] palette = model.Palette.Take(256).Select(color => Color(color)).ToArray();
 			Palette = new uint[256];
 			Array.Copy(
 				sourceArray: palette,
@@ -26,10 +27,7 @@ namespace Voxel2Pixel.Model
 		}
 		public VoxModel(string filePath, int frame = 0) : this(new FileToVoxCore.Vox.VoxReader().LoadModel(filePath), frame) { }
 		public uint[] Palette;
-		public static uint Color(FileToVoxCore.Drawing.Color color) => PixelDraw.Color(
-			r: color.R,
-			g: color.G,
-			b: color.B,
-			a: color.A);
+		public static uint Color(FileToVoxCore.Drawing.Color color) => ((uint)color.ToArgb()).Argb2rgba();
+		#endregion Read
 	}
 }

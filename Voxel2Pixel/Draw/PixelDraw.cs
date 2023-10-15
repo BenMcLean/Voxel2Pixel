@@ -1049,6 +1049,12 @@ namespace Voxel2Pixel.Draw
 		public static byte B(this uint color) => (byte)(color >> 8);
 		public static byte A(this uint color) => (byte)color;
 		public static uint Color(byte r, byte g, byte b, byte a) => (uint)(r << 24 | g << 16 | b << 8 | a);
+		/// <param name="rgba">rgba8888, Big Endian</param>
+		/// <returns>argb8888, Big Endian</returns>
+		public static uint Rgba2argb(this uint rgba) => (rgba << 24) | (rgba >> 8);
+		/// <param name="rgba">argb8888, Big Endian</param>
+		/// <returns>rgba8888, Big Endian</returns>
+		public static uint Argb2rgba(this uint argb) => (argb << 8) | (argb >> 24);
 		public static int LerpColor(this int startColor, int endColor, float change)
 		{
 			int sA = startColor & 0xFF, sB = startColor >> 8 & 0xFF, sG = startColor >> 16 & 0xFF, sR = startColor >> 24 & 0xFF,
