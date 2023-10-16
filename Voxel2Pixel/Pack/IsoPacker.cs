@@ -231,6 +231,8 @@ namespace Voxel2Pixel.Pack
 			voxelOrigins: voxelOrigins);
 		public static byte[][] Iso8(this IModel[] models, IVoxelColor[] voxelColors, out int[] widths, out int[][] pixelOrigins, params int[][] voxelOrigins)
 		{
+			if (voxelOrigins is null)
+				voxelOrigins = new int[models.Length][];
 			byte[][][] sprites = new byte[models.Length][][];
 			int[][] widths2 = new int[sprites.Length][];
 			int[][][] pixelOrigins2 = new int[sprites.Length][][];
@@ -262,6 +264,24 @@ namespace Voxel2Pixel.Pack
 			widths = CombineArrays(aboveWidths, isoWidths);
 			pixelOrigins = CombineArrays(abovePixelOrigins, isoPixelOrigins);
 			return CombineArrays(aboveSprites, isoSprites);
+		}
+		public static byte[][] Iso8Outlined(this IModel[] models, IVoxelColor[] voxelColors, out int[] widths, out int[][] pixelOrigins, params int[][] voxelOrigins)
+		{
+			if (voxelOrigins is null)
+				voxelOrigins = new int[models.Length][];
+			byte[][][] sprites = new byte[models.Length][][];
+			int[][] widths2 = new int[sprites.Length][];
+			int[][][] pixelOrigins2 = new int[sprites.Length][][];
+			for (int model = 0; model < models.Length; model++)
+				sprites[model] = Iso8Outlined(
+					model: models[model],
+					voxelColor: voxelColors[model],
+					widths: out widths2[model],
+					pixelOrigins: out pixelOrigins2[model],
+					voxelOrigin: voxelOrigins[model]);
+			widths = CombineArrays(widths2);
+			pixelOrigins = CombineArrays(pixelOrigins2);
+			return CombineArrays(sprites);
 		}
 		public static byte[][] Iso8Outlined(this IModel model, IVoxelColor voxelColor, out int[] widths, out int[][] pixelOrigins, params int[] voxelOrigin)
 		{
