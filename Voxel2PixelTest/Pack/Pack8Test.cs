@@ -28,6 +28,8 @@ namespace Voxel2PixelTest.Pack
 				hazmat2 = new VoxModel(@"..\..\..\Hazmat2.vox");
 			IVoxelColor hazmatColor = new NaiveDimmer(hazmat.Palette),
 				hazmat2Color = new NaiveDimmer(hazmat2.Palette);
+			int[] hazmatVoxelOrigin = new int[] { 7, 4, 0 },
+				hazmat2VoxelOrigin = new int[] { 7, 11, 0 };
 			Iso8Gif(
 				models: new IModel[]
 					{
@@ -42,7 +44,7 @@ namespace Voxel2PixelTest.Pack
 					},
 				voxelColors: new IVoxelColor[] { hazmatColor, hazmat2Color, hazmatColor, hazmat2Color },
 				path: "Hazmat.gif",
-				voxelOrigins: null,
+				voxelOrigins: new int[][] { hazmatVoxelOrigin, hazmat2VoxelOrigin, hazmatVoxelOrigin, hazmat2VoxelOrigin },
 				frameDelay: 100);
 		}
 		[Fact]
@@ -140,7 +142,13 @@ namespace Voxel2PixelTest.Pack
 							y: pixelOriginY - pixelOrigins[frame][1],
 							insert: sprites[frame],
 							insertWidth: widths[frame],
-							width: width))
+							width: width)
+						.DrawPixel(
+							color: 0xFF00FFFF,
+							x: pixelOriginX,
+							y: pixelOriginY,
+							width: width)
+						)
 					.ToArray()
 					.AddFrameNumbers(width),
 				frameDelay: frameDelay)
