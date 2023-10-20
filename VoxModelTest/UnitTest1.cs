@@ -13,6 +13,11 @@ namespace VoxModelTest
 			Assert.Equal(
 				expected: 200u,
 				actual: voxModel.VersionNumber);
+			voxModel.Write("test.vox");
+			VoxFile test = new VoxFile("test.vox");
+			Assert.Equal(
+				expected: 200u,
+				actual: test.VersionNumber);
 		}
 	}
 }

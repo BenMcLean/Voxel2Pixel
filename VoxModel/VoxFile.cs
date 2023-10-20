@@ -16,6 +16,12 @@ namespace VoxModel
 				VersionNumber = ReadVersionNumber(stream);
 			}
 		}
+		public void Write(string path)
+		{
+			using (FileStream stream = new FileStream(path, FileMode.Create))
+			{
+				WriteVersionNumber(stream);
+			}
 		}
 		#region Header
 		public uint VersionNumber;
@@ -29,6 +35,15 @@ namespace VoxModel
 				if (reader.ReadUInt32() != 0x20584F56)//"VOX "
 					throw new InvalidDataException("\"" + stream + "\" has an invalid signature code!");
 				return reader.ReadUInt32();
+			}
+		}
+		public void WriteVersionNumber(Stream stream) => WriteVersionNumber(stream, VersionNumber);
+		public static void WriteVersionNumber(Stream stream, uint versionNumber)
+		{
+			using (BinaryWriter writer = new BinaryWriter(stream))
+			{
+				writer.Write(0x20584F56);//"VOX "
+				writer.Write(versionNumber);
 			}
 		}
 		#endregion Header
