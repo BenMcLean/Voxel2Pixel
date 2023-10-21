@@ -1,4 +1,4 @@
-﻿using System.Collections;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -17,7 +17,7 @@ namespace VoxModel
 			using (BinaryReader reader = new BinaryReader(stream))
 			{
 				VersionNumber = ReadVersionNumber(reader);
-				Main = new MainChunk(reader);
+				Chunks = GetChunks(reader).ToList();
 			}
 		}
 		public void Write(string path)
@@ -31,7 +31,8 @@ namespace VoxModel
 		public void Write(BinaryWriter writer)
 		{
 			WriteVersionNumber(writer);
-			Main.Write(writer);
+			foreach (Chunk chunk in Chunks)
+				chunk.Write(writer);
 		}
 		public static string ReadString(BinaryReader reader, int length = 4) => new string(reader.ReadChars(length));
 		public static void WriteString(BinaryWriter writer, string @string) => writer.Write(@string.ToArray());
@@ -70,67 +71,54 @@ namespace VoxModel
 				set => tagName = value.ExactPadRight(4);
 			}
 			private string tagName;
-			public byte[] Data;
+			public uint DataLength;
 			public uint ChildrenLength;
 			public Chunk(Stream stream) : this(new BinaryReader(stream)) { }
 			public Chunk(BinaryReader reader) : this(tagName: ReadString(reader), reader: reader) { }
 			public Chunk(string tagName, BinaryReader reader)
 			{
-				//A chunk consists of 5 parts.
-				//The chunk tag name, a 4 byte human readable character sequence.
 				TagName = tagName;
-				//An integer indicating the number of bytes in the chunk data.
-				Data = new byte[reader.ReadUInt32()];
-				//An integer indicating the number of bytes in the children chunks.
+				DataLength = reader.ReadUInt32();
 				ChildrenLength = reader.ReadUInt32();
-				//The chunk data.
-				Data = reader.ReadBytes(Data.Length);
 			}
 			public virtual void Write(BinaryWriter writer)
 			{
-				//A chunk consists of 5 parts.
-				//The chunk tag name, a 4 byte human readable character sequence.
 				WriteString(writer, TagName);
-				//An integer indicating the number of bytes in the chunk data.
-				writer.Write((uint)Data.Length);
-				//An integer indicating the number of bytes in the children chunks.
+				writer.Write(DataLength);
 				writer.Write(ChildrenLength);
-				//The chunk data.
-				writer.Write(Data);
 			}
 		}
-		#endregion Chunk
-		#region MainChunk
-		public class MainChunk : Chunk
+		public class UnknownChunk : Chunk
 		{
-			public byte[] Children;
-			public MainChunk(string tagName, BinaryReader reader) : base(tagName, reader) => Children = reader.ReadBytes((int)ChildrenLength);
-			public MainChunk(BinaryReader reader) : base(reader) => Children = reader.ReadBytes((int)ChildrenLength);
+			public byte[] Data;
+			public UnknownChunk(BinaryReader reader) : this(ReadString(reader), reader) { }
+			public UnknownChunk(string tagName, BinaryReader reader) : base(tagName, reader) => Data = reader.ReadBytes((int)DataLength);
 			public override void Write(BinaryWriter writer)
 			{
 				base.Write(writer);
-				writer.Write(Children);
-			}
-			public IEnumerable Chunks()
-			{
-				using (MemoryStream ms = new MemoryStream(Children))
-				using (BinaryReader reader = new BinaryReader(ms))
-					while (reader.BaseStream.Position < Children.Length)
-					{
-						string name = ReadString(reader);
-						switch (name)
-						{
-							case "MAIN":
-								yield return new MainChunk(name, reader);
-								break;
-							default:
-								yield return new Chunk(name, reader);
-								break;
-						}
-					}
+				writer.Write(Data);
 			}
 		}
-		public MainChunk Main;
-		#endregion MainChunk
+		public List<Chunk> Chunks;
+		public static IEnumerable<Chunk> GetChunks(byte[] bytes) => GetChunks(new BinaryReader(new MemoryStream(bytes)));
+		public static IEnumerable<Chunk> GetChunks(BinaryReader reader)
+		{
+			while (reader.BaseStream.Position < reader.BaseStream.Length)
+			{
+				string name = ReadString(reader);
+				switch (name)
+				{
+					case "MAIN":
+						yield return new Chunk(name, reader);
+						break;
+					default:
+						yield return new UnknownChunk(name, reader);
+						break;
+				}
+			}
+		}
+		#endregion Chunk
+		#region SizeChunk
+		#endregion SizeChunk
 	}
 }

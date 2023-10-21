@@ -11,13 +11,13 @@ namespace VoxModelTest
 		[Fact]
 		public void MagicaVoxelFileTest()
 		{
-			VoxFile voxModel = new VoxFile(Path);
-			Asserts(voxModel);
-			foreach (VoxFile.Chunk chunk in voxModel.Main.Chunks())
+			VoxFile voxFile = new VoxFile(Path);
+			Asserts(voxFile);
+			foreach (VoxFile.Chunk chunk in voxFile.Chunks)
 			{
 				output.WriteLine(chunk.TagName);
 			}
-			voxModel.Write("test.vox");
+			voxFile.Write("test.vox");
 			Asserts(new VoxFile("test.vox"));
 		}
 		private void Asserts(VoxFile voxFile)
@@ -27,7 +27,7 @@ namespace VoxModelTest
 				actual: voxFile.VersionNumber);
 			Assert.Equal(
 				expected: "MAIN",
-				actual: voxFile.Main.TagName);
+				actual: voxFile.Chunks[0].TagName);
 		}
 	}
 }
