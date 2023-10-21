@@ -73,7 +73,7 @@ namespace VoxModel
 			private string tagName;
 			public uint DataLength;
 			public uint ChildrenLength;
-			public Chunk(Stream stream) : this(new BinaryReader(stream)) { }
+			public Chunk() { }
 			public Chunk(BinaryReader reader) : this(tagName: ReadString(reader), reader: reader) { }
 			public Chunk(string tagName, BinaryReader reader)
 			{
@@ -91,7 +91,8 @@ namespace VoxModel
 		public class UnknownChunk : Chunk
 		{
 			public byte[] Data;
-			public UnknownChunk(BinaryReader reader) : this(ReadString(reader), reader) { }
+			public UnknownChunk() { }
+			public UnknownChunk(BinaryReader reader) : this(tagName: ReadString(reader), reader: reader) { }
 			public UnknownChunk(string tagName, BinaryReader reader) : base(tagName, reader) => Data = reader.ReadBytes((int)DataLength);
 			public override void Write(BinaryWriter writer)
 			{
@@ -111,6 +112,9 @@ namespace VoxModel
 					case "MAIN":
 						yield return new Chunk(name, reader);
 						break;
+					case "SIZE":
+						yield return new SizeChunk(name, reader);
+						break;
 					default:
 						yield return new UnknownChunk(name, reader);
 						break;
@@ -119,6 +123,27 @@ namespace VoxModel
 		}
 		#endregion Chunk
 		#region SizeChunk
+		public class SizeChunk : Chunk
+		{
+			public int SizeX, SizeY, SizeZ;
+			public SizeChunk() { }
+			public SizeChunk(BinaryReader reader) : this(tagName: ReadString(reader), reader: reader) { }
+			public SizeChunk(string tagName, BinaryReader reader) : base(tagName, reader)
+			{
+				SizeX = reader.ReadInt32();
+				SizeY = reader.ReadInt32();
+				SizeZ = reader.ReadInt32();
+			}
+			public override void Write(BinaryWriter writer)
+			{
+				TagName = "SIZE";
+				DataLength = 12;
+				base.Write(writer);
+				writer.Write(SizeX);
+				writer.Write(SizeY);
+				writer.Write(SizeZ);
+			}
+		}
 		#endregion SizeChunk
 	}
 }
