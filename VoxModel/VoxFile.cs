@@ -15,6 +15,7 @@ namespace VoxModel
 			using (FileStream stream = new FileStream(path, FileMode.Open))
 			{
 				VersionNumber = ReadVersionNumber(stream);
+				Main = new MainChunk(stream);
 			}
 		}
 		public void Write(string path)
@@ -22,6 +23,7 @@ namespace VoxModel
 			using (FileStream stream = new FileStream(path, FileMode.Create))
 			{
 				WriteVersionNumber(stream);
+				Main.Write(stream);
 			}
 		}
 		#region Header
@@ -49,14 +51,75 @@ namespace VoxModel
 		}
 		#endregion Header
 		#region Chunk
-		/*
-		A chunk consists of 5 parts.
-		The chunk tag name, a 4 byte human readable character sequence.
-		An integer indicating the number of bytes in the chunk data.
-		An integer indicating the number of bytes in the children chunks.
-		The chunk data.
-		The children chunks.
-		*/
+		/// <summary>
+		/// A chunk consists of 5 parts.
+		/// The chunk tag name, a 4 byte human readable character sequence.
+		/// An integer indicating the number of bytes in the chunk data.
+		/// An integer indicating the number of bytes in the children chunks.
+		/// The chunk data.
+		/// The children chunks.
+		/// </summary>
+		public class Chunk
+		{
+			public string TagName
+			{
+				get => tagName;
+				set => tagName = value.ExactPadRight(4);
+			}
+			private string tagName;
+			public byte[] Data;
+			public uint ChildrenLength;
+			public Chunk(Stream stream)
+			{
+				using (BinaryReader reader = new BinaryReader(stream))
+				{
+					//A chunk consists of 5 parts.
+					//The chunk tag name, a 4 byte human readable character sequence.
+					tagName = new string(reader.ReadChars(4).Reverse().ToArray());
+					//An integer indicating the number of bytes in the chunk data.
+					Data = new byte[reader.ReadUInt32()];
+					//An integer indicating the number of bytes in the children chunks.
+					ChildrenLength = reader.ReadUInt32();
+					//The chunk data.
+					Data = reader.ReadBytes(Data.Length);
+				}
+			}
+			public virtual void Write(Stream stream)
+			{
+				using (BinaryWriter writer = new BinaryWriter(stream))
+				{
+					//A chunk consists of 5 parts.
+					//The chunk tag name, a 4 byte human readable character sequence.
+					writer.Write(TagName.ToArray());
+					//An integer indicating the number of bytes in the chunk data.
+					writer.Write((uint)Data.Length);
+					//An integer indicating the number of bytes in the children chunks.
+					writer.Write(ChildrenLength);
+					//The chunk data.
+					writer.Write(Data);
+				}
+			}
+		}
+		public class MainChunk : Chunk
+		{
+			public byte[] Children;
+			public MainChunk(Stream stream) : base(stream)
+			{
+				using (BinaryReader reader = new BinaryReader(stream))
+				{
+					Children = reader.ReadBytes((int)ChildrenLength);
+				}
+			}
+			public override void Write(Stream stream)
+			{
+				base.Write(stream);
+				using (BinaryWriter writer = new BinaryWriter(stream))
+				{
+					writer.Write(Children);
+				}
+			}
+		}
+		MainChunk Main;
 		#endregion Chunk
 	}
 }
