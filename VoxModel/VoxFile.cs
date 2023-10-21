@@ -99,9 +99,12 @@ namespace VoxModel
 				writer.Write(Data);
 			}
 		}
+		#endregion Chunk
+		#region MainChunk
 		public class MainChunk : Chunk
 		{
 			public byte[] Children;
+			public MainChunk(string tagName, BinaryReader reader) : base(tagName, reader) => Children = reader.ReadBytes((int)ChildrenLength);
 			public MainChunk(BinaryReader reader) : base(reader) => Children = reader.ReadBytes((int)ChildrenLength);
 			public override void Write(BinaryWriter writer)
 			{
@@ -112,11 +115,22 @@ namespace VoxModel
 			{
 				using (MemoryStream ms = new MemoryStream(Children))
 				using (BinaryReader reader = new BinaryReader(ms))
-					while (reader.BaseStream.CanRead)
-						yield return new Chunk(reader);
+					while (reader.BaseStream.Position < Children.Length)
+					{
+						string name = ReadString(reader);
+						switch (name)
+						{
+							case "MAIN":
+								yield return new MainChunk(name, reader);
+								break;
+							default:
+								yield return new Chunk(name, reader);
+								break;
+						}
+					}
 			}
 		}
 		public MainChunk Main;
-		#endregion Chunk
+		#endregion MainChunk
 	}
 }
