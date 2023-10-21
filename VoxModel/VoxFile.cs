@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections;
+using System.IO;
 using System.Linq;
 
 namespace VoxModel
@@ -10,44 +11,46 @@ namespace VoxModel
 	/// </summary>
 	public struct VoxFile
 	{
-		public VoxFile(string path)
+		public VoxFile(string path) : this(new FileStream(path, FileMode.Open)) { }
+		public VoxFile(Stream stream)
 		{
-			using (FileStream stream = new FileStream(path, FileMode.Open))
+			using (BinaryReader reader = new BinaryReader(stream))
 			{
-				VersionNumber = ReadVersionNumber(stream);
-				Main = new MainChunk(stream);
+				VersionNumber = ReadVersionNumber(reader);
+				Main = new MainChunk(reader);
 			}
 		}
 		public void Write(string path)
 		{
 			using (FileStream stream = new FileStream(path, FileMode.Create))
+			using (BinaryWriter writer = new BinaryWriter(stream))
 			{
-				WriteVersionNumber(stream);
-				Main.Write(stream);
+				Write(writer);
 			}
 		}
+		public void Write(BinaryWriter writer)
+		{
+			WriteVersionNumber(writer);
+			Main.Write(writer);
+		}
+		public static string ReadString(BinaryReader reader, int length = 4) => new string(reader.ReadChars(length));
+		public static void WriteString(BinaryWriter writer, string @string) => writer.Write(@string.ToArray());
 		#region Header
 		public uint VersionNumber;
 		/// <summary>
 		/// "The header of a vox file consists of a 4 byte magic string "VOX ". This is followed by a int (4 bytes) version number, typically 150 or 200."
 		/// </summary>
-		public static uint ReadVersionNumber(Stream stream)
+		public static uint ReadVersionNumber(BinaryReader reader)
 		{
-			using (BinaryReader reader = new BinaryReader(stream))
-			{
-				if ("VOX ".Equals(new string(reader.ReadChars(4).Reverse().ToArray())))
-					throw new InvalidDataException("\"" + stream + "\" has an invalid signature code!");
-				return reader.ReadUInt32();
-			}
+			if (!"VOX ".Equals(ReadString(reader)))
+				throw new InvalidDataException("\"" + reader + "\" has an invalid signature code!");
+			return reader.ReadUInt32();
 		}
-		public void WriteVersionNumber(Stream stream) => WriteVersionNumber(stream, VersionNumber);
-		public static void WriteVersionNumber(Stream stream, uint versionNumber)
+		public void WriteVersionNumber(BinaryWriter writer) => WriteVersionNumber(writer, VersionNumber);
+		public static void WriteVersionNumber(BinaryWriter writer, uint versionNumber)
 		{
-			using (BinaryWriter writer = new BinaryWriter(stream))
-			{
-				writer.Write("VOX ".ToArray());
-				writer.Write(versionNumber);
-			}
+			WriteString(writer, "VOX ");
+			writer.Write(versionNumber);
 		}
 		#endregion Header
 		#region Chunk
@@ -69,57 +72,51 @@ namespace VoxModel
 			private string tagName;
 			public byte[] Data;
 			public uint ChildrenLength;
-			public Chunk(Stream stream)
+			public Chunk(Stream stream) : this(new BinaryReader(stream)) { }
+			public Chunk(BinaryReader reader) : this(tagName: ReadString(reader), reader: reader) { }
+			public Chunk(string tagName, BinaryReader reader)
 			{
-				using (BinaryReader reader = new BinaryReader(stream))
-				{
-					//A chunk consists of 5 parts.
-					//The chunk tag name, a 4 byte human readable character sequence.
-					tagName = new string(reader.ReadChars(4).Reverse().ToArray());
-					//An integer indicating the number of bytes in the chunk data.
-					Data = new byte[reader.ReadUInt32()];
-					//An integer indicating the number of bytes in the children chunks.
-					ChildrenLength = reader.ReadUInt32();
-					//The chunk data.
-					Data = reader.ReadBytes(Data.Length);
-				}
+				//A chunk consists of 5 parts.
+				//The chunk tag name, a 4 byte human readable character sequence.
+				TagName = tagName;
+				//An integer indicating the number of bytes in the chunk data.
+				Data = new byte[reader.ReadUInt32()];
+				//An integer indicating the number of bytes in the children chunks.
+				ChildrenLength = reader.ReadUInt32();
+				//The chunk data.
+				Data = reader.ReadBytes(Data.Length);
 			}
-			public virtual void Write(Stream stream)
+			public virtual void Write(BinaryWriter writer)
 			{
-				using (BinaryWriter writer = new BinaryWriter(stream))
-				{
-					//A chunk consists of 5 parts.
-					//The chunk tag name, a 4 byte human readable character sequence.
-					writer.Write(TagName.ToArray());
-					//An integer indicating the number of bytes in the chunk data.
-					writer.Write((uint)Data.Length);
-					//An integer indicating the number of bytes in the children chunks.
-					writer.Write(ChildrenLength);
-					//The chunk data.
-					writer.Write(Data);
-				}
+				//A chunk consists of 5 parts.
+				//The chunk tag name, a 4 byte human readable character sequence.
+				WriteString(writer, TagName);
+				//An integer indicating the number of bytes in the chunk data.
+				writer.Write((uint)Data.Length);
+				//An integer indicating the number of bytes in the children chunks.
+				writer.Write(ChildrenLength);
+				//The chunk data.
+				writer.Write(Data);
 			}
 		}
 		public class MainChunk : Chunk
 		{
 			public byte[] Children;
-			public MainChunk(Stream stream) : base(stream)
+			public MainChunk(BinaryReader reader) : base(reader) => Children = reader.ReadBytes((int)ChildrenLength);
+			public override void Write(BinaryWriter writer)
 			{
-				using (BinaryReader reader = new BinaryReader(stream))
-				{
-					Children = reader.ReadBytes((int)ChildrenLength);
-				}
+				base.Write(writer);
+				writer.Write(Children);
 			}
-			public override void Write(Stream stream)
+			public IEnumerable Chunks()
 			{
-				base.Write(stream);
-				using (BinaryWriter writer = new BinaryWriter(stream))
-				{
-					writer.Write(Children);
-				}
+				using (MemoryStream ms = new MemoryStream(Children))
+				using (BinaryReader reader = new BinaryReader(ms))
+					while (reader.BaseStream.CanRead)
+						yield return new Chunk(reader);
 			}
 		}
-		MainChunk Main;
+		public MainChunk Main;
 		#endregion Chunk
 	}
 }

@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using VoxModel;
 using Xunit;
 
@@ -12,14 +10,18 @@ namespace VoxModelTest
 		public void MagicaVoxelFileTest()
 		{
 			VoxFile voxModel = new VoxFile(Path);
-			Assert.Equal(
-				expected: 200u,
-				actual: voxModel.VersionNumber);
+			Asserts(voxModel);
 			voxModel.Write("test.vox");
-			VoxFile test = new VoxFile("test.vox");
+			Asserts(new VoxFile("test.vox"));
+		}
+		private void Asserts(VoxFile voxFile)
+		{
 			Assert.Equal(
 				expected: 200u,
-				actual: test.VersionNumber);
+				actual: voxFile.VersionNumber);
+			Assert.Equal(
+				expected: "MAIN",
+				actual: voxFile.Main.TagName);
 		}
 	}
 }
