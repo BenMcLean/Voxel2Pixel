@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Linq;
 
 namespace VoxModel
 {
@@ -32,7 +33,7 @@ namespace VoxModel
 		{
 			using (BinaryReader reader = new BinaryReader(stream))
 			{
-				if (reader.ReadUInt32() != 0x20584F56)//"VOX "
+				if ("VOX ".Equals(new string(reader.ReadChars(4).Reverse().ToArray())))
 					throw new InvalidDataException("\"" + stream + "\" has an invalid signature code!");
 				return reader.ReadUInt32();
 			}
@@ -42,10 +43,20 @@ namespace VoxModel
 		{
 			using (BinaryWriter writer = new BinaryWriter(stream))
 			{
-				writer.Write(0x20584F56);//"VOX "
+				writer.Write("VOX ".ToArray());
 				writer.Write(versionNumber);
 			}
 		}
 		#endregion Header
+		#region Chunk
+		/*
+		A chunk consists of 5 parts.
+		The chunk tag name, a 4 byte human readable character sequence.
+		An integer indicating the number of bytes in the chunk data.
+		An integer indicating the number of bytes in the children chunks.
+		The chunk data.
+		The children chunks.
+		*/
+		#endregion Chunk
 	}
 }

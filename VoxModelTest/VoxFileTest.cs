@@ -1,13 +1,15 @@
+using System;
+using System.Linq;
 using VoxModel;
 using Xunit;
 
 namespace VoxModelTest
 {
-	public class UnitTest1
+	public class VoxFileTest
 	{
 		public const string Path = @"..\..\..\..\Voxel2PixelTest\NumberCube.vox";
 		[Fact]
-		public void Test1()
+		public void MagicaVoxelFileTest()
 		{
 			VoxFile voxModel = new VoxFile(Path);
 			Assert.Equal(
