@@ -266,16 +266,16 @@ namespace Voxel2Pixel.Draw
 		public static void Diagonal(IModel model, IRectangleRenderer renderer)
 		{
 			int pixelWidth = model.SizeX + model.SizeY;
-			for (int pixelY = 0; pixelY < model.SizeZ; pixelY++)
-				for (int pixelX = 0; pixelX < pixelWidth; pixelX += 2)
+			for (ushort pixelY = 0; pixelY < model.SizeZ; pixelY++)
+				for (ushort pixelX = 0; pixelX < pixelWidth; pixelX += 2)
 				{
 					bool leftDone = false,
 						rightDone = false;
-					int startX = Math.Max(pixelX - model.SizeY + 1, 0),
-						startY = Math.Max(model.SizeY - 1 - pixelX, 0),
-						voxelZ = model.SizeZ - 1 - pixelY;
+					ushort startX = (ushort)Math.Max(pixelX - model.SizeY + 1, 0),
+						startY = (ushort)Math.Max(model.SizeY - 1 - pixelX, 0),
+						voxelZ = (ushort)(model.SizeZ - 1 - pixelY);
 					if (pixelX >= pixelWidth - 1
-						&& model.At(model.SizeX - 1, 0, voxelZ) is byte rightEdge
+						&& model.At((ushort)(model.SizeX - 1), 0, voxelZ) is byte rightEdge
 						&& rightEdge != 0)
 					{
 						renderer.RectRight(
@@ -284,13 +284,13 @@ namespace Voxel2Pixel.Draw
 							voxel: rightEdge);
 						continue;
 					}
-					for (int voxelX = startX, voxelY = startY;
+					for (ushort voxelX = startX, voxelY = startY;
 						 voxelX <= model.SizeX && voxelY <= model.SizeY && !(leftDone && rightDone);
 						 voxelX++, voxelY++)
 					{
 						if (!leftDone
 							&& voxelX > 0
-							&& model.At(voxelX - 1, voxelY, voxelZ) is byte voxelRight
+							&& model.At((ushort)(voxelX - 1), voxelY, voxelZ) is byte voxelRight
 							&& voxelRight != 0)
 						{
 							renderer.RectRight(
@@ -301,7 +301,7 @@ namespace Voxel2Pixel.Draw
 						}
 						if (!rightDone
 							&& voxelY > 0
-							&& model.At(voxelX, voxelY - 1, voxelZ) is byte voxelLeft
+							&& model.At(voxelX, (ushort)(voxelY - 1), voxelZ) is byte voxelLeft
 							&& voxelLeft != 0)
 						{
 							renderer.RectLeft(
@@ -383,17 +383,17 @@ namespace Voxel2Pixel.Draw
 						sizeX: scaleX,
 						sizeY: scaleY);
 			}
-			int pixelWidth = model.SizeX + model.SizeY;
-			for (int pixelY = 0; pixelY < model.SizeZ; pixelY++)
-				for (int pixelX = 0; pixelX < pixelWidth; pixelX += 2)
+			ushort pixelWidth = (ushort)(model.SizeX + model.SizeY);
+			for (ushort pixelY = 0; pixelY < model.SizeZ; pixelY++)
+				for (ushort pixelX = 0; pixelX < pixelWidth; pixelX += 2)
 				{
 					bool leftDone = false,
 						rightDone = false;
-					int startX = Math.Max(pixelX - model.SizeY + 1, 0),
-						startY = Math.Max(model.SizeY - 1 - pixelX, 0),
-						voxelZ = model.SizeZ - 1 - pixelY;
+					ushort startX = (ushort)(Math.Max(pixelX - model.SizeY + 1, 0)),
+						startY = (ushort)(Math.Max(model.SizeY - 1 - pixelX, 0)),
+						voxelZ = (ushort)(model.SizeZ - 1 - pixelY);
 					if (pixelX >= pixelWidth - 1
-						&& model.At(model.SizeX - 1, 0, voxelZ) is byte rightEdge
+						&& model.At((ushort)(model.SizeX - 1), 0, voxelZ) is byte rightEdge
 						&& rightEdge != 0)
 					{
 						DrawRight(
@@ -401,17 +401,17 @@ namespace Voxel2Pixel.Draw
 							y: pixelY,
 							voxel: rightEdge,
 							peek: voxelZ >= model.SizeZ
-								|| (model.At(model.SizeX - 1, 0, voxelZ + 1) is byte voxelAbove
+								|| (model.At((ushort)(model.SizeX - 1), 0, (ushort)(voxelZ + 1)) is byte voxelAbove
 								&& voxelAbove != 0));
 						continue;
 					}
-					for (int voxelX = startX, voxelY = startY;
+					for (ushort voxelX = startX, voxelY = startY;
 						 voxelX <= model.SizeX && voxelY <= model.SizeY && !(leftDone && rightDone);
 						 voxelX++, voxelY++)
 					{
 						if (!leftDone
 							&& voxelX > 0
-							&& model.At(voxelX - 1, voxelY, voxelZ) is byte voxelRight
+							&& model.At((ushort)(voxelX - 1), voxelY, voxelZ) is byte voxelRight
 							&& voxelRight != 0)
 						{
 							DrawRight(
@@ -419,13 +419,13 @@ namespace Voxel2Pixel.Draw
 								y: pixelY,
 								voxel: voxelRight,
 								peek: voxelZ == model.SizeZ - 1
-									|| (model.At(voxelX - 1, voxelY, voxelZ + 1) is byte voxelAbove
+									|| (model.At((ushort)(voxelX - 1), voxelY, (ushort)(voxelZ + 1)) is byte voxelAbove
 									&& voxelAbove == 0));
 							leftDone = true;
 						}
 						if (!rightDone
 							&& voxelY > 0
-							&& model.At(voxelX, voxelY - 1, voxelZ) is byte voxelLeft
+							&& model.At(voxelX, (ushort)(voxelY - 1), voxelZ) is byte voxelLeft
 							&& voxelLeft != 0)
 						{
 							DrawLeft(
@@ -433,7 +433,7 @@ namespace Voxel2Pixel.Draw
 								y: pixelY,
 								voxel: voxelLeft,
 								peek: voxelZ == model.SizeZ - 1
-									|| (model.At(voxelX, voxelY - 1, voxelZ + 1) is byte voxelAbove
+									|| (model.At(voxelX, (ushort)(voxelY - 1), (ushort)(voxelZ + 1)) is byte voxelAbove
 									&& voxelAbove == 0));
 							rightDone = true;
 						}
@@ -447,7 +447,7 @@ namespace Voxel2Pixel.Draw
 									y: pixelY,
 									voxel: voxel,
 									peek: voxelZ == model.SizeZ - 1
-										|| (model.At(voxelX, voxelY, voxelZ + 1) is byte voxelAbove
+										|| (model.At(voxelX, voxelY, (ushort)(voxelZ + 1)) is byte voxelAbove
 										&& voxelAbove == 0));
 							if (!rightDone)
 								DrawRight(
@@ -455,7 +455,7 @@ namespace Voxel2Pixel.Draw
 									y: pixelY,
 									voxel: voxel,
 									peek: voxelZ == model.SizeZ - 1
-										|| (model.At(voxelX, voxelY, voxelZ + 1) is byte voxelAbove
+										|| (model.At(voxelX, voxelY, (ushort)(voxelZ + 1)) is byte voxelAbove
 										&& voxelAbove == 0));
 							break;
 						}
@@ -471,9 +471,9 @@ namespace Voxel2Pixel.Draw
 		}
 		public static void Above(IModel model, IRectangleRenderer renderer)
 		{
-			int pixelHeight = model.SizeY + model.SizeZ;
-			for (int pixelX = 0; pixelX < model.SizeX; pixelX++)
-				for (int pixelY = 0; pixelY <= pixelHeight; pixelY += 2)
+			ushort pixelHeight = (ushort)(model.SizeY + model.SizeZ);
+			for (ushort pixelX = 0; pixelX < model.SizeX; pixelX++)
+				for (ushort pixelY = 0; pixelY <= pixelHeight; pixelY += 2)
 				{
 					if (pixelY + 2 > pixelHeight
 						&& model.At(pixelX, 0, 0) is byte bottomEdge
@@ -485,17 +485,17 @@ namespace Voxel2Pixel.Draw
 							voxel: bottomEdge);
 						continue;
 					}
-					int startY = Math.Max(model.SizeY - 1 - pixelY, 0),
-						startZ = model.SizeZ - 1 - Math.Max(pixelY + 1 - model.SizeY, 0);
+					ushort startY = (ushort)Math.Max(model.SizeY - 1 - pixelY, 0),
+						startZ = (ushort)(model.SizeZ - 1 - Math.Max(pixelY + 1 - model.SizeY, 0));
 					bool higher = false,
 						lower = false;
-					for (int voxelY = startY, voxelZ = startZ;
+					for (ushort voxelY = startY, voxelZ = startZ;
 						voxelY < model.SizeY && voxelZ >= 0 && !(higher && lower);
 						voxelY++, voxelZ--)
 					{
 						if (!higher
 							&& voxelZ < model.SizeZ - 1
-							&& model.At(pixelX, voxelY, voxelZ + 1) is byte voxelAbove
+							&& model.At(pixelX, voxelY, (ushort)(voxelZ + 1)) is byte voxelAbove
 							&& voxelAbove != 0)
 						{
 							renderer.RectFront(
@@ -506,7 +506,7 @@ namespace Voxel2Pixel.Draw
 						}
 						if (!lower
 							&& voxelY > 0
-							&& model.At(pixelX, voxelY - 1, voxelZ) is byte voxelFront
+							&& model.At(pixelX, (ushort)(voxelY - 1), voxelZ) is byte voxelFront
 							&& voxelFront != 0)
 						{
 							renderer.RectTop(
@@ -532,7 +532,7 @@ namespace Voxel2Pixel.Draw
 						}
 						if (!higher
 							&& voxelY < model.SizeY - 1
-							&& model.At(pixelX, voxelY + 1, voxelZ) is byte voxelBack
+							&& model.At(pixelX, (ushort)(voxelY + 1), voxelZ) is byte voxelBack
 							&& voxelBack != 0)
 						{
 							renderer.RectFront(
@@ -543,7 +543,7 @@ namespace Voxel2Pixel.Draw
 						}
 						if (!lower
 							&& voxelZ > 0
-							&& model.At(pixelX, voxelY, voxelZ - 1) is byte voxelBelow
+							&& model.At(pixelX, voxelY, (ushort)(voxelZ - 1)) is byte voxelBelow
 							&& voxelBelow != 0)
 						{
 							renderer.RectTop(
