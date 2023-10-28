@@ -3,11 +3,8 @@ using Voxel2Pixel.Model;
 
 namespace Voxel2Pixel.Interfaces
 {
-	public interface ISparseModel
+	public interface ISparseModel : IModel
 	{
 		IEnumerable<Voxel> Voxels { get; }
-		ushort SizeX { get; }
-		ushort SizeY { get; }
-		ushort SizeZ { get; }
 	}
 }

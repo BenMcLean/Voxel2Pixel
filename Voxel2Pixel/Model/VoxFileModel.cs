@@ -13,19 +13,19 @@ namespace Voxel2Pixel.Model
 		{
 			Palette = new uint[256];
 			uint[] palette = model.Palette.Take(Palette.Length).Select(color => Color(color)).ToArray();
-			Array.Copy(
+			System.Array.Copy(
 				sourceArray: palette,
 				sourceIndex: 0,
 				destinationArray: Palette,
 				destinationIndex: 1,
 				length: Math.Min(palette.Length, Palette.Length) - 1);
 			FileToVoxCore.Vox.VoxelData voxelData = model.VoxelFrames[frame];
-			Voxels = Array3D.Initialize<byte>(voxelData.VoxelsWide, voxelData.VoxelsTall, voxelData.VoxelsDeep);
+			Array = Array3D.Initialize<byte>(voxelData.VoxelsWide, voxelData.VoxelsTall, voxelData.VoxelsDeep);
 			for (int x = 0; x < SizeX; x++)
 				for (int y = 0; y < SizeY; y++)
 					for (int z = 0; z < SizeZ; z++)
 						if (voxelData.GetSafe(x, y, z) is byte voxel && voxel != 0)
-							Voxels[x][y][z] = voxel;
+							Array[x][y][z] = voxel;
 		}
 		public VoxFileModel(string filePath, int frame = 0) : this(new FileToVoxCore.Vox.VoxReader().LoadModel(filePath), frame) { }
 		public uint[] Palette { get; set; }

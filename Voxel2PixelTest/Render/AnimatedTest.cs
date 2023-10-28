@@ -29,11 +29,11 @@ namespace Voxel2PixelTest.Render
                 for (int y = model.SizeY - 1; y >= 0; y--)
                     for (int z = 0; z < model.SizeZ; z++)
                     {
-                        model.Voxels[x][y][z] = 1;
+                        model.Array[x][y][z] = 1;
                         int randomX = random.Next(0, model.SizeX),
                             randomY = random.Next(0, model.SizeY),
                             randomZ = random.Next(0, model.SizeZ);
-                        model.Voxels[randomX][randomY][randomZ] = (byte)(random.Next(0, ArrayModelTest.Rainbow.Count) + 1);
+                        model.Array[randomX][randomY][randomZ] = (byte)(random.Next(0, ArrayModelTest.Rainbow.Count) + 1);
                         ArrayRenderer arrayRenderer = new ArrayRenderer
                         {
                             Image = new byte[width * 4 * height],
@@ -42,8 +42,8 @@ namespace Voxel2PixelTest.Render
                         };
                         VoxelDraw.Iso(model, arrayRenderer);
                         frames.Add(arrayRenderer.Image);
-                        model.Voxels[randomX][randomY][randomZ] = 0;
-                        model.Voxels[x][y][z] = 2;
+                        model.Array[randomX][randomY][randomZ] = 0;
+                        model.Array[x][y][z] = 2;
                     }
             ImageMaker.AnimatedGif(
                 width: width,

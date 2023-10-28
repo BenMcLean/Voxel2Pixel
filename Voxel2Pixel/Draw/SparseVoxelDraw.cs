@@ -21,7 +21,7 @@ namespace Voxel2Pixel.Draw
 			public VoxelY(Voxel voxel)
 			{
 				y = voxel.Y;
-				color = voxel.Index;
+				color = voxel.@byte;
 			}
 		}
 		public static void Front(ISparseModel model, IRectangleRenderer renderer)
