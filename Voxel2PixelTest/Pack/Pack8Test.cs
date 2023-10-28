@@ -16,7 +16,7 @@ namespace Voxel2PixelTest.Pack
 		[Fact]
 		public void IsoSpritesTest()
 		{
-			VoxModel model = new VoxModel(@"..\..\..\Sora.vox");
+			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
 			Iso8Gif(
 				model: model,
 				voxelColor: new NaiveDimmer(model.Palette),
@@ -25,8 +25,8 @@ namespace Voxel2PixelTest.Pack
 		[Fact]
 		public void HazmatTest()
 		{
-			VoxModel hazmat = new VoxModel(@"..\..\..\Hazmat.vox"),
-				hazmat2 = new VoxModel(@"..\..\..\Hazmat2.vox");
+			VoxFileModel hazmat = new VoxFileModel(@"..\..\..\Hazmat.vox"),
+				hazmat2 = new VoxFileModel(@"..\..\..\Hazmat2.vox");
 			IVoxelColor hazmatColor = new NaiveDimmer(hazmat.Palette),
 				hazmat2Color = new NaiveDimmer(hazmat2.Palette);
 			int[] hazmatVoxelOrigin = new int[] { 7, 4, 0 },
@@ -62,7 +62,7 @@ namespace Voxel2PixelTest.Pack
 		[Fact]
 		public void NumberCubeTest()
 		{
-			VoxModel model = new VoxModel(@"..\..\..\NumberCube.vox");
+			VoxFileModel model = new VoxFileModel(@"..\..\..\NumberCube.vox");
 			Iso8Gif(
 				model: model,
 				voxelColor: new NaiveDimmer(model.Palette),

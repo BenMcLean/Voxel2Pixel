@@ -6,10 +6,10 @@ using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model
 {
-    public class VoxModel : ArrayModel
+    public class VoxFileModel : ArrayModel
 	{
 		#region Read
-		public VoxModel(FileToVoxCore.Vox.VoxModel model, int frame = 0)
+		public VoxFileModel(FileToVoxCore.Vox.VoxModel model, int frame = 0)
 		{
 			Palette = new uint[256];
 			uint[] palette = model.Palette.Take(Palette.Length).Select(color => Color(color)).ToArray();
@@ -27,7 +27,7 @@ namespace Voxel2Pixel.Model
 						if (voxelData.GetSafe(x, y, z) is byte voxel && voxel != 0)
 							Voxels[x][y][z] = voxel;
 		}
-		public VoxModel(string filePath, int frame = 0) : this(new FileToVoxCore.Vox.VoxReader().LoadModel(filePath), frame) { }
+		public VoxFileModel(string filePath, int frame = 0) : this(new FileToVoxCore.Vox.VoxReader().LoadModel(filePath), frame) { }
 		public uint[] Palette { get; set; }
 		public static uint Color(FileToVoxCore.Drawing.Color color) => ((uint)color.ToArgb()).Argb2rgba();
 		#endregion Read

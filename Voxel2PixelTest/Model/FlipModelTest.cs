@@ -14,7 +14,7 @@ namespace Voxel2PixelTest.Model
 		[Fact]
 		public void ArrayRendererTest()
 		{
-			VoxModel voxModel = new VoxModel(@"..\..\..\Sora.vox");
+			VoxFileModel voxModel = new VoxFileModel(@"..\..\..\Sora.vox");
 			IVoxelColor voxelColor = new NaiveDimmer(voxModel.Palette);
 			FlipModel model = new FlipModel
 			{

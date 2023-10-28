@@ -15,7 +15,7 @@ namespace Voxel2PixelTest.Draw
         [Fact]
         public void SideTest()
         {
-            VoxModel model = new VoxModel(@"..\..\..\Sora.vox");
+            VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
             int width = VoxelDraw.DiagonalWidth(model),
                 height = VoxelDraw.DiagonalHeight(model);
             ArrayRenderer arrayRenderer = new ArrayRenderer

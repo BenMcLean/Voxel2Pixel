@@ -8,12 +8,12 @@ using Xunit;
 
 namespace Voxel2PixelTest.Model
 {
-    public class VoxModelTest
+    public class VoxFileModelTest
 	{
 		[Fact]
 		public void ArrayRendererTest()
 		{
-			VoxModel model = new VoxModel(@"..\..\..\Sora.vox");
+			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
 			int width = VoxelDraw.IsoWidth(model),
 				height = VoxelDraw.IsoHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
@@ -33,7 +33,7 @@ namespace Voxel2PixelTest.Model
 		[Fact]
 		public void CropTest()
 		{
-			VoxModel model = new VoxModel(@"..\..\..\Sora.vox");
+			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
 			int width = VoxelDraw.IsoWidth(model),
 				height = VoxelDraw.IsoHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
