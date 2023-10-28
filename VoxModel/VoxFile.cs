@@ -65,14 +65,14 @@ namespace VoxModel
 		/// </summary>
 		public class Chunk
 		{
-			public string TagName
+			public virtual string TagName
 			{
 				get => tagName;
 				set => tagName = value.ExactPadRight(4);
 			}
 			private string tagName;
-			public uint DataLength;
-			public uint ChildrenLength;
+			public virtual uint DataLength { get; set; }
+			public virtual uint ChildrenLength { get; set; }
 			public Chunk() { }
 			public Chunk(BinaryReader reader) : this(tagName: ReadString(reader), reader: reader) { }
 			public Chunk(string tagName, BinaryReader reader)
@@ -96,6 +96,7 @@ namespace VoxModel
 			public UnknownChunk(string tagName, BinaryReader reader) : base(tagName, reader) => Data = reader.ReadBytes((int)DataLength);
 			public override void Write(BinaryWriter writer)
 			{
+				DataLength = (uint)Data.Length;
 				base.Write(writer);
 				writer.Write(Data);
 			}
@@ -125,6 +126,8 @@ namespace VoxModel
 		#region SizeChunk
 		public class SizeChunk : Chunk
 		{
+			public override string TagName => "SIZE";
+			public override uint DataLength => 12u;
 			public int SizeX, SizeY, SizeZ;
 			public SizeChunk() { }
 			public SizeChunk(BinaryReader reader) : this(tagName: ReadString(reader), reader: reader) { }
@@ -136,8 +139,6 @@ namespace VoxModel
 			}
 			public override void Write(BinaryWriter writer)
 			{
-				TagName = "SIZE";
-				DataLength = 12;
 				base.Write(writer);
 				writer.Write(SizeX);
 				writer.Write(SizeY);
@@ -145,5 +146,40 @@ namespace VoxModel
 			}
 		}
 		#endregion SizeChunk
+		#region XyziChunk
+		public class XyziChunk : Chunk
+		{
+			public struct Voxel
+			{
+				public byte X, Y, Z, Index;
+				public byte[] Bytes => new byte[4] { X, Y, Z, Index };
+				public Voxel(byte[] fourBytes) : this(x: fourBytes[0], y: fourBytes[1], z: fourBytes[2], index: fourBytes[3]) { }
+				public Voxel(byte x, byte y, byte z, byte index)
+				{
+					X = x;
+					Y = y;
+					Z = z;
+					Index = index;
+				}
+			}
+			Voxel[] Voxels;
+			public XyziChunk() { }
+			public XyziChunk(BinaryReader reader) : this(tagName: ReadString(reader), reader: reader) { }
+			public XyziChunk(string tagName, BinaryReader reader) : base(tagName, reader)
+			{
+				Voxels = new Voxel[reader.ReadUInt32()];
+				for (int i = 0; i < Voxels.Length; i++)
+					Voxels[i] = new Voxel(reader.ReadBytes(4));
+			}
+			public override void Write(BinaryWriter writer)
+			{
+				TagName = "XYZI";
+				DataLength = (uint)Voxels.Length * 4u;
+				base.Write(writer);
+				foreach (Voxel voxel in Voxels)
+					writer.Write(voxel.Bytes);
+			}
+		}
+		#endregion XyziChunk
 	}
 }

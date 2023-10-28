@@ -1,9 +1,10 @@
 ﻿using System;
 using Voxel2Pixel.Draw;
+using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model
 {
-	public class TextureModel : IModel
+    public class TextureModel : IModel
 	{
 		public TextureModel(byte[] texture, int width = 0)
 		{

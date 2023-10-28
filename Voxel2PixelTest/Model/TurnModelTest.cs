@@ -4,13 +4,14 @@ using System.Collections.Generic;
 using System.IO;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
+using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Render;
 using Xunit;
 
 namespace Voxel2PixelTest.Model
 {
-	public class TurnModelTest
+    public class TurnModelTest
 	{
 		[Fact]
 		public void ReverseRotateTest()

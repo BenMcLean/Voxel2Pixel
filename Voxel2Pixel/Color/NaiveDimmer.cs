@@ -1,8 +1,9 @@
 ﻿using Voxel2Pixel.Draw;
+using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Color
 {
-	public class NaiveDimmer : IVoxelColor, IDimmer
+    public class NaiveDimmer : IVoxelColor, IDimmer
 	{
 		public NaiveDimmer(uint[] palette)
 		{

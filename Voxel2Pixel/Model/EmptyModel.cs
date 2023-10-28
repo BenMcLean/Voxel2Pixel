@@ -1,6 +1,8 @@
-﻿namespace Voxel2Pixel.Model
+﻿using Voxel2Pixel.Interfaces;
+
+namespace Voxel2Pixel.Model
 {
-	public class EmptyModel : IModel
+    public class EmptyModel : IModel
 	{
 		public virtual int SizeX { get; set; }
 		public virtual int SizeY { get; set; }

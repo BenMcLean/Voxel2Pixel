@@ -1,4 +1,4 @@
-﻿using Voxel2Pixel.Color;
+﻿using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Render
 {

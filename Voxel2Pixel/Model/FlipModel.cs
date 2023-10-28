@@ -1,6 +1,8 @@
-﻿namespace Voxel2Pixel.Model
+﻿using Voxel2Pixel.Interfaces;
+
+namespace Voxel2Pixel.Model
 {
-	public class FlipModel : IModel
+    public class FlipModel : IModel
 	{
 		public IModel Model { get; set; }
 		public bool FlipX { get; set; } = false;

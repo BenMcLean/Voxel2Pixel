@@ -2,6 +2,7 @@
 using System.Linq;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
+using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Pack;
 using Voxel2PixelTest.Model;
@@ -9,7 +10,7 @@ using Xunit;
 
 namespace Voxel2PixelTest.Pack
 {
-	public class Pack8Test
+    public class Pack8Test
 	{
 		#region Tests
 		[Fact]

@@ -1,6 +1,8 @@
-﻿namespace Voxel2Pixel.Color
+﻿using Voxel2Pixel.Interfaces;
+
+namespace Voxel2Pixel.Color
 {
-	public class FlatVoxelColor : IVoxelColor
+    public class FlatVoxelColor : IVoxelColor
 	{
 		public FlatVoxelColor(uint[] palette) => Palette = palette;
 		public uint[] Palette { get; set; }

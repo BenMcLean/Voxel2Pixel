@@ -1,14 +1,14 @@
 ﻿using RectpackSharp;
 using System.Linq;
-using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
+using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Render;
 using static Voxel2Pixel.Draw.PixelDraw;
 
 namespace Voxel2Pixel.Pack
 {
-	public static class IsoPacker
+    public static class IsoPacker
 	{
 		public static byte[] Pack8(IModel model, IVoxelColor voxelColor, out int width, out RectpackSharp.PackingRectangle[] packingRectangles)
 		{

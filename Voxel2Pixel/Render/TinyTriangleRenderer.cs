@@ -1,8 +1,8 @@
-﻿using Voxel2Pixel.Color;
+﻿using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Render
 {
-	public class TinyTriangleRenderer : ITriangleRenderer
+    public class TinyTriangleRenderer : ITriangleRenderer
 	{
 		public virtual IRectangleRenderer RectangleRenderer { get; set; }
 		public virtual IVoxelColor VoxelColor { get; set; }

@@ -1,6 +1,8 @@
-﻿namespace Voxel2Pixel.Model
+﻿using Voxel2Pixel.Interfaces;
+
+namespace Voxel2Pixel.Model
 {
-	public abstract class ContainerModel : IModel
+    public abstract class ContainerModel : IModel
 	{
 		public virtual IModel Model { get; set; }
 		#region IModel

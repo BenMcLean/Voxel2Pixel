@@ -2,16 +2,17 @@
 using System;
 using System.Linq;
 using System.IO;
+using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model
 {
-	/// <summary>
-	/// There are only 24 possible orientations achievable by 90 degree rotations around coordinate axis, which form the rotation group of a cube, also known as the chiral octahedral symmetry group.
-	/// http://www.ams.org/samplings/feature-column/fcarc-cubes7
-	/// https://en.wikipedia.org/wiki/Octahedral_symmetry#Chiral_octahedral_symmetry
-	/// In 3D space for voxels, I'm following the MagicaVoxel convention, which is Z+up, right-handed, so X+ means east/right, Y+ means forwards/north and Z+ means up.
-	/// </summary>
-	public sealed class CuboidOrientation : ITurnable
+    /// <summary>
+    /// There are only 24 possible orientations achievable by 90 degree rotations around coordinate axis, which form the rotation group of a cube, also known as the chiral octahedral symmetry group.
+    /// http://www.ams.org/samplings/feature-column/fcarc-cubes7
+    /// https://en.wikipedia.org/wiki/Octahedral_symmetry#Chiral_octahedral_symmetry
+    /// In 3D space for voxels, I'm following the MagicaVoxel convention, which is Z+up, right-handed, so X+ means east/right, Y+ means forwards/north and Z+ means up.
+    /// </summary>
+    public sealed class CuboidOrientation : ITurnable
 	{
 		#region Data members
 		public readonly byte Value;

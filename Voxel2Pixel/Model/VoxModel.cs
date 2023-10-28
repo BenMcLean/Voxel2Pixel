@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using Voxel2Pixel.Draw;
+using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model
 {
-	public class VoxModel : ArrayModel
+    public class VoxModel : ArrayModel
 	{
 		#region Read
 		public VoxModel(FileToVoxCore.Vox.VoxModel model, int frame = 0)

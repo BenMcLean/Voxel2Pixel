@@ -1,6 +1,8 @@
-﻿namespace Voxel2Pixel.Model
+﻿using Voxel2Pixel.Interfaces;
+
+namespace Voxel2Pixel.Model
 {
-	public class ArrayModel : IModel, ITurnable
+    public class ArrayModel : IModel, ITurnable
 	{
 		public ArrayModel(byte[][][] voxels) => Voxels = voxels;
 		public ArrayModel(ArrayModel other) : this(other.Voxels.DeepCopy()) { }

@@ -1,4 +1,4 @@
-﻿namespace Voxel2Pixel.Color
+﻿namespace Voxel2Pixel.Interfaces
 {
 	public interface IVoxelColor
 	{

@@ -1,11 +1,12 @@
 ﻿using System;
+using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model
 {
-	/// <summary>
-	/// Rotates models at 90 degree angles, including their sizes
-	/// </summary>
-	public class TurnModel : ContainerModel, ITurnable
+    /// <summary>
+    /// Rotates models at 90 degree angles, including their sizes
+    /// </summary>
+    public class TurnModel : ContainerModel, ITurnable
 	{
 		public CuboidOrientation CuboidOrientation { get; set; } = CuboidOrientation.SOUTH0;
 		#region ContainerModel
