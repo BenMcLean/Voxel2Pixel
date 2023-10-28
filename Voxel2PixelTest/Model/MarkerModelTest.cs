@@ -9,7 +9,7 @@ using Xunit;
 
 namespace Voxel2PixelTest.Model
 {
-    public class MarkerModelTest
+	public class MarkerModelTest
 	{
 		[Fact]
 		public void Above()
@@ -28,9 +28,9 @@ namespace Voxel2PixelTest.Model
 				height = VoxelDraw.AboveHeight(model);
 			IVoxelColor voxelColor = new NaiveDimmer(ArrayModelTest.RainbowPalette);
 			List<byte[]> frames = new List<byte[]>();
-			for (int y = 0; y < model.SizeY; y++)
-				for (int z = 0; z < model.SizeZ; z++)
-					for (int x = 0; x < model.SizeX; x++)
+			for (ushort y = 0; y < model.SizeY; y++)
+				for (ushort z = 0; z < model.SizeZ; z++)
+					for (ushort x = 0; x < model.SizeX; x++)
 					{
 						model.X = x;
 						model.Y = y;

@@ -587,6 +587,9 @@ namespace Voxel2Pixel.Draw
 				evenSizeY = model.SizeY % 2 == 0;
 			bool[] tiles = new bool[4];
 			#region Isometric local functions
+			bool IsInside(int x, int y, int z) => !IsOutside(x, y, z);
+			bool IsOutside(int x, int y, int z) => x < 0 || y < 0 || z < 0 || model.IsOutside((ushort)x, (ushort)y, (ushort)z);
+			byte At(int x, int y, int z) => model.At((ushort)x, (ushort)y, (ushort)z);
 			void Tile(int tile, Face face, int x, int y, byte voxel)
 			{
 				// 12
@@ -667,8 +670,8 @@ namespace Voxel2Pixel.Draw
 							voxelX++, voxelY++, voxelZ--)
 					{
 						if ((!tiles[0] || !tiles[1])
-							&& model.IsInside(voxelX - 1, voxelY, voxelZ + 1)
-							&& model.At(voxelX - 1, voxelY, voxelZ + 1) is byte xMinus1zPlus1
+							&& IsInside(voxelX - 1, voxelY, voxelZ + 1)
+							&& At(voxelX - 1, voxelY, voxelZ + 1) is byte xMinus1zPlus1
 							&& xMinus1zPlus1 != 0)
 						{
 							Tile(tile: 0,
@@ -683,8 +686,8 @@ namespace Voxel2Pixel.Draw
 								voxel: xMinus1zPlus1);
 						}
 						if ((!tiles[2] || !tiles[3])
-							&& model.IsInside(voxelX, voxelY - 1, voxelZ + 1)
-							&& model.At(voxelX, voxelY - 1, voxelZ + 1) is byte yMinus1zPlus1
+							&& IsInside(voxelX, voxelY - 1, voxelZ + 1)
+							&& At(voxelX, voxelY - 1, voxelZ + 1) is byte yMinus1zPlus1
 							&& yMinus1zPlus1 != 0)
 						{
 							Tile(tile: 2,
@@ -699,8 +702,8 @@ namespace Voxel2Pixel.Draw
 								voxel: yMinus1zPlus1);
 						}
 						if ((!tiles[1] || !tiles[2])
-							&& model.IsInside(voxelX, voxelY, voxelZ + 1)
-							&& model.At(voxelX, voxelY, voxelZ + 1) is byte zPlus1
+							&& IsInside(voxelX, voxelY, voxelZ + 1)
+							&& At(voxelX, voxelY, voxelZ + 1) is byte zPlus1
 							&& zPlus1 != 0)
 						{
 							Tile(tile: 1,
@@ -715,8 +718,8 @@ namespace Voxel2Pixel.Draw
 								voxel: zPlus1);
 						}
 						if (!tiles[0]
-							&& model.IsInside(voxelX - 1, voxelY, voxelZ)
-							&& model.At(voxelX - 1, voxelY, voxelZ) is byte xMinus1
+							&& IsInside(voxelX - 1, voxelY, voxelZ)
+							&& At(voxelX - 1, voxelY, voxelZ) is byte xMinus1
 							&& xMinus1 != 0)
 							Tile(tile: 0,
 								face: Face.Vertical,
@@ -724,16 +727,16 @@ namespace Voxel2Pixel.Draw
 								y: pixelY,
 								voxel: xMinus1);
 						if (!tiles[3]
-							&& model.IsInside(voxelX, voxelY - 1, voxelZ)
-							&& model.At(voxelX, voxelY - 1, voxelZ) is byte yMinus1
+							&& IsInside(voxelX, voxelY - 1, voxelZ)
+							&& At(voxelX, voxelY - 1, voxelZ) is byte yMinus1
 							&& yMinus1 != 0)
 							Tile(tile: 3,
 								face: Face.Vertical,
 								x: pixelX,
 								y: pixelY,
 								voxel: yMinus1);
-						if (model.IsInside(voxelX, voxelY, voxelZ)
-							&& model.At(voxelX, voxelY, voxelZ) is byte voxel
+						if (IsInside(voxelX, voxelY, voxelZ)
+							&& At(voxelX, voxelY, voxelZ) is byte voxel
 							&& voxel != 0)
 						{
 							Tile(tile: 0,
@@ -759,8 +762,8 @@ namespace Voxel2Pixel.Draw
 							break;
 						}
 						if ((!tiles[0] || !tiles[1])
-							&& model.IsInside(voxelX, voxelY + 1, voxelZ)
-							&& model.At(voxelX, voxelY + 1, voxelZ) is byte yPlus1
+							&& IsInside(voxelX, voxelY + 1, voxelZ)
+							&& At(voxelX, voxelY + 1, voxelZ) is byte yPlus1
 							&& yPlus1 != 0)
 						{
 							Tile(tile: 0,
@@ -775,8 +778,8 @@ namespace Voxel2Pixel.Draw
 								voxel: yPlus1);
 						}
 						if ((!tiles[2] || !tiles[3])
-							&& model.IsInside(voxelX + 1, voxelY, voxelZ)
-							&& model.At(voxelX + 1, voxelY, voxelZ) is byte xPlus1
+							&& IsInside(voxelX + 1, voxelY, voxelZ)
+							&& At(voxelX + 1, voxelY, voxelZ) is byte xPlus1
 							&& xPlus1 != 0)
 						{
 							Tile(tile: 2,
@@ -791,8 +794,8 @@ namespace Voxel2Pixel.Draw
 								voxel: xPlus1);
 						}
 						if ((!tiles[1] || !tiles[2])
-							&& model.IsInside(voxelX + 1, voxelY + 1, voxelZ)
-							&& model.At(voxelX + 1, voxelY + 1, voxelZ) is byte xPlus1yPlus1
+							&& IsInside(voxelX + 1, voxelY + 1, voxelZ)
+							&& At(voxelX + 1, voxelY + 1, voxelZ) is byte xPlus1yPlus1
 							&& xPlus1yPlus1 != 0)
 						{
 							Tile(tile: 1,
@@ -807,8 +810,8 @@ namespace Voxel2Pixel.Draw
 								voxel: xPlus1yPlus1);
 						}
 						if (!tiles[0]
-							&& model.IsInside(voxelX, voxelY + 1, voxelZ - 1)
-							&& model.At(voxelX, voxelY + 1, voxelZ - 1) is byte yPlus1zMinus1
+							&& IsInside(voxelX, voxelY + 1, voxelZ - 1)
+							&& At(voxelX, voxelY + 1, voxelZ - 1) is byte yPlus1zMinus1
 							&& yPlus1zMinus1 != 0)
 							Tile(tile: 0,
 								face: Face.Vertical,
@@ -816,8 +819,8 @@ namespace Voxel2Pixel.Draw
 								y: pixelY,
 								voxel: yPlus1zMinus1);
 						if (!tiles[3]
-							&& model.IsInside(voxelX + 1, voxelY, voxelZ - 1)
-							&& model.At(voxelX + 1, voxelY, voxelZ - 1) is byte xPlus1zMinus1
+							&& IsInside(voxelX + 1, voxelY, voxelZ - 1)
+							&& At(voxelX + 1, voxelY, voxelZ - 1) is byte xPlus1zMinus1
 							&& xPlus1zMinus1 != 0)
 							Tile(tile: 3,
 								face: Face.Vertical,
@@ -834,8 +837,8 @@ namespace Voxel2Pixel.Draw
 				pixelX += 4, pixelY -= 4)
 			{
 				int voxelX = model.SizeX - 1 - (pixelY / 2 - pixelX / 2 + model.SizeX) / 2;
-				if (model.IsInside(voxelX, model.SizeY - 1, model.SizeZ - 1)
-					&& model.At(voxelX, model.SizeY - 1, model.SizeZ - 1) is byte voxel
+				if (IsInside(voxelX, model.SizeY - 1, model.SizeZ - 1)
+					&& At(voxelX, model.SizeY - 1, model.SizeZ - 1) is byte voxel
 					&& voxel != 0)
 					renderer.TriVertical(
 						x: pixelX,
@@ -850,8 +853,8 @@ namespace Voxel2Pixel.Draw
 				pixelX += 4, pixelY += 4)
 			{
 				int voxelY = model.SizeY - 1 - (pixelX / 2 + pixelY / 2 - model.SizeX + 1) / 2;
-				if (model.IsInside(model.SizeX - 1, voxelY, model.SizeZ - 1)
-					&& model.At(model.SizeX - 1, voxelY, model.SizeZ - 1) is byte voxel
+				if (IsInside(model.SizeX - 1, voxelY, model.SizeZ - 1)
+					&& At(model.SizeX - 1, voxelY, model.SizeZ - 1) is byte voxel
 					&& voxel != 0)
 					renderer.TriVertical(
 						x: pixelX,
@@ -867,8 +870,8 @@ namespace Voxel2Pixel.Draw
 			{
 				int voxelY = model.SizeY - 1 - pixelX / 2;
 				if (pixelX >= 2
-					&& model.IsInside(0, voxelY + 1, 0)
-					&& model.At(0, voxelY + 1, 0) is byte leftVoxel
+					&& IsInside(0, voxelY + 1, 0)
+					&& At(0, voxelY + 1, 0) is byte leftVoxel
 					&& leftVoxel != 0)
 				{
 					renderer.TriLeft(
@@ -882,8 +885,8 @@ namespace Voxel2Pixel.Draw
 						right: true,
 						voxel: leftVoxel);
 				}
-				if (model.IsInside(0, voxelY, 0)
-					&& model.At(0, voxelY, 0) is byte voxel
+				if (IsInside(0, voxelY, 0)
+					&& At(0, voxelY, 0) is byte voxel
 					&& voxel != 0)
 				{
 					renderer.TriLeft(
@@ -906,8 +909,8 @@ namespace Voxel2Pixel.Draw
 			{
 				int voxelX = pixelX / 2 - model.SizeY;
 				if (pixelX < pixelWidth - 2
-					&& model.IsInside(voxelX + 1, 0, 0)
-					&& model.At(voxelX + 1, 0, 0) is byte rightVoxel
+					&& IsInside(voxelX + 1, 0, 0)
+					&& At(voxelX + 1, 0, 0) is byte rightVoxel
 					&& rightVoxel != 0)
 				{
 					renderer.TriLeft(
@@ -921,8 +924,8 @@ namespace Voxel2Pixel.Draw
 						right: true,
 						voxel: rightVoxel);
 				}
-				if (model.IsInside(voxelX, 0, 0)
-					&& model.At(voxelX, 0, 0) is byte voxel
+				if (IsInside(voxelX, 0, 0)
+					&& At(voxelX, 0, 0) is byte voxel
 					&& voxel != 0)
 				{
 					renderer.TriRight(

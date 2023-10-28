@@ -75,10 +75,10 @@ namespace Voxel2Pixel.Model
 			y = ReverseRotate(1, coordinates);
 			z = ReverseRotate(2, coordinates);
 		}
-		public byte? ReverseAt(int x, int y, int z)
+		public byte ReverseAt(ushort x, ushort y, ushort z)
 		{
 			ReverseRotate(out int x1, out int y1, out int z1, x, y, z);
-			return Model.At(x1, y1, z1);
+			return Model.At((ushort)x1, (ushort)y1, (ushort)z1);
 		}
 		#endregion ReverseRotate
 		#region Size
