@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using Voxel2Pixel.Interfaces;
-using Voxel2Pixel.Model;
 using Voxel2Pixel.Render;
 
 namespace Voxel2Pixel.Draw
