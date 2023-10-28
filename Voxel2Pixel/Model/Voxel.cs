@@ -4,8 +4,8 @@ namespace Voxel2Pixel.Model
 {
 	public struct Voxel
 	{
-		public byte X, Y, Z, Index;
-		public byte this[int index]
+		public uint X, Y, Z, Data;
+		public uint this[int index]
 		{
 			get
 			{
@@ -18,7 +18,7 @@ namespace Voxel2Pixel.Model
 					case 2:
 						return Z;
 					case 3:
-						return Index;
+						return Data;
 					default:
 						throw new IndexOutOfRangeException();
 				}
@@ -37,27 +37,27 @@ namespace Voxel2Pixel.Model
 						Z = value;
 						break;
 					case 3:
-						Index = value;
+						Data = value;
 						break;
 					default:
 						throw new IndexOutOfRangeException();
 				}
 			}
 		}
-		public byte[] Bytes => new byte[4] { X, Y, Z, Index };
-		public Voxel(byte[] bytes)
+		public uint[] UInts => new uint[4] { X, Y, Z, Data };
+		public Voxel(uint[] uints)
 		{
-			X = bytes[0];
-			Y = bytes[1];
-			Z = bytes[2];
-			Index = bytes[3];
+			X = uints[0];
+			Y = uints[1];
+			Z = uints[2];
+			Data = uints[3];
 		}
-		public Voxel(byte x, byte y, byte z, byte index)
+		public Voxel(uint x, uint y, uint z, uint Data)
 		{
 			X = x;
 			Y = y;
 			Z = z;
-			Index = index;
+			this.Data = Data;
 		}
 	}
 }
