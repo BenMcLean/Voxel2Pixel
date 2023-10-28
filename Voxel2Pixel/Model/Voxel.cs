@@ -45,6 +45,8 @@ namespace Voxel2Pixel.Model
 			}
 		}
 		public ushort[] Ushorts => new ushort[4] { X, Y, Z, Data };
+		public byte Index => (byte)Data;
+		public byte @byte => (byte)(Data >> 1);
 		public Voxel(ushort[] @ushort)
 		{
 			X = @ushort[0];
