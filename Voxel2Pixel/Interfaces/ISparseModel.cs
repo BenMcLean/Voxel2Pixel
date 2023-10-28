@@ -6,8 +6,8 @@ namespace Voxel2Pixel.Interfaces
 	public interface ISparseModel
 	{
 		IEnumerable<Voxel> Voxels { get; }
-		int SizeX { get; }
-		int SizeY { get; }
-		int SizeZ { get; }
+		ushort SizeX { get; }
+		ushort SizeY { get; }
+		ushort SizeZ { get; }
 	}
 }

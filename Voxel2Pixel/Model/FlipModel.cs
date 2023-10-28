@@ -27,9 +27,9 @@ namespace Voxel2Pixel.Model
 		}
 		public bool[] Get => new bool[3] { FlipX, FlipY, FlipZ };
 		#region IModel
-		public int SizeX => Model.SizeX;
-		public int SizeY => Model.SizeY;
-		public int SizeZ => Model.SizeZ;
+		public ushort SizeX => Model.SizeX;
+		public ushort SizeY => (ushort)Model.SizeY;
+		public ushort SizeZ => (ushort)Model.SizeZ;
 		public byte? At(int x, int y, int z) => Model.At(
 			x: FlipX ? SizeX - 1 - x : x,
 			y: FlipY ? SizeY - 1 - y : y,

@@ -4,8 +4,8 @@ namespace Voxel2Pixel.Model
 {
 	public struct Voxel
 	{
-		public uint X, Y, Z, Data;
-		public uint this[int index]
+		public ushort X, Y, Z, Data;
+		public ushort this[int index]
 		{
 			get
 			{
@@ -44,20 +44,20 @@ namespace Voxel2Pixel.Model
 				}
 			}
 		}
-		public uint[] UInts => new uint[4] { X, Y, Z, Data };
-		public Voxel(uint[] uints)
+		public ushort[] Ushorts => new ushort[4] { X, Y, Z, Data };
+		public Voxel(ushort[] @ushort)
 		{
-			X = uints[0];
-			Y = uints[1];
-			Z = uints[2];
-			Data = uints[3];
+			X = @ushort[0];
+			Y = @ushort[1];
+			Z = @ushort[2];
+			Data = @ushort[3];
 		}
-		public Voxel(uint x, uint y, uint z, uint Data)
+		public Voxel(ushort x, ushort y, ushort z, ushort data)
 		{
 			X = x;
 			Y = y;
 			Z = z;
-			this.Data = Data;
+			Data = data;
 		}
 	}
 }

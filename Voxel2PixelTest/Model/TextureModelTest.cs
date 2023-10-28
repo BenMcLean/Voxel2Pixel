@@ -13,7 +13,7 @@ namespace Voxel2PixelTest.Model
 		[Fact]
 		public void ArrayRendererTest()
 		{
-			int testTextureWidth = 10, testTextureHeight = 32;
+			ushort testTextureWidth = 10, testTextureHeight = 32;
 			byte[] testTexture = TestTexture(testTextureWidth, testTextureHeight);
 			ImageMaker.Png(
 				width: testTextureWidth,
