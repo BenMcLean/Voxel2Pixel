@@ -13,12 +13,12 @@ namespace Voxel2Pixel.Model
 		public override ushort SizeX => RotatedSize(0);
 		public override ushort SizeY => RotatedSize(1);
 		public override ushort SizeZ => RotatedSize(2);
-		public override bool IsInside(int x, int y, int z) => !IsOutside(x, y, z);
-		public override bool IsOutside(int x, int y, int z) => x < 0 || y < 0 || z < 0 || x >= SizeX || y >= SizeY || z >= SizeZ;
-		public override byte? At(int x, int y, int z)
+		public override bool IsInside(ushort x, ushort y, ushort z) => !IsOutside(x, y, z);
+		public override bool IsOutside(ushort x, ushort y, ushort z) => x >= SizeX || y >= SizeY || z >= SizeZ;
+		public override byte At(ushort x, ushort y, ushort z)
 		{
 			Rotate(out int x1, out int y1, out int z1, x, y, z);
-			return Model.At(x1, y1, z1);
+			return Model.At((ushort)x1, (ushort)y1, (ushort)z1);
 		}
 		#endregion ContainerModel
 		#region ITurnable

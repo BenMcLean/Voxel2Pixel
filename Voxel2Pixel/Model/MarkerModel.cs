@@ -8,12 +8,12 @@
 		#region Data members
 		public byte Voxel { get; set; } = 1;
 		public bool Overwrite { get; set; } = true;
-		public int X { get; set; } = 0;
-		public int Y { get; set; } = 0;
-		public int Z { get; set; } = 0;
+		public ushort X { get; set; } = 0;
+		public ushort Y { get; set; } = 0;
+		public ushort Z { get; set; } = 0;
 		#endregion Data members
-		#region IModel
-		public override byte? At(int x, int y, int z) =>
+		#region IFetch
+		public override byte At(ushort x, ushort y, ushort z) =>
 			x == X && y == Y && z == Z ?
 				Overwrite ?
 					Voxel
@@ -21,6 +21,6 @@
 						@byte
 						: Voxel
 				: Model.At(x, y, z);
-		#endregion IModel
+		#endregion IFetch
 	}
 }

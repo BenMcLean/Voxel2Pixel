@@ -29,18 +29,18 @@ namespace Voxel2Pixel.SparseModel
 							List.Add(new Voxel(x, y, z, @byte));
 		}
 		#region IFetch
-		public byte? At(int x, int y, int z) => IsInside(x, y, z) ?
+		public byte At(ushort x, ushort y, ushort z) => IsInside(x, y, z) ?
 			Voxels.Where(voxel => voxel.X == x && voxel.Y == y && voxel.Z == z)
 				.Select(voxel => voxel.@byte)
 				.FirstOrDefault()
-			: (byte?)null;
+			: (byte)0;
 		#endregion IFetch
 		#region IModel
 		public ushort SizeX { get; set; }
 		public ushort SizeY { get; set; }
 		public ushort SizeZ { get; set; }
-		public bool IsInside(int x, int y, int z) => !IsOutside(x, y, z);
-		public bool IsOutside(int x, int y, int z) => x < 0 || y < 0 || z < 0 || x >= SizeX || y >= SizeY || z >= SizeZ;
+		public bool IsInside(ushort x, ushort y, ushort z) => !IsOutside(x, y, z);
+		public bool IsOutside(ushort x, ushort y, ushort z) => x >= SizeX || y >= SizeY || z >= SizeZ;
 		#endregion IModel
 		#region ISparseModel
 		public IEnumerable<Voxel> Voxels => List;

@@ -5,8 +5,12 @@
 		public int OffsetX { get; set; } = 0;
 		public int OffsetY { get; set; } = 0;
 		public int OffsetZ { get; set; } = 0;
-		#region IModel
-		public override byte? At(int x, int y, int z) => IsInside(x + OffsetX, y + OffsetY, z + OffsetZ) ? Model.At(x + OffsetX, y + OffsetY, z + OffsetZ) : 0;
-		#endregion IModel
+		#region IFetch
+		public override byte At(ushort x, ushort y, ushort z) =>
+			x + OffsetX >= 0 && y + OffsetY >= 0 && z + OffsetZ >= 0
+			&& IsInside((ushort)(x + OffsetX), (ushort)(y + OffsetY), (ushort)(z + OffsetZ)) ?
+				Model.At((ushort)(x + OffsetX), (ushort)(y + OffsetY), (ushort)(z + OffsetZ))
+				: (byte)0;
+		#endregion IFetch
 	}
 }

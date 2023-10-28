@@ -15,8 +15,8 @@
 				borderCount++;
 			return borderCount >= 2;
 		}
-		#region IModel
-		public override byte? At(int x, int y, int z) =>
+		#region IFetch
+		public override byte At(ushort x, ushort y, ushort z) =>
 			Overwrite ?
 				IsBorder(x, y, z) ?
 					IsInside(x, y, z) ?
@@ -28,6 +28,6 @@
 					: IsInside(x, y, z) && IsBorder(x, y, z) ?
 						Voxel
 						: (byte)0;
-		#endregion IModel
+		#endregion IFetch
 	}
 }

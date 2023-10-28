@@ -17,9 +17,9 @@ namespace Voxel2Pixel.Draw
 		public static int FrontHeight(IModel model) => model.SizeZ;
 		public static void Front(IModel model, IRectangleRenderer renderer)
 		{
-			for (int z = 0; z < model.SizeZ; z++)
-				for (int x = 0; x < model.SizeX; x++)
-					for (int y = 0; y < model.SizeY; y++)
+			for (ushort z = 0; z < model.SizeZ; z++)
+				for (ushort x = 0; x < model.SizeX; x++)
+					for (ushort y = 0; y < model.SizeY; y++)
 						if (model.At(x, y, z) is byte voxel
 							&& voxel != 0)
 						{
@@ -34,14 +34,14 @@ namespace Voxel2Pixel.Draw
 		public static int FrontPeekHeight(IModel model, int scaleY = 6) => model.SizeZ * scaleY;
 		public static void FrontPeek(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 6)
 		{
-			for (int z = 0; z < model.SizeZ; z++)
-				for (int x = 0; x < model.SizeX; x++)
-					for (int y = 0; y < model.SizeY; y++)
+			for (ushort z = 0; z < model.SizeZ; z++)
+				for (ushort x = 0; x < model.SizeX; x++)
+					for (ushort y = 0; y < model.SizeY; y++)
 						if (model.At(x, y, z) is byte voxel
 							&& voxel != 0)
 						{
 							if (z >= model.SizeZ - 1
-								|| model.At(x, y, z + 1) == 0)
+								|| model.At(x, y, (ushort)(z + 1)) == 0)
 							{
 								renderer.RectTop(
 									x: x * scaleX,
@@ -70,9 +70,9 @@ namespace Voxel2Pixel.Draw
 		public static int RightHeight(IModel model) => model.SizeZ;
 		public static void Right(IModel model, IRectangleRenderer renderer)
 		{
-			for (int z = 0; z < model.SizeZ; z++)
-				for (int y = 0; y < model.SizeY; y++)
-					for (int x = 0; x < model.SizeX; x++)
+			for (ushort z = 0; z < model.SizeZ; z++)
+				for (ushort y = 0; y < model.SizeY; y++)
+					for (ushort x = 0; x < model.SizeX; x++)
 						if (model.At(x, y, z) is byte voxel
 							&& voxel != 0)
 						{
@@ -87,14 +87,14 @@ namespace Voxel2Pixel.Draw
 		public static int RightPeekHeight(IModel model, int scaleY = 6) => model.SizeZ * scaleY;
 		public static void RightPeek(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 6)
 		{
-			for (int z = 0; z < model.SizeZ; z++)
-				for (int y = 0; y < model.SizeY; y++)
-					for (int x = 0; x < model.SizeX; x++)
+			for (ushort z = 0; z < model.SizeZ; z++)
+				for (ushort y = 0; y < model.SizeY; y++)
+					for (ushort x = 0; x < model.SizeX; x++)
 						if (model.At(x, y, z) is byte voxel
 							&& voxel != 0)
 						{
 							if (z >= model.SizeZ - 1
-								|| model.At(x, y, z + 1) == 0)
+								|| model.At(x, y, (ushort)(z + 1)) == 0)
 							{
 								renderer.RectTop(
 									x: (model.SizeY - 1 - y) * scaleX,
@@ -123,10 +123,10 @@ namespace Voxel2Pixel.Draw
 		public static int BackHeight(IModel model) => model.SizeZ;
 		public static void Back(IModel model, IRectangleRenderer renderer)
 		{
-			for (int z = 0; z < model.SizeZ; z++)
-				for (int x = 0; x < model.SizeX; x++)
+			for (ushort z = 0; z < model.SizeZ; z++)
+				for (ushort x = 0; x < model.SizeX; x++)
 					for (int y = model.SizeY - 1; y >= 0; y--)
-						if (model.At(x, y, z) is byte voxel
+						if (model.At(x, (ushort)y, z) is byte voxel
 							&& voxel != 0)
 						{
 							renderer.RectFront(
@@ -140,14 +140,14 @@ namespace Voxel2Pixel.Draw
 		public static int BackPeekHeight(IModel model, int scaleY = 6) => model.SizeZ * scaleY;
 		public static void BackPeek(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 6)
 		{
-			for (int z = 0; z < model.SizeZ; z++)
-				for (int x = 0; x < model.SizeX; x++)
+			for (ushort z = 0; z < model.SizeZ; z++)
+				for (ushort x = 0; x < model.SizeX; x++)
 					for (int y = model.SizeY - 1; y >= 0; y--)
-						if (model.At(x, y, z) is byte voxel
+						if (model.At(x, (ushort)y, z) is byte voxel
 							&& voxel != 0)
 						{
 							if (z >= model.SizeZ - 1
-								|| model.At(x, y, z + 1) == 0)
+								|| model.At(x, (ushort)y, (ushort)(z + 1)) == 0)
 							{
 								renderer.RectTop(
 									x: (model.SizeX - 1 - x) * scaleX,
@@ -176,10 +176,10 @@ namespace Voxel2Pixel.Draw
 		public static int LeftHeight(IModel model) => model.SizeZ;
 		public static void Left(IModel model, IRectangleRenderer renderer)
 		{
-			for (int z = 0; z < model.SizeZ; z++)
-				for (int y = 0; y < model.SizeY; y++)
+			for (ushort z = 0; z < model.SizeZ; z++)
+				for (ushort y = 0; y < model.SizeY; y++)
 					for (int x = model.SizeX - 1; x >= 0; x--)
-						if (model.At(x, y, z) is byte voxel
+						if (model.At((ushort)x, y, z) is byte voxel
 							&& voxel != 0)
 						{
 							renderer.RectFront(
@@ -193,14 +193,14 @@ namespace Voxel2Pixel.Draw
 		public static int LeftPeekHeight(IModel model, int scaleY = 6) => model.SizeZ * scaleY;
 		public static void LeftPeek(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 6)
 		{
-			for (int z = 0; z < model.SizeZ; z++)
-				for (int y = 0; y < model.SizeY; y++)
+			for (ushort z = 0; z < model.SizeZ; z++)
+				for (ushort y = 0; y < model.SizeY; y++)
 					for (int x = model.SizeX - 1; x >= 0; x--)
-						if (model.At(x, y, z) is byte voxel
+						if (model.At((ushort)x, y, z) is byte voxel
 							&& voxel != 0)
 						{
 							if (z >= model.SizeZ - 1
-								|| model.At(x, y, z + 1) == 0)
+								|| model.At((ushort)x, y, (ushort)(z + 1)) == 0)
 							{
 								renderer.RectTop(
 									x: y * scaleX,
@@ -229,10 +229,10 @@ namespace Voxel2Pixel.Draw
 		public static int TopHeight(IModel model) => model.SizeY;
 		public static void Top(IModel model, IRectangleRenderer renderer)
 		{
-			for (int y = 0; y < model.SizeY; y++)
-				for (int x = 0; x < model.SizeX; x++)
+			for (ushort y = 0; y < model.SizeY; y++)
+				for (ushort x = 0; x < model.SizeX; x++)
 					for (int z = model.SizeZ - 1; z >= 0; z--)
-						if (model.At(x, y, z) is byte voxel
+						if (model.At(x, y, (ushort)z) is byte voxel
 							&& voxel != 0)
 						{
 							renderer.RectFront(
@@ -246,9 +246,9 @@ namespace Voxel2Pixel.Draw
 		public static int BottomHeight(IModel model) => model.SizeY;
 		public static void Bottom(IModel model, IRectangleRenderer renderer)
 		{
-			for (int x = 0; x < model.SizeX; x++)
-				for (int y = 0; y < model.SizeY; y++)
-					for (int z = 0; z < model.SizeZ; z++)
+			for (ushort x = 0; x < model.SizeX; x++)
+				for (ushort y = 0; y < model.SizeY; y++)
+					for (ushort z = 0; z < model.SizeZ; z++)
 						if (model.At(x, y, z) is byte voxel
 							&& voxel != 0)
 						{

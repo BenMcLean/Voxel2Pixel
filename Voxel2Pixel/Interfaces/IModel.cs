@@ -5,7 +5,7 @@
 		ushort SizeX { get; }
 		ushort SizeY { get; }
 		ushort SizeZ { get; }
-		bool IsInside(int x, int y, int z);
-		bool IsOutside(int x, int y, int z);
+		bool IsInside(ushort x, ushort y, ushort z);
+		bool IsOutside(ushort x, ushort y, ushort z);
 	}
 }

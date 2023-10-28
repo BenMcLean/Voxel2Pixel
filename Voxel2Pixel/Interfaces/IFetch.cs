@@ -2,6 +2,6 @@
 {
 	public interface IFetch
 	{
-		byte? At(int x, int y, int z);
+		byte At(ushort x, ushort y, ushort z);
 	}
 }

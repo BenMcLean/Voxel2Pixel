@@ -26,9 +26,9 @@ namespace Voxel2Pixel.Model
 		public ushort SizeX => (ushort)Array.Length;
 		public ushort SizeY => (ushort)Array[0].Length;
 		public ushort SizeZ => (ushort)Array[0][0].Length;
-		public byte? At(int x, int y, int z) => IsInside(x, y, z) ? Array[x][y][z] : (byte?)null;
-		public bool IsInside(int x, int y, int z) => !IsOutside(x, y, z);
-		public bool IsOutside(int x, int y, int z) => x < 0 || y < 0 || z < 0 || x >= SizeX || y >= SizeY || z >= SizeZ;
+		public byte At(ushort x, ushort y, ushort z) => IsInside(x, y, z) ? Array[x][y][z] : (byte)0;
+		public bool IsInside(ushort x, ushort y, ushort z) => !IsOutside(x, y, z);
+		public bool IsOutside(ushort x, ushort y, ushort z) => x >= SizeX || y >= SizeY || z >= SizeZ;
 		#endregion IModel
 		#region ISparseModel
 		public IEnumerable<Voxel> Voxels
