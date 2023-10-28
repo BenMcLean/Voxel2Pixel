@@ -11,7 +11,7 @@ using Xunit;
 
 namespace Voxel2PixelTest.Model
 {
-    public class TurnModelTest
+	public class TurnModelTest
 	{
 		[Fact]
 		public void ReverseRotateTest()
@@ -121,6 +121,25 @@ namespace Voxel2PixelTest.Model
 				frames: frames.ToArray(),
 				frameDelay: 150)
 			.SaveAsGif("TurnModelTest.gif");
+		}
+		[Fact]
+		public void Start()
+		{
+			TurnModel turnModel = new TurnModel
+			{
+				Model = new EmptyModel
+				{
+					SizeX = 3,
+					SizeY = 7,
+					SizeZ = 11,
+				}
+			};
+			foreach (CuboidOrientation cuboidOrientation in CuboidOrientation.Values)
+			{
+				turnModel.CuboidOrientation = cuboidOrientation;
+				for (int axis = 0; axis < 3; axis++)
+					Assert.True(turnModel.Rotate(axis, turnModel.Sizes) > 0);
+			}
 		}
 	}
 }

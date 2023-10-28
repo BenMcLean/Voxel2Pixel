@@ -13,6 +13,7 @@ namespace Voxel2Pixel.Model
 		public override ushort SizeX => RotatedSize(0);
 		public override ushort SizeY => RotatedSize(1);
 		public override ushort SizeZ => RotatedSize(2);
+		public int[] Sizes => new int[] { SizeX, SizeY, SizeZ };
 		public override bool IsInside(ushort x, ushort y, ushort z) => !IsOutside(x, y, z);
 		public override bool IsOutside(ushort x, ushort y, ushort z) => x >= SizeX || y >= SizeY || z >= SizeZ;
 		public override byte At(ushort x, ushort y, ushort z)
@@ -59,7 +60,7 @@ namespace Voxel2Pixel.Model
 		}
 		#endregion ITurnable
 		#region Rotate
-		public int Rotate(int axis, params int[] coordinates) => CuboidOrientation.Rotate(axis, coordinates) + Start(axis);
+		public int Rotate(int axis, params int[] coordinates) => CuboidOrientation.Rotate(axis, coordinates) + CuboidOrientation.Offset(axis, Sizes);
 		public void Rotate(out int x, out int y, out int z, params int[] coordinates)
 		{
 			x = Rotate(0, coordinates);
@@ -68,7 +69,7 @@ namespace Voxel2Pixel.Model
 		}
 		#endregion Rotate
 		#region ReverseRotate
-		public int ReverseRotate(int axis, params int[] coordinates) => CuboidOrientation.ReverseRotate(axis, coordinates) + Start(CuboidOrientation.ReverseAffected(axis));
+		public int ReverseRotate(int axis, params int[] coordinates) => CuboidOrientation.ReverseRotate(axis, coordinates) + CuboidOrientation.Offset(CuboidOrientation.ReverseAffected(axis), Sizes);
 		public void ReverseRotate(out int x, out int y, out int z, params int[] coordinates)
 		{
 			x = ReverseRotate(0, coordinates);
@@ -106,14 +107,5 @@ namespace Voxel2Pixel.Model
 			}
 		}
 		#endregion Size
-		#region Start
-		public int Start(int axis) =>
-			CuboidOrientation.Step(axis) < 1 ?
-				ModelSize(axis) - 1
-				: 0;
-		public int StartX => Start(0);
-		public int StartY => Start(1);
-		public int StartZ => Start(2);
-		#endregion Start
 	}
 }

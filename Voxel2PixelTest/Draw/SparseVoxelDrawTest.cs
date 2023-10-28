@@ -1,4 +1,6 @@
 ﻿using SixLabors.ImageSharp;
+using System;
+using System.Collections.Generic;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
@@ -30,6 +32,38 @@ namespace Voxel2PixelTest.Draw
 				width: width,
 				bytes: arrayRenderer.Image)
 				.SaveAsPng("SparseVoxelDrawFront.png");
+		}
+		[Fact]
+		public void TurnSparseModel()
+		{
+			VoxFileModel voxFile = new VoxFileModel(@"..\..\..\Sora.vox");
+			ushort width = Math.Max(Math.Max(voxFile.SizeX, voxFile.SizeY), voxFile.SizeZ);
+			IVoxelColor voxelColor = new NaiveDimmer(voxFile.Palette);
+			TurnSparseModel model = new TurnSparseModel
+			{
+				SparseModel = new ListModel(voxFile),
+			};
+			List<byte[]> frames = new List<byte[]>();
+			foreach (CuboidOrientation cuboidOrientation in CuboidOrientation.Values)
+			{
+				model.CuboidOrientation = cuboidOrientation;
+				ArrayRenderer arrayRenderer = new ArrayRenderer
+				{
+					Image = new byte[width * 4 * width],
+					Width = width,
+					VoxelColor = voxelColor,
+				};
+				SparseVoxelDraw.Front(model, arrayRenderer);
+				frames.Add(arrayRenderer.Image);
+			}
+			ImageMaker.AnimatedGif(
+				scaleX: 32,
+				scaleY: 32,
+				width: width,
+				frameDelay: 150,
+				repeatCount: 0,
+				frames: frames.ToArray())
+				.SaveAsPng("SparseVoxelDrawFront.gif");
 		}
 	}
 }
