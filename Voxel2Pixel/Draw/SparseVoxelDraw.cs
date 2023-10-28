@@ -1,4 +1,5 @@
-﻿using Voxel2Pixel.Interfaces;
+﻿using System.Linq;
+using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Render;
 
@@ -26,15 +27,16 @@ namespace Voxel2Pixel.Draw
 		}
 		public static void Front(ISparseModel model, IRectangleRenderer renderer)
 		{
-			VoxelY?[] grid = new VoxelY?[model.SizeX * model.SizeZ];
-			foreach (Voxel voxel in model.Voxels)
-				if (!(grid[voxel.Z * model.SizeZ + voxel.X] is VoxelY old)
-					|| voxel.Y < old.y)
-					grid[voxel.Z * model.SizeZ + voxel.X] = new VoxelY(voxel);
+			VoxelY[] grid = new VoxelY[model.SizeX * model.SizeZ];
+			foreach (Voxel voxel in model.Voxels
+				.Where(voxel => !(grid[voxel.Z * model.SizeX + voxel.X] is VoxelY old)
+					|| old.color == 0
+					|| old.y > voxel.Y))
+				grid[voxel.Z * model.SizeX + voxel.X] = new VoxelY(voxel);
 			uint index = 0;
 			for (ushort y = 0; y < model.SizeZ; y++)
 				for (ushort x = 0; x < model.SizeX; x++)
-					if (grid[++index] is VoxelY voxelY)
+					if (grid[++index] is VoxelY voxelY && voxelY.color != 0)
 						renderer.RectFront(
 							x: x,
 							y: model.SizeZ - 1 - y,
