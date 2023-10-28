@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Voxel2Pixel.Interfaces;
-using Voxel2Pixel.Model;
 
-namespace Voxel2Pixel.SparseModel
+namespace Voxel2Pixel.Model
 {
 	public class ListModel : ISparseModel
 	{
