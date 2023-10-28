@@ -9,10 +9,10 @@ namespace Voxel2Pixel.Model
 	{
 		public TextureModel(byte[] texture, ushort width = 0)
 		{
-			SizeX = width < 1 ? (ushort)Math.Sqrt(texture.Length >> 2) : width;
-			SizeY = (ushort)(Indexes.Length / SizeX);
 			Palette = texture.PaletteFromTexture();
 			Indexes = texture.Byte2IndexArray(Palette);
+			SizeX = width < 1 ? (ushort)Math.Sqrt(Indexes.Length) : width;
+			SizeY = (ushort)(Indexes.Length / SizeX);
 		}
 		public uint[] Palette { get; set; }
 		public byte[] Indexes { get; }
