@@ -36,7 +36,7 @@ namespace Voxel2Pixel.Draw
 			uint index = 0;
 			for (ushort y = 0; y < model.SizeZ; y++)
 				for (ushort x = 0; x < model.SizeX; x++)
-					if (grid[++index] is VoxelY voxelY && voxelY.color != 0)
+					if (grid[index++] is VoxelY voxelY && voxelY.color != 0)
 						renderer.RectFront(
 							x: x,
 							y: model.SizeZ - 1 - y,

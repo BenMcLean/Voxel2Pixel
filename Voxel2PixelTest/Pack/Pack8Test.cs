@@ -10,7 +10,7 @@ using Xunit;
 
 namespace Voxel2PixelTest.Pack
 {
-    public class Pack8Test
+	public class Pack8Test
 	{
 		#region Tests
 		[Fact]
