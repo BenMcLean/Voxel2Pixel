@@ -16,12 +16,12 @@ namespace Voxel2Pixel.Model
 			{
 				foreach (Voxel voxel in SparseModel.Voxels)
 				{
-					Rotate(out int x, out int y, out int z, voxel.X, voxel.Y, voxel.Z);
+					ReverseRotate(out ushort x, out ushort y, out ushort z, voxel.X, voxel.Y, voxel.Z);
 					yield return new Voxel
 					{
-						X = (ushort)x,
-						Y = (ushort)y,
-						Z = (ushort)z,
+						X = x,
+						Y = y,
+						Z = z,
 						@byte = voxel.@byte,
 					};
 				}

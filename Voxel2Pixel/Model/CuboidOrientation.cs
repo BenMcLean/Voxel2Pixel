@@ -144,14 +144,14 @@ namespace Voxel2Pixel.Model
 		}
 		#endregion ReverseRotate
 		#region Offset
-		public int Offset(int axis, params int[] size) =>
+		public int Offset(int axis, params ushort[] size) =>
 			Step(axis) < 1 ?
 				size[Affected(axis)] - 1
 				: 0;
 		/// <summary>
 		/// Calculates the offsets to move the rotated voxel model so that it is in the x+,y+,z+ quadrant after the rotation.
 		/// </summary>
-		public void Offset(out int x, out int y, out int z, params int[] size)
+		public void Offset(out int x, out int y, out int z, params ushort[] size)
 		{
 			x = Offset(0, size);
 			y = Offset(1, size);

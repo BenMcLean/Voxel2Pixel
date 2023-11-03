@@ -17,8 +17,8 @@ namespace Voxel2Pixel.Draw
 		public static int FrontHeight(IModel model) => model.SizeZ;
 		private struct VoxelY
 		{
-			public ushort y;
-			public byte color;
+			public readonly ushort y;
+			public readonly byte color;
 			public VoxelY(Voxel voxel)
 			{
 				y = voxel.Y;

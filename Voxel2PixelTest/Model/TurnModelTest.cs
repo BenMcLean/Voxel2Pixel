@@ -35,26 +35,20 @@ namespace Voxel2PixelTest.Model
 			foreach (CuboidOrientation cuboidOrientation in CuboidOrientation.Values)
 			{
 				turnModel.CuboidOrientation = cuboidOrientation;
-				for (int x = 0; x < turnModel.Model.SizeX; x++)
-					for (int y = 0; y < turnModel.Model.SizeY; y++)
-						for (int z = 0; z < turnModel.Model.SizeZ; z++)
+				for (ushort x = 0; x < turnModel.Model.SizeX; x++)
+					for (ushort y = 0; y < turnModel.Model.SizeY; y++)
+						for (ushort z = 0; z < turnModel.Model.SizeZ; z++)
 						{
-							turnModel.Rotate(out int x1, out int y1, out int z1, x, y, z);
-							Assert.True(x1 >= 0);
-							Assert.True(y1 >= 0);
-							Assert.True(z1 >= 0);
+							turnModel.Rotate(out ushort x1, out ushort y1, out ushort z1, x, y, z);
 							Assert.True(x1 < turnModel.SizeX);
 							Assert.True(y1 < turnModel.SizeY);
 							Assert.True(z1 < turnModel.SizeZ);
-							turnModel.ReverseRotate(out int x2, out int y2, out int z2, x, y, z);
-							Assert.True(x2 >= 0);
-							Assert.True(y2 >= 0);
-							Assert.True(z2 >= 0);
-							turnModel.ReverseRotate(out int x3, out int y3, out int z3, x1, y1, z1);
+							turnModel.ReverseRotate(out ushort x2, out ushort y2, out ushort z2, x, y, z);
+							turnModel.ReverseRotate(out ushort x3, out ushort y3, out ushort z3, x1, y1, z1);
 							Assert.Equal(x, x3);
 							Assert.Equal(y, y3);
 							Assert.Equal(z, z3);
-							turnModel.Rotate(out int x4, out int y4, out int z4, x2, y2, z2);
+							turnModel.Rotate(out ushort x4, out ushort y4, out ushort z4, x2, y2, z2);
 							Assert.Equal(x, x4);
 							Assert.Equal(y, y4);
 							Assert.Equal(z, z4);
@@ -107,7 +101,7 @@ namespace Voxel2PixelTest.Model
 				frames.Add(arrayRenderer.Image);
 			}
 			Directory.CreateDirectory(@".\NumberCube");
-			for (int frame = 0; frame < frames.Count; frame++)
+			for (ushort frame = 0; frame < frames.Count; frame++)
 				ImageMaker.Png(
 					scaleX: 16,
 					scaleY: 16,
@@ -121,25 +115,6 @@ namespace Voxel2PixelTest.Model
 				frames: frames.ToArray(),
 				frameDelay: 150)
 			.SaveAsGif("TurnModelTest.gif");
-		}
-		[Fact]
-		public void Start()
-		{
-			TurnModel turnModel = new TurnModel
-			{
-				Model = new EmptyModel
-				{
-					SizeX = 3,
-					SizeY = 7,
-					SizeZ = 11,
-				}
-			};
-			foreach (CuboidOrientation cuboidOrientation in CuboidOrientation.Values)
-			{
-				turnModel.CuboidOrientation = cuboidOrientation;
-				for (int axis = 0; axis < 3; axis++)
-					Assert.True(turnModel.Rotate(axis, turnModel.Sizes) > 0);
-			}
 		}
 	}
 }

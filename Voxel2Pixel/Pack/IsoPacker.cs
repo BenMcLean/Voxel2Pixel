@@ -8,7 +8,7 @@ using static Voxel2Pixel.Draw.PixelDraw;
 
 namespace Voxel2Pixel.Pack
 {
-    public static class IsoPacker
+	public static class IsoPacker
 	{
 		public static byte[] Pack8(IModel model, IVoxelColor voxelColor, out int width, out RectpackSharp.PackingRectangle[] packingRectangles)
 		{
@@ -70,9 +70,9 @@ namespace Voxel2Pixel.Pack
 				sprites[i] = arrayRenderer.Image;
 				widths[i] = width;
 				turnModel.ReverseRotate(
-					x: out int turnedX,
-					y: out int turnedY,
-					z: out int turnedZ,
+					x: out ushort turnedX,
+					y: out ushort turnedY,
+					z: out ushort turnedZ,
 					coordinates: voxelOrigin);
 				pixelOrigins[i] = new int[2];
 				VoxelDraw.AboveLocate(
@@ -162,9 +162,9 @@ namespace Voxel2Pixel.Pack
 				sprites[i] = arrayRenderer.Image;
 				widths[i] = width;
 				turnModel.ReverseRotate(
-					x: out int turnedX,
-					y: out int turnedY,
-					z: out int turnedZ,
+					x: out ushort turnedX,
+					y: out ushort turnedY,
+					z: out ushort turnedZ,
 					coordinates: voxelOrigin);
 				pixelOrigins[i] = new int[2];
 				VoxelDraw.IsoLocate(
