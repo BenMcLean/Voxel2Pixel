@@ -1,10 +1,9 @@
-﻿namespace Voxel2Pixel.Interfaces
+﻿using Voxel2Pixel.Model;
+
+namespace Voxel2Pixel.Interfaces
 {
 	public interface IVoxelColor
 	{
-		uint TopFace(byte voxel);
-		uint RightFace(byte voxel);
-		uint FrontFace(byte voxel);
-		uint LeftFace(byte voxel);
+		uint Color(byte voxel, VisibleFace visibleFace);
 	}
 }

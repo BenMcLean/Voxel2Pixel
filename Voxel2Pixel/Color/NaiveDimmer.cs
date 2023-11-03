@@ -1,9 +1,10 @@
 ﻿using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
+using Voxel2Pixel.Model;
 
 namespace Voxel2Pixel.Color
 {
-    public class NaiveDimmer : IVoxelColor, IDimmer
+	public class NaiveDimmer : IVoxelColor, IDimmer
 	{
 		public NaiveDimmer(uint[] palette)
 		{
@@ -32,11 +33,21 @@ namespace Voxel2Pixel.Color
 		public uint Dimmer(int brightness, byte voxel) => Palette[brightness][voxel];
 		#endregion IDimmer
 		#region IVoxelColor
-		public bool Iso { get; set; } = true;
-		public uint TopFace(byte voxel) => Bright(voxel);
-		public uint RightFace(byte voxel) => Light(voxel);
-		public uint FrontFace(byte voxel) => Medium(voxel);
-		public uint LeftFace(byte voxel) => Dim(voxel);
+		public virtual uint Color(byte voxel, VisibleFace visibleFace = VisibleFace.Front)
+		{
+			switch (visibleFace)
+			{
+				case VisibleFace.Top:
+					return Bright(voxel);
+				case VisibleFace.Right:
+					return Light(voxel);
+				case VisibleFace.Front:
+					return Medium(voxel);
+				case VisibleFace.Left:
+					return Dim(voxel);
+			}
+			throw new System.IO.InvalidDataException();
+		}
 		#endregion IVoxelColor
 	}
 }

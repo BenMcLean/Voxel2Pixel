@@ -1,6 +1,8 @@
-﻿namespace Voxel2Pixel.Render
+﻿using Voxel2Pixel.Interfaces;
+
+namespace Voxel2Pixel.Render
 {
-	public class OffsetRenderer : TriangleRenderer
+    public class OffsetRenderer : TriangleRenderer
 	{
 		public IRectangleRenderer RectangleRenderer { get; set; }
 		public int OffsetX { get; set; } = 0;

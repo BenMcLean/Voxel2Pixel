@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Voxel2Pixel.Interfaces;
-using Voxel2Pixel.Render;
+using Voxel2Pixel.Model;
 
 namespace Voxel2Pixel.Draw
 {
@@ -23,7 +23,7 @@ namespace Voxel2Pixel.Draw
 						if (model.At(x, y, z) is byte voxel
 							&& voxel != 0)
 						{
-							renderer.RectFront(
+							renderer.Rect(
 								x: x,
 								y: model.SizeZ - 1 - z,
 								voxel: voxel);
@@ -43,24 +43,27 @@ namespace Voxel2Pixel.Draw
 							if (z >= model.SizeZ - 1
 								|| model.At(x, y, (ushort)(z + 1)) == 0)
 							{
-								renderer.RectTop(
+								renderer.Rect(
 									x: x * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY,
 									voxel: voxel,
+									visibleFace: VisibleFace.Top,
 									sizeX: scaleX,
 									sizeY: 1);
-								renderer.RectFront(
+								renderer.Rect(
 									x: x * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY + 1,
 									voxel: voxel,
+									visibleFace: VisibleFace.Front,
 									sizeX: scaleX,
 									sizeY: scaleY - 1);
 							}
 							else
-								renderer.RectFront(
+								renderer.Rect(
 									x: x * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY,
 									voxel: voxel,
+									visibleFace: VisibleFace.Front,
 									sizeX: scaleX,
 									sizeY: scaleY);
 							break;
@@ -76,7 +79,7 @@ namespace Voxel2Pixel.Draw
 						if (model.At(x, y, z) is byte voxel
 							&& voxel != 0)
 						{
-							renderer.RectFront(
+							renderer.Rect(
 								x: model.SizeY - 1 - y,
 								y: model.SizeZ - 1 - z,
 								voxel: voxel);
@@ -96,24 +99,27 @@ namespace Voxel2Pixel.Draw
 							if (z >= model.SizeZ - 1
 								|| model.At(x, y, (ushort)(z + 1)) == 0)
 							{
-								renderer.RectTop(
+								renderer.Rect(
 									x: (model.SizeY - 1 - y) * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY,
 									voxel: voxel,
+									visibleFace: VisibleFace.Top,
 									sizeX: scaleX,
 									sizeY: 1);
-								renderer.RectFront(
+								renderer.Rect(
 									x: (model.SizeY - 1 - y) * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY + 1,
 									voxel: voxel,
+									visibleFace: VisibleFace.Front,
 									sizeX: scaleX,
 									sizeY: scaleY - 1);
 							}
 							else
-								renderer.RectFront(
+								renderer.Rect(
 									x: (model.SizeY - 1 - y) * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY,
 									voxel: voxel,
+									visibleFace: VisibleFace.Front,
 									sizeX: scaleX,
 									sizeY: scaleY);
 							break;
@@ -129,7 +135,7 @@ namespace Voxel2Pixel.Draw
 						if (model.At(x, (ushort)y, z) is byte voxel
 							&& voxel != 0)
 						{
-							renderer.RectFront(
+							renderer.Rect(
 								x: model.SizeX - 1 - x,
 								y: model.SizeZ - 1 - z,
 								voxel: voxel);
@@ -149,24 +155,27 @@ namespace Voxel2Pixel.Draw
 							if (z >= model.SizeZ - 1
 								|| model.At(x, (ushort)y, (ushort)(z + 1)) == 0)
 							{
-								renderer.RectTop(
+								renderer.Rect(
 									x: (model.SizeX - 1 - x) * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY,
 									voxel: voxel,
+									visibleFace: VisibleFace.Top,
 									sizeX: scaleX,
 									sizeY: 1);
-								renderer.RectFront(
+								renderer.Rect(
 									x: (model.SizeX - 1 - x) * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY + 1,
 									voxel: voxel,
+									visibleFace: VisibleFace.Front,
 									sizeX: scaleX,
 									sizeY: scaleY - 1);
 							}
 							else
-								renderer.RectFront(
+								renderer.Rect(
 									x: (model.SizeX - 1 - x) * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY,
 									voxel: voxel,
+									visibleFace: VisibleFace.Front,
 									sizeX: scaleX,
 									sizeY: scaleY);
 							break;
@@ -182,7 +191,7 @@ namespace Voxel2Pixel.Draw
 						if (model.At((ushort)x, y, z) is byte voxel
 							&& voxel != 0)
 						{
-							renderer.RectFront(
+							renderer.Rect(
 								x: y,
 								y: model.SizeZ - 1 - z,
 								voxel: voxel);
@@ -202,24 +211,27 @@ namespace Voxel2Pixel.Draw
 							if (z >= model.SizeZ - 1
 								|| model.At((ushort)x, y, (ushort)(z + 1)) == 0)
 							{
-								renderer.RectTop(
+								renderer.Rect(
 									x: y * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY,
 									voxel: voxel,
+									visibleFace: VisibleFace.Top,
 									sizeX: scaleX,
 									sizeY: 1);
-								renderer.RectFront(
+								renderer.Rect(
 									x: y * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY + 1,
 									voxel: voxel,
+									visibleFace: VisibleFace.Front,
 									sizeX: scaleX,
 									sizeY: scaleY - 1);
 							}
 							else
-								renderer.RectFront(
+								renderer.Rect(
 									x: y * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY,
 									voxel: voxel,
+									visibleFace: VisibleFace.Front,
 									sizeX: scaleX,
 									sizeY: scaleY);
 							break;
@@ -235,7 +247,7 @@ namespace Voxel2Pixel.Draw
 						if (model.At(x, y, (ushort)z) is byte voxel
 							&& voxel != 0)
 						{
-							renderer.RectFront(
+							renderer.Rect(
 								x: x,
 								y: model.SizeY - 1 - y,
 								voxel: voxel);
@@ -252,7 +264,7 @@ namespace Voxel2Pixel.Draw
 						if (model.At(x, y, z) is byte voxel
 							&& voxel != 0)
 						{
-							renderer.RectFront(
+							renderer.Rect(
 								x: x,
 								y: y,
 								voxel: voxel);
@@ -278,10 +290,11 @@ namespace Voxel2Pixel.Draw
 						&& model.At((ushort)(model.SizeX - 1), 0, voxelZ) is byte rightEdge
 						&& rightEdge != 0)
 					{
-						renderer.RectRight(
+						renderer.Rect(
 							x: pixelX,
 							y: pixelY,
-							voxel: rightEdge);
+							voxel: rightEdge,
+							visibleFace: VisibleFace.Right);
 						continue;
 					}
 					for (ushort voxelX = startX, voxelY = startY;
@@ -293,10 +306,11 @@ namespace Voxel2Pixel.Draw
 							&& model.At((ushort)(voxelX - 1), voxelY, voxelZ) is byte voxelRight
 							&& voxelRight != 0)
 						{
-							renderer.RectRight(
+							renderer.Rect(
 								x: pixelX,
 								y: pixelY,
-								voxel: voxelRight);
+								voxel: voxelRight,
+								visibleFace: VisibleFace.Right);
 							leftDone = true;
 						}
 						if (!rightDone
@@ -304,10 +318,11 @@ namespace Voxel2Pixel.Draw
 							&& model.At(voxelX, (ushort)(voxelY - 1), voxelZ) is byte voxelLeft
 							&& voxelLeft != 0)
 						{
-							renderer.RectLeft(
+							renderer.Rect(
 								x: pixelX + 1,
 								y: pixelY,
-								voxel: voxelLeft);
+								voxel: voxelLeft,
+								visibleFace: VisibleFace.Left);
 							rightDone = true;
 						}
 						if (leftDone && rightDone) break;
@@ -315,15 +330,17 @@ namespace Voxel2Pixel.Draw
 							&& voxel != 0)
 						{
 							if (!leftDone)
-								renderer.RectLeft(
+								renderer.Rect(
 									x: pixelX,
 									y: pixelY,
-									voxel: voxel);
+									voxel: voxel,
+									visibleFace: VisibleFace.Left);
 							if (!rightDone)
-								renderer.RectRight(
+								renderer.Rect(
 									x: pixelX + 1,
 									y: pixelY,
-									voxel: voxel);
+									voxel: voxel,
+									visibleFace: VisibleFace.Right);
 							break;
 						}
 					}
@@ -337,24 +354,27 @@ namespace Voxel2Pixel.Draw
 			{
 				if (peek)
 				{
-					renderer.RectTop(
+					renderer.Rect(
 						x: x * scaleX,
 						y: y * scaleY,
 						voxel: voxel,
+						visibleFace: VisibleFace.Top,
 						sizeX: scaleX,
 						sizeY: 1);
-					renderer.RectRight(
+					renderer.Rect(
 						x: x * scaleX,
 						y: y * scaleY + 1,
 						voxel: voxel,
+						visibleFace: VisibleFace.Right,
 						sizeX: scaleX,
 						sizeY: scaleY - 1);
 				}
 				else
-					renderer.RectRight(
+					renderer.Rect(
 						x: x * scaleX,
 						y: y * scaleY,
 						voxel: voxel,
+						visibleFace: VisibleFace.Right,
 						sizeX: scaleX,
 						sizeY: scaleY);
 			}
@@ -362,24 +382,27 @@ namespace Voxel2Pixel.Draw
 			{
 				if (peek)
 				{
-					renderer.RectTop(
+					renderer.Rect(
 						x: x * scaleX,
 						y: y * scaleY,
 						voxel: voxel,
+						visibleFace: VisibleFace.Top,
 						sizeX: scaleX,
 						sizeY: 1);
-					renderer.RectLeft(
+					renderer.Rect(
 						x: x * scaleX,
 						y: y * scaleY + 1,
 						voxel: voxel,
+						visibleFace: VisibleFace.Left,
 						sizeX: scaleX,
 						sizeY: scaleY - 1);
 				}
 				else
-					renderer.RectLeft(
+					renderer.Rect(
 						x: x * scaleX,
 						y: y * scaleY,
 						voxel: voxel,
+						visibleFace: VisibleFace.Left,
 						sizeX: scaleX,
 						sizeY: scaleY);
 			}
@@ -479,7 +502,7 @@ namespace Voxel2Pixel.Draw
 						&& model.At(pixelX, 0, 0) is byte bottomEdge
 						&& bottomEdge != 0)
 					{
-						renderer.RectFront(
+						renderer.Rect(
 							x: pixelX,
 							y: pixelY,
 							voxel: bottomEdge);
@@ -498,7 +521,7 @@ namespace Voxel2Pixel.Draw
 							&& model.At(pixelX, voxelY, (ushort)(voxelZ + 1)) is byte voxelAbove
 							&& voxelAbove != 0)
 						{
-							renderer.RectFront(
+							renderer.Rect(
 								x: pixelX,
 								y: pixelY,
 								voxel: voxelAbove);
@@ -509,22 +532,24 @@ namespace Voxel2Pixel.Draw
 							&& model.At(pixelX, (ushort)(voxelY - 1), voxelZ) is byte voxelFront
 							&& voxelFront != 0)
 						{
-							renderer.RectTop(
+							renderer.Rect(
 								x: pixelX,
 								y: pixelY + 1,
-								voxel: voxelFront);
+								voxel: voxelFront,
+								visibleFace: VisibleFace.Top);
 							lower = true;
 						}
 						if (model.At(pixelX, voxelY, voxelZ) is byte voxel
 							&& voxel != 0)
 						{
 							if (!higher)
-								renderer.RectTop(
+								renderer.Rect(
 									x: pixelX,
 									y: pixelY,
-									voxel: voxel);
+									voxel: voxel,
+									visibleFace: VisibleFace.Top);
 							if (!lower)
-								renderer.RectFront(
+								renderer.Rect(
 									x: pixelX,
 									y: pixelY + 1,
 									voxel: voxel);
@@ -535,7 +560,7 @@ namespace Voxel2Pixel.Draw
 							&& model.At(pixelX, (ushort)(voxelY + 1), voxelZ) is byte voxelBack
 							&& voxelBack != 0)
 						{
-							renderer.RectFront(
+							renderer.Rect(
 								x: pixelX,
 								y: pixelY,
 								voxel: voxelBack);
@@ -546,10 +571,11 @@ namespace Voxel2Pixel.Draw
 							&& model.At(pixelX, voxelY, (ushort)(voxelZ - 1)) is byte voxelBelow
 							&& voxelBelow != 0)
 						{
-							renderer.RectTop(
+							renderer.Rect(
 								x: pixelX,
 								y: pixelY + 1,
-								voxel: voxelBelow);
+								voxel: voxelBelow,
+								visibleFace: VisibleFace.Top);
 							lower = true;
 						}
 						if (higher && lower)
@@ -572,10 +598,6 @@ namespace Voxel2Pixel.Draw
 			pixelX = 2 * (model.SizeY + voxelX - voxelY);
 			pixelY = IsoHeight(model) - 2 * (voxelX + voxelY) - 4 * voxelZ - 1;
 		}
-		private enum Face
-		{
-			Vertical, Left, Right,
-		};
 		public static void Iso(IModel model, ITriangleRenderer renderer)
 		{
 			int modelSizeX2 = model.SizeX * 2,
@@ -590,7 +612,7 @@ namespace Voxel2Pixel.Draw
 			bool IsInside(int x, int y, int z) => !IsOutside(x, y, z);
 			bool IsOutside(int x, int y, int z) => x < 0 || y < 0 || z < 0 || model.IsOutside((ushort)x, (ushort)y, (ushort)z);
 			byte At(int x, int y, int z) => model.At((ushort)x, (ushort)y, (ushort)z);
-			void Tile(int tile, Face face, int x, int y, byte voxel)
+			void Tile(int tile, int x, int y, byte voxel, VisibleFace visibleFace = VisibleFace.Front)
 			{
 				// 12
 				//1122
@@ -599,39 +621,13 @@ namespace Voxel2Pixel.Draw
 				//0  3
 				if (!tiles[tile])
 				{
-					Tri(right: tile % 2 == 0,
-						face: face,
+					renderer.Tri(
 						x: x + (tile < 2 ? 0 : 2),
 						y: y + (tile == 0 || tile == 3 ? 2 : 0),
-						voxel: voxel);
+						right: tile % 2 == 0,
+						voxel: voxel,
+						visibleFace: visibleFace);
 					tiles[tile] = true;
-				}
-			}
-			void Tri(bool right, Face face, int x, int y, byte voxel)
-			{
-				switch (face)
-				{
-					case Face.Vertical:
-						renderer.TriVertical(
-							x: x,
-							y: y,
-							right: right,
-							voxel: voxel);
-						break;
-					case Face.Left:
-						renderer.TriLeft(
-							x: x,
-							y: y,
-							right: right,
-							voxel: voxel);
-						break;
-					case Face.Right:
-						renderer.TriRight(
-							x: x,
-							y: y,
-							right: right,
-							voxel: voxel);
-						break;
 				}
 			}
 			#endregion Isometric local functions
@@ -675,15 +671,15 @@ namespace Voxel2Pixel.Draw
 							&& xMinus1zPlus1 != 0)
 						{
 							Tile(tile: 0,
-								face: Face.Right,
 								x: pixelX,
 								y: pixelY,
-								voxel: xMinus1zPlus1);
+								voxel: xMinus1zPlus1,
+								visibleFace: VisibleFace.Right);
 							Tile(tile: 1,
-								face: Face.Right,
 								x: pixelX,
 								y: pixelY,
-								voxel: xMinus1zPlus1);
+								voxel: xMinus1zPlus1,
+								visibleFace: VisibleFace.Right);
 						}
 						if ((!tiles[2] || !tiles[3])
 							&& IsInside(voxelX, voxelY - 1, voxelZ + 1)
@@ -691,15 +687,15 @@ namespace Voxel2Pixel.Draw
 							&& yMinus1zPlus1 != 0)
 						{
 							Tile(tile: 2,
-								face: Face.Left,
 								x: pixelX,
 								y: pixelY,
-								voxel: yMinus1zPlus1);
+								voxel: yMinus1zPlus1,
+								visibleFace: VisibleFace.Left);
 							Tile(tile: 3,
-								face: Face.Left,
 								x: pixelX,
 								y: pixelY,
-								voxel: yMinus1zPlus1);
+								voxel: yMinus1zPlus1,
+								visibleFace: VisibleFace.Left);
 						}
 						if ((!tiles[1] || !tiles[2])
 							&& IsInside(voxelX, voxelY, voxelZ + 1)
@@ -707,58 +703,58 @@ namespace Voxel2Pixel.Draw
 							&& zPlus1 != 0)
 						{
 							Tile(tile: 1,
-								face: Face.Left,
 								x: pixelX,
 								y: pixelY,
-								voxel: zPlus1);
+								voxel: zPlus1,
+								visibleFace: VisibleFace.Left);
 							Tile(tile: 2,
-								face: Face.Right,
 								x: pixelX,
 								y: pixelY,
-								voxel: zPlus1);
+								voxel: zPlus1,
+								visibleFace: VisibleFace.Right);
 						}
 						if (!tiles[0]
 							&& IsInside(voxelX - 1, voxelY, voxelZ)
 							&& At(voxelX - 1, voxelY, voxelZ) is byte xMinus1
 							&& xMinus1 != 0)
 							Tile(tile: 0,
-								face: Face.Vertical,
 								x: pixelX,
 								y: pixelY,
-								voxel: xMinus1);
+								voxel: xMinus1,
+								visibleFace: VisibleFace.Top);
 						if (!tiles[3]
 							&& IsInside(voxelX, voxelY - 1, voxelZ)
 							&& At(voxelX, voxelY - 1, voxelZ) is byte yMinus1
 							&& yMinus1 != 0)
 							Tile(tile: 3,
-								face: Face.Vertical,
 								x: pixelX,
 								y: pixelY,
-								voxel: yMinus1);
+								voxel: yMinus1,
+								visibleFace: VisibleFace.Top);
 						if (IsInside(voxelX, voxelY, voxelZ)
 							&& At(voxelX, voxelY, voxelZ) is byte voxel
 							&& voxel != 0)
 						{
 							Tile(tile: 0,
-								face: Face.Left,
 								x: pixelX,
 								y: pixelY,
-								voxel: voxel);
+								voxel: voxel,
+								visibleFace: VisibleFace.Left);
 							Tile(tile: 1,
-								face: Face.Vertical,
 								x: pixelX,
 								y: pixelY,
-								voxel: voxel);
+								voxel: voxel,
+								visibleFace: VisibleFace.Top);
 							Tile(tile: 2,
-								face: Face.Vertical,
 								x: pixelX,
 								y: pixelY,
-								voxel: voxel);
+								voxel: voxel,
+								visibleFace: VisibleFace.Top);
 							Tile(tile: 3,
-								face: Face.Right,
 								x: pixelX,
 								y: pixelY,
-								voxel: voxel);
+								voxel: voxel,
+								visibleFace: VisibleFace.Right);
 							break;
 						}
 						if ((!tiles[0] || !tiles[1])
@@ -767,15 +763,15 @@ namespace Voxel2Pixel.Draw
 							&& yPlus1 != 0)
 						{
 							Tile(tile: 0,
-								face: Face.Right,
 								x: pixelX,
 								y: pixelY,
-								voxel: yPlus1);
+								voxel: yPlus1,
+								visibleFace: VisibleFace.Right);
 							Tile(tile: 1,
-								face: Face.Right,
 								x: pixelX,
 								y: pixelY,
-								voxel: yPlus1);
+								voxel: yPlus1,
+								visibleFace: VisibleFace.Right);
 						}
 						if ((!tiles[2] || !tiles[3])
 							&& IsInside(voxelX + 1, voxelY, voxelZ)
@@ -783,15 +779,15 @@ namespace Voxel2Pixel.Draw
 							&& xPlus1 != 0)
 						{
 							Tile(tile: 2,
-								face: Face.Left,
 								x: pixelX,
 								y: pixelY,
-								voxel: xPlus1);
+								voxel: xPlus1,
+								visibleFace: VisibleFace.Left);
 							Tile(tile: 3,
-								face: Face.Left,
 								x: pixelX,
 								y: pixelY,
-								voxel: xPlus1);
+								voxel: xPlus1,
+								visibleFace: VisibleFace.Left);
 						}
 						if ((!tiles[1] || !tiles[2])
 							&& IsInside(voxelX + 1, voxelY + 1, voxelZ)
@@ -799,34 +795,34 @@ namespace Voxel2Pixel.Draw
 							&& xPlus1yPlus1 != 0)
 						{
 							Tile(tile: 1,
-								face: Face.Left,
 								x: pixelX,
 								y: pixelY,
-								voxel: xPlus1yPlus1);
+								voxel: xPlus1yPlus1,
+								visibleFace: VisibleFace.Left);
 							Tile(tile: 2,
-								face: Face.Right,
 								x: pixelX,
 								y: pixelY,
-								voxel: xPlus1yPlus1);
+								voxel: xPlus1yPlus1,
+								visibleFace: VisibleFace.Right);
 						}
 						if (!tiles[0]
 							&& IsInside(voxelX, voxelY + 1, voxelZ - 1)
 							&& At(voxelX, voxelY + 1, voxelZ - 1) is byte yPlus1zMinus1
 							&& yPlus1zMinus1 != 0)
 							Tile(tile: 0,
-								face: Face.Vertical,
 								x: pixelX,
 								y: pixelY,
-								voxel: yPlus1zMinus1);
+								voxel: yPlus1zMinus1,
+								visibleFace: VisibleFace.Top);
 						if (!tiles[3]
 							&& IsInside(voxelX + 1, voxelY, voxelZ - 1)
 							&& At(voxelX + 1, voxelY, voxelZ - 1) is byte xPlus1zMinus1
 							&& xPlus1zMinus1 != 0)
 							Tile(tile: 3,
-								face: Face.Vertical,
 								x: pixelX,
 								y: pixelY,
-								voxel: xPlus1zMinus1);
+								voxel: xPlus1zMinus1,
+								visibleFace: VisibleFace.Top);
 					}
 				}
 			}
@@ -840,11 +836,12 @@ namespace Voxel2Pixel.Draw
 				if (IsInside(voxelX, model.SizeY - 1, model.SizeZ - 1)
 					&& At(voxelX, model.SizeY - 1, model.SizeZ - 1) is byte voxel
 					&& voxel != 0)
-					renderer.TriVertical(
+					renderer.Tri(
 						x: pixelX,
 						y: pixelY,
 						right: false,
-						voxel: voxel);
+						voxel: voxel,
+						visibleFace: VisibleFace.Top);
 			}
 			#endregion Isometric top left edge
 			#region Isometric top right edge
@@ -856,11 +853,12 @@ namespace Voxel2Pixel.Draw
 				if (IsInside(model.SizeX - 1, voxelY, model.SizeZ - 1)
 					&& At(model.SizeX - 1, voxelY, model.SizeZ - 1) is byte voxel
 					&& voxel != 0)
-					renderer.TriVertical(
+					renderer.Tri(
 						x: pixelX,
 						y: pixelY,
 						right: true,
-						voxel: voxel);
+						voxel: voxel,
+						visibleFace: VisibleFace.Top);
 			}
 			#endregion Isometric top right edge
 			#region Isometric bottom left edge
@@ -874,31 +872,35 @@ namespace Voxel2Pixel.Draw
 					&& At(0, voxelY + 1, 0) is byte leftVoxel
 					&& leftVoxel != 0)
 				{
-					renderer.TriLeft(
+					renderer.Tri(
 						x: pixelX - 2,
 						y: pixelY,
 						right: false,
-						voxel: leftVoxel);
-					renderer.TriRight(
+						voxel: leftVoxel,
+						visibleFace: VisibleFace.Left);
+					renderer.Tri(
 						x: pixelX,
 						y: pixelY,
 						right: true,
-						voxel: leftVoxel);
+						voxel: leftVoxel,
+						visibleFace: VisibleFace.Right);
 				}
 				if (IsInside(0, voxelY, 0)
 					&& At(0, voxelY, 0) is byte voxel
 					&& voxel != 0)
 				{
-					renderer.TriLeft(
+					renderer.Tri(
 						x: pixelX,
 						y: pixelY,
 						right: true,
-						voxel: voxel);
-					renderer.TriLeft(
+						voxel: voxel,
+						visibleFace: VisibleFace.Left);
+					renderer.Tri(
 						x: pixelX,
 						y: pixelY + 2,
 						right: false,
-						voxel: voxel);
+						voxel: voxel,
+						visibleFace: VisibleFace.Left);
 				}
 			}
 			#endregion Isometric bottom left edge
@@ -913,31 +915,35 @@ namespace Voxel2Pixel.Draw
 					&& At(voxelX + 1, 0, 0) is byte rightVoxel
 					&& rightVoxel != 0)
 				{
-					renderer.TriLeft(
+					renderer.Tri(
 						x: pixelX,
 						y: pixelY,
 						right: false,
-						voxel: rightVoxel);
-					renderer.TriRight(
+						voxel: rightVoxel,
+						visibleFace: VisibleFace.Left);
+					renderer.Tri(
 						x: pixelX + 2,
 						y: pixelY,
 						right: true,
-						voxel: rightVoxel);
+						voxel: rightVoxel,
+						visibleFace: VisibleFace.Right);
 				}
 				if (IsInside(voxelX, 0, 0)
 					&& At(voxelX, 0, 0) is byte voxel
 					&& voxel != 0)
 				{
-					renderer.TriRight(
+					renderer.Tri(
 						x: pixelX,
 						y: pixelY,
 						right: false,
-						voxel: voxel);
-					renderer.TriRight(
+						voxel: voxel,
+						visibleFace: VisibleFace.Right);
+					renderer.Tri(
 						x: pixelX,
 						y: pixelY + 2,
 						right: true,
-						voxel: voxel);
+						voxel: voxel,
+						visibleFace: VisibleFace.Right);
 				}
 			}
 			#endregion Isometric bottom right edge
@@ -946,16 +952,18 @@ namespace Voxel2Pixel.Draw
 				&& model.At(0, 0, 0) is byte origin
 				&& origin != 0)
 			{
-				renderer.TriLeft(
+				renderer.Tri(
 					x: modelSizeY2 - 2,
 					y: pixelHeight - 4,
 					right: false,
-					voxel: origin);
-				renderer.TriRight(
+					voxel: origin,
+					visibleFace: VisibleFace.Left);
+				renderer.Tri(
 					x: modelSizeY2,
 					y: pixelHeight - 4,
 					right: true,
-					voxel: origin);
+					voxel: origin,
+					visibleFace: VisibleFace.Right);
 			}
 			#endregion Isometric origin
 		}

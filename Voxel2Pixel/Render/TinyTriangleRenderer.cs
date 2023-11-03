@@ -1,8 +1,9 @@
 ﻿using Voxel2Pixel.Interfaces;
+using Voxel2Pixel.Model;
 
 namespace Voxel2Pixel.Render
 {
-    public class TinyTriangleRenderer : ITriangleRenderer
+	public class TinyTriangleRenderer : ITriangleRenderer
 	{
 		public virtual IRectangleRenderer RectangleRenderer { get; set; }
 		public virtual IVoxelColor VoxelColor { get; set; }
@@ -12,9 +13,11 @@ namespace Voxel2Pixel.Render
 				x: x / 2 + (right ? 0 : 1),
 				y: y / 4,
 				color: color);
-		public virtual void TriVertical(int x, int y, bool right, byte voxel) => Tri(x, y, right, VoxelColor.TopFace(voxel));
-		public virtual void TriLeft(int x, int y, bool right, byte voxel) => Tri(x, y, right, VoxelColor.LeftFace(voxel));
-		public virtual void TriRight(int x, int y, bool right, byte voxel) => Tri(x, y, right, VoxelColor.RightFace(voxel));
+		public virtual void Tri(int x, int y, bool right, byte voxel, VisibleFace visibleFace = VisibleFace.Front) => Tri(
+			x: x,
+			y: y,
+			right: right,
+			color: VoxelColor.Color(voxel, visibleFace));
 		#endregion ITriangleRenderer
 	}
 }

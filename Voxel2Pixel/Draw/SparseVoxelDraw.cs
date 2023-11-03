@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
-using Voxel2Pixel.Render;
 
 namespace Voxel2Pixel.Draw
 {
@@ -37,11 +36,14 @@ namespace Voxel2Pixel.Draw
 			for (ushort y = 0; y < model.SizeZ; y++)
 				for (ushort x = 0; x < model.SizeX; x++)
 					if (grid[index++] is VoxelY voxelY && voxelY.color != 0)
-						renderer.RectFront(
+						renderer.Rect(
 							x: x,
 							y: model.SizeZ - 1 - y,
 							voxel: voxelY.color);
 		}
 		#endregion Straight
+		#region Diagonal
+
+		#endregion Diagonal
 	}
 }
