@@ -57,39 +57,39 @@ namespace Voxel2Pixel.Draw
 			ushort width = model.SizeX,
 				depth = model.SizeY,
 				height = model.SizeZ;
-			uint pixelWidth = (uint)(width + depth);
+			uint pixelWidth = (uint)(width + depth), index;
 			VoxelD[] grid = new VoxelD[pixelWidth * height];
 			foreach (Voxel voxel in model.Voxels
 				.Where(voxel => voxel.@byte != 0))
 			{
-				uint i = pixelWidth * voxel.Z + depth - voxel.Y - 1 + voxel.X,
-					distance = (uint)(voxel.X + voxel.Y);
-				if (!(grid[i] is VoxelD left)
+				index = (uint)(pixelWidth * (height - voxel.Z - 1) + depth - voxel.Y - 1 + voxel.X);
+				uint distance = (uint)(voxel.X + voxel.Y);
+				if (!(grid[index] is VoxelD left)
 					|| left.@byte == 0
 					|| left.Distance > distance)
-					grid[i] = new VoxelD
+					grid[index] = new VoxelD
 					{
 						Distance = distance,
 						@byte = voxel.@byte,
 						VisibleFace = VisibleFace.Left,
 					};
-				if (!(grid[++i] is VoxelD right)
+				if (!(grid[++index] is VoxelD right)
 					|| right.@byte == 0
 					|| right.Distance > distance)
-					grid[i] = new VoxelD
+					grid[index] = new VoxelD
 					{
 						Distance = distance,
 						@byte = voxel.@byte,
 						VisibleFace = VisibleFace.Right,
 					};
 			}
-			uint index = 0;
+			index = 0;
 			for (ushort y = 0; y < height; y++)
 				for (ushort x = 0; x < pixelWidth; x++)
 					if (grid[index++] is VoxelD voxelD && voxelD.@byte != 0)
 						renderer.Rect(
 							x: x,
-							y: height - 1 - y,
+							y: y,
 							voxel: voxelD.@byte,
 							visibleFace: voxelD.VisibleFace);
 		}
@@ -110,18 +110,8 @@ namespace Voxel2Pixel.Draw
 			foreach (Voxel voxel in model.Voxels
 				.Where(voxel => voxel.@byte != 0))
 			{
-				uint distance = (uint)(height + voxel.Y - voxel.Z - 1),
-					i = width * (pixelHeight - 1 - voxel.Y - voxel.Z) + voxel.X;
-				if (!(grid[i] is VoxelD front)
-					|| front.@byte == 0
-					|| front.Distance > distance)
-					grid[i] = new VoxelD
-					{
-						Distance = distance,
-						@byte = voxel.@byte,
-						VisibleFace = VisibleFace.Front,
-					};
-				i -= width;
+				uint i = width * (pixelHeight - 2 - voxel.Y - voxel.Z) + voxel.X,
+					distance = (uint)(height + voxel.Y - voxel.Z - 1);
 				if (!(grid[i] is VoxelD top)
 					|| top.@byte == 0
 					|| top.Distance > distance)
@@ -130,6 +120,16 @@ namespace Voxel2Pixel.Draw
 						Distance = distance,
 						@byte = voxel.@byte,
 						VisibleFace = VisibleFace.Top,
+					};
+				i += width;
+				if (!(grid[i] is VoxelD front)
+					|| front.@byte == 0
+					|| front.Distance > distance)
+					grid[i] = new VoxelD
+					{
+						Distance = distance,
+						@byte = voxel.@byte,
+						VisibleFace = VisibleFace.Front,
 					};
 			}
 			uint index = 0;
