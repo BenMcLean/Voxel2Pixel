@@ -93,6 +93,31 @@ namespace Voxel2Pixel.Draw
 							voxel: voxelD.@byte,
 							visibleFace: voxelD.VisibleFace);
 		}
+		public static int AboveWidth(IModel model) => model.SizeX;
+		public static int AboveHeight(IModel model) => model.SizeY + model.SizeZ;
+		public static void AboveLocate(out int pixelX, out int pixelY, ISparseModel model, int voxelX = 0, int voxelY = 0, int voxelZ = 0)
+		{
+			pixelX = voxelX;
+			pixelY = AboveHeight(model) - 1 - voxelY - voxelZ;
+		}
+		public static void Above(ISparseModel model, IRectangleRenderer renderer)
+		{
+			ushort width = model.SizeX,
+				depth = model.SizeY,
+				height = model.SizeZ;
+			uint pixelHeight = (uint)(depth + height);
+			VoxelD[] grid = new VoxelD[width * pixelHeight];
+
+			uint index = 0;
+			for (ushort y = 0; y < pixelHeight; y++)
+				for (ushort x = 0; x < width; x++)
+					if (grid[index++] is VoxelD voxelD && voxelD.@byte != 0)
+						renderer.Rect(
+							x: x,
+							y: height - 1 - y,
+							voxel: voxelD.@byte,
+							visibleFace: voxelD.VisibleFace);
+		}
 		#endregion Diagonal
 	}
 }
