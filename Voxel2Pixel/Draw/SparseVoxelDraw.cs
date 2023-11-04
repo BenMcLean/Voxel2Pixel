@@ -24,25 +24,30 @@ namespace Voxel2Pixel.Draw
 				@byte = voxel.@byte;
 			}
 		}
-		public static void Front(ISparseModel model, IRectangleRenderer renderer)
+		public static void Front(ISparseModel model, IRectangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Front)
 		{
 			ushort width = model.SizeX,
 				height = model.SizeZ;
+			uint index;
 			VoxelY[] grid = new VoxelY[width * height];
 			foreach (Voxel voxel in model.Voxels
-				.Where(voxel => voxel.@byte != 0 && (
-					!(grid[(height - voxel.Z - 1) * width + voxel.X] is VoxelY old)
+				.Where(voxel => voxel.@byte != 0))
+			{
+				index = (uint)(width * (height - voxel.Z - 1) + voxel.X);
+				if (!(grid[index] is VoxelY old)
 						|| old.@byte == 0
-						|| old.Y > voxel.Y)))
-				grid[(height - voxel.Z - 1) * width + voxel.X] = new VoxelY(voxel);
-			uint index = 0;
+						|| old.Y > voxel.Y)
+					grid[index] = new VoxelY(voxel);
+			}
+			index = 0;
 			for (ushort y = 0; y < height; y++)
 				for (ushort x = 0; x < width; x++)
 					if (grid[index++] is VoxelY voxelY && voxelY.@byte != 0)
 						renderer.Rect(
 							x: x,
 							y: y,
-							voxel: voxelY.@byte);
+							voxel: voxelY.@byte,
+							visibleFace: visibleFace);
 		}
 		#endregion Straight
 		#region Diagonal
