@@ -16,12 +16,12 @@ namespace Voxel2Pixel.Draw
 		public static int FrontHeight(IModel model) => model.SizeZ;
 		private struct VoxelY
 		{
-			public readonly ushort y;
-			public readonly byte color;
+			public readonly ushort Y;
+			public readonly byte @byte;
 			public VoxelY(Voxel voxel)
 			{
-				y = voxel.Y;
-				color = voxel.@byte;
+				Y = voxel.Y;
+				@byte = voxel.@byte;
 			}
 		}
 		public static void Front(ISparseModel model, IRectangleRenderer renderer)
@@ -29,21 +29,26 @@ namespace Voxel2Pixel.Draw
 			VoxelY[] grid = new VoxelY[model.SizeX * model.SizeZ];
 			foreach (Voxel voxel in model.Voxels
 				.Where(voxel => !(grid[voxel.Z * model.SizeX + voxel.X] is VoxelY old)
-					|| old.color == 0
-					|| old.y > voxel.Y))
+					|| old.@byte == 0
+					|| old.Y > voxel.Y))
 				grid[voxel.Z * model.SizeX + voxel.X] = new VoxelY(voxel);
 			uint index = 0;
 			for (ushort y = 0; y < model.SizeZ; y++)
 				for (ushort x = 0; x < model.SizeX; x++)
-					if (grid[index++] is VoxelY voxelY && voxelY.color != 0)
+					if (grid[index++] is VoxelY voxelY && voxelY.@byte != 0)
 						renderer.Rect(
 							x: x,
 							y: model.SizeZ - 1 - y,
-							voxel: voxelY.color);
+							voxel: voxelY.@byte);
 		}
 		#endregion Straight
 		#region Diagonal
-
+		private struct VoxelYZ
+		{
+			public uint YZ;
+			public byte Voxel;
+			public VisibleFace VisibleFace;
+		}
 		#endregion Diagonal
 	}
 }
