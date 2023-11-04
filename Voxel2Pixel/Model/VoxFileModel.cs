@@ -6,7 +6,7 @@ using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model
 {
-    public class VoxFileModel : ArrayModel
+	public class VoxFileModel : ArrayModel
 	{
 		#region Read
 		public VoxFileModel(FileToVoxCore.Vox.VoxModel model, int frame = 0)
@@ -20,7 +20,7 @@ namespace Voxel2Pixel.Model
 				destinationIndex: 1,
 				length: Math.Min(palette.Length, Palette.Length) - 1);
 			FileToVoxCore.Vox.VoxelData voxelData = model.VoxelFrames[frame];
-			Array = Array3D.Initialize<byte>(voxelData.VoxelsWide, voxelData.VoxelsTall, voxelData.VoxelsDeep);
+			Array = Array3D.Initialize<byte>(voxelData.VoxelsWide - 1, voxelData.VoxelsTall - 1, voxelData.VoxelsDeep - 1);
 			for (int x = 0; x < SizeX; x++)
 				for (int y = 0; y < SizeY; y++)
 					for (int z = 0; z < SizeZ; z++)
