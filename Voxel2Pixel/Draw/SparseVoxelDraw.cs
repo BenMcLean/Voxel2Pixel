@@ -28,9 +28,10 @@ namespace Voxel2Pixel.Draw
 		{
 			VoxelY[] grid = new VoxelY[model.SizeX * model.SizeZ];
 			foreach (Voxel voxel in model.Voxels
-				.Where(voxel => !(grid[voxel.Z * model.SizeX + voxel.X] is VoxelY old)
-					|| old.@byte == 0
-					|| old.Y > voxel.Y))
+				.Where(voxel => voxel.@byte != 0 && (
+					!(grid[voxel.Z * model.SizeX + voxel.X] is VoxelY old)
+						|| old.@byte == 0
+						|| old.Y > voxel.Y)))
 				grid[voxel.Z * model.SizeX + voxel.X] = new VoxelY(voxel);
 			uint index = 0;
 			for (ushort y = 0; y < model.SizeZ; y++)
@@ -43,11 +44,53 @@ namespace Voxel2Pixel.Draw
 		}
 		#endregion Straight
 		#region Diagonal
-		private struct VoxelYZ
+		private struct VoxelD
 		{
-			public uint YZ;
-			public byte Voxel;
+			public uint Distance;
+			public byte @byte;
 			public VisibleFace VisibleFace;
+		}
+		public static int DiagonalWidth(IModel model) => model.SizeX + model.SizeY;
+		public static int DiagonalHeight(IModel model) => model.SizeZ;
+		public static void Diagonal(ISparseModel model, IRectangleRenderer renderer)
+		{
+			ushort width = model.SizeX,
+				depth = model.SizeY,
+				height = model.SizeZ;
+			VoxelD[] grid = new VoxelD[width * height];
+			foreach (Voxel voxel in model.Voxels
+				.Where(voxel => voxel.@byte != 0))
+			{
+				uint i = (uint)(width * voxel.Z + depth - voxel.Y - 1 + voxel.X),
+					distance = (uint)(voxel.X + voxel.Y);
+				if (!(grid[i] is VoxelD left)
+					|| left.@byte == 0
+					|| left.Distance > distance)
+					grid[i] = new VoxelD
+					{
+						Distance = distance,
+						@byte = voxel.@byte,
+						VisibleFace = VisibleFace.Left,
+					};
+				if (!(grid[++i] is VoxelD right)
+					|| right.@byte == 0
+					|| right.Distance > distance)
+					grid[i] = new VoxelD
+					{
+						Distance = distance,
+						@byte = voxel.@byte,
+						VisibleFace = VisibleFace.Right,
+					};
+			}
+			uint index = 0;
+			for (ushort y = 0; y < depth; y++)
+				for (ushort x = 0; x < width; x++)
+					if (grid[index++] is VoxelD voxelD && voxelD.@byte != 0)
+						renderer.Rect(
+							x: x,
+							y: height - 1 - y,
+							voxel: voxelD.@byte,
+							visibleFace: voxelD.VisibleFace);
 		}
 		#endregion Diagonal
 	}
