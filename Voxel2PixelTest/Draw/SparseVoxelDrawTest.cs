@@ -55,6 +55,28 @@ namespace Voxel2PixelTest.Draw
 				.SaveAsPng("SparseVoxelDrawDiagonal.png");
 		}
 		[Fact]
+		public void Above()
+		{
+			VoxFileModel voxFile = new VoxFileModel(@"..\..\..\Hazmat.vox");
+			IVoxelColor voxelColor = new NaiveDimmer(voxFile.Palette);
+			ListModel model = new ListModel(voxFile);
+			int width = SparseVoxelDraw.AboveWidth(model),
+				height = SparseVoxelDraw.AboveHeight(model);
+			ArrayRenderer arrayRenderer = new ArrayRenderer
+			{
+				Image = new byte[width * 4 * height],
+				Width = width,
+				VoxelColor = voxelColor,
+			};
+			SparseVoxelDraw.Above(model, arrayRenderer);
+			ImageMaker.Png(
+				scaleX: 32,
+				scaleY: 32,
+				width: width,
+				bytes: arrayRenderer.Image)
+				.SaveAsPng("SparseVoxelDrawAbove.png");
+		}
+		[Fact]
 		public void TurnSparseModel()
 		{
 			VoxFileModel voxFile = new VoxFileModel(@"..\..\..\Sora.vox");

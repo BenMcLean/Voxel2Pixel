@@ -107,14 +107,38 @@ namespace Voxel2Pixel.Draw
 				height = model.SizeZ;
 			uint pixelHeight = (uint)(depth + height);
 			VoxelD[] grid = new VoxelD[width * pixelHeight];
-
+			foreach (Voxel voxel in model.Voxels
+				.Where(voxel => voxel.@byte != 0))
+			{
+				uint distance = (uint)(height + voxel.Y - voxel.Z - 1),
+					i = width * (pixelHeight - 1 - voxel.Y - voxel.Z) + voxel.X;
+				if (!(grid[i] is VoxelD front)
+					|| front.@byte == 0
+					|| front.Distance > distance)
+					grid[i] = new VoxelD
+					{
+						Distance = distance,
+						@byte = voxel.@byte,
+						VisibleFace = VisibleFace.Front,
+					};
+				i -= width;
+				if (!(grid[i] is VoxelD top)
+					|| top.@byte == 0
+					|| top.Distance > distance)
+					grid[i] = new VoxelD
+					{
+						Distance = distance,
+						@byte = voxel.@byte,
+						VisibleFace = VisibleFace.Top,
+					};
+			}
 			uint index = 0;
 			for (ushort y = 0; y < pixelHeight; y++)
 				for (ushort x = 0; x < width; x++)
 					if (grid[index++] is VoxelD voxelD && voxelD.@byte != 0)
 						renderer.Rect(
 							x: x,
-							y: height - 1 - y,
+							y: y,
 							voxel: voxelD.@byte,
 							visibleFace: voxelD.VisibleFace);
 		}
