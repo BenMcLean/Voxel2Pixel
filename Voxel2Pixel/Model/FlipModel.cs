@@ -24,10 +24,10 @@
 		}
 		public bool[] Get => new bool[3] { FlipX, FlipY, FlipZ };
 		#region IFetch
-		public override byte At(ushort x, ushort y, ushort z) => Model.At(
+		public override byte this[ushort x, ushort y, ushort z] => Model[
 			x: FlipX ? (ushort)(SizeX - 1 - x) : x,
 			y: FlipY ? (ushort)(SizeY - 1 - y) : y,
-			z: FlipZ ? (ushort)(SizeZ - 1 - z) : z);
+			z: FlipZ ? (ushort)(SizeZ - 1 - z) : z];
 		#endregion IFetch
 	}
 }

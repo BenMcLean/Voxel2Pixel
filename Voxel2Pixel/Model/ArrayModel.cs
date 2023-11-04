@@ -13,7 +13,7 @@ namespace Voxel2Pixel.Model
 			for (ushort x = 0; x < SizeX; x++)
 				for (ushort y = 0; y < SizeY; y++)
 					for (ushort z = 0; z < SizeZ; z++)
-						if (model.At(x, y, z) is byte voxel)
+						if (model[x, y, z] is byte voxel)
 							Array[x][y][z] = voxel;
 		}
 		public ArrayModel(ISparseModel model) : this(model.SizeX, model.SizeY, model.SizeZ)
@@ -26,7 +26,7 @@ namespace Voxel2Pixel.Model
 		public ushort SizeX => (ushort)Array.Length;
 		public ushort SizeY => (ushort)Array[0].Length;
 		public ushort SizeZ => (ushort)Array[0][0].Length;
-		public byte At(ushort x, ushort y, ushort z) => IsInside(x, y, z) ? Array[x][y][z] : (byte)0;
+		public byte this[ushort x, ushort y, ushort z] => IsInside(x, y, z) ? Array[x][y][z] : (byte)0;
 		public bool IsInside(ushort x, ushort y, ushort z) => !IsOutside(x, y, z);
 		public bool IsOutside(ushort x, ushort y, ushort z) => x >= SizeX || y >= SizeY || z >= SizeZ;
 		#endregion IModel

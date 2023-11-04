@@ -9,15 +9,6 @@ namespace Voxel2Pixel.Model
 		private Dictionary<ulong, byte> Dictionary = new Dictionary<ulong, byte>();
 		public void Clear() => Dictionary.Clear();
 		public byte Empty { get; set; } = 0;
-		public byte this[ushort x, ushort y, ushort z]
-		{
-			get => Dictionary.TryGetValue(Encode(x, y, z), out byte @byte) ? @byte : Empty;
-			set
-			{
-				if (IsInside(x, y, z))
-					Dictionary[Encode(x, y, z)] = value;
-			}
-		}
 		public static ulong Encode(ushort x, ushort y, ushort z) => ((ulong)z << 32) | ((ulong)y << 16) | x;
 		public static void Decode(ulong @ulong, out ushort x, out ushort y, out ushort z)
 		{
@@ -61,7 +52,15 @@ namespace Voxel2Pixel.Model
 		public ushort SizeX { get; set; }
 		public ushort SizeY { get; set; }
 		public ushort SizeZ { get; set; }
-		public byte At(ushort x, ushort y, ushort z) => this[x, y, z];
+		public byte this[ushort x, ushort y, ushort z]
+		{
+			get => Dictionary.TryGetValue(Encode(x, y, z), out byte @byte) ? @byte : Empty;
+			set
+			{
+				if (IsInside(x, y, z))
+					Dictionary[Encode(x, y, z)] = value;
+			}
+		}
 		public bool IsInside(ushort x, ushort y, ushort z) => !IsOutside(x, y, z);
 		public bool IsOutside(ushort x, ushort y, ushort z) => x >= SizeX || y >= SizeY || z >= SizeZ;
 		#endregion IModel

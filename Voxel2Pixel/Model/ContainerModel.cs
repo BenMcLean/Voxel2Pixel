@@ -6,7 +6,7 @@ namespace Voxel2Pixel.Model
 	{
 		public virtual IModel Model { get; set; }
 		#region IFetch
-		public virtual byte At(ushort x, ushort y, ushort z) => Model.At(x, y, z);
+		public virtual byte this[ushort x, ushort y, ushort z] => Model[x, y, z];
 		#endregion IFetch
 		#region IModel
 		public virtual ushort SizeX => Model.SizeX;

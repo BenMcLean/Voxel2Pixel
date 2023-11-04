@@ -17,7 +17,7 @@ namespace Voxel2Pixel.Model
 		public uint[] Palette { get; set; }
 		public byte[] Indexes { get; }
 		#region IFetch
-		public byte At(ushort x, ushort y, ushort z) => IsInside(x, y, z) ? Indexes[y * SizeX + x] : (byte)0;
+		public byte this[ushort x, ushort y, ushort z] => IsInside(x, y, z) ? Indexes[y * SizeX + x] : (byte)0;
 		#endregion IFetch
 		#region IModel
 		public ushort SizeX { get; }

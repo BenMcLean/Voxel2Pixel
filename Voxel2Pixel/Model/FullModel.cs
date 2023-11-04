@@ -6,7 +6,7 @@ namespace Voxel2Pixel.Model
 	{
 		public byte Voxel { get; set; } = 1;
 		#region IModel
-		public override byte At(ushort x, ushort y, ushort z) => Voxel;
+		public override byte this[ushort x, ushort y, ushort z] => Voxel;
 		#endregion IModel
 		#region ISparseModel
 		public override IEnumerable<Voxel> Voxels

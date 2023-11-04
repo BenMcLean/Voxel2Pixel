@@ -10,7 +10,7 @@ namespace Voxel2Pixel.Model
 		public virtual ushort SizeX { get; set; }
 		public virtual ushort SizeY { get; set; }
 		public virtual ushort SizeZ { get; set; }
-		public virtual byte At(ushort x, ushort y, ushort z) => 0;
+		public virtual byte this[ushort x, ushort y, ushort z] => 0;
 		public virtual bool IsInside(ushort x, ushort y, ushort z) => !IsOutside(x, y, z);
 		public virtual bool IsOutside(ushort x, ushort y, ushort z) => x >= SizeX || y >= SizeY || z >= SizeZ;
 		#endregion IModel

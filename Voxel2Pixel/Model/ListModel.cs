@@ -24,11 +24,11 @@ namespace Voxel2Pixel.Model
 			for (ushort x = 0; x < SizeX; x++)
 				for (ushort y = 0; y < SizeY; y++)
 					for (ushort z = 0; z < SizeZ; z++)
-						if (model.At(x, y, z) is byte @byte && @byte != 0)
+						if (model[x, y, z] is byte @byte && @byte != 0)
 							List.Add(new Voxel(x, y, z, @byte));
 		}
 		#region IFetch
-		public byte At(ushort x, ushort y, ushort z) => IsInside(x, y, z) ?
+		public byte this[ushort x, ushort y, ushort z] => IsInside(x, y, z) ?
 			Voxels.Where(voxel => voxel.X == x && voxel.Y == y && voxel.Z == z)
 				.Select(voxel => voxel.@byte)
 				.FirstOrDefault()

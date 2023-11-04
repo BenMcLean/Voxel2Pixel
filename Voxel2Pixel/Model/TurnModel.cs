@@ -16,10 +16,13 @@ namespace Voxel2Pixel.Model
 		public ushort[] Sizes => new ushort[] { SizeX, SizeY, SizeZ };
 		public override bool IsInside(ushort x, ushort y, ushort z) => !IsOutside(x, y, z);
 		public override bool IsOutside(ushort x, ushort y, ushort z) => x >= SizeX || y >= SizeY || z >= SizeZ;
-		public override byte At(ushort x, ushort y, ushort z)
+		public override byte this[ushort x, ushort y, ushort z]
 		{
-			Rotate(out ushort x1, out ushort y1, out ushort z1, x, y, z);
-			return Model.At(x1, y1, z1);
+			get
+			{
+				Rotate(out ushort x1, out ushort y1, out ushort z1, x, y, z);
+				return Model[x1, y1, z1];
+			}
 		}
 		#endregion ContainerModel
 		#region ITurnable
@@ -80,10 +83,10 @@ namespace Voxel2Pixel.Model
 			y = ReverseRotate(1, coordinates);
 			z = ReverseRotate(2, coordinates);
 		}
-		public byte ReverseAt(ushort x, ushort y, ushort z)
+		public byte Reverse(ushort x, ushort y, ushort z)
 		{
 			ReverseRotate(out ushort x1, out ushort y1, out ushort z1, x, y, z);
-			return Model.At(x1, y1, z1);
+			return Model[x1, y1, z1];
 		}
 		#endregion ReverseRotate
 		#region Size

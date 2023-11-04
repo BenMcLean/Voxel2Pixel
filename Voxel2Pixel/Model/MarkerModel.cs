@@ -13,14 +13,14 @@
 		public ushort Z { get; set; } = 0;
 		#endregion Data members
 		#region IFetch
-		public override byte At(ushort x, ushort y, ushort z) =>
+		public override byte this[ushort x, ushort y, ushort z] =>
 			x == X && y == Y && z == Z ?
 				Overwrite ?
 					Voxel
-					: Model.At(x, y, z) is byte @byte && @byte != 0 ?
+					: Model[x, y, z] is byte @byte && @byte != 0 ?
 						@byte
 						: Voxel
-				: Model.At(x, y, z);
+				: Model[x, y, z];
 		#endregion IFetch
 	}
 }

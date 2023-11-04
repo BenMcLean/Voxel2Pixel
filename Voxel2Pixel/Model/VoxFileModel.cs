@@ -42,7 +42,7 @@ namespace Voxel2Pixel.Model
 			for (ushort x = 0; x < model.SizeX; x++)
 				for (ushort y = 0; y < model.SizeY; y++)
 					for (ushort z = 0; z < model.SizeZ; z++)
-						if (model.At(x, y, z) is byte voxel && voxel != 0)
+						if (model[x, y, z] is byte voxel && voxel != 0)
 							yield return new FileToVoxCore.Schematics.Voxel(
 								x: x,
 								y: y,
@@ -59,7 +59,7 @@ namespace Voxel2Pixel.Model
 			for (ushort x = 0; x < turnModel.SizeX; x++)
 				for (ushort y = 0; y < turnModel.SizeY; y++)
 					for (ushort z = 0; z < turnModel.SizeZ; z++)
-						if (turnModel.At(x, y, z) is byte voxel && voxel != 0)
+						if (turnModel[x, y, z] is byte voxel && voxel != 0)
 							yield return new FileToVoxCore.Schematics.Voxel(
 								x: x,
 								y: y,
