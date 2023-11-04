@@ -57,15 +57,16 @@ namespace Voxel2Pixel.Draw
 			ushort width = model.SizeX,
 				depth = model.SizeY,
 				height = model.SizeZ;
-			VoxelD[] grid = new VoxelD[width * height];
+			uint pixelWidth = (uint)(width + depth);
+			VoxelD[] grid = new VoxelD[pixelWidth * height];
 			foreach (Voxel voxel in model.Voxels
 				.Where(voxel => voxel.@byte != 0))
 			{
-				uint i = (uint)(width * voxel.Z + depth - voxel.Y - 1 + voxel.X),
+				uint i = pixelWidth * voxel.Z + depth - voxel.Y - 1 + voxel.X,
 					distance = (uint)(voxel.X + voxel.Y);
 				if (!(grid[i] is VoxelD left)
 					|| left.@byte == 0
-					|| left.Distance < distance)
+					|| left.Distance > distance)
 					grid[i] = new VoxelD
 					{
 						Distance = distance,
@@ -74,7 +75,7 @@ namespace Voxel2Pixel.Draw
 					};
 				if (!(grid[++i] is VoxelD right)
 					|| right.@byte == 0
-					|| right.Distance < distance)
+					|| right.Distance > distance)
 					grid[i] = new VoxelD
 					{
 						Distance = distance,
@@ -83,8 +84,8 @@ namespace Voxel2Pixel.Draw
 					};
 			}
 			uint index = 0;
-			for (ushort y = 0; y < depth; y++)
-				for (ushort x = 0; x < width; x++)
+			for (ushort y = 0; y < height; y++)
+				for (ushort x = 0; x < pixelWidth; x++)
 					if (grid[index++] is VoxelD voxelD && voxelD.@byte != 0)
 						renderer.Rect(
 							x: x,
