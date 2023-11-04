@@ -34,6 +34,27 @@ namespace Voxel2PixelTest.Draw
 				.SaveAsPng("SparseVoxelDrawFront.png");
 		}
 		[Fact]
+		public void Diagonal()
+		{
+			VoxFileModel voxFile = new VoxFileModel(@"..\..\..\Sora.vox");
+			IVoxelColor voxelColor = new NaiveDimmer(voxFile.Palette);
+			ListModel model = new ListModel(voxFile);
+			int width = SparseVoxelDraw.DiagonalWidth(model);
+			ArrayRenderer arrayRenderer = new ArrayRenderer
+			{
+				Image = new byte[width * 4 * model.SizeZ],
+				Width = width,
+				VoxelColor = voxelColor,
+			};
+			SparseVoxelDraw.Diagonal(model, arrayRenderer);
+			ImageMaker.Png(
+				scaleX: 32,
+				scaleY: 32,
+				width: width,
+				bytes: arrayRenderer.Image)
+				.SaveAsPng("SparseVoxelDrawDiagonal.png");
+		}
+		[Fact]
 		public void TurnSparseModel()
 		{
 			VoxFileModel voxFile = new VoxFileModel(@"..\..\..\Sora.vox");

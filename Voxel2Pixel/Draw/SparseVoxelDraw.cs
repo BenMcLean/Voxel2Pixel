@@ -65,7 +65,7 @@ namespace Voxel2Pixel.Draw
 					distance = (uint)(voxel.X + voxel.Y);
 				if (!(grid[i] is VoxelD left)
 					|| left.@byte == 0
-					|| left.Distance > distance)
+					|| left.Distance < distance)
 					grid[i] = new VoxelD
 					{
 						Distance = distance,
@@ -74,7 +74,7 @@ namespace Voxel2Pixel.Draw
 					};
 				if (!(grid[++i] is VoxelD right)
 					|| right.@byte == 0
-					|| right.Distance > distance)
+					|| right.Distance < distance)
 					grid[i] = new VoxelD
 					{
 						Distance = distance,
