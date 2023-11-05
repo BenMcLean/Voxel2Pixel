@@ -33,20 +33,23 @@ namespace Voxel2Pixel.Color
 		public uint Dimmer(int brightness, byte voxel) => Palette[brightness][voxel];
 		#endregion IDimmer
 		#region IVoxelColor
-		public virtual uint Color(byte voxel, VisibleFace visibleFace = VisibleFace.Front)
+		public virtual uint this[byte voxel, VisibleFace visibleFace = VisibleFace.Front]
 		{
-			switch (visibleFace)
+			get
 			{
-				case VisibleFace.Top:
-					return Bright(voxel);
-				case VisibleFace.Right:
-					return Light(voxel);
-				case VisibleFace.Front:
-					return Medium(voxel);
-				case VisibleFace.Left:
-					return Dim(voxel);
+				switch (visibleFace)
+				{
+					case VisibleFace.Top:
+						return Bright(voxel);
+					case VisibleFace.Right:
+						return Light(voxel);
+					case VisibleFace.Front:
+						return Medium(voxel);
+					case VisibleFace.Left:
+						return Dim(voxel);
+				}
+				throw new System.IO.InvalidDataException();
 			}
-			throw new System.IO.InvalidDataException();
 		}
 		#endregion IVoxelColor
 	}

@@ -49,14 +49,14 @@ namespace Voxel2Pixel.Render
 			x: x,
 			y: y,
 			right: right,
-			color: VoxelColor.Color(voxel, visibleFace));
+			color: VoxelColor[voxel, visibleFace]);
 		#endregion ITriangleRenderer
 		#region IRectangleRenderer
 		public abstract void Rect(int x, int y, uint color, int sizeX = 1, int sizeY = 1);
 		public virtual void Rect(int x, int y, byte voxel, VisibleFace visibleFace = VisibleFace.Front, int sizeX = 1, int sizeY = 1) => Rect(
 			x: x,
 			y: y,
-			color: VoxelColor.Color(voxel, visibleFace),
+			color: VoxelColor[voxel, visibleFace],
 			sizeX: sizeX,
 			sizeY: sizeY);
 		#endregion IRectangleRenderer

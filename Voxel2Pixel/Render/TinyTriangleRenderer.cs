@@ -17,7 +17,7 @@ namespace Voxel2Pixel.Render
 			x: x,
 			y: y,
 			right: right,
-			color: VoxelColor.Color(voxel, visibleFace));
+			color: VoxelColor[voxel, visibleFace]);
 		#endregion ITriangleRenderer
 	}
 }
