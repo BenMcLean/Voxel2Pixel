@@ -17,7 +17,7 @@ namespace Voxel2PixelTest.Draw
 		{
 			VoxFileModel voxFile = new VoxFileModel(@"..\..\..\Sora.vox");
 			IVoxelColor voxelColor = new NaiveDimmer(voxFile.Palette);
-			ListModel model = new ListModel(voxFile);
+			DictionaryModel model = new DictionaryModel(voxFile);
 			ushort width = model.SizeX;
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{
@@ -38,7 +38,7 @@ namespace Voxel2PixelTest.Draw
 		{
 			VoxFileModel voxFile = new VoxFileModel(@"..\..\..\Sora.vox");
 			IVoxelColor voxelColor = new NaiveDimmer(voxFile.Palette);
-			ListModel model = new ListModel(voxFile);
+			DictionaryModel model = new DictionaryModel(voxFile);
 			int width = SparseVoxelDraw.DiagonalWidth(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{
@@ -57,9 +57,9 @@ namespace Voxel2PixelTest.Draw
 		[Fact]
 		public void Above()
 		{
-			VoxFileModel voxFile = new VoxFileModel(@"..\..\..\Hazmat.vox");
+			VoxFileModel voxFile = new VoxFileModel(@"..\..\..\Sora.vox");
 			IVoxelColor voxelColor = new NaiveDimmer(voxFile.Palette);
-			ListModel model = new ListModel(voxFile);
+			DictionaryModel model = new DictionaryModel(voxFile);
 			int width = SparseVoxelDraw.AboveWidth(model),
 				height = SparseVoxelDraw.AboveHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
@@ -84,7 +84,7 @@ namespace Voxel2PixelTest.Draw
 			IVoxelColor voxelColor = new NaiveDimmer(voxFile.Palette);
 			TurnSparseModel model = new TurnSparseModel
 			{
-				SparseModel = new ListModel(voxFile),
+				SparseModel = new DictionaryModel(voxFile),
 			};
 			List<byte[]> frames = new List<byte[]>();
 			foreach (CuboidOrientation cuboidOrientation in CuboidOrientation.Values)
