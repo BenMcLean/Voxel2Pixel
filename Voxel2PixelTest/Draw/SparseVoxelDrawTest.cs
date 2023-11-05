@@ -82,9 +82,9 @@ namespace Voxel2PixelTest.Draw
 			VoxFileModel voxFile = new VoxFileModel(@"..\..\..\Sora.vox");
 			ushort width = Math.Max(Math.Max(voxFile.SizeX, voxFile.SizeY), voxFile.SizeZ);
 			IVoxelColor voxelColor = new NaiveDimmer(voxFile.Palette);
-			TurnSparseModel model = new TurnSparseModel
+			TurnModel model = new TurnModel
 			{
-				SparseModel = new DictionaryModel(voxFile),
+				Model = new DictionaryModel(voxFile),
 			};
 			List<byte[]> frames = new List<byte[]>();
 			foreach (CuboidOrientation cuboidOrientation in CuboidOrientation.Values)

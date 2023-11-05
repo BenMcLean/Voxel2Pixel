@@ -1,4 +1,7 @@
-﻿namespace Voxel2Pixel.Model
+﻿using System.Collections.Generic;
+using System.Linq;
+
+namespace Voxel2Pixel.Model
 {
 	public class FlipModel : ContainerModel
 	{
@@ -23,11 +26,17 @@
 			return this;
 		}
 		public bool[] Get => new bool[3] { FlipX, FlipY, FlipZ };
-		#region IFetch
 		public override byte this[ushort x, ushort y, ushort z] => Model[
 			x: FlipX ? (ushort)(SizeX - 1 - x) : x,
 			y: FlipY ? (ushort)(SizeY - 1 - y) : y,
 			z: FlipZ ? (ushort)(SizeZ - 1 - z) : z];
-		#endregion IFetch
+		public override IEnumerable<Voxel> Voxels => Model.Voxels
+			.Select(voxel => new Voxel
+			{
+				X = FlipX ? (ushort)(SizeX - 1 - voxel.X) : voxel.X,
+				Y = FlipY ? (ushort)(SizeY - 1 - voxel.Y) : voxel.Y,
+				Z = FlipZ ? (ushort)(SizeZ - 1 - voxel.Z) : voxel.Z,
+				@byte = voxel.@byte,
+			});
 	}
 }

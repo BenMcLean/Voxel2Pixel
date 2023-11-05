@@ -1,4 +1,7 @@
-﻿namespace Voxel2Pixel.Model
+﻿using System;
+using System.Collections.Generic;
+
+namespace Voxel2Pixel.Model
 {
 	public class BoxModel : ContainerModel
 	{
@@ -15,7 +18,7 @@
 				borderCount++;
 			return borderCount >= 2;
 		}
-		#region IFetch
+		#region IModel
 		public override byte this[ushort x, ushort y, ushort z] =>
 			Overwrite ?
 				IsBorder(x, y, z) ?
@@ -28,6 +31,7 @@
 					: !IsOutside(x, y, z) && IsBorder(x, y, z) ?
 						Voxel
 						: (byte)0;
-		#endregion IFetch
+		public override IEnumerable<Voxel> Voxels => throw new NotImplementedException();
+		#endregion IModel
 	}
 }

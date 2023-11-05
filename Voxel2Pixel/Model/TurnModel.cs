@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model
@@ -21,6 +22,23 @@ namespace Voxel2Pixel.Model
 			{
 				Rotate(out ushort x1, out ushort y1, out ushort z1, x, y, z);
 				return Model[x1, y1, z1];
+			}
+		}
+		public override IEnumerable<Voxel> Voxels
+		{
+			get
+			{
+				foreach (Voxel voxel in Model.Voxels)
+				{
+					ReverseRotate(out ushort x, out ushort y, out ushort z, voxel.X, voxel.Y, voxel.Z);
+					yield return new Voxel
+					{
+						X = x,
+						Y = y,
+						Z = z,
+						@byte = voxel.@byte,
+					};
+				}
 			}
 		}
 		#endregion ContainerModel

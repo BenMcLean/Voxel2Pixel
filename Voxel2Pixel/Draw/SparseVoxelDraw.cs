@@ -24,7 +24,7 @@ namespace Voxel2Pixel.Draw
 				@byte = voxel.@byte;
 			}
 		}
-		public static void Front(ISparseModel model, IRectangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Front)
+		public static void Front(IModel model, IRectangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Front)
 		{
 			ushort width = model.SizeX,
 				height = model.SizeZ;
@@ -59,7 +59,7 @@ namespace Voxel2Pixel.Draw
 		}
 		public static int DiagonalWidth(IModel model) => model.SizeX + model.SizeY;
 		public static int DiagonalHeight(IModel model) => model.SizeZ;
-		public static void Diagonal(ISparseModel model, IRectangleRenderer renderer)
+		public static void Diagonal(IModel model, IRectangleRenderer renderer)
 		{
 			ushort width = model.SizeX,
 				depth = model.SizeY,
@@ -102,12 +102,12 @@ namespace Voxel2Pixel.Draw
 		}
 		public static int AboveWidth(IModel model) => model.SizeX;
 		public static int AboveHeight(IModel model) => model.SizeY + model.SizeZ;
-		public static void AboveLocate(out int pixelX, out int pixelY, ISparseModel model, int voxelX = 0, int voxelY = 0, int voxelZ = 0)
+		public static void AboveLocate(out int pixelX, out int pixelY, IModel model, int voxelX = 0, int voxelY = 0, int voxelZ = 0)
 		{
 			pixelX = voxelX;
 			pixelY = AboveHeight(model) - 1 - voxelY - voxelZ;
 		}
-		public static void Above(ISparseModel model, IRectangleRenderer renderer)
+		public static void Above(IModel model, IRectangleRenderer renderer)
 		{
 			ushort width = model.SizeX,
 				depth = model.SizeY,

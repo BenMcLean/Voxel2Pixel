@@ -3,7 +3,7 @@ using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model
 {
-	public class DictionaryModel : ISparseModel
+	public class DictionaryModel : IModel
 	{
 		#region DictionaryModel
 		private Dictionary<ulong, byte> Dictionary = new Dictionary<ulong, byte>();
@@ -15,7 +15,7 @@ namespace Voxel2Pixel.Model
 			y = (ushort)(@ulong >> 16);
 			z = (ushort)(@ulong >> 32);
 		}
-		public DictionaryModel(ISparseModel model) : this(model.Voxels, model.SizeX, model.SizeY, model.SizeZ) { }
+		public DictionaryModel(IModel model) : this(model.Voxels, model.SizeX, model.SizeY, model.SizeZ) { }
 		public DictionaryModel(IEnumerable<Voxel> voxels, params ushort[] size) : this(size)
 		{
 			foreach (Voxel voxel in voxels)
@@ -28,7 +28,7 @@ namespace Voxel2Pixel.Model
 			SizeZ = size[2];
 		}
 		#endregion DictionaryModel
-		#region ISparseModel
+		#region IModel
 		public IEnumerable<Voxel> Voxels
 		{
 			get
@@ -46,7 +46,7 @@ namespace Voxel2Pixel.Model
 				}
 			}
 		}
-		#endregion ISparseModel
+		#endregion IModel
 		#region IModel
 		public ushort SizeX { get; set; }
 		public ushort SizeY { get; set; }

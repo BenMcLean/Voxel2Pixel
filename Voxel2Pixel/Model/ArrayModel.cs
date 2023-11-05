@@ -3,20 +3,12 @@ using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model
 {
-	public class ArrayModel : IModel, ITurnable, ISparseModel
+	public class ArrayModel : IModel, ITurnable
 	{
 		public ArrayModel(byte[][][] voxels) => Array = voxels;
 		public ArrayModel(ArrayModel other) : this(other.Array.DeepCopy()) { }
 		public ArrayModel(ushort sizeX = 1, ushort sizeY = 1, ushort sizeZ = 1) : this(Array3D.Initialize<byte>(sizeX, sizeY, sizeZ)) { }
 		public ArrayModel(IModel model) : this(model.SizeX, model.SizeY, model.SizeZ)
-		{
-			for (ushort x = 0; x < SizeX; x++)
-				for (ushort y = 0; y < SizeY; y++)
-					for (ushort z = 0; z < SizeZ; z++)
-						if (model[x, y, z] is byte voxel)
-							Array[x][y][z] = voxel;
-		}
-		public ArrayModel(ISparseModel model) : this(model.SizeX, model.SizeY, model.SizeZ)
 		{
 			foreach (Voxel voxel in model.Voxels)
 				Array[voxel.X][voxel.Y][voxel.Z] = voxel.@byte;
@@ -28,8 +20,6 @@ namespace Voxel2Pixel.Model
 		public ushort SizeZ => (ushort)Array[0][0].Length;
 		public byte this[ushort x, ushort y, ushort z] => !IsOutside(x, y, z) ? Array[x][y][z] : (byte)0;
 		public bool IsOutside(ushort x, ushort y, ushort z) => x >= SizeX || y >= SizeY || z >= SizeZ;
-		#endregion IModel
-		#region ISparseModel
 		public IEnumerable<Voxel> Voxels
 		{
 			get
@@ -41,7 +31,7 @@ namespace Voxel2Pixel.Model
 								yield return new Voxel(x, y, z, @byte);
 			}
 		}
-		#endregion ISparseModel
+		#endregion IModel
 		#region ITurnable
 		public ITurnable CounterX()
 		{

@@ -5,7 +5,7 @@ using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model
 {
-	public class TextureModel : ISparseModel
+	public class TextureModel : IModel
 	{
 		public TextureModel(byte[] texture, ushort width = 0)
 		{
@@ -16,16 +16,12 @@ namespace Voxel2Pixel.Model
 		}
 		public uint[] Palette { get; set; }
 		public byte[] Indexes { get; }
-		#region IFetch
-		public byte this[ushort x, ushort y, ushort z] => !IsOutside(x, y, z) ? Indexes[y * SizeX + x] : (byte)0;
-		#endregion IFetch
 		#region IModel
+		public byte this[ushort x, ushort y, ushort z] => !IsOutside(x, y, z) ? Indexes[y * SizeX + x] : (byte)0;
 		public ushort SizeX { get; }
 		public ushort SizeY { get; }
 		public ushort SizeZ { get; set; } = 1;
 		public bool IsOutside(ushort x, ushort y, ushort z) => x >= SizeX || y >= SizeY || z >= SizeZ;
-		#endregion IModel
-		#region ISparseModel
 		public IEnumerable<Voxel> Voxels
 		{
 			get
@@ -37,6 +33,6 @@ namespace Voxel2Pixel.Model
 								yield return new Voxel(x, (ushort)y, z, @byte);
 			}
 		}
-		#endregion ISparseModel
+		#endregion IModel
 	}
 }
