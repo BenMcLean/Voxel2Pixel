@@ -19,13 +19,13 @@
 		public override byte this[ushort x, ushort y, ushort z] =>
 			Overwrite ?
 				IsBorder(x, y, z) ?
-					IsInside(x, y, z) ?
+					!IsOutside(x, y, z) ?
 						Voxel
 						: (byte)0
 					: Model[x, y, z]
 				: Model[x, y, z] is byte voxel && voxel != 0 ?
 					voxel
-					: IsInside(x, y, z) && IsBorder(x, y, z) ?
+					: !IsOutside(x, y, z) && IsBorder(x, y, z) ?
 						Voxel
 						: (byte)0;
 		#endregion IFetch

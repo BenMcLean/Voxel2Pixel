@@ -58,11 +58,10 @@ namespace Voxel2Pixel.Model
 			{
 				if (value == 0)
 					Dictionary.Remove(Encode(x, y, z));
-				else if (IsInside(x, y, z))
+				else if (!IsOutside(x, y, z))
 					Dictionary[Encode(x, y, z)] = value;
 			}
 		}
-		public bool IsInside(ushort x, ushort y, ushort z) => !IsOutside(x, y, z);
 		public bool IsOutside(ushort x, ushort y, ushort z) => x >= SizeX || y >= SizeY || z >= SizeZ;
 		#endregion IModel
 	}

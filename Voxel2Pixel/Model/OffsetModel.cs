@@ -8,7 +8,7 @@
 		#region IFetch
 		public override byte this[ushort x, ushort y, ushort z] =>
 			x + OffsetX >= 0 && y + OffsetY >= 0 && z + OffsetZ >= 0
-			&& IsInside((ushort)(x + OffsetX), (ushort)(y + OffsetY), (ushort)(z + OffsetZ)) ?
+			&& !IsOutside((ushort)(x + OffsetX), (ushort)(y + OffsetY), (ushort)(z + OffsetZ)) ?
 				Model[(ushort)(x + OffsetX), (ushort)(y + OffsetY), (ushort)(z + OffsetZ)]
 				: (byte)0;
 		#endregion IFetch

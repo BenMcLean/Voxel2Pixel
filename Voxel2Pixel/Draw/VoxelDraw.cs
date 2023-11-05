@@ -609,7 +609,6 @@ namespace Voxel2Pixel.Draw
 				evenSizeY = model.SizeY % 2 == 0;
 			bool[] tiles = new bool[4];
 			#region Isometric local functions
-			bool IsInside(int x, int y, int z) => !IsOutside(x, y, z);
 			bool IsOutside(int x, int y, int z) => x < 0 || y < 0 || z < 0 || model.IsOutside((ushort)x, (ushort)y, (ushort)z);
 			byte At(int x, int y, int z) => model[(ushort)x, (ushort)y, (ushort)z];
 			void Tile(int tile, int x, int y, byte voxel, VisibleFace visibleFace = VisibleFace.Front)
@@ -666,7 +665,7 @@ namespace Voxel2Pixel.Draw
 							voxelX++, voxelY++, voxelZ--)
 					{
 						if ((!tiles[0] || !tiles[1])
-							&& IsInside(voxelX - 1, voxelY, voxelZ + 1)
+							&& !IsOutside(voxelX - 1, voxelY, voxelZ + 1)
 							&& At(voxelX - 1, voxelY, voxelZ + 1) is byte xMinus1zPlus1
 							&& xMinus1zPlus1 != 0)
 						{
@@ -682,7 +681,7 @@ namespace Voxel2Pixel.Draw
 								visibleFace: VisibleFace.Right);
 						}
 						if ((!tiles[2] || !tiles[3])
-							&& IsInside(voxelX, voxelY - 1, voxelZ + 1)
+							&& !IsOutside(voxelX, voxelY - 1, voxelZ + 1)
 							&& At(voxelX, voxelY - 1, voxelZ + 1) is byte yMinus1zPlus1
 							&& yMinus1zPlus1 != 0)
 						{
@@ -698,7 +697,7 @@ namespace Voxel2Pixel.Draw
 								visibleFace: VisibleFace.Left);
 						}
 						if ((!tiles[1] || !tiles[2])
-							&& IsInside(voxelX, voxelY, voxelZ + 1)
+							&& !IsOutside(voxelX, voxelY, voxelZ + 1)
 							&& At(voxelX, voxelY, voxelZ + 1) is byte zPlus1
 							&& zPlus1 != 0)
 						{
@@ -714,7 +713,7 @@ namespace Voxel2Pixel.Draw
 								visibleFace: VisibleFace.Right);
 						}
 						if (!tiles[0]
-							&& IsInside(voxelX - 1, voxelY, voxelZ)
+							&& !IsOutside(voxelX - 1, voxelY, voxelZ)
 							&& At(voxelX - 1, voxelY, voxelZ) is byte xMinus1
 							&& xMinus1 != 0)
 							Tile(tile: 0,
@@ -723,7 +722,7 @@ namespace Voxel2Pixel.Draw
 								voxel: xMinus1,
 								visibleFace: VisibleFace.Top);
 						if (!tiles[3]
-							&& IsInside(voxelX, voxelY - 1, voxelZ)
+							&& !IsOutside(voxelX, voxelY - 1, voxelZ)
 							&& At(voxelX, voxelY - 1, voxelZ) is byte yMinus1
 							&& yMinus1 != 0)
 							Tile(tile: 3,
@@ -731,7 +730,7 @@ namespace Voxel2Pixel.Draw
 								y: pixelY,
 								voxel: yMinus1,
 								visibleFace: VisibleFace.Top);
-						if (IsInside(voxelX, voxelY, voxelZ)
+						if (!IsOutside(voxelX, voxelY, voxelZ)
 							&& At(voxelX, voxelY, voxelZ) is byte voxel
 							&& voxel != 0)
 						{
@@ -758,7 +757,7 @@ namespace Voxel2Pixel.Draw
 							break;
 						}
 						if ((!tiles[0] || !tiles[1])
-							&& IsInside(voxelX, voxelY + 1, voxelZ)
+							&& !IsOutside(voxelX, voxelY + 1, voxelZ)
 							&& At(voxelX, voxelY + 1, voxelZ) is byte yPlus1
 							&& yPlus1 != 0)
 						{
@@ -774,7 +773,7 @@ namespace Voxel2Pixel.Draw
 								visibleFace: VisibleFace.Right);
 						}
 						if ((!tiles[2] || !tiles[3])
-							&& IsInside(voxelX + 1, voxelY, voxelZ)
+							&& !IsOutside(voxelX + 1, voxelY, voxelZ)
 							&& At(voxelX + 1, voxelY, voxelZ) is byte xPlus1
 							&& xPlus1 != 0)
 						{
@@ -790,7 +789,7 @@ namespace Voxel2Pixel.Draw
 								visibleFace: VisibleFace.Left);
 						}
 						if ((!tiles[1] || !tiles[2])
-							&& IsInside(voxelX + 1, voxelY + 1, voxelZ)
+							&& !IsOutside(voxelX + 1, voxelY + 1, voxelZ)
 							&& At(voxelX + 1, voxelY + 1, voxelZ) is byte xPlus1yPlus1
 							&& xPlus1yPlus1 != 0)
 						{
@@ -806,7 +805,7 @@ namespace Voxel2Pixel.Draw
 								visibleFace: VisibleFace.Right);
 						}
 						if (!tiles[0]
-							&& IsInside(voxelX, voxelY + 1, voxelZ - 1)
+							&& !IsOutside(voxelX, voxelY + 1, voxelZ - 1)
 							&& At(voxelX, voxelY + 1, voxelZ - 1) is byte yPlus1zMinus1
 							&& yPlus1zMinus1 != 0)
 							Tile(tile: 0,
@@ -815,7 +814,7 @@ namespace Voxel2Pixel.Draw
 								voxel: yPlus1zMinus1,
 								visibleFace: VisibleFace.Top);
 						if (!tiles[3]
-							&& IsInside(voxelX + 1, voxelY, voxelZ - 1)
+							&& !IsOutside(voxelX + 1, voxelY, voxelZ - 1)
 							&& At(voxelX + 1, voxelY, voxelZ - 1) is byte xPlus1zMinus1
 							&& xPlus1zMinus1 != 0)
 							Tile(tile: 3,
@@ -833,7 +832,7 @@ namespace Voxel2Pixel.Draw
 				pixelX += 4, pixelY -= 4)
 			{
 				int voxelX = model.SizeX - 1 - (pixelY / 2 - pixelX / 2 + model.SizeX) / 2;
-				if (IsInside(voxelX, model.SizeY - 1, model.SizeZ - 1)
+				if (!IsOutside(voxelX, model.SizeY - 1, model.SizeZ - 1)
 					&& At(voxelX, model.SizeY - 1, model.SizeZ - 1) is byte voxel
 					&& voxel != 0)
 					renderer.Tri(
@@ -850,7 +849,7 @@ namespace Voxel2Pixel.Draw
 				pixelX += 4, pixelY += 4)
 			{
 				int voxelY = model.SizeY - 1 - (pixelX / 2 + pixelY / 2 - model.SizeX + 1) / 2;
-				if (IsInside(model.SizeX - 1, voxelY, model.SizeZ - 1)
+				if (!IsOutside(model.SizeX - 1, voxelY, model.SizeZ - 1)
 					&& At(model.SizeX - 1, voxelY, model.SizeZ - 1) is byte voxel
 					&& voxel != 0)
 					renderer.Tri(
@@ -868,7 +867,7 @@ namespace Voxel2Pixel.Draw
 			{
 				int voxelY = model.SizeY - 1 - pixelX / 2;
 				if (pixelX >= 2
-					&& IsInside(0, voxelY + 1, 0)
+					&& !IsOutside(0, voxelY + 1, 0)
 					&& At(0, voxelY + 1, 0) is byte leftVoxel
 					&& leftVoxel != 0)
 				{
@@ -885,7 +884,7 @@ namespace Voxel2Pixel.Draw
 						voxel: leftVoxel,
 						visibleFace: VisibleFace.Right);
 				}
-				if (IsInside(0, voxelY, 0)
+				if (!IsOutside(0, voxelY, 0)
 					&& At(0, voxelY, 0) is byte voxel
 					&& voxel != 0)
 				{
@@ -911,7 +910,7 @@ namespace Voxel2Pixel.Draw
 			{
 				int voxelX = pixelX / 2 - model.SizeY;
 				if (pixelX < pixelWidth - 2
-					&& IsInside(voxelX + 1, 0, 0)
+					&& !IsOutside(voxelX + 1, 0, 0)
 					&& At(voxelX + 1, 0, 0) is byte rightVoxel
 					&& rightVoxel != 0)
 				{
@@ -928,7 +927,7 @@ namespace Voxel2Pixel.Draw
 						voxel: rightVoxel,
 						visibleFace: VisibleFace.Right);
 				}
-				if (IsInside(voxelX, 0, 0)
+				if (!IsOutside(voxelX, 0, 0)
 					&& At(voxelX, 0, 0) is byte voxel
 					&& voxel != 0)
 				{
