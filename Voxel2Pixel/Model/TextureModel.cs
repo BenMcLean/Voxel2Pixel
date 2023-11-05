@@ -22,9 +22,8 @@ namespace Voxel2Pixel.Model
 		public ushort SizeX { get; }
 		public ushort SizeY { get; }
 		public ushort SizeZ { get; set; } = 1;
-		IEnumerator<Voxel> IEnumerable<Voxel>.GetEnumerator() => (IEnumerator<Voxel>)GetEnumerator();
-		IEnumerator IEnumerable.GetEnumerator() => (IEnumerator)GetEnumerator();
-		public virtual IEnumerable<Voxel> GetEnumerator()
+		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+		public virtual IEnumerator<Voxel> GetEnumerator()
 		{
 			for (ushort x = 0; x < SizeX; x++)
 				for (uint y = 0, rowStart = 0; y < SizeY; y++, rowStart += SizeX)

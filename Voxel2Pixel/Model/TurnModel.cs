@@ -23,7 +23,7 @@ namespace Voxel2Pixel.Model
 				return Model[x1, y1, z1];
 			}
 		}
-		public override IEnumerable<Voxel> GetEnumerator()
+		public override IEnumerator<Voxel> GetEnumerator()
 		{
 			foreach (Voxel voxel in Model)
 			{

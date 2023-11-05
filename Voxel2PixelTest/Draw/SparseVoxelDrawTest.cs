@@ -102,7 +102,7 @@ namespace Voxel2PixelTest.Draw
 			IVoxelColor voxelColor = new NaiveDimmer(voxFile.Palette);
 			TurnModel model = new TurnModel
 			{
-				Model = new DictionaryModel(voxFile),
+				Model = voxFile,
 			};
 			List<byte[]> frames = new List<byte[]>();
 			foreach (CuboidOrientation cuboidOrientation in CuboidOrientation.Values)
@@ -117,7 +117,7 @@ namespace Voxel2PixelTest.Draw
 							Assert.True(y2 >= 0);
 							Assert.True(z2 >= 0);
 						}
-				foreach (Voxel voxel in model.GetEnumerator())
+				foreach (Voxel voxel in model)
 				{
 					Assert.True(voxel.X < model.SizeX);
 					Assert.True(voxel.Y < model.SizeY);

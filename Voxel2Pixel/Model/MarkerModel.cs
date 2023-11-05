@@ -25,7 +25,7 @@ namespace Voxel2Pixel.Model
 						@byte
 						: Voxel
 				: Model[x, y, z];
-		public override IEnumerable<Voxel> GetEnumerator() => throw new NotImplementedException();
+		public override IEnumerator<Voxel> GetEnumerator() => throw new NotImplementedException();
 		#endregion IModel
 	}
 }

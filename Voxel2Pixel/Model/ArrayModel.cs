@@ -20,9 +20,8 @@ namespace Voxel2Pixel.Model
 		public ushort SizeY => (ushort)Array[0].Length;
 		public ushort SizeZ => (ushort)Array[0][0].Length;
 		public byte this[ushort x, ushort y, ushort z] => !this.IsOutside(x, y, z) ? Array[x][y][z] : (byte)0;
-		IEnumerator<Voxel> IEnumerable<Voxel>.GetEnumerator() => (IEnumerator<Voxel>)GetEnumerator();
-		IEnumerator IEnumerable.GetEnumerator() => (IEnumerator)GetEnumerator();
-		public IEnumerable<Voxel> GetEnumerator()
+		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+		public IEnumerator<Voxel> GetEnumerator()
 		{
 			for (ushort x = 0; x < SizeX; x++)
 				for (ushort y = 0; y < SizeY; y++)

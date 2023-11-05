@@ -8,9 +8,8 @@ namespace Voxel2Pixel.Model
 	{
 		public virtual IModel Model { get; set; }
 		#region IModel
-		IEnumerator<Voxel> IEnumerable<Voxel>.GetEnumerator() => (IEnumerator<Voxel>)GetEnumerator();
-		IEnumerator IEnumerable.GetEnumerator() => (IEnumerator)GetEnumerator();
-		public virtual IEnumerable<Voxel> GetEnumerator() => Model;
+		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+		public virtual IEnumerator<Voxel> GetEnumerator() => Model.GetEnumerator();
 		public virtual byte this[ushort x, ushort y, ushort z] => Model[x, y, z];
 		public virtual ushort SizeX => Model.SizeX;
 		public virtual ushort SizeY => Model.SizeY;

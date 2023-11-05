@@ -37,16 +37,15 @@ namespace Voxel2Pixel.Model
 		}
 		#endregion DictionaryModel
 		#region IModel
-		IEnumerator<Voxel> IEnumerable<Voxel>.GetEnumerator() => (IEnumerator<Voxel>)GetEnumerator();
-		IEnumerator IEnumerable.GetEnumerator() => (IEnumerator)GetEnumerator();
-		public IEnumerable<Voxel> GetEnumerator() => Dictionary
+		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+		public IEnumerator<Voxel> GetEnumerator() => Dictionary
 			.Select(voxel => new Voxel
 			{
 				X = (ushort)voxel.Key,
 				Y = (ushort)(voxel.Key >> 16),
 				Z = (ushort)(voxel.Key >> 32),
 				@byte = voxel.Value,
-			});
+			}).GetEnumerator();
 		public ushort SizeX { get; set; } = 0;
 		public ushort SizeY { get; set; } = 0;
 		public ushort SizeZ { get; set; } = 0;
