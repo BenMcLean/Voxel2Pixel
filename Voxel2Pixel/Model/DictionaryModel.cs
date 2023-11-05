@@ -46,8 +46,6 @@ namespace Voxel2Pixel.Model
 				}
 			}
 		}
-		#endregion IModel
-		#region IModel
 		public ushort SizeX { get; set; }
 		public ushort SizeY { get; set; }
 		public ushort SizeZ { get; set; }
