@@ -33,6 +33,27 @@ namespace Voxel2PixelTest.Draw
 				.SaveAsPng("SparseVoxelDrawFront.png");
 		}
 		[Fact]
+		public void FrontPeek()
+		{
+			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
+			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
+			byte scaleX = 6, scaleY = 6;
+			ushort width = (ushort)(model.SizeX * scaleX);
+			ArrayRenderer arrayRenderer = new ArrayRenderer
+			{
+				Image = new byte[width * 4 * model.SizeZ * scaleY],
+				Width = width,
+				VoxelColor = voxelColor,
+			};
+			SparseVoxelDraw.FrontPeek(model, arrayRenderer, scaleX, scaleY);
+			ImageMaker.Png(
+				scaleX: 1,
+				scaleY: 1,
+				width: width,
+				bytes: arrayRenderer.Image)
+				.SaveAsPng("SparseVoxelDrawFrontPeek.png");
+		}
+		[Fact]
 		public void Diagonal()
 		{
 			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");

@@ -58,7 +58,7 @@ namespace Voxel2Pixel.Draw
 			foreach (Voxel voxel in model.Voxels
 				.Where(voxel => voxel.@byte != 0
 					&& (!dictionary.TryGetValue(Encode(voxel), out Voxel old)
-						|| old.Y < voxel.Y)))
+						|| old.Y > voxel.Y)))
 				dictionary[Encode(voxel)] = voxel;
 			foreach (Voxel voxel in dictionary.Values)
 				if (voxel.Z >= height - 1
