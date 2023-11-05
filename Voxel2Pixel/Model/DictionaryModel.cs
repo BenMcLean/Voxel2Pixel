@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model
@@ -8,7 +9,7 @@ namespace Voxel2Pixel.Model
 		#region DictionaryModel
 		private Dictionary<ulong, byte> Dictionary = new Dictionary<ulong, byte>();
 		public void Clear() => Dictionary.Clear();
-		public static ulong Encode(ushort x, ushort y, ushort z) => ((ulong)z << 32) | ((ulong)y << 16) | x;
+		public static ulong Encode(ushort x, ushort y, ushort z) => ((ulong)z << 32) | ((uint)y << 16) | x;
 		public static void Decode(ulong @ulong, out ushort x, out ushort y, out ushort z)
 		{
 			x = (ushort)@ulong;
@@ -29,23 +30,14 @@ namespace Voxel2Pixel.Model
 		}
 		#endregion DictionaryModel
 		#region IModel
-		public IEnumerable<Voxel> Voxels
-		{
-			get
+		public IEnumerable<Voxel> Voxels => Dictionary
+			.Select(voxel => new Voxel
 			{
-				foreach (KeyValuePair<ulong, byte> voxel in Dictionary)
-				{
-					Decode(voxel.Key, out ushort x, out ushort y, out ushort z);
-					yield return new Voxel
-					{
-						X = x,
-						Y = y,
-						Z = z,
-						@byte = voxel.Value,
-					};
-				}
-			}
-		}
+				X = (ushort)voxel.Key,
+				Y = (ushort)(voxel.Key >> 16),
+				Z = (ushort)(voxel.Key >> 32),
+				@byte = voxel.Value,
+			});
 		public ushort SizeX { get; set; }
 		public ushort SizeY { get; set; }
 		public ushort SizeZ { get; set; }
