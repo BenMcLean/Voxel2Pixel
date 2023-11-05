@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Voxel2Pixel.Interfaces;
 
@@ -53,16 +54,10 @@ namespace Voxel2Pixel.Model
 			{
 				if (value == 0)
 					Dictionary.Remove(Encode(x, y, z));
+				else if (this.IsOutside(x, y, z))
+					throw new IndexOutOfRangeException("[" + string.Join(", ", x, y, z) + "] is outside [" + string.Join(", ", SizeX, SizeY, SizeZ) + "]");
 				else
-				{
 					Dictionary[Encode(x, y, z)] = value;
-					if (x > SizeX)
-						SizeX = x;
-					if (y > SizeY)
-						SizeY = y;
-					if (z > SizeZ)
-						SizeZ = z;
-				}
 			}
 		}
 		#endregion IModel
