@@ -23,21 +23,12 @@ namespace Voxel2Pixel.Model
 				return Model[x1, y1, z1];
 			}
 		}
-		public override IEnumerable<Voxel> Voxels
+		public override IEnumerable<Voxel> GetEnumerator()
 		{
-			get
+			foreach (Voxel voxel in Model)
 			{
-				foreach (Voxel voxel in Model.Voxels)
-				{
-					ReverseRotate(out ushort x, out ushort y, out ushort z, voxel.X, voxel.Y, voxel.Z);
-					yield return new Voxel
-					{
-						X = x,
-						Y = y,
-						Z = z,
-						@byte = voxel.@byte,
-					};
-				}
+				ReverseRotate(out ushort x, out ushort y, out ushort z, voxel.X, voxel.Y, voxel.Z);
+				yield return new Voxel(x, y, z, voxel.@byte);
 			}
 		}
 		#endregion ContainerModel

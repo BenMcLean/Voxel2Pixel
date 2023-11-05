@@ -14,7 +14,7 @@ namespace Voxel2Pixel.Model
 			&& !this.IsOutside((ushort)(x + OffsetX), (ushort)(y + OffsetY), (ushort)(z + OffsetZ)) ?
 				Model[(ushort)(x + OffsetX), (ushort)(y + OffsetY), (ushort)(z + OffsetZ)]
 				: (byte)0;
-		public override IEnumerable<Voxel> Voxels => throw new NotImplementedException();
+		public override IEnumerable<Voxel> GetEnumerator() => throw new NotImplementedException();
 		#endregion IModel
 	}
 }

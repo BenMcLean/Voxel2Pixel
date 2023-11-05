@@ -117,7 +117,7 @@ namespace Voxel2PixelTest.Draw
 							Assert.True(y2 >= 0);
 							Assert.True(z2 >= 0);
 						}
-				foreach (Voxel voxel in model.Voxels)
+				foreach (Voxel voxel in model.GetEnumerator())
 				{
 					Assert.True(voxel.X < model.SizeX);
 					Assert.True(voxel.Y < model.SizeY);

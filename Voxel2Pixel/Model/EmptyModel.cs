@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using Voxel2Pixel.Interfaces;
 
@@ -11,7 +12,9 @@ namespace Voxel2Pixel.Model
 		public virtual ushort SizeY { get; set; }
 		public virtual ushort SizeZ { get; set; }
 		public virtual byte this[ushort x, ushort y, ushort z] => 0;
-		public virtual IEnumerable<Voxel> Voxels => Enumerable.Empty<Voxel>();
+		IEnumerator<Voxel> IEnumerable<Voxel>.GetEnumerator() => (IEnumerator<Voxel>)GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => (IEnumerator)GetEnumerator();
+		public virtual IEnumerable<Voxel> GetEnumerator() => Enumerable.Empty<Voxel>();
 		#endregion IModel
 	}
 }

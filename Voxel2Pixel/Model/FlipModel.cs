@@ -30,7 +30,7 @@ namespace Voxel2Pixel.Model
 			x: FlipX ? (ushort)(SizeX - 1 - x) : x,
 			y: FlipY ? (ushort)(SizeY - 1 - y) : y,
 			z: FlipZ ? (ushort)(SizeZ - 1 - z) : z];
-		public override IEnumerable<Voxel> Voxels => Model.Voxels
+		public override IEnumerable<Voxel> GetEnumerator() => Model
 			.Select(voxel => new Voxel
 			{
 				X = FlipX ? (ushort)(SizeX - 1 - voxel.X) : voxel.X,

@@ -39,7 +39,7 @@ namespace Voxel2Pixel.Model
 			red: color.R(),
 			green: color.G(),
 			blue: color.B());
-		public static IEnumerable<FileToVoxCore.Schematics.Voxel> FileToVoxCoreVoxels(IModel model, uint[] palette) => model.Voxels
+		public static IEnumerable<FileToVoxCore.Schematics.Voxel> FileToVoxCoreVoxels(IModel model, uint[] palette) => model
 			.Select(voxel => new FileToVoxCore.Schematics.Voxel(
 				x: voxel.X,
 				y: voxel.Y,

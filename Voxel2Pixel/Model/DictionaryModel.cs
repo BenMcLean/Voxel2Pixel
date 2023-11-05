@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Voxel2Pixel.Interfaces;
@@ -18,7 +19,7 @@ namespace Voxel2Pixel.Model
 			z = (ushort)(@ulong >> 32);
 		}
 		public DictionaryModel() { }
-		public DictionaryModel(IModel model) : this(model.Voxels, model.SizeX, model.SizeY, model.SizeZ) { }
+		public DictionaryModel(IModel model) : this(model, model.SizeX, model.SizeY, model.SizeZ) { }
 		public DictionaryModel(IEnumerable<Voxel> voxels, params ushort[] size)
 		{
 			foreach (Voxel voxel in voxels)
@@ -36,7 +37,9 @@ namespace Voxel2Pixel.Model
 		}
 		#endregion DictionaryModel
 		#region IModel
-		public IEnumerable<Voxel> Voxels => Dictionary
+		IEnumerator<Voxel> IEnumerable<Voxel>.GetEnumerator() => (IEnumerator<Voxel>)GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => (IEnumerator)GetEnumerator();
+		public IEnumerable<Voxel> GetEnumerator() => Dictionary
 			.Select(voxel => new Voxel
 			{
 				X = (ushort)voxel.Key,

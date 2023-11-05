@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Voxel2Pixel.Model
@@ -24,7 +25,7 @@ namespace Voxel2Pixel.Model
 						@byte
 						: Voxel
 				: Model[x, y, z];
-		public override IEnumerable<Voxel> Voxels => throw new NotImplementedException();
+		public override IEnumerable<Voxel> GetEnumerator() => throw new NotImplementedException();
 		#endregion IModel
 	}
 }

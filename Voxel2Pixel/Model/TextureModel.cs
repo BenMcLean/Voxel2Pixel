@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
@@ -21,16 +22,15 @@ namespace Voxel2Pixel.Model
 		public ushort SizeX { get; }
 		public ushort SizeY { get; }
 		public ushort SizeZ { get; set; } = 1;
-		public IEnumerable<Voxel> Voxels
+		IEnumerator<Voxel> IEnumerable<Voxel>.GetEnumerator() => (IEnumerator<Voxel>)GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => (IEnumerator)GetEnumerator();
+		public virtual IEnumerable<Voxel> GetEnumerator()
 		{
-			get
-			{
-				for (ushort x = 0; x < SizeX; x++)
-					for (int y = 0, rowStart = 0; y < SizeY; y++, rowStart += SizeX)
-						for (ushort z = 0; z < SizeZ; z++)
-							if (Indexes[rowStart + x] is byte @byte && @byte != 0)
-								yield return new Voxel(x, (ushort)y, z, @byte);
-			}
+			for (ushort x = 0; x < SizeX; x++)
+				for (uint y = 0, rowStart = 0; y < SizeY; y++, rowStart += SizeX)
+					for (ushort z = 0; z < SizeZ; z++)
+						if (Indexes[rowStart + x] is byte @byte && @byte != 0)
+							yield return new Voxel(x, (ushort)y, z, @byte);
 		}
 		#endregion IModel
 	}

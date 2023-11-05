@@ -31,7 +31,7 @@ namespace Voxel2Pixel.Model
 					: !this.IsOutside(x, y, z) && IsBorder(x, y, z) ?
 						Voxel
 						: (byte)0;
-		public override IEnumerable<Voxel> Voxels => throw new NotImplementedException();
+		public override IEnumerable<Voxel> GetEnumerator() => throw new NotImplementedException();
 		#endregion IModel
 	}
 }

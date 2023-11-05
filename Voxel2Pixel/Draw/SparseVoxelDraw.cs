@@ -31,7 +31,7 @@ namespace Voxel2Pixel.Draw
 				height = model.SizeZ;
 			uint index;
 			VoxelY[] grid = new VoxelY[width * height];
-			foreach (Voxel voxel in model.Voxels
+			foreach (Voxel voxel in model
 				.Where(voxel => voxel.@byte != 0))
 			{
 				index = (uint)(width * (height - voxel.Z - 1) + voxel.X);
@@ -55,7 +55,7 @@ namespace Voxel2Pixel.Draw
 			ushort height = model.SizeZ;
 			Dictionary<uint, Voxel> dictionary = new Dictionary<uint, Voxel>();
 			uint Encode(Voxel voxel) => (uint)(voxel.Z << 16) | voxel.X;
-			foreach (Voxel voxel in model.Voxels
+			foreach (Voxel voxel in model
 				.Where(voxel => voxel.@byte != 0
 					&& (!dictionary.TryGetValue(Encode(voxel), out Voxel old)
 						|| old.Y > voxel.Y)))
@@ -105,7 +105,7 @@ namespace Voxel2Pixel.Draw
 				height = model.SizeZ;
 			uint pixelWidth = (uint)(width + depth), index;
 			VoxelD[] grid = new VoxelD[pixelWidth * height];
-			foreach (Voxel voxel in model.Voxels
+			foreach (Voxel voxel in model
 				.Where(voxel => voxel.@byte != 0))
 			{
 				index = (uint)(pixelWidth * (height - voxel.Z - 1) + depth - voxel.Y - 1 + voxel.X);
@@ -153,7 +153,7 @@ namespace Voxel2Pixel.Draw
 				height = model.SizeZ;
 			uint pixelHeight = (uint)(depth + height), index;
 			VoxelD[] grid = new VoxelD[width * pixelHeight];
-			foreach (Voxel voxel in model.Voxels
+			foreach (Voxel voxel in model
 				.Where(voxel => voxel.@byte != 0))
 			{
 				index = width * (pixelHeight - 2 - voxel.Y - voxel.Z) + voxel.X;
