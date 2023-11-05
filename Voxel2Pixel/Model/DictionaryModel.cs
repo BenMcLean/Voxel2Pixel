@@ -8,7 +8,6 @@ namespace Voxel2Pixel.Model
 		#region DictionaryModel
 		private Dictionary<ulong, byte> Dictionary = new Dictionary<ulong, byte>();
 		public void Clear() => Dictionary.Clear();
-		public byte Empty { get; set; } = 0;
 		public static ulong Encode(ushort x, ushort y, ushort z) => ((ulong)z << 32) | ((ulong)y << 16) | x;
 		public static void Decode(ulong @ulong, out ushort x, out ushort y, out ushort z)
 		{
@@ -54,10 +53,12 @@ namespace Voxel2Pixel.Model
 		public ushort SizeZ { get; set; }
 		public byte this[ushort x, ushort y, ushort z]
 		{
-			get => Dictionary.TryGetValue(Encode(x, y, z), out byte @byte) ? @byte : Empty;
+			get => Dictionary.TryGetValue(Encode(x, y, z), out byte @byte) ? @byte : (byte)0;
 			set
 			{
-				if (IsInside(x, y, z))
+				if (value == 0)
+					Dictionary.Remove(Encode(x, y, z));
+				else if (IsInside(x, y, z))
 					Dictionary[Encode(x, y, z)] = value;
 			}
 		}
