@@ -11,7 +11,6 @@ namespace Voxel2Pixel.Model
 		public virtual ushort SizeY { get; set; }
 		public virtual ushort SizeZ { get; set; }
 		public virtual byte this[ushort x, ushort y, ushort z] => 0;
-		public virtual bool IsOutside(ushort x, ushort y, ushort z) => x >= SizeX || y >= SizeY || z >= SizeZ;
 		public virtual IEnumerable<Voxel> Voxels => Enumerable.Empty<Voxel>();
 		#endregion IModel
 	}

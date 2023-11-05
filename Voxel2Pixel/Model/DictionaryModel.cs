@@ -20,11 +20,18 @@ namespace Voxel2Pixel.Model
 		public DictionaryModel(IModel model) : this(model.Voxels, model.SizeX, model.SizeY, model.SizeZ) { }
 		public DictionaryModel(IEnumerable<Voxel> voxels, params ushort[] size)
 		{
-			SizeX = size[0];
-			SizeY = size[1];
-			SizeZ = size[2];
 			foreach (Voxel voxel in voxels)
 				this[voxel.X, voxel.Y, voxel.Z] = voxel.@byte;
+			if (!(size is null) && size.Length > 0)
+			{
+				SizeX = size[0];
+				if (size.Length > 1)
+				{
+					SizeY = size[1];
+					if (size.Length > 2)
+						SizeZ = size[2];
+				}
+			}
 		}
 		#endregion DictionaryModel
 		#region IModel
@@ -36,9 +43,9 @@ namespace Voxel2Pixel.Model
 				Z = (ushort)(voxel.Key >> 32),
 				@byte = voxel.Value,
 			});
-		public ushort SizeX { get; set; } = ushort.MaxValue;
-		public ushort SizeY { get; set; } = ushort.MaxValue;
-		public ushort SizeZ { get; set; } = ushort.MaxValue;
+		public ushort SizeX { get; set; } = 0;
+		public ushort SizeY { get; set; } = 0;
+		public ushort SizeZ { get; set; } = 0;
 		public byte this[ushort x, ushort y, ushort z]
 		{
 			get => Dictionary.TryGetValue(Encode(x, y, z), out byte @byte) ? @byte : (byte)0;
@@ -46,11 +53,18 @@ namespace Voxel2Pixel.Model
 			{
 				if (value == 0)
 					Dictionary.Remove(Encode(x, y, z));
-				else if (!IsOutside(x, y, z))
+				else
+				{
 					Dictionary[Encode(x, y, z)] = value;
+					if (x > SizeX)
+						SizeX = x;
+					if (y > SizeY)
+						SizeY = y;
+					if (z > SizeZ)
+						SizeZ = z;
+				}
 			}
 		}
-		public bool IsOutside(ushort x, ushort y, ushort z) => x >= SizeX || y >= SizeY || z >= SizeZ;
 		#endregion IModel
 	}
 }

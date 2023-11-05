@@ -17,11 +17,10 @@ namespace Voxel2Pixel.Model
 		public uint[] Palette { get; set; }
 		public byte[] Indexes { get; }
 		#region IModel
-		public byte this[ushort x, ushort y, ushort z] => !IsOutside(x, y, z) ? Indexes[y * SizeX + x] : (byte)0;
+		public byte this[ushort x, ushort y, ushort z] => !this.IsOutside(x, y, z) ? Indexes[y * SizeX + x] : (byte)0;
 		public ushort SizeX { get; }
 		public ushort SizeY { get; }
 		public ushort SizeZ { get; set; } = 1;
-		public bool IsOutside(ushort x, ushort y, ushort z) => x >= SizeX || y >= SizeY || z >= SizeZ;
 		public IEnumerable<Voxel> Voxels
 		{
 			get

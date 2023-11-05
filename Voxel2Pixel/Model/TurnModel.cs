@@ -15,7 +15,6 @@ namespace Voxel2Pixel.Model
 		public override ushort SizeY => RotatedSize(1);
 		public override ushort SizeZ => RotatedSize(2);
 		public ushort[] Sizes => new ushort[] { SizeX, SizeY, SizeZ };
-		public override bool IsOutside(ushort x, ushort y, ushort z) => x >= SizeX || y >= SizeY || z >= SizeZ;
 		public override byte this[ushort x, ushort y, ushort z]
 		{
 			get

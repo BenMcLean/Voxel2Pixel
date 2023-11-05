@@ -18,8 +18,7 @@ namespace Voxel2Pixel.Model
 		public ushort SizeX => (ushort)Array.Length;
 		public ushort SizeY => (ushort)Array[0].Length;
 		public ushort SizeZ => (ushort)Array[0][0].Length;
-		public byte this[ushort x, ushort y, ushort z] => !IsOutside(x, y, z) ? Array[x][y][z] : (byte)0;
-		public bool IsOutside(ushort x, ushort y, ushort z) => x >= SizeX || y >= SizeY || z >= SizeZ;
+		public byte this[ushort x, ushort y, ushort z] => !this.IsOutside(x, y, z) ? Array[x][y][z] : (byte)0;
 		public IEnumerable<Voxel> Voxels
 		{
 			get

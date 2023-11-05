@@ -12,7 +12,6 @@ namespace Voxel2Pixel.Model
 		public virtual ushort SizeX => Model.SizeX;
 		public virtual ushort SizeY => Model.SizeY;
 		public virtual ushort SizeZ => Model.SizeZ;
-		public virtual bool IsOutside(ushort x, ushort y, ushort z) => Model.IsOutside(x, y, z);
 		#endregion IModel
 	}
 }
