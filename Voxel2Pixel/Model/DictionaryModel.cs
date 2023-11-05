@@ -16,17 +16,15 @@ namespace Voxel2Pixel.Model
 			y = (ushort)(@ulong >> 16);
 			z = (ushort)(@ulong >> 32);
 		}
+		public DictionaryModel() { }
 		public DictionaryModel(IModel model) : this(model.Voxels, model.SizeX, model.SizeY, model.SizeZ) { }
-		public DictionaryModel(IEnumerable<Voxel> voxels, params ushort[] size) : this(size)
-		{
-			foreach (Voxel voxel in voxels)
-				this[voxel.X, voxel.Y, voxel.Z] = voxel.@byte;
-		}
-		public DictionaryModel(params ushort[] size)
+		public DictionaryModel(IEnumerable<Voxel> voxels, params ushort[] size)
 		{
 			SizeX = size[0];
 			SizeY = size[1];
 			SizeZ = size[2];
+			foreach (Voxel voxel in voxels)
+				this[voxel.X, voxel.Y, voxel.Z] = voxel.@byte;
 		}
 		#endregion DictionaryModel
 		#region IModel
@@ -38,9 +36,9 @@ namespace Voxel2Pixel.Model
 				Z = (ushort)(voxel.Key >> 32),
 				@byte = voxel.Value,
 			});
-		public ushort SizeX { get; set; }
-		public ushort SizeY { get; set; }
-		public ushort SizeZ { get; set; }
+		public ushort SizeX { get; set; } = ushort.MaxValue;
+		public ushort SizeY { get; set; } = ushort.MaxValue;
+		public ushort SizeZ { get; set; } = ushort.MaxValue;
 		public byte this[ushort x, ushort y, ushort z]
 		{
 			get => Dictionary.TryGetValue(Encode(x, y, z), out byte @byte) ? @byte : (byte)0;

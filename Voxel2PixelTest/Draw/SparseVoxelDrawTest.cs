@@ -15,9 +15,8 @@ namespace Voxel2PixelTest.Draw
 		[Fact]
 		public void Front()
 		{
-			VoxFileModel voxFile = new VoxFileModel(@"..\..\..\Sora.vox");
-			IVoxelColor voxelColor = new NaiveDimmer(voxFile.Palette);
-			DictionaryModel model = new DictionaryModel(voxFile);
+			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
+			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
 			ushort width = model.SizeX;
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{
@@ -36,9 +35,8 @@ namespace Voxel2PixelTest.Draw
 		[Fact]
 		public void Diagonal()
 		{
-			VoxFileModel voxFile = new VoxFileModel(@"..\..\..\Sora.vox");
-			IVoxelColor voxelColor = new NaiveDimmer(voxFile.Palette);
-			DictionaryModel model = new DictionaryModel(voxFile);
+			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
+			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
 			int width = SparseVoxelDraw.DiagonalWidth(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{
@@ -57,9 +55,8 @@ namespace Voxel2PixelTest.Draw
 		[Fact]
 		public void Above()
 		{
-			VoxFileModel voxFile = new VoxFileModel(@"..\..\..\Sora.vox");
-			IVoxelColor voxelColor = new NaiveDimmer(voxFile.Palette);
-			DictionaryModel model = new DictionaryModel(voxFile);
+			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
+			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
 			int width = SparseVoxelDraw.AboveWidth(model),
 				height = SparseVoxelDraw.AboveHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
