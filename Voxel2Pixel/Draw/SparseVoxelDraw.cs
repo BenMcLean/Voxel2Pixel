@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
 
@@ -48,6 +49,44 @@ namespace Voxel2Pixel.Draw
 							y: y,
 							voxel: voxelY.@byte,
 							visibleFace: visibleFace);
+		}
+		public static void FrontPeek(IModel model, IRectangleRenderer renderer, byte scaleX = 6, byte scaleY = 6)
+		{
+			ushort height = model.SizeZ;
+			Dictionary<uint, Voxel> dictionary = new Dictionary<uint, Voxel>();
+			uint Encode(Voxel voxel) => (uint)(voxel.Z << 16) | voxel.X;
+			foreach (Voxel voxel in model.Voxels
+				.Where(voxel => voxel.@byte != 0
+					&& (!dictionary.TryGetValue(Encode(voxel), out Voxel old)
+						|| old.Y < voxel.Y)))
+				dictionary[Encode(voxel)] = voxel;
+			foreach (Voxel voxel in dictionary.Values)
+				if (voxel.Z >= height - 1
+					|| model[voxel.X, voxel.Y, (ushort)(voxel.Z + 1)] == 0)
+				{
+					renderer.Rect(
+						x: voxel.X * scaleX,
+						y: (height - 1 - voxel.Z) * scaleY,
+						voxel: voxel.@byte,
+						visibleFace: VisibleFace.Top,
+						sizeX: scaleX,
+						sizeY: 1);
+					renderer.Rect(
+						x: voxel.X * scaleX,
+						y: (height - 1 - voxel.Z) * scaleY + 1,
+						voxel: voxel.@byte,
+						visibleFace: VisibleFace.Front,
+						sizeX: scaleX,
+						sizeY: scaleY - 1);
+				}
+				else
+					renderer.Rect(
+						x: voxel.X * scaleX,
+						y: (height - 1 - voxel.Z) * scaleY,
+						voxel: voxel.@byte,
+						visibleFace: VisibleFace.Front,
+						sizeX: scaleX,
+						sizeY: scaleY);
 		}
 		#endregion Straight
 		#region Diagonal
