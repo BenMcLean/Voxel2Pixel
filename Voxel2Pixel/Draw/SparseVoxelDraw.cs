@@ -109,7 +109,7 @@ namespace Voxel2Pixel.Draw
 				.Where(voxel => voxel.@byte != 0))
 			{
 				index = (uint)(pixelWidth * (height - voxel.Z - 1) + depth - voxel.Y - 1 + voxel.X);
-				uint distance = (uint)(voxel.X + voxel.Y);
+				uint distance = (uint)voxel.X + voxel.Y;
 				if (!(grid[index] is VoxelD left)
 					|| left.@byte == 0
 					|| left.Distance > distance)
@@ -138,6 +138,74 @@ namespace Voxel2Pixel.Draw
 							y: y,
 							voxel: voxelD.@byte,
 							visibleFace: voxelD.VisibleFace);
+		}
+		public static int DiagonalPeekWidth(IModel model, byte scaleX = 4) => (model.SizeX + model.SizeY) * scaleX;
+		public static int DiagonalPeekHeight(IModel model, byte scaleY = 6) => model.SizeZ * scaleY;
+		public struct VoxelF
+		{
+			public Voxel Voxel;
+			public VisibleFace VisibleFace;
+			public uint Distance => (uint)Voxel.X + Voxel.Y;
+		}
+		public static void DiagonalPeek(IModel model, IRectangleRenderer renderer, byte scaleX = 6, byte scaleY = 6)
+		{
+			ushort width = model.SizeX,
+				depth = model.SizeY,
+				height = model.SizeZ;
+			uint pixelWidth = (uint)(width + depth), index;
+			VoxelF[] grid = new VoxelF[pixelWidth * height];
+			foreach (Voxel voxel in model
+				.Where(voxel => voxel.@byte != 0))
+			{
+				index = (uint)(pixelWidth * (height - voxel.Z - 1) + depth - voxel.Y - 1 + voxel.X);
+				uint distance = (uint)voxel.X + voxel.Y;
+				if (!(grid[index] is VoxelF left)
+					|| left.Voxel.@byte == 0
+					|| left.Distance > distance)
+					grid[index] = new VoxelF
+					{
+						Voxel = voxel,
+						VisibleFace = VisibleFace.Left,
+					};
+				if (!(grid[++index] is VoxelF right)
+					|| right.Voxel.@byte == 0
+					|| right.Distance > distance)
+					grid[index] = new VoxelF
+					{
+						Voxel = voxel,
+						VisibleFace = VisibleFace.Right,
+					};
+			}
+			index = 0;
+			for (ushort y = 0; y < height; y++)
+				for (ushort x = 0; x < pixelWidth; x++)
+					if (grid[index++] is VoxelF f && f.Voxel.@byte != 0)
+						if (f.Voxel.Z >= height - 1
+							|| model[f.Voxel.X, f.Voxel.Y, (ushort)(f.Voxel.Z + 1)] == 0)
+						{
+							renderer.Rect(
+								x: x * scaleX,
+								y: y * scaleY,
+								voxel: f.Voxel.@byte,
+								visibleFace: VisibleFace.Top,
+								sizeX: scaleX,
+								sizeY: 1);
+							renderer.Rect(
+								x: x * scaleX,
+								y: y * scaleY + 1,
+								voxel: f.Voxel.@byte,
+								visibleFace: f.VisibleFace,
+								sizeX: scaleX,
+								sizeY: scaleY - 1);
+						}
+						else
+							renderer.Rect(
+								x: x * scaleX,
+								y: y * scaleY,
+								voxel: f.Voxel.@byte,
+								visibleFace: f.VisibleFace,
+								sizeX: scaleX,
+								sizeY: scaleY);
 		}
 		public static int AboveWidth(IModel model) => model.SizeX;
 		public static int AboveHeight(IModel model) => model.SizeY + model.SizeZ;
