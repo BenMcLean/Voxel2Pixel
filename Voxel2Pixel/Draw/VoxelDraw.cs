@@ -15,7 +15,7 @@ namespace Voxel2Pixel.Draw
 		#region Straight
 		public static int FrontWidth(IModel model) => model.SizeX;
 		public static int FrontHeight(IModel model) => model.SizeZ;
-		public static void Front(IModel model, IRectangleRenderer renderer)
+		public static void Front(IModel model, IRectangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Front)
 		{
 			for (ushort z = 0; z < model.SizeZ; z++)
 				for (ushort x = 0; x < model.SizeX; x++)
@@ -26,13 +26,14 @@ namespace Voxel2Pixel.Draw
 							renderer.Rect(
 								x: x,
 								y: model.SizeZ - 1 - z,
-								voxel: voxel);
+								voxel: voxel,
+								visibleFace: visibleFace);
 							break;
 						}
 		}
-		public static int FrontPeekWidth(IModel model, int scaleX = 6) => model.SizeX * scaleX;
-		public static int FrontPeekHeight(IModel model, int scaleY = 6) => model.SizeZ * scaleY;
-		public static void FrontPeek(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 6)
+		public static int FrontPeekWidth(IModel model, byte scaleX = 6) => model.SizeX * scaleX;
+		public static int FrontPeekHeight(IModel model, byte scaleY = 6) => model.SizeZ * scaleY;
+		public static void FrontPeek(IModel model, IRectangleRenderer renderer, byte scaleX = 6, byte scaleY = 6)
 		{
 			for (ushort z = 0; z < model.SizeZ; z++)
 				for (ushort x = 0; x < model.SizeX; x++)
@@ -66,208 +67,6 @@ namespace Voxel2Pixel.Draw
 									visibleFace: VisibleFace.Front,
 									sizeX: scaleX,
 									sizeY: scaleY);
-							break;
-						}
-		}
-		public static int RightWidth(IModel model) => model.SizeY;
-		public static int RightHeight(IModel model) => model.SizeZ;
-		public static void Right(IModel model, IRectangleRenderer renderer)
-		{
-			for (ushort z = 0; z < model.SizeZ; z++)
-				for (ushort y = 0; y < model.SizeY; y++)
-					for (ushort x = 0; x < model.SizeX; x++)
-						if (model[x, y, z] is byte voxel
-							&& voxel != 0)
-						{
-							renderer.Rect(
-								x: model.SizeY - 1 - y,
-								y: model.SizeZ - 1 - z,
-								voxel: voxel);
-							break;
-						}
-		}
-		public static int RightPeekWidth(IModel model, int scaleX = 6) => model.SizeY * scaleX;
-		public static int RightPeekHeight(IModel model, int scaleY = 6) => model.SizeZ * scaleY;
-		public static void RightPeek(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 6)
-		{
-			for (ushort z = 0; z < model.SizeZ; z++)
-				for (ushort y = 0; y < model.SizeY; y++)
-					for (ushort x = 0; x < model.SizeX; x++)
-						if (model[x, y, z] is byte voxel
-							&& voxel != 0)
-						{
-							if (z >= model.SizeZ - 1
-								|| model[x, y, (ushort)(z + 1)] == 0)
-							{
-								renderer.Rect(
-									x: (model.SizeY - 1 - y) * scaleX,
-									y: (model.SizeZ - 1 - z) * scaleY,
-									voxel: voxel,
-									visibleFace: VisibleFace.Top,
-									sizeX: scaleX,
-									sizeY: 1);
-								renderer.Rect(
-									x: (model.SizeY - 1 - y) * scaleX,
-									y: (model.SizeZ - 1 - z) * scaleY + 1,
-									voxel: voxel,
-									visibleFace: VisibleFace.Front,
-									sizeX: scaleX,
-									sizeY: scaleY - 1);
-							}
-							else
-								renderer.Rect(
-									x: (model.SizeY - 1 - y) * scaleX,
-									y: (model.SizeZ - 1 - z) * scaleY,
-									voxel: voxel,
-									visibleFace: VisibleFace.Front,
-									sizeX: scaleX,
-									sizeY: scaleY);
-							break;
-						}
-		}
-		public static int BackWidth(IModel model) => model.SizeX;
-		public static int BackHeight(IModel model) => model.SizeZ;
-		public static void Back(IModel model, IRectangleRenderer renderer)
-		{
-			for (ushort z = 0; z < model.SizeZ; z++)
-				for (ushort x = 0; x < model.SizeX; x++)
-					for (int y = model.SizeY - 1; y >= 0; y--)
-						if (model[x, (ushort)y, z] is byte voxel
-							&& voxel != 0)
-						{
-							renderer.Rect(
-								x: model.SizeX - 1 - x,
-								y: model.SizeZ - 1 - z,
-								voxel: voxel);
-							break;
-						}
-		}
-		public static int BackPeekWidth(IModel model, int scaleX = 6) => model.SizeX * scaleX;
-		public static int BackPeekHeight(IModel model, int scaleY = 6) => model.SizeZ * scaleY;
-		public static void BackPeek(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 6)
-		{
-			for (ushort z = 0; z < model.SizeZ; z++)
-				for (ushort x = 0; x < model.SizeX; x++)
-					for (int y = model.SizeY - 1; y >= 0; y--)
-						if (model[x, (ushort)y, z] is byte voxel
-							&& voxel != 0)
-						{
-							if (z >= model.SizeZ - 1
-								|| model[x, (ushort)y, (ushort)(z + 1)] == 0)
-							{
-								renderer.Rect(
-									x: (model.SizeX - 1 - x) * scaleX,
-									y: (model.SizeZ - 1 - z) * scaleY,
-									voxel: voxel,
-									visibleFace: VisibleFace.Top,
-									sizeX: scaleX,
-									sizeY: 1);
-								renderer.Rect(
-									x: (model.SizeX - 1 - x) * scaleX,
-									y: (model.SizeZ - 1 - z) * scaleY + 1,
-									voxel: voxel,
-									visibleFace: VisibleFace.Front,
-									sizeX: scaleX,
-									sizeY: scaleY - 1);
-							}
-							else
-								renderer.Rect(
-									x: (model.SizeX - 1 - x) * scaleX,
-									y: (model.SizeZ - 1 - z) * scaleY,
-									voxel: voxel,
-									visibleFace: VisibleFace.Front,
-									sizeX: scaleX,
-									sizeY: scaleY);
-							break;
-						}
-		}
-		public static int LeftWidth(IModel model) => model.SizeY;
-		public static int LeftHeight(IModel model) => model.SizeZ;
-		public static void Left(IModel model, IRectangleRenderer renderer)
-		{
-			for (ushort z = 0; z < model.SizeZ; z++)
-				for (ushort y = 0; y < model.SizeY; y++)
-					for (int x = model.SizeX - 1; x >= 0; x--)
-						if (model[(ushort)x, y, z] is byte voxel
-							&& voxel != 0)
-						{
-							renderer.Rect(
-								x: y,
-								y: model.SizeZ - 1 - z,
-								voxel: voxel);
-							break;
-						}
-		}
-		public static int LeftPeekWidth(IModel model, int scaleX = 6) => model.SizeY * scaleX;
-		public static int LeftPeekHeight(IModel model, int scaleY = 6) => model.SizeZ * scaleY;
-		public static void LeftPeek(IModel model, IRectangleRenderer renderer, int scaleX = 6, int scaleY = 6)
-		{
-			for (ushort z = 0; z < model.SizeZ; z++)
-				for (ushort y = 0; y < model.SizeY; y++)
-					for (int x = model.SizeX - 1; x >= 0; x--)
-						if (model[(ushort)x, y, z] is byte voxel
-							&& voxel != 0)
-						{
-							if (z >= model.SizeZ - 1
-								|| model[(ushort)x, y, (ushort)(z + 1)] == 0)
-							{
-								renderer.Rect(
-									x: y * scaleX,
-									y: (model.SizeZ - 1 - z) * scaleY,
-									voxel: voxel,
-									visibleFace: VisibleFace.Top,
-									sizeX: scaleX,
-									sizeY: 1);
-								renderer.Rect(
-									x: y * scaleX,
-									y: (model.SizeZ - 1 - z) * scaleY + 1,
-									voxel: voxel,
-									visibleFace: VisibleFace.Front,
-									sizeX: scaleX,
-									sizeY: scaleY - 1);
-							}
-							else
-								renderer.Rect(
-									x: y * scaleX,
-									y: (model.SizeZ - 1 - z) * scaleY,
-									voxel: voxel,
-									visibleFace: VisibleFace.Front,
-									sizeX: scaleX,
-									sizeY: scaleY);
-							break;
-						}
-		}
-		public static int TopWidth(IModel model) => model.SizeX;
-		public static int TopHeight(IModel model) => model.SizeY;
-		public static void Top(IModel model, IRectangleRenderer renderer)
-		{
-			for (ushort y = 0; y < model.SizeY; y++)
-				for (ushort x = 0; x < model.SizeX; x++)
-					for (int z = model.SizeZ - 1; z >= 0; z--)
-						if (model[x, y, (ushort)z] is byte voxel
-							&& voxel != 0)
-						{
-							renderer.Rect(
-								x: x,
-								y: model.SizeY - 1 - y,
-								voxel: voxel);
-							break;
-						}
-		}
-		public static int BottomWidth(IModel model) => model.SizeX;
-		public static int BottomHeight(IModel model) => model.SizeY;
-		public static void Bottom(IModel model, IRectangleRenderer renderer)
-		{
-			for (ushort x = 0; x < model.SizeX; x++)
-				for (ushort y = 0; y < model.SizeY; y++)
-					for (ushort z = 0; z < model.SizeZ; z++)
-						if (model[x, y, z] is byte voxel
-							&& voxel != 0)
-						{
-							renderer.Rect(
-								x: x,
-								y: y,
-								voxel: voxel);
 							break;
 						}
 		}
@@ -346,9 +145,9 @@ namespace Voxel2Pixel.Draw
 					}
 				}
 		}
-		public static int DiagonalPeekWidth(IModel model, int scaleX = 4) => (model.SizeX + model.SizeY) * scaleX;
-		public static int DiagonalPeekHeight(IModel model, int scaleY = 6) => model.SizeZ * scaleY;
-		public static void DiagonalPeek(IModel model, IRectangleRenderer renderer, int scaleX = 4, int scaleY = 6)
+		public static int DiagonalPeekWidth(IModel model, byte scaleX = 4) => (model.SizeX + model.SizeY) * scaleX;
+		public static int DiagonalPeekHeight(IModel model, byte scaleY = 6) => model.SizeZ * scaleY;
+		public static void DiagonalPeek(IModel model, IRectangleRenderer renderer, byte scaleX = 4, byte scaleY = 6)
 		{
 			void DrawRight(int x, int y, byte voxel, bool peek = false)
 			{
