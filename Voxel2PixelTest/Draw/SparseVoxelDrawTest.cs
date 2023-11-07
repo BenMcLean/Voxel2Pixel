@@ -144,5 +144,26 @@ namespace Voxel2PixelTest.Draw
 				frameDelay: 150)
 			.SaveAsGif("SparseVoxelDrawFront.gif");
 		}
+		[Fact]
+		public void Iso()
+		{
+			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
+			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
+			int width = (int)SparseVoxelDraw.IsoWidth(model),
+				height = (int)SparseVoxelDraw.IsoHeight(model);
+			ArrayRenderer arrayRenderer = new ArrayRenderer
+			{
+				Image = new byte[width * 4 * height],
+				Width = width,
+				VoxelColor = voxelColor,
+			};
+			SparseVoxelDraw.Iso(model, arrayRenderer);
+			ImageMaker.Png(
+				scaleX: 2,
+				scaleY: 1,
+				width: width,
+				bytes: arrayRenderer.Image)
+				.SaveAsPng("SparseVoxelDrawIso.png");
+		}
 	}
 }

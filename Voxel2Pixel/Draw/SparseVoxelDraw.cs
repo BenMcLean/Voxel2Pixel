@@ -342,11 +342,12 @@ namespace Voxel2Pixel.Draw
 					@byte: voxel.@byte,
 					visibleFace: VisibleFace.Right);
 			}
+			bool Right(ushort x, ushort y) => (x >> 1) % 2 == (y >> 1) % 2;
 			foreach (KeyValuePair<uint, VoxelD> triangle in dictionary)
 				renderer.Tri(
 					x: (ushort)triangle.Key,
 					y: (ushort)(triangle.Key >> 16),
-					right: (ushort)triangle.Key % 2 == ((ushort)(triangle.Key >> 16) % 4 < 2 ? 0 : 1),
+					right: Right((ushort)triangle.Key, (ushort)(triangle.Key >> 16)),
 					voxel: triangle.Value.@byte,
 					visibleFace: triangle.Value.VisibleFace);
 		}
