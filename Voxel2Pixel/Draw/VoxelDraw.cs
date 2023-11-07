@@ -29,18 +29,15 @@ namespace Voxel2Pixel.Draw
 		{
 			ushort width = model.SizeX,
 				height = model.SizeZ;
-			uint index;
 			VoxelY[] grid = new VoxelY[width * height];
 			foreach (Voxel voxel in model
 				.Where(voxel => voxel.Index != 0))
-			{
-				index = (uint)(width * (height - voxel.Z - 1) + voxel.X);
-				if (!(grid[index] is VoxelY old)
+				if (width * (height - voxel.Z - 1) + voxel.X is int i
+					&& (!(grid[i] is VoxelY old)
 						|| old.Index == 0
-						|| old.Y > voxel.Y)
-					grid[index] = new VoxelY(voxel);
-			}
-			index = 0;
+						|| old.Y > voxel.Y))
+					grid[i] = new VoxelY(voxel);
+			uint index = 0;
 			for (ushort y = 0; y < height; y++)
 				for (ushort x = 0; x < width; x++)
 					if (grid[index++] is VoxelY voxelY && voxelY.Index != 0)
@@ -52,15 +49,18 @@ namespace Voxel2Pixel.Draw
 		}
 		public static void FrontPeek(IModel model, IRectangleRenderer renderer, byte scaleX = 6, byte scaleY = 6)
 		{
-			ushort height = model.SizeZ;
-			Dictionary<uint, Voxel> dictionary = new Dictionary<uint, Voxel>();
-			uint Encode(Voxel voxel) => (uint)(voxel.Z << 16) | voxel.X;
+			ushort width = model.SizeX,
+				height = model.SizeZ;
+			Voxel[] grid = new Voxel[width * height];
 			foreach (Voxel voxel in model
-				.Where(voxel => voxel.Index != 0
-					&& (!dictionary.TryGetValue(Encode(voxel), out Voxel old)
-						|| old.Y > voxel.Y)))
-				dictionary[Encode(voxel)] = voxel;
-			foreach (Voxel voxel in dictionary.Values)
+				.Where(voxel => voxel.Index != 0))
+				if (width * (height - voxel.Z - 1) + voxel.X is int index
+					&& (!(grid[index] is Voxel old)
+						|| old.Index == 0
+						|| old.Y > voxel.Y))
+					grid[index] = voxel;
+			foreach (Voxel voxel in grid
+				.Where(voxel => voxel.Index != 0))
 				if (voxel.Z >= height - 1
 					|| model[voxel.X, voxel.Y, (ushort)(voxel.Z + 1)] == 0)
 				{
