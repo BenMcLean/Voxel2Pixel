@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Voxel2PixelTest.Model
 {
-    public class VoxFileModelTest
+	public class VoxFileModelTest
 	{
 		[Fact]
 		public void ArrayRendererTest()

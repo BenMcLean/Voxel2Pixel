@@ -78,7 +78,7 @@ namespace Voxel2PixelTest.Render
 								sizeX: sizeX,
 								sizeY: sizeY,
 								sizeZ: sizeZ));
-						SparseVoxelDraw.Iso(
+						VoxelDraw.Iso(
 							model: model,
 							renderer: arrayRenderer);
 						VoxelDraw.IsoLocate(

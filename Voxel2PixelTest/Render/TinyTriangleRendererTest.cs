@@ -12,7 +12,7 @@ namespace Voxel2PixelTest.Render
 		[Fact]
 		public void TinyTest()
 		{
-			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
+			VoxFileModel model = new VoxFileModel(@"..\..\..\Hazmat.vox");
 			int width = VoxelDraw.IsoWidth(model) / 2,
 				height = VoxelDraw.IsoHeight(model) / 4;
 			ArrayRenderer arrayRenderer = new ArrayRenderer

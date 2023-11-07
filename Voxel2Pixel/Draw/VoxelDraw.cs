@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
@@ -15,274 +15,197 @@ namespace Voxel2Pixel.Draw
 		#region Straight
 		public static int FrontWidth(IModel model) => model.SizeX;
 		public static int FrontHeight(IModel model) => model.SizeZ;
+		private struct VoxelY
+		{
+			public readonly ushort Y;
+			public readonly byte Index;
+			public VoxelY(Voxel voxel)
+			{
+				Y = voxel.Y;
+				Index = voxel.Index;
+			}
+		}
 		public static void Front(IModel model, IRectangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Front)
 		{
-			for (ushort z = 0; z < model.SizeZ; z++)
-				for (ushort x = 0; x < model.SizeX; x++)
-					for (ushort y = 0; y < model.SizeY; y++)
-						if (model[x, y, z] is byte voxel
-							&& voxel != 0)
-						{
-							renderer.Rect(
-								x: x,
-								y: model.SizeZ - 1 - z,
-								voxel: voxel,
-								visibleFace: visibleFace);
-							break;
-						}
+			ushort width = model.SizeX,
+				height = model.SizeZ;
+			uint index;
+			VoxelY[] grid = new VoxelY[width * height];
+			foreach (Voxel voxel in model
+				.Where(voxel => voxel.Index != 0))
+			{
+				index = (uint)(width * (height - voxel.Z - 1) + voxel.X);
+				if (!(grid[index] is VoxelY old)
+						|| old.Index == 0
+						|| old.Y > voxel.Y)
+					grid[index] = new VoxelY(voxel);
+			}
+			index = 0;
+			for (ushort y = 0; y < height; y++)
+				for (ushort x = 0; x < width; x++)
+					if (grid[index++] is VoxelY voxelY && voxelY.Index != 0)
+						renderer.Rect(
+							x: x,
+							y: y,
+							voxel: voxelY.Index,
+							visibleFace: visibleFace);
 		}
-		public static int FrontPeekWidth(IModel model, byte scaleX = 6) => model.SizeX * scaleX;
-		public static int FrontPeekHeight(IModel model, byte scaleY = 6) => model.SizeZ * scaleY;
 		public static void FrontPeek(IModel model, IRectangleRenderer renderer, byte scaleX = 6, byte scaleY = 6)
 		{
-			for (ushort z = 0; z < model.SizeZ; z++)
-				for (ushort x = 0; x < model.SizeX; x++)
-					for (ushort y = 0; y < model.SizeY; y++)
-						if (model[x, y, z] is byte voxel
-							&& voxel != 0)
-						{
-							if (z >= model.SizeZ - 1
-								|| model[x, y, (ushort)(z + 1)] == 0)
-							{
-								renderer.Rect(
-									x: x * scaleX,
-									y: (model.SizeZ - 1 - z) * scaleY,
-									voxel: voxel,
-									visibleFace: VisibleFace.Top,
-									sizeX: scaleX,
-									sizeY: 1);
-								renderer.Rect(
-									x: x * scaleX,
-									y: (model.SizeZ - 1 - z) * scaleY + 1,
-									voxel: voxel,
-									visibleFace: VisibleFace.Front,
-									sizeX: scaleX,
-									sizeY: scaleY - 1);
-							}
-							else
-								renderer.Rect(
-									x: x * scaleX,
-									y: (model.SizeZ - 1 - z) * scaleY,
-									voxel: voxel,
-									visibleFace: VisibleFace.Front,
-									sizeX: scaleX,
-									sizeY: scaleY);
-							break;
-						}
+			ushort height = model.SizeZ;
+			Dictionary<uint, Voxel> dictionary = new Dictionary<uint, Voxel>();
+			uint Encode(Voxel voxel) => (uint)(voxel.Z << 16) | voxel.X;
+			foreach (Voxel voxel in model
+				.Where(voxel => voxel.Index != 0
+					&& (!dictionary.TryGetValue(Encode(voxel), out Voxel old)
+						|| old.Y > voxel.Y)))
+				dictionary[Encode(voxel)] = voxel;
+			foreach (Voxel voxel in dictionary.Values)
+				if (voxel.Z >= height - 1
+					|| model[voxel.X, voxel.Y, (ushort)(voxel.Z + 1)] == 0)
+				{
+					renderer.Rect(
+						x: voxel.X * scaleX,
+						y: (height - 1 - voxel.Z) * scaleY,
+						voxel: voxel.Index,
+						visibleFace: VisibleFace.Top,
+						sizeX: scaleX,
+						sizeY: 1);
+					renderer.Rect(
+						x: voxel.X * scaleX,
+						y: (height - 1 - voxel.Z) * scaleY + 1,
+						voxel: voxel.Index,
+						visibleFace: VisibleFace.Front,
+						sizeX: scaleX,
+						sizeY: scaleY - 1);
+				}
+				else
+					renderer.Rect(
+						x: voxel.X * scaleX,
+						y: (height - 1 - voxel.Z) * scaleY,
+						voxel: voxel.Index,
+						visibleFace: VisibleFace.Front,
+						sizeX: scaleX,
+						sizeY: scaleY);
 		}
 		#endregion Straight
 		#region Diagonal
+		private struct DistantShape
+		{
+			public uint Distance;
+			public byte Index;
+			public VisibleFace VisibleFace;
+		}
 		public static int DiagonalWidth(IModel model) => model.SizeX + model.SizeY;
 		public static int DiagonalHeight(IModel model) => model.SizeZ;
 		public static void Diagonal(IModel model, IRectangleRenderer renderer)
 		{
-			int pixelWidth = model.SizeX + model.SizeY;
-			for (ushort pixelY = 0; pixelY < model.SizeZ; pixelY++)
-				for (ushort pixelX = 0; pixelX < pixelWidth; pixelX += 2)
-				{
-					bool leftDone = false,
-						rightDone = false;
-					ushort startX = (ushort)Math.Max(pixelX - model.SizeY + 1, 0),
-						startY = (ushort)Math.Max(model.SizeY - 1 - pixelX, 0),
-						voxelZ = (ushort)(model.SizeZ - 1 - pixelY);
-					if (pixelX >= pixelWidth - 1
-						&& model[(ushort)(model.SizeX - 1), 0, voxelZ] is byte rightEdge
-						&& rightEdge != 0)
+			ushort width = model.SizeX,
+				depth = model.SizeY,
+				height = model.SizeZ;
+			uint pixelWidth = (uint)(width + depth), index;
+			DistantShape[] grid = new DistantShape[pixelWidth * height];
+			foreach (Voxel voxel in model
+				.Where(voxel => voxel.Index != 0))
+			{
+				index = (uint)(pixelWidth * (height - voxel.Z - 1) + depth - voxel.Y - 1 + voxel.X);
+				uint distance = (uint)voxel.X + voxel.Y;
+				if (!(grid[index] is DistantShape left)
+					|| left.Index == 0
+					|| left.Distance > distance)
+					grid[index] = new DistantShape
 					{
+						Distance = distance,
+						Index = voxel.Index,
+						VisibleFace = VisibleFace.Left,
+					};
+				if (!(grid[++index] is DistantShape right)
+					|| right.Index == 0
+					|| right.Distance > distance)
+					grid[index] = new DistantShape
+					{
+						Distance = distance,
+						Index = voxel.Index,
+						VisibleFace = VisibleFace.Right,
+					};
+			}
+			index = 0;
+			for (ushort y = 0; y < height; y++)
+				for (ushort x = 0; x < pixelWidth; x++)
+					if (grid[index++] is DistantShape rect && rect.Index != 0)
 						renderer.Rect(
-							x: pixelX,
-							y: pixelY,
-							voxel: rightEdge,
-							visibleFace: VisibleFace.Right);
-						continue;
-					}
-					for (ushort voxelX = startX, voxelY = startY;
-						 voxelX <= model.SizeX && voxelY <= model.SizeY && !(leftDone && rightDone);
-						 voxelX++, voxelY++)
-					{
-						if (!leftDone
-							&& voxelX > 0
-							&& model[(ushort)(voxelX - 1), voxelY, voxelZ] is byte voxelRight
-							&& voxelRight != 0)
-						{
-							renderer.Rect(
-								x: pixelX,
-								y: pixelY,
-								voxel: voxelRight,
-								visibleFace: VisibleFace.Right);
-							leftDone = true;
-						}
-						if (!rightDone
-							&& voxelY > 0
-							&& model[voxelX, (ushort)(voxelY - 1), voxelZ] is byte voxelLeft
-							&& voxelLeft != 0)
-						{
-							renderer.Rect(
-								x: pixelX + 1,
-								y: pixelY,
-								voxel: voxelLeft,
-								visibleFace: VisibleFace.Left);
-							rightDone = true;
-						}
-						if (leftDone && rightDone) break;
-						if (model[voxelX, voxelY, voxelZ] is byte voxel
-							&& voxel != 0)
-						{
-							if (!leftDone)
-								renderer.Rect(
-									x: pixelX,
-									y: pixelY,
-									voxel: voxel,
-									visibleFace: VisibleFace.Left);
-							if (!rightDone)
-								renderer.Rect(
-									x: pixelX + 1,
-									y: pixelY,
-									voxel: voxel,
-									visibleFace: VisibleFace.Right);
-							break;
-						}
-					}
-				}
+							x: x,
+							y: y,
+							voxel: rect.Index,
+							visibleFace: rect.VisibleFace);
 		}
 		public static int DiagonalPeekWidth(IModel model, byte scaleX = 4) => (model.SizeX + model.SizeY) * scaleX;
 		public static int DiagonalPeekHeight(IModel model, byte scaleY = 6) => model.SizeZ * scaleY;
-		public static void DiagonalPeek(IModel model, IRectangleRenderer renderer, byte scaleX = 4, byte scaleY = 6)
+		public struct VoxelFace
 		{
-			void DrawRight(int x, int y, byte voxel, bool peek = false)
+			public Voxel Voxel;
+			public VisibleFace VisibleFace;
+			public uint Distance => (uint)Voxel.X + Voxel.Y;
+		}
+		public static void DiagonalPeek(IModel model, IRectangleRenderer renderer, byte scaleX = 6, byte scaleY = 6)
+		{
+			ushort width = model.SizeX,
+				depth = model.SizeY,
+				height = model.SizeZ;
+			uint pixelWidth = (uint)(width + depth), index;
+			VoxelFace[] grid = new VoxelFace[pixelWidth * height];
+			foreach (Voxel voxel in model
+				.Where(voxel => voxel.Index != 0))
 			{
-				if (peek)
-				{
-					renderer.Rect(
-						x: x * scaleX,
-						y: y * scaleY,
-						voxel: voxel,
-						visibleFace: VisibleFace.Top,
-						sizeX: scaleX,
-						sizeY: 1);
-					renderer.Rect(
-						x: x * scaleX,
-						y: y * scaleY + 1,
-						voxel: voxel,
-						visibleFace: VisibleFace.Right,
-						sizeX: scaleX,
-						sizeY: scaleY - 1);
-				}
-				else
-					renderer.Rect(
-						x: x * scaleX,
-						y: y * scaleY,
-						voxel: voxel,
-						visibleFace: VisibleFace.Right,
-						sizeX: scaleX,
-						sizeY: scaleY);
-			}
-			void DrawLeft(int x, int y, byte voxel, bool peek = false)
-			{
-				if (peek)
-				{
-					renderer.Rect(
-						x: x * scaleX,
-						y: y * scaleY,
-						voxel: voxel,
-						visibleFace: VisibleFace.Top,
-						sizeX: scaleX,
-						sizeY: 1);
-					renderer.Rect(
-						x: x * scaleX,
-						y: y * scaleY + 1,
-						voxel: voxel,
-						visibleFace: VisibleFace.Left,
-						sizeX: scaleX,
-						sizeY: scaleY - 1);
-				}
-				else
-					renderer.Rect(
-						x: x * scaleX,
-						y: y * scaleY,
-						voxel: voxel,
-						visibleFace: VisibleFace.Left,
-						sizeX: scaleX,
-						sizeY: scaleY);
-			}
-			ushort pixelWidth = (ushort)(model.SizeX + model.SizeY);
-			for (ushort pixelY = 0; pixelY < model.SizeZ; pixelY++)
-				for (ushort pixelX = 0; pixelX < pixelWidth; pixelX += 2)
-				{
-					bool leftDone = false,
-						rightDone = false;
-					ushort startX = (ushort)(Math.Max(pixelX - model.SizeY + 1, 0)),
-						startY = (ushort)(Math.Max(model.SizeY - 1 - pixelX, 0)),
-						voxelZ = (ushort)(model.SizeZ - 1 - pixelY);
-					if (pixelX >= pixelWidth - 1
-						&& model[(ushort)(model.SizeX - 1), 0, voxelZ] is byte rightEdge
-						&& rightEdge != 0)
+				index = (uint)(pixelWidth * (height - voxel.Z - 1) + depth - voxel.Y - 1 + voxel.X);
+				uint distance = (uint)voxel.X + voxel.Y;
+				if (!(grid[index] is VoxelFace left)
+					|| left.Voxel.Index == 0
+					|| left.Distance > distance)
+					grid[index] = new VoxelFace
 					{
-						DrawRight(
-							x: pixelX,
-							y: pixelY,
-							voxel: rightEdge,
-							peek: voxelZ >= model.SizeZ
-								|| (model[(ushort)(model.SizeX - 1), 0, (ushort)(voxelZ + 1)] is byte voxelAbove
-								&& voxelAbove != 0));
-						continue;
-					}
-					for (ushort voxelX = startX, voxelY = startY;
-						 voxelX <= model.SizeX && voxelY <= model.SizeY && !(leftDone && rightDone);
-						 voxelX++, voxelY++)
+						Voxel = voxel,
+						VisibleFace = VisibleFace.Left,
+					};
+				if (!(grid[++index] is VoxelFace right)
+					|| right.Voxel.Index == 0
+					|| right.Distance > distance)
+					grid[index] = new VoxelFace
 					{
-						if (!leftDone
-							&& voxelX > 0
-							&& model[(ushort)(voxelX - 1), voxelY, voxelZ] is byte voxelRight
-							&& voxelRight != 0)
+						Voxel = voxel,
+						VisibleFace = VisibleFace.Right,
+					};
+			}
+			index = 0;
+			for (ushort y = 0; y < height; y++)
+				for (ushort x = 0; x < pixelWidth; x++)
+					if (grid[index++] is VoxelFace face && face.Voxel.Index != 0)
+						if (face.Voxel.Z >= height - 1
+							|| model[face.Voxel.X, face.Voxel.Y, (ushort)(face.Voxel.Z + 1)] == 0)
 						{
-							DrawRight(
-								x: pixelX,
-								y: pixelY,
-								voxel: voxelRight,
-								peek: voxelZ == model.SizeZ - 1
-									|| (model[(ushort)(voxelX - 1), voxelY, (ushort)(voxelZ + 1)] is byte voxelAbove
-									&& voxelAbove == 0));
-							leftDone = true;
+							renderer.Rect(
+								x: x * scaleX,
+								y: y * scaleY,
+								voxel: face.Voxel.Index,
+								visibleFace: VisibleFace.Top,
+								sizeX: scaleX,
+								sizeY: 1);
+							renderer.Rect(
+								x: x * scaleX,
+								y: y * scaleY + 1,
+								voxel: face.Voxel.Index,
+								visibleFace: face.VisibleFace,
+								sizeX: scaleX,
+								sizeY: scaleY - 1);
 						}
-						if (!rightDone
-							&& voxelY > 0
-							&& model[voxelX, (ushort)(voxelY - 1), voxelZ] is byte voxelLeft
-							&& voxelLeft != 0)
-						{
-							DrawLeft(
-								x: pixelX + 1,
-								y: pixelY,
-								voxel: voxelLeft,
-								peek: voxelZ == model.SizeZ - 1
-									|| (model[voxelX, (ushort)(voxelY - 1), (ushort)(voxelZ + 1)] is byte voxelAbove
-									&& voxelAbove == 0));
-							rightDone = true;
-						}
-						if (leftDone && rightDone) break;
-						if (model[voxelX, voxelY, voxelZ] is byte voxel
-							&& voxel != 0)
-						{
-							if (!leftDone)
-								DrawLeft(
-									x: pixelX,
-									y: pixelY,
-									voxel: voxel,
-									peek: voxelZ == model.SizeZ - 1
-										|| (model[voxelX, voxelY, (ushort)(voxelZ + 1)] is byte voxelAbove
-										&& voxelAbove == 0));
-							if (!rightDone)
-								DrawRight(
-									x: pixelX + 1,
-									y: pixelY,
-									voxel: voxel,
-									peek: voxelZ == model.SizeZ - 1
-										|| (model[voxelX, voxelY, (ushort)(voxelZ + 1)] is byte voxelAbove
-										&& voxelAbove == 0));
-							break;
-						}
-					}
-				}
+						else
+							renderer.Rect(
+								x: x * scaleX,
+								y: y * scaleY,
+								voxel: face.Voxel.Index,
+								visibleFace: face.VisibleFace,
+								sizeX: scaleX,
+								sizeY: scaleY);
 		}
 		public static int AboveWidth(IModel model) => model.SizeX;
 		public static int AboveHeight(IModel model) => model.SizeY + model.SizeZ;
@@ -293,94 +216,45 @@ namespace Voxel2Pixel.Draw
 		}
 		public static void Above(IModel model, IRectangleRenderer renderer)
 		{
-			ushort pixelHeight = (ushort)(model.SizeY + model.SizeZ);
-			for (ushort pixelX = 0; pixelX < model.SizeX; pixelX++)
-				for (ushort pixelY = 0; pixelY <= pixelHeight; pixelY += 2)
-				{
-					if (pixelY + 2 > pixelHeight
-						&& model[pixelX, 0, 0] is byte bottomEdge
-						&& bottomEdge != 0)
+			ushort width = model.SizeX,
+				depth = model.SizeY,
+				height = model.SizeZ;
+			uint pixelHeight = (uint)(depth + height), index;
+			DistantShape[] grid = new DistantShape[width * pixelHeight];
+			foreach (Voxel voxel in model
+				.Where(voxel => voxel.Index != 0))
+			{
+				index = width * (pixelHeight - 2 - voxel.Y - voxel.Z) + voxel.X;
+				uint distance = (uint)(height + voxel.Y - voxel.Z - 1);
+				if (!(grid[index] is DistantShape top)
+					|| top.Index == 0
+					|| top.Distance > distance)
+					grid[index] = new DistantShape
 					{
+						Distance = distance,
+						Index = voxel.Index,
+						VisibleFace = VisibleFace.Top,
+					};
+				index += width;
+				if (!(grid[index] is DistantShape front)
+					|| front.Index == 0
+					|| front.Distance > distance)
+					grid[index] = new DistantShape
+					{
+						Distance = distance,
+						Index = voxel.Index,
+						VisibleFace = VisibleFace.Front,
+					};
+			}
+			index = 0;
+			for (ushort y = 0; y < pixelHeight; y++)
+				for (ushort x = 0; x < width; x++)
+					if (grid[index++] is DistantShape rect && rect.Index != 0)
 						renderer.Rect(
-							x: pixelX,
-							y: pixelY,
-							voxel: bottomEdge);
-						continue;
-					}
-					ushort startY = (ushort)Math.Max(model.SizeY - 1 - pixelY, 0),
-						startZ = (ushort)(model.SizeZ - 1 - Math.Max(pixelY + 1 - model.SizeY, 0));
-					bool higher = false,
-						lower = false;
-					for (ushort voxelY = startY, voxelZ = startZ;
-						voxelY < model.SizeY && voxelZ >= 0 && !(higher && lower);
-						voxelY++, voxelZ--)
-					{
-						if (!higher
-							&& voxelZ < model.SizeZ - 1
-							&& model[pixelX, voxelY, (ushort)(voxelZ + 1)] is byte voxelAbove
-							&& voxelAbove != 0)
-						{
-							renderer.Rect(
-								x: pixelX,
-								y: pixelY,
-								voxel: voxelAbove);
-							higher = true;
-						}
-						if (!lower
-							&& voxelY > 0
-							&& model[pixelX, (ushort)(voxelY - 1), voxelZ] is byte voxelFront
-							&& voxelFront != 0)
-						{
-							renderer.Rect(
-								x: pixelX,
-								y: pixelY + 1,
-								voxel: voxelFront,
-								visibleFace: VisibleFace.Top);
-							lower = true;
-						}
-						if (model[pixelX, voxelY, voxelZ] is byte voxel
-							&& voxel != 0)
-						{
-							if (!higher)
-								renderer.Rect(
-									x: pixelX,
-									y: pixelY,
-									voxel: voxel,
-									visibleFace: VisibleFace.Top);
-							if (!lower)
-								renderer.Rect(
-									x: pixelX,
-									y: pixelY + 1,
-									voxel: voxel);
-							break;
-						}
-						if (!higher
-							&& voxelY < model.SizeY - 1
-							&& model[pixelX, (ushort)(voxelY + 1), voxelZ] is byte voxelBack
-							&& voxelBack != 0)
-						{
-							renderer.Rect(
-								x: pixelX,
-								y: pixelY,
-								voxel: voxelBack);
-							higher = true;
-						}
-						if (!lower
-							&& voxelZ > 0
-							&& model[pixelX, voxelY, (ushort)(voxelZ - 1)] is byte voxelBelow
-							&& voxelBelow != 0)
-						{
-							renderer.Rect(
-								x: pixelX,
-								y: pixelY + 1,
-								voxel: voxelBelow,
-								visibleFace: VisibleFace.Top);
-							lower = true;
-						}
-						if (higher && lower)
-							break;
-					}
-				}
+							x: x,
+							y: y,
+							voxel: rect.Index,
+							visibleFace: rect.VisibleFace);
 		}
 		#endregion Diagonal
 		#region Isometric
@@ -399,371 +273,86 @@ namespace Voxel2Pixel.Draw
 		}
 		public static void Iso(IModel model, ITriangleRenderer renderer)
 		{
-			int modelSizeX2 = model.SizeX * 2,
-				modelSizeY2 = model.SizeY * 2,
-				modelSizeZ4 = model.SizeZ * 4,
-				pixelWidth = modelSizeX2 + modelSizeY2,
-				pixelHeight = pixelWidth + modelSizeZ4;
-			bool evenSizeX = model.SizeX % 2 == 0,
-				evenSizeY = model.SizeY % 2 == 0;
-			bool[] tiles = new bool[4];
-			#region Isometric local functions
-			bool IsOutside(int x, int y, int z) => x < 0 || y < 0 || z < 0 || model.IsOutside((ushort)x, (ushort)y, (ushort)z);
-			byte At(int x, int y, int z) => model[(ushort)x, (ushort)y, (ushort)z];
-			void Tile(int tile, int x, int y, byte voxel, VisibleFace visibleFace = VisibleFace.Front)
+			bool isOddWidth = model.SizeX % 2 == 1;
+			ushort height = model.SizeZ;
+			Dictionary<uint, DistantShape> dictionary = new Dictionary<uint, DistantShape>();
+			void Tri(ushort x, ushort y, uint distance, byte @byte, VisibleFace visibleFace = VisibleFace.Front)
 			{
-				// 12
-				//1122
-				//0123
-				//0033
-				//0  3
-				if (!tiles[tile])
-				{
-					renderer.Tri(
-						x: x + (tile < 2 ? 0 : 2),
-						y: y + (tile == 0 || tile == 3 ? 2 : 0),
-						right: tile % 2 == 0,
-						voxel: voxel,
-						visibleFace: visibleFace);
-					tiles[tile] = true;
-				}
-			}
-			#endregion Isometric local functions
-			#region Isometric main tiled area
-			for (int pixelY = 0; pixelY < pixelHeight - 2; pixelY += 4)
-			{
-				int pixelStartX = pixelY < modelSizeX2 + modelSizeZ4 ?
-						modelSizeX2 - pixelY - 1 > 0 ?
-							modelSizeX2 - pixelY - 2
-							: (evenSizeX ? -2 : 0) + (pixelY % 4 < 2 ? 0 : 1)
-						: pixelY - modelSizeX2 - modelSizeZ4 + 2,
-					pixelStopX = pixelY < modelSizeY2 + modelSizeZ4 ?
-						Math.Min(modelSizeX2 + pixelY + 2, pixelWidth - 1)
-						: pixelWidth + modelSizeY2 + modelSizeZ4 - pixelY - 2;
-				for (int pixelX = pixelStartX; pixelX < pixelStopX; pixelX += 4)
-				{
-					bool right = ((pixelX >> 1) + (pixelY >> 1) & 1) == (evenSizeX ? 0 : 1),
-						startAtTop = pixelY < modelSizeX2 + modelSizeY2
-							&& pixelX > pixelY - modelSizeX2
-							&& pixelX < pixelWidth + modelSizeY2 - pixelY - 2,
-						startAtLeft = !startAtTop && pixelX < modelSizeY2;
-					int halfX = pixelX / 2,
-						halfY = pixelY / 2,
-						startX = startAtTop ? model.SizeX - 1 - (halfY - halfX + model.SizeX) / 2
-							: startAtLeft ? 0
-							: halfX - model.SizeY + 1,
-						startY = startAtTop ? model.SizeY - 1 - (halfX + halfY - model.SizeX + 1) / 2
-							: startAtLeft ? model.SizeY - 1 - halfX
-							: 0,
-						startZ = startAtTop ? model.SizeZ - 1
-							: startAtLeft ? model.SizeZ - 2 - (halfY - halfX - model.SizeX) / 2
-							: model.SizeY + model.SizeZ - (halfY + halfX - model.SizeX - 1) / 2 - 3;
-					Array.Clear(tiles, 0, tiles.Length);
-					for (int voxelX = startX, voxelY = startY, voxelZ = startZ;
-							voxelX <= model.SizeX && voxelY <= model.SizeY && voxelZ >= 0 && tiles.Any(@bool => !@bool);
-							voxelX++, voxelY++, voxelZ--)
+				uint index = (uint)(y << 16) | x;
+				if (!dictionary.TryGetValue(index, out DistantShape old)
+						|| old.Distance > distance)
+					dictionary[index] = new DistantShape
 					{
-						if ((!tiles[0] || !tiles[1])
-							&& !IsOutside(voxelX - 1, voxelY, voxelZ + 1)
-							&& At(voxelX - 1, voxelY, voxelZ + 1) is byte xMinus1zPlus1
-							&& xMinus1zPlus1 != 0)
-						{
-							Tile(tile: 0,
-								x: pixelX,
-								y: pixelY,
-								voxel: xMinus1zPlus1,
-								visibleFace: VisibleFace.Right);
-							Tile(tile: 1,
-								x: pixelX,
-								y: pixelY,
-								voxel: xMinus1zPlus1,
-								visibleFace: VisibleFace.Right);
-						}
-						if ((!tiles[2] || !tiles[3])
-							&& !IsOutside(voxelX, voxelY - 1, voxelZ + 1)
-							&& At(voxelX, voxelY - 1, voxelZ + 1) is byte yMinus1zPlus1
-							&& yMinus1zPlus1 != 0)
-						{
-							Tile(tile: 2,
-								x: pixelX,
-								y: pixelY,
-								voxel: yMinus1zPlus1,
-								visibleFace: VisibleFace.Left);
-							Tile(tile: 3,
-								x: pixelX,
-								y: pixelY,
-								voxel: yMinus1zPlus1,
-								visibleFace: VisibleFace.Left);
-						}
-						if ((!tiles[1] || !tiles[2])
-							&& !IsOutside(voxelX, voxelY, voxelZ + 1)
-							&& At(voxelX, voxelY, voxelZ + 1) is byte zPlus1
-							&& zPlus1 != 0)
-						{
-							Tile(tile: 1,
-								x: pixelX,
-								y: pixelY,
-								voxel: zPlus1,
-								visibleFace: VisibleFace.Left);
-							Tile(tile: 2,
-								x: pixelX,
-								y: pixelY,
-								voxel: zPlus1,
-								visibleFace: VisibleFace.Right);
-						}
-						if (!tiles[0]
-							&& !IsOutside(voxelX - 1, voxelY, voxelZ)
-							&& At(voxelX - 1, voxelY, voxelZ) is byte xMinus1
-							&& xMinus1 != 0)
-							Tile(tile: 0,
-								x: pixelX,
-								y: pixelY,
-								voxel: xMinus1,
-								visibleFace: VisibleFace.Top);
-						if (!tiles[3]
-							&& !IsOutside(voxelX, voxelY - 1, voxelZ)
-							&& At(voxelX, voxelY - 1, voxelZ) is byte yMinus1
-							&& yMinus1 != 0)
-							Tile(tile: 3,
-								x: pixelX,
-								y: pixelY,
-								voxel: yMinus1,
-								visibleFace: VisibleFace.Top);
-						if (!IsOutside(voxelX, voxelY, voxelZ)
-							&& At(voxelX, voxelY, voxelZ) is byte voxel
-							&& voxel != 0)
-						{
-							Tile(tile: 0,
-								x: pixelX,
-								y: pixelY,
-								voxel: voxel,
-								visibleFace: VisibleFace.Left);
-							Tile(tile: 1,
-								x: pixelX,
-								y: pixelY,
-								voxel: voxel,
-								visibleFace: VisibleFace.Top);
-							Tile(tile: 2,
-								x: pixelX,
-								y: pixelY,
-								voxel: voxel,
-								visibleFace: VisibleFace.Top);
-							Tile(tile: 3,
-								x: pixelX,
-								y: pixelY,
-								voxel: voxel,
-								visibleFace: VisibleFace.Right);
-							break;
-						}
-						if ((!tiles[0] || !tiles[1])
-							&& !IsOutside(voxelX, voxelY + 1, voxelZ)
-							&& At(voxelX, voxelY + 1, voxelZ) is byte yPlus1
-							&& yPlus1 != 0)
-						{
-							Tile(tile: 0,
-								x: pixelX,
-								y: pixelY,
-								voxel: yPlus1,
-								visibleFace: VisibleFace.Right);
-							Tile(tile: 1,
-								x: pixelX,
-								y: pixelY,
-								voxel: yPlus1,
-								visibleFace: VisibleFace.Right);
-						}
-						if ((!tiles[2] || !tiles[3])
-							&& !IsOutside(voxelX + 1, voxelY, voxelZ)
-							&& At(voxelX + 1, voxelY, voxelZ) is byte xPlus1
-							&& xPlus1 != 0)
-						{
-							Tile(tile: 2,
-								x: pixelX,
-								y: pixelY,
-								voxel: xPlus1,
-								visibleFace: VisibleFace.Left);
-							Tile(tile: 3,
-								x: pixelX,
-								y: pixelY,
-								voxel: xPlus1,
-								visibleFace: VisibleFace.Left);
-						}
-						if ((!tiles[1] || !tiles[2])
-							&& !IsOutside(voxelX + 1, voxelY + 1, voxelZ)
-							&& At(voxelX + 1, voxelY + 1, voxelZ) is byte xPlus1yPlus1
-							&& xPlus1yPlus1 != 0)
-						{
-							Tile(tile: 1,
-								x: pixelX,
-								y: pixelY,
-								voxel: xPlus1yPlus1,
-								visibleFace: VisibleFace.Left);
-							Tile(tile: 2,
-								x: pixelX,
-								y: pixelY,
-								voxel: xPlus1yPlus1,
-								visibleFace: VisibleFace.Right);
-						}
-						if (!tiles[0]
-							&& !IsOutside(voxelX, voxelY + 1, voxelZ - 1)
-							&& At(voxelX, voxelY + 1, voxelZ - 1) is byte yPlus1zMinus1
-							&& yPlus1zMinus1 != 0)
-							Tile(tile: 0,
-								x: pixelX,
-								y: pixelY,
-								voxel: yPlus1zMinus1,
-								visibleFace: VisibleFace.Top);
-						if (!tiles[3]
-							&& !IsOutside(voxelX + 1, voxelY, voxelZ - 1)
-							&& At(voxelX + 1, voxelY, voxelZ - 1) is byte xPlus1zMinus1
-							&& xPlus1zMinus1 != 0)
-							Tile(tile: 3,
-								x: pixelX,
-								y: pixelY,
-								voxel: xPlus1zMinus1,
-								visibleFace: VisibleFace.Top);
-					}
-				}
+						Distance = distance,
+						Index = @byte,
+						VisibleFace = visibleFace,
+					};
 			}
-			#endregion Isometric main tiled area
-			#region Isometric top left edge
-			for (int pixelX = evenSizeX ? 0 : 2, pixelY = modelSizeX2 - (evenSizeX ? 2 : 4);
-				pixelX < modelSizeX2 && pixelY > 1;
-				pixelX += 4, pixelY -= 4)
+			foreach (Voxel voxel in model
+				.Where(voxel => voxel.Index != 0))
 			{
-				int voxelX = model.SizeX - 1 - (pixelY / 2 - pixelX / 2 + model.SizeX) / 2;
-				if (!IsOutside(voxelX, model.SizeY - 1, model.SizeZ - 1)
-					&& At(voxelX, model.SizeY - 1, model.SizeZ - 1) is byte voxel
-					&& voxel != 0)
-					renderer.Tri(
-						x: pixelX,
-						y: pixelY,
-						right: false,
-						voxel: voxel,
-						visibleFace: VisibleFace.Top);
-			}
-			#endregion Isometric top left edge
-			#region Isometric top right edge
-			for (int pixelX = modelSizeX2 + 2, pixelY = 2;
-				pixelX < pixelWidth && pixelY < modelSizeY2;
-				pixelX += 4, pixelY += 4)
-			{
-				int voxelY = model.SizeY - 1 - (pixelX / 2 + pixelY / 2 - model.SizeX + 1) / 2;
-				if (!IsOutside(model.SizeX - 1, voxelY, model.SizeZ - 1)
-					&& At(model.SizeX - 1, voxelY, model.SizeZ - 1) is byte voxel
-					&& voxel != 0)
-					renderer.Tri(
-						x: pixelX,
-						y: pixelY,
-						right: true,
-						voxel: voxel,
-						visibleFace: VisibleFace.Top);
-			}
-			#endregion Isometric top right edge
-			#region Isometric bottom left edge
-			for (int pixelX = evenSizeX ? 0 : -2, pixelY = modelSizeX2 + modelSizeZ4 - (evenSizeX ? 4 : 6);
-				pixelX < modelSizeY2 && pixelY < pixelHeight;
-				pixelX += 4, pixelY += 4)
-			{
-				int voxelY = model.SizeY - 1 - pixelX / 2;
-				if (pixelX >= 2
-					&& !IsOutside(0, voxelY + 1, 0)
-					&& At(0, voxelY + 1, 0) is byte leftVoxel
-					&& leftVoxel != 0)
-				{
-					renderer.Tri(
-						x: pixelX - 2,
-						y: pixelY,
-						right: false,
-						voxel: leftVoxel,
-						visibleFace: VisibleFace.Left);
-					renderer.Tri(
-						x: pixelX,
-						y: pixelY,
-						right: true,
-						voxel: leftVoxel,
-						visibleFace: VisibleFace.Right);
-				}
-				if (!IsOutside(0, voxelY, 0)
-					&& At(0, voxelY, 0) is byte voxel
-					&& voxel != 0)
-				{
-					renderer.Tri(
-						x: pixelX,
-						y: pixelY,
-						right: true,
-						voxel: voxel,
-						visibleFace: VisibleFace.Left);
-					renderer.Tri(
-						x: pixelX,
-						y: pixelY + 2,
-						right: false,
-						voxel: voxel,
-						visibleFace: VisibleFace.Left);
-				}
-			}
-			#endregion Isometric bottom left edge
-			#region Isometric bottom right edge
-			for (int pixelX = modelSizeY2 + (evenSizeX != evenSizeY ? 0 : 2), pixelY = modelSizeX2 + modelSizeZ4 + modelSizeY2 - (evenSizeX != evenSizeY ? 6 : 8);
-				pixelX < pixelWidth;
-				pixelX += 4, pixelY -= 4)
-			{
-				int voxelX = pixelX / 2 - model.SizeY;
-				if (pixelX < pixelWidth - 2
-					&& !IsOutside(voxelX + 1, 0, 0)
-					&& At(voxelX + 1, 0, 0) is byte rightVoxel
-					&& rightVoxel != 0)
-				{
-					renderer.Tri(
-						x: pixelX,
-						y: pixelY,
-						right: false,
-						voxel: rightVoxel,
-						visibleFace: VisibleFace.Left);
-					renderer.Tri(
-						x: pixelX + 2,
-						y: pixelY,
-						right: true,
-						voxel: rightVoxel,
-						visibleFace: VisibleFace.Right);
-				}
-				if (!IsOutside(voxelX, 0, 0)
-					&& At(voxelX, 0, 0) is byte voxel
-					&& voxel != 0)
-				{
-					renderer.Tri(
-						x: pixelX,
-						y: pixelY,
-						right: false,
-						voxel: voxel,
-						visibleFace: VisibleFace.Right);
-					renderer.Tri(
-						x: pixelX,
-						y: pixelY + 2,
-						right: true,
-						voxel: voxel,
-						visibleFace: VisibleFace.Right);
-				}
-			}
-			#endregion Isometric bottom right edge
-			#region Isometric origin
-			if (evenSizeX == evenSizeY
-				&& model[0, 0, 0] is byte origin
-				&& origin != 0)
-			{
-				renderer.Tri(
-					x: modelSizeY2 - 2,
-					y: pixelHeight - 4,
-					right: false,
-					voxel: origin,
+				uint distance = (uint)voxel.X + voxel.Y + height - voxel.Z - 1;
+				IsoLocate(
+					pixelX: out int pixelX,
+					pixelY: out int pixelY,
+					model: model,
+					voxelX: voxel.X,
+					voxelY: voxel.Y,
+					voxelZ: voxel.Z);
+				// 01
+				//0011
+				//2014
+				//2244
+				//2354
+				//3355
+				// 35
+				Tri(//0
+					x: (ushort)(pixelX - 2),
+					y: (ushort)(pixelY - 6),
+					distance: distance,
+					@byte: voxel.Index,
+					visibleFace: VisibleFace.Top);
+				Tri(//1
+					x: (ushort)pixelX,
+					y: (ushort)(pixelY - 6),
+					distance: distance,
+					@byte: voxel.Index,
+					visibleFace: VisibleFace.Top);
+				Tri(//2
+					x: (ushort)(pixelX - 2),
+					y: (ushort)(pixelY - 4),
+					distance: distance,
+					@byte: voxel.Index,
 					visibleFace: VisibleFace.Left);
-				renderer.Tri(
-					x: modelSizeY2,
-					y: pixelHeight - 4,
-					right: true,
-					voxel: origin,
+				Tri(//3
+					x: (ushort)(pixelX - 2),
+					y: (ushort)(pixelY - 2),
+					distance: distance,
+					@byte: voxel.Index,
+					visibleFace: VisibleFace.Left);
+				Tri(//4
+					x: (ushort)pixelX,
+					y: (ushort)(pixelY - 4),
+					distance: distance,
+					@byte: voxel.Index,
+					visibleFace: VisibleFace.Right);
+				Tri(//5
+					x: (ushort)pixelX,
+					y: (ushort)(pixelY - 2),
+					distance: distance,
+					@byte: voxel.Index,
 					visibleFace: VisibleFace.Right);
 			}
-			#endregion Isometric origin
+			bool Right(ushort x, ushort y) => ((x >> 1) % 2 == (y >> 1) % 2) ^ isOddWidth;
+			foreach (KeyValuePair<uint, DistantShape> triangle in dictionary)
+				renderer.Tri(
+					x: (ushort)triangle.Key,
+					y: (ushort)(triangle.Key >> 16),
+					right: Right(
+						x: (ushort)triangle.Key,
+						y: (ushort)(triangle.Key >> 16)),
+					voxel: triangle.Value.Index,
+					visibleFace: triangle.Value.VisibleFace);
 		}
 		#endregion Isometric
 	}
