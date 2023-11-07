@@ -294,8 +294,8 @@ namespace Voxel2Pixel.Draw
 				.Where(voxel => voxel.Index != 0))
 			{
 				uint distance = (uint)voxel.X + voxel.Y + height - voxel.Z - 1;
-				ushort pixelX = (ushort)(2 * (depth + voxel.X - voxel.Y)),
-					pixelY = (ushort)(isoHeight - 2 * (voxel.X + voxel.Y) - 4 * voxel.Z - 1);
+				ushort x = (ushort)(2 * (depth + voxel.X - voxel.Y)),
+					y = (ushort)(isoHeight - 2 * (voxel.X + voxel.Y) - 4 * voxel.Z - 1);
 				// 01
 				//0011
 				//2014
@@ -304,51 +304,48 @@ namespace Voxel2Pixel.Draw
 				//3355
 				// 35
 				Tri(//0
-					x: (ushort)(pixelX - 2),
-					y: (ushort)(pixelY - 6),
+					x: (ushort)(x - 2),
+					y: (ushort)(y - 6),
 					distance: distance,
 					@byte: voxel.Index,
 					visibleFace: VisibleFace.Top);
 				Tri(//1
-					x: pixelX,
-					y: (ushort)(pixelY - 6),
+					x: x,
+					y: (ushort)(y - 6),
 					distance: distance,
 					@byte: voxel.Index,
 					visibleFace: VisibleFace.Top);
 				Tri(//2
-					x: (ushort)(pixelX - 2),
-					y: (ushort)(pixelY - 4),
+					x: (ushort)(x - 2),
+					y: (ushort)(y - 4),
 					distance: distance,
 					@byte: voxel.Index,
 					visibleFace: VisibleFace.Left);
 				Tri(//3
-					x: (ushort)(pixelX - 2),
-					y: (ushort)(pixelY - 2),
+					x: (ushort)(x - 2),
+					y: (ushort)(y - 2),
 					distance: distance,
 					@byte: voxel.Index,
 					visibleFace: VisibleFace.Left);
 				Tri(//4
-					x: pixelX,
-					y: (ushort)(pixelY - 4),
+					x: x,
+					y: (ushort)(y - 4),
 					distance: distance,
 					@byte: voxel.Index,
 					visibleFace: VisibleFace.Right);
 				Tri(//5
-					x: pixelX,
-					y: (ushort)(pixelY - 2),
+					x: x,
+					y: (ushort)(y - 2),
 					distance: distance,
 					@byte: voxel.Index,
 					visibleFace: VisibleFace.Right);
 			}
 			byte oddWidth = (byte)(width & 1);
-			bool Right(ushort x, ushort y) => (((x ^ y) >> 1) & 1) == oddWidth;
 			foreach (KeyValuePair<uint, DistantShape> triangle in dictionary)
 				renderer.Tri(
 					x: (ushort)triangle.Key,
 					y: (ushort)(triangle.Key >> 16),
-					right: Right(
-						x: (ushort)triangle.Key,
-						y: (ushort)(triangle.Key >> 16)),
+					right: (((triangle.Key >> 1) ^ (triangle.Key >> 17)) & 1u) == oddWidth,
 					voxel: triangle.Value.Index,
 					visibleFace: triangle.Value.VisibleFace);
 		}
