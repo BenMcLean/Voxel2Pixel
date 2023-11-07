@@ -257,5 +257,99 @@ namespace Voxel2Pixel.Draw
 							visibleFace: voxelD.VisibleFace);
 		}
 		#endregion Diagonal
+		#region Isometric
+		public static uint IsoWidth(IModel model) => (uint)(2u * (model.SizeX + model.SizeY));
+		public static uint IsoHeight(IModel model) => (uint)(2u * (model.SizeX + model.SizeY) + 4u * model.SizeZ - 1u);
+		public static void IsoLocate(out int pixelX, out int pixelY, IModel model, int voxelX = 0, int voxelY = 0, int voxelZ = 0)
+		{
+			// To move one x+ in voxels is x + 2, y - 2 in pixels.
+			// To move one x- in voxels is x - 2, y + 2 in pixels.
+			// To move one y+ in voxels is x - 2, y - 2 in pixels.
+			// To move one y- in voxels is x + 2, y + 2 in pixels.
+			// To move one z+ in voxels is y - 4 in pixels.
+			// To move one z- in voxels is y + 4 in pixels.
+			pixelX = 2 * (model.SizeY + voxelX - voxelY);
+			pixelY = (int)IsoHeight(model) - 2 * (voxelX + voxelY) - 4 * voxelZ - 1;
+		}
+		public static void Iso(IModel model, ITriangleRenderer renderer)
+		{
+			ushort height = model.SizeZ;
+			Dictionary<uint, VoxelD> dictionary = new Dictionary<uint, VoxelD>();
+			void Tri(ushort x, ushort y, uint distance, byte @byte, VisibleFace visibleFace = VisibleFace.Front)
+			{
+				uint index = (uint)(y << 16) | x;
+				if (!dictionary.TryGetValue(index, out VoxelD old)
+						|| old.Distance > distance)
+					dictionary[index] = new VoxelD
+					{
+						Distance = distance,
+						@byte = @byte,
+						VisibleFace = visibleFace,
+					};
+			}
+			foreach (Voxel voxel in model
+				.Where(voxel => voxel.@byte != 0))
+			{
+				uint distance = (uint)voxel.X + voxel.Y + height - voxel.Z - 1;
+				IsoLocate(
+					pixelX: out int pixelX,
+					pixelY: out int pixelY,
+					model: model,
+					voxelX: voxel.X,
+					voxelY: voxel.Y,
+					voxelZ: voxel.Z);
+				// 01
+				//0011
+				//2014
+				//2244
+				//2354
+				//3355
+				// 35
+				Tri(//0
+					x: (ushort)(pixelX - 2),
+					y: (ushort)(pixelY - 6),
+					distance: distance,
+					@byte: voxel.@byte,
+					visibleFace: VisibleFace.Top);
+				Tri(//1
+					x: (ushort)pixelX,
+					y: (ushort)(pixelY - 6),
+					distance: distance,
+					@byte: voxel.@byte,
+					visibleFace: VisibleFace.Top);
+				Tri(//2
+					x: (ushort)(pixelX - 2),
+					y: (ushort)(pixelY - 4),
+					distance: distance,
+					@byte: voxel.@byte,
+					visibleFace: VisibleFace.Left);
+				Tri(//3
+					x: (ushort)(pixelX - 2),
+					y: (ushort)(pixelY - 2),
+					distance: distance,
+					@byte: voxel.@byte,
+					visibleFace: VisibleFace.Left);
+				Tri(//4
+					x: (ushort)pixelX,
+					y: (ushort)(pixelY - 4),
+					distance: distance,
+					@byte: voxel.@byte,
+					visibleFace: VisibleFace.Right);
+				Tri(//5
+					x: (ushort)pixelX,
+					y: (ushort)(pixelY - 2),
+					distance: distance,
+					@byte: voxel.@byte,
+					visibleFace: VisibleFace.Right);
+			}
+			foreach (KeyValuePair<uint, VoxelD> triangle in dictionary)
+				renderer.Tri(
+					x: (ushort)triangle.Key,
+					y: (ushort)(triangle.Key >> 16),
+					right: (ushort)triangle.Key % 2 == ((ushort)(triangle.Key >> 16) % 4 < 2 ? 0 : 1),
+					voxel: triangle.Value.@byte,
+					visibleFace: triangle.Value.VisibleFace);
+		}
+		#endregion Isometric
 	}
 }
