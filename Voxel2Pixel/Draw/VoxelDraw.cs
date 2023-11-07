@@ -273,8 +273,10 @@ namespace Voxel2Pixel.Draw
 		}
 		public static void Iso(IModel model, ITriangleRenderer renderer)
 		{
-			bool isOddWidth = model.SizeX % 2 == 1;
-			ushort height = model.SizeZ;
+			ushort width = model.SizeX,
+				depth = model.SizeY,
+				height = model.SizeZ,
+				isoHeight = (ushort)(2 * (width + depth) + 4 * height - 1);
 			Dictionary<uint, DistantShape> dictionary = new Dictionary<uint, DistantShape>();
 			void Tri(ushort x, ushort y, uint distance, byte @byte, VisibleFace visibleFace = VisibleFace.Front)
 			{
@@ -292,13 +294,8 @@ namespace Voxel2Pixel.Draw
 				.Where(voxel => voxel.Index != 0))
 			{
 				uint distance = (uint)voxel.X + voxel.Y + height - voxel.Z - 1;
-				IsoLocate(
-					pixelX: out int pixelX,
-					pixelY: out int pixelY,
-					model: model,
-					voxelX: voxel.X,
-					voxelY: voxel.Y,
-					voxelZ: voxel.Z);
+				ushort pixelX = (ushort)(2 * (depth + voxel.X - voxel.Y)),
+					pixelY = (ushort)(isoHeight - 2 * (voxel.X + voxel.Y) - 4 * voxel.Z - 1);
 				// 01
 				//0011
 				//2014
@@ -313,7 +310,7 @@ namespace Voxel2Pixel.Draw
 					@byte: voxel.Index,
 					visibleFace: VisibleFace.Top);
 				Tri(//1
-					x: (ushort)pixelX,
+					x: pixelX,
 					y: (ushort)(pixelY - 6),
 					distance: distance,
 					@byte: voxel.Index,
@@ -331,19 +328,20 @@ namespace Voxel2Pixel.Draw
 					@byte: voxel.Index,
 					visibleFace: VisibleFace.Left);
 				Tri(//4
-					x: (ushort)pixelX,
+					x: pixelX,
 					y: (ushort)(pixelY - 4),
 					distance: distance,
 					@byte: voxel.Index,
 					visibleFace: VisibleFace.Right);
 				Tri(//5
-					x: (ushort)pixelX,
+					x: pixelX,
 					y: (ushort)(pixelY - 2),
 					distance: distance,
 					@byte: voxel.Index,
 					visibleFace: VisibleFace.Right);
 			}
-			bool Right(ushort x, ushort y) => ((x >> 1) % 2 == (y >> 1) % 2) ^ isOddWidth;
+			byte oddWidth = (byte)(width & 1);
+			bool Right(ushort x, ushort y) => (((x ^ y) >> 1) & 1) == oddWidth;
 			foreach (KeyValuePair<uint, DistantShape> triangle in dictionary)
 				renderer.Tri(
 					x: (ushort)triangle.Key,
