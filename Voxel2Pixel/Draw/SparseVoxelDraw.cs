@@ -18,11 +18,11 @@ namespace Voxel2Pixel.Draw
 		private struct VoxelY
 		{
 			public readonly ushort Y;
-			public readonly byte @byte;
+			public readonly byte Index;
 			public VoxelY(Voxel voxel)
 			{
 				Y = voxel.Y;
-				@byte = voxel.@byte;
+				Index = voxel.Index;
 			}
 		}
 		public static void Front(IModel model, IRectangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Front)
@@ -32,22 +32,22 @@ namespace Voxel2Pixel.Draw
 			uint index;
 			VoxelY[] grid = new VoxelY[width * height];
 			foreach (Voxel voxel in model
-				.Where(voxel => voxel.@byte != 0))
+				.Where(voxel => voxel.Index != 0))
 			{
 				index = (uint)(width * (height - voxel.Z - 1) + voxel.X);
 				if (!(grid[index] is VoxelY old)
-						|| old.@byte == 0
+						|| old.Index == 0
 						|| old.Y > voxel.Y)
 					grid[index] = new VoxelY(voxel);
 			}
 			index = 0;
 			for (ushort y = 0; y < height; y++)
 				for (ushort x = 0; x < width; x++)
-					if (grid[index++] is VoxelY voxelY && voxelY.@byte != 0)
+					if (grid[index++] is VoxelY voxelY && voxelY.Index != 0)
 						renderer.Rect(
 							x: x,
 							y: y,
-							voxel: voxelY.@byte,
+							voxel: voxelY.Index,
 							visibleFace: visibleFace);
 		}
 		public static void FrontPeek(IModel model, IRectangleRenderer renderer, byte scaleX = 6, byte scaleY = 6)
@@ -56,7 +56,7 @@ namespace Voxel2Pixel.Draw
 			Dictionary<uint, Voxel> dictionary = new Dictionary<uint, Voxel>();
 			uint Encode(Voxel voxel) => (uint)(voxel.Z << 16) | voxel.X;
 			foreach (Voxel voxel in model
-				.Where(voxel => voxel.@byte != 0
+				.Where(voxel => voxel.Index != 0
 					&& (!dictionary.TryGetValue(Encode(voxel), out Voxel old)
 						|| old.Y > voxel.Y)))
 				dictionary[Encode(voxel)] = voxel;
@@ -67,14 +67,14 @@ namespace Voxel2Pixel.Draw
 					renderer.Rect(
 						x: voxel.X * scaleX,
 						y: (height - 1 - voxel.Z) * scaleY,
-						voxel: voxel.@byte,
+						voxel: voxel.Index,
 						visibleFace: VisibleFace.Top,
 						sizeX: scaleX,
 						sizeY: 1);
 					renderer.Rect(
 						x: voxel.X * scaleX,
 						y: (height - 1 - voxel.Z) * scaleY + 1,
-						voxel: voxel.@byte,
+						voxel: voxel.Index,
 						visibleFace: VisibleFace.Front,
 						sizeX: scaleX,
 						sizeY: scaleY - 1);
@@ -83,7 +83,7 @@ namespace Voxel2Pixel.Draw
 					renderer.Rect(
 						x: voxel.X * scaleX,
 						y: (height - 1 - voxel.Z) * scaleY,
-						voxel: voxel.@byte,
+						voxel: voxel.Index,
 						visibleFace: VisibleFace.Front,
 						sizeX: scaleX,
 						sizeY: scaleY);
@@ -93,7 +93,7 @@ namespace Voxel2Pixel.Draw
 		private struct VoxelD
 		{
 			public uint Distance;
-			public byte @byte;
+			public byte Index;
 			public VisibleFace VisibleFace;
 		}
 		public static int DiagonalWidth(IModel model) => model.SizeX + model.SizeY;
@@ -106,37 +106,37 @@ namespace Voxel2Pixel.Draw
 			uint pixelWidth = (uint)(width + depth), index;
 			VoxelD[] grid = new VoxelD[pixelWidth * height];
 			foreach (Voxel voxel in model
-				.Where(voxel => voxel.@byte != 0))
+				.Where(voxel => voxel.Index != 0))
 			{
 				index = (uint)(pixelWidth * (height - voxel.Z - 1) + depth - voxel.Y - 1 + voxel.X);
 				uint distance = (uint)voxel.X + voxel.Y;
 				if (!(grid[index] is VoxelD left)
-					|| left.@byte == 0
+					|| left.Index == 0
 					|| left.Distance > distance)
 					grid[index] = new VoxelD
 					{
 						Distance = distance,
-						@byte = voxel.@byte,
+						Index = voxel.Index,
 						VisibleFace = VisibleFace.Left,
 					};
 				if (!(grid[++index] is VoxelD right)
-					|| right.@byte == 0
+					|| right.Index == 0
 					|| right.Distance > distance)
 					grid[index] = new VoxelD
 					{
 						Distance = distance,
-						@byte = voxel.@byte,
+						Index = voxel.Index,
 						VisibleFace = VisibleFace.Right,
 					};
 			}
 			index = 0;
 			for (ushort y = 0; y < height; y++)
 				for (ushort x = 0; x < pixelWidth; x++)
-					if (grid[index++] is VoxelD voxelD && voxelD.@byte != 0)
+					if (grid[index++] is VoxelD voxelD && voxelD.Index != 0)
 						renderer.Rect(
 							x: x,
 							y: y,
-							voxel: voxelD.@byte,
+							voxel: voxelD.Index,
 							visibleFace: voxelD.VisibleFace);
 		}
 		public static int DiagonalPeekWidth(IModel model, byte scaleX = 4) => (model.SizeX + model.SizeY) * scaleX;
@@ -155,12 +155,12 @@ namespace Voxel2Pixel.Draw
 			uint pixelWidth = (uint)(width + depth), index;
 			VoxelF[] grid = new VoxelF[pixelWidth * height];
 			foreach (Voxel voxel in model
-				.Where(voxel => voxel.@byte != 0))
+				.Where(voxel => voxel.Index != 0))
 			{
 				index = (uint)(pixelWidth * (height - voxel.Z - 1) + depth - voxel.Y - 1 + voxel.X);
 				uint distance = (uint)voxel.X + voxel.Y;
 				if (!(grid[index] is VoxelF left)
-					|| left.Voxel.@byte == 0
+					|| left.Voxel.Index == 0
 					|| left.Distance > distance)
 					grid[index] = new VoxelF
 					{
@@ -168,7 +168,7 @@ namespace Voxel2Pixel.Draw
 						VisibleFace = VisibleFace.Left,
 					};
 				if (!(grid[++index] is VoxelF right)
-					|| right.Voxel.@byte == 0
+					|| right.Voxel.Index == 0
 					|| right.Distance > distance)
 					grid[index] = new VoxelF
 					{
@@ -179,21 +179,21 @@ namespace Voxel2Pixel.Draw
 			index = 0;
 			for (ushort y = 0; y < height; y++)
 				for (ushort x = 0; x < pixelWidth; x++)
-					if (grid[index++] is VoxelF f && f.Voxel.@byte != 0)
+					if (grid[index++] is VoxelF f && f.Voxel.Index != 0)
 						if (f.Voxel.Z >= height - 1
 							|| model[f.Voxel.X, f.Voxel.Y, (ushort)(f.Voxel.Z + 1)] == 0)
 						{
 							renderer.Rect(
 								x: x * scaleX,
 								y: y * scaleY,
-								voxel: f.Voxel.@byte,
+								voxel: f.Voxel.Index,
 								visibleFace: VisibleFace.Top,
 								sizeX: scaleX,
 								sizeY: 1);
 							renderer.Rect(
 								x: x * scaleX,
 								y: y * scaleY + 1,
-								voxel: f.Voxel.@byte,
+								voxel: f.Voxel.Index,
 								visibleFace: f.VisibleFace,
 								sizeX: scaleX,
 								sizeY: scaleY - 1);
@@ -202,7 +202,7 @@ namespace Voxel2Pixel.Draw
 							renderer.Rect(
 								x: x * scaleX,
 								y: y * scaleY,
-								voxel: f.Voxel.@byte,
+								voxel: f.Voxel.Index,
 								visibleFace: f.VisibleFace,
 								sizeX: scaleX,
 								sizeY: scaleY);
@@ -222,38 +222,38 @@ namespace Voxel2Pixel.Draw
 			uint pixelHeight = (uint)(depth + height), index;
 			VoxelD[] grid = new VoxelD[width * pixelHeight];
 			foreach (Voxel voxel in model
-				.Where(voxel => voxel.@byte != 0))
+				.Where(voxel => voxel.Index != 0))
 			{
 				index = width * (pixelHeight - 2 - voxel.Y - voxel.Z) + voxel.X;
 				uint distance = (uint)(height + voxel.Y - voxel.Z - 1);
 				if (!(grid[index] is VoxelD top)
-					|| top.@byte == 0
+					|| top.Index == 0
 					|| top.Distance > distance)
 					grid[index] = new VoxelD
 					{
 						Distance = distance,
-						@byte = voxel.@byte,
+						Index = voxel.Index,
 						VisibleFace = VisibleFace.Top,
 					};
 				index += width;
 				if (!(grid[index] is VoxelD front)
-					|| front.@byte == 0
+					|| front.Index == 0
 					|| front.Distance > distance)
 					grid[index] = new VoxelD
 					{
 						Distance = distance,
-						@byte = voxel.@byte,
+						Index = voxel.Index,
 						VisibleFace = VisibleFace.Front,
 					};
 			}
 			index = 0;
 			for (ushort y = 0; y < pixelHeight; y++)
 				for (ushort x = 0; x < width; x++)
-					if (grid[index++] is VoxelD voxelD && voxelD.@byte != 0)
+					if (grid[index++] is VoxelD voxelD && voxelD.Index != 0)
 						renderer.Rect(
 							x: x,
 							y: y,
-							voxel: voxelD.@byte,
+							voxel: voxelD.Index,
 							visibleFace: voxelD.VisibleFace);
 		}
 		#endregion Diagonal
@@ -283,12 +283,12 @@ namespace Voxel2Pixel.Draw
 					dictionary[index] = new VoxelD
 					{
 						Distance = distance,
-						@byte = @byte,
+						Index = @byte,
 						VisibleFace = visibleFace,
 					};
 			}
 			foreach (Voxel voxel in model
-				.Where(voxel => voxel.@byte != 0))
+				.Where(voxel => voxel.Index != 0))
 			{
 				uint distance = (uint)voxel.X + voxel.Y + height - voxel.Z - 1;
 				IsoLocate(
@@ -309,37 +309,37 @@ namespace Voxel2Pixel.Draw
 					x: (ushort)(pixelX - 2),
 					y: (ushort)(pixelY - 6),
 					distance: distance,
-					@byte: voxel.@byte,
+					@byte: voxel.Index,
 					visibleFace: VisibleFace.Top);
 				Tri(//1
 					x: (ushort)pixelX,
 					y: (ushort)(pixelY - 6),
 					distance: distance,
-					@byte: voxel.@byte,
+					@byte: voxel.Index,
 					visibleFace: VisibleFace.Top);
 				Tri(//2
 					x: (ushort)(pixelX - 2),
 					y: (ushort)(pixelY - 4),
 					distance: distance,
-					@byte: voxel.@byte,
+					@byte: voxel.Index,
 					visibleFace: VisibleFace.Left);
 				Tri(//3
 					x: (ushort)(pixelX - 2),
 					y: (ushort)(pixelY - 2),
 					distance: distance,
-					@byte: voxel.@byte,
+					@byte: voxel.Index,
 					visibleFace: VisibleFace.Left);
 				Tri(//4
 					x: (ushort)pixelX,
 					y: (ushort)(pixelY - 4),
 					distance: distance,
-					@byte: voxel.@byte,
+					@byte: voxel.Index,
 					visibleFace: VisibleFace.Right);
 				Tri(//5
 					x: (ushort)pixelX,
 					y: (ushort)(pixelY - 2),
 					distance: distance,
-					@byte: voxel.@byte,
+					@byte: voxel.Index,
 					visibleFace: VisibleFace.Right);
 			}
 			bool Right(ushort x, ushort y) => (x >> 1) % 2 == (y >> 1) % 2;
@@ -348,7 +348,7 @@ namespace Voxel2Pixel.Draw
 					x: (ushort)triangle.Key,
 					y: (ushort)(triangle.Key >> 16),
 					right: Right((ushort)triangle.Key, (ushort)(triangle.Key >> 16)),
-					voxel: triangle.Value.@byte,
+					voxel: triangle.Value.Index,
 					visibleFace: triangle.Value.VisibleFace);
 		}
 		#endregion Isometric

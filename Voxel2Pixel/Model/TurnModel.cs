@@ -28,7 +28,7 @@ namespace Voxel2Pixel.Model
 			foreach (Voxel voxel in Model)
 			{
 				ReverseRotate(out ushort x, out ushort y, out ushort z, voxel.X, voxel.Y, voxel.Z);
-				yield return new Voxel(x, y, z, voxel.@byte);
+				yield return new Voxel(x, y, z, voxel.Index);
 			}
 		}
 		#endregion ContainerModel

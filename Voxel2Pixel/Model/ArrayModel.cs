@@ -12,7 +12,7 @@ namespace Voxel2Pixel.Model
 		public ArrayModel(IModel model) : this(model.SizeX, model.SizeY, model.SizeZ)
 		{
 			foreach (Voxel voxel in model)
-				Array[voxel.X][voxel.Y][voxel.Z] = voxel.@byte;
+				Array[voxel.X][voxel.Y][voxel.Z] = voxel.Index;
 		}
 		public byte[][][] Array { get; set; }
 		#region IModel

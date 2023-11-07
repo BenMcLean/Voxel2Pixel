@@ -5,7 +5,7 @@ namespace Voxel2Pixel.Model
 	public struct Voxel
 	{
 		public ushort X, Y, Z;
-		public byte @byte;
+		public byte Index;
 		public ushort this[int index]
 		{
 			get
@@ -19,7 +19,7 @@ namespace Voxel2Pixel.Model
 					case 2:
 						return Z;
 					case 3:
-						return @byte;
+						return Index;
 					default:
 						throw new IndexOutOfRangeException();
 				}
@@ -38,22 +38,22 @@ namespace Voxel2Pixel.Model
 						Z = value;
 						break;
 					case 3:
-						@byte = (byte)value;
+						Index = (byte)value;
 						break;
 					default:
 						throw new IndexOutOfRangeException();
 				}
 			}
 		}
-		public ushort[] @ushort => new ushort[4] { X, Y, Z, @byte };
+		public ushort[] @ushort => new ushort[4] { X, Y, Z, Index };
 		public Voxel(params ushort[] @ushort) : this(@ushort, (byte)@ushort[3]) { }
-		public Voxel(ushort[] @ushort, byte @byte) : this(@ushort[0], @ushort[1], @ushort[2], @byte) { }
-		public Voxel(ushort x, ushort y, ushort z, byte @byte)
+		public Voxel(ushort[] @ushort, byte index) : this(@ushort[0], @ushort[1], @ushort[2], index) { }
+		public Voxel(ushort x, ushort y, ushort z, byte index)
 		{
 			X = x;
 			Y = y;
 			Z = z;
-			this.@byte = @byte;
+			Index = index;
 		}
 	}
 }

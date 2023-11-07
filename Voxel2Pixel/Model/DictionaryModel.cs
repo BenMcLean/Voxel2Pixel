@@ -23,7 +23,7 @@ namespace Voxel2Pixel.Model
 		public DictionaryModel(IEnumerable<Voxel> voxels, params ushort[] size)
 		{
 			foreach (Voxel voxel in voxels)
-				this[voxel.X, voxel.Y, voxel.Z] = voxel.@byte;
+				this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
 			if (!(size is null) && size.Length > 0)
 			{
 				SizeX = size[0];
@@ -44,7 +44,7 @@ namespace Voxel2Pixel.Model
 				X = (ushort)voxel.Key,
 				Y = (ushort)(voxel.Key >> 16),
 				Z = (ushort)(voxel.Key >> 32),
-				@byte = voxel.Value,
+				Index = voxel.Value,
 			}).GetEnumerator();
 		public ushort SizeX { get; set; } = 0;
 		public ushort SizeY { get; set; } = 0;
