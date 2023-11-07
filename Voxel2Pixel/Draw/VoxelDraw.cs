@@ -178,9 +178,9 @@ namespace Voxel2Pixel.Draw
 			}
 			index = 0;
 			pixelWidth *= scaleX;
-			uint pixelHeight = (uint)height * scaleY;
-			for (ushort y = 0; y < pixelHeight; y += scaleY)
-				for (ushort x = 0; x < pixelWidth; x += scaleX)
+			int pixelHeight = height * scaleY;
+			for (int y = 0; y < pixelHeight; y += scaleY)
+				for (int x = 0; x < pixelWidth; x += scaleX)
 					if (grid[index++] is VoxelFace face && face.Voxel.Index != 0)
 						if (face.Voxel.Z >= height - 1
 							|| model[face.Voxel.X, face.Voxel.Y, (ushort)(face.Voxel.Z + 1)] == 0)
