@@ -273,6 +273,7 @@ namespace Voxel2Pixel.Draw
 		}
 		public static void Iso(IModel model, ITriangleRenderer renderer)
 		{
+			bool isOddWidth = model.SizeX % 2 == 1;
 			ushort height = model.SizeZ;
 			Dictionary<uint, VoxelD> dictionary = new Dictionary<uint, VoxelD>();
 			void Tri(ushort x, ushort y, uint distance, byte @byte, VisibleFace visibleFace = VisibleFace.Front)
@@ -342,7 +343,7 @@ namespace Voxel2Pixel.Draw
 					@byte: voxel.Index,
 					visibleFace: VisibleFace.Right);
 			}
-			bool Right(ushort x, ushort y) => (x >> 1) % 2 == (y >> 1) % 2;
+			bool Right(ushort x, ushort y) => ((x >> 1) % 2 == (y >> 1) % 2) ^ isOddWidth;
 			foreach (KeyValuePair<uint, VoxelD> triangle in dictionary)
 				renderer.Tri(
 					x: (ushort)triangle.Key,

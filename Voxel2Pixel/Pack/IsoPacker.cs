@@ -57,14 +57,14 @@ namespace Voxel2Pixel.Pack
 			};
 			for (int i = 0; i < sprites.Length; i++)
 			{
-				int width = VoxelDraw.AboveWidth(turnModel);
+				int width = SparseVoxelDraw.AboveWidth(turnModel);
 				ArrayRenderer arrayRenderer = new ArrayRenderer
 				{
-					Image = new byte[width * 4 * VoxelDraw.AboveHeight(turnModel)],
+					Image = new byte[width * 4 * SparseVoxelDraw.AboveHeight(turnModel)],
 					Width = width,
 					VoxelColor = voxelColor,
 				};
-				VoxelDraw.Above(
+				SparseVoxelDraw.Above(
 					model: turnModel,
 					renderer: arrayRenderer);
 				sprites[i] = arrayRenderer.Image;
@@ -75,7 +75,7 @@ namespace Voxel2Pixel.Pack
 					z: out ushort turnedZ,
 					coordinates: voxelOrigin);
 				pixelOrigins[i] = new int[2];
-				VoxelDraw.AboveLocate(
+				SparseVoxelDraw.AboveLocate(
 					pixelX: out pixelOrigins[i][0],
 					pixelY: out pixelOrigins[i][1],
 					model: turnModel,
@@ -149,14 +149,14 @@ namespace Voxel2Pixel.Pack
 			};
 			for (int i = 0; i < sprites.Length; i++)
 			{
-				int width = VoxelDraw.IsoWidth(turnModel) << 1;//*2
+				int width = (int)SparseVoxelDraw.IsoWidth(turnModel) << 1;//*2
 				Array2xRenderer arrayRenderer = new Array2xRenderer
 				{
-					Image = new byte[width * 4 * VoxelDraw.IsoHeight(turnModel)],
+					Image = new byte[width * 4 * SparseVoxelDraw.IsoHeight(turnModel)],
 					Width = width,
 					VoxelColor = voxelColor,
 				};
-				VoxelDraw.Iso(
+				SparseVoxelDraw.Iso(
 					model: turnModel,
 					renderer: arrayRenderer);
 				sprites[i] = arrayRenderer.Image;
@@ -167,7 +167,7 @@ namespace Voxel2Pixel.Pack
 					z: out ushort turnedZ,
 					coordinates: voxelOrigin);
 				pixelOrigins[i] = new int[2];
-				VoxelDraw.IsoLocate(
+				SparseVoxelDraw.IsoLocate(
 					pixelX: out pixelOrigins[i][0],
 					pixelY: out pixelOrigins[i][1],
 					model: turnModel,
