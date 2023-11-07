@@ -74,6 +74,26 @@ namespace Voxel2PixelTest.Draw
 				.SaveAsPng("SparseVoxelDrawDiagonal.png");
 		}
 		[Fact]
+		public void DiagonalPeek()
+		{
+			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
+			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
+			int width = VoxelDraw.DiagonalPeekWidth(model);
+			ArrayRenderer arrayRenderer = new ArrayRenderer
+			{
+				Image = new byte[width * 4 * VoxelDraw.DiagonalPeekHeight(model)],
+				Width = width,
+				VoxelColor = voxelColor,
+			};
+			VoxelDraw.DiagonalPeek(model, arrayRenderer);
+			ImageMaker.Png(
+				scaleX: 6,
+				scaleY: 6,
+				width: width,
+				bytes: arrayRenderer.Image)
+				.SaveAsPng("SparseVoxelDrawDiagonalPeek.png");
+		}
+		[Fact]
 		public void Above()
 		{
 			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");

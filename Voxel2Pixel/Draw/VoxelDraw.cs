@@ -139,7 +139,7 @@ namespace Voxel2Pixel.Draw
 							index: rect.Index,
 							visibleFace: rect.VisibleFace);
 		}
-		public static int DiagonalPeekWidth(IModel model, byte scaleX = 4) => (model.SizeX + model.SizeY) * scaleX;
+		public static int DiagonalPeekWidth(IModel model, byte scaleX = 6) => (model.SizeX + model.SizeY) * scaleX;
 		public static int DiagonalPeekHeight(IModel model, byte scaleY = 6) => model.SizeZ * scaleY;
 		public struct VoxelFace
 		{
@@ -177,22 +177,24 @@ namespace Voxel2Pixel.Draw
 					};
 			}
 			index = 0;
-			for (ushort y = 0; y < height; y++)
-				for (ushort x = 0; x < pixelWidth; x++)
+			pixelWidth *= scaleX;
+			uint pixelHeight = (uint)height * scaleY;
+			for (ushort y = 0; y < pixelHeight; y += scaleY)
+				for (ushort x = 0; x < pixelWidth; x += scaleX)
 					if (grid[index++] is VoxelFace face && face.Voxel.Index != 0)
 						if (face.Voxel.Z >= height - 1
 							|| model[face.Voxel.X, face.Voxel.Y, (ushort)(face.Voxel.Z + 1)] == 0)
 						{
 							renderer.Rect(
-								x: x * scaleX,
-								y: y * scaleY,
+								x: x,
+								y: y,
 								index: face.Voxel.Index,
 								visibleFace: VisibleFace.Top,
 								sizeX: scaleX,
 								sizeY: 1);
 							renderer.Rect(
-								x: x * scaleX,
-								y: y * scaleY + 1,
+								x: x,
+								y: y + 1,
 								index: face.Voxel.Index,
 								visibleFace: face.VisibleFace,
 								sizeX: scaleX,
@@ -200,8 +202,8 @@ namespace Voxel2Pixel.Draw
 						}
 						else
 							renderer.Rect(
-								x: x * scaleX,
-								y: y * scaleY,
+								x: x,
+								y: y,
 								index: face.Voxel.Index,
 								visibleFace: face.VisibleFace,
 								sizeX: scaleX,
