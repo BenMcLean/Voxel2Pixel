@@ -8,6 +8,6 @@ namespace Voxel2Pixel.Interfaces
 	public interface IRectangleRenderer
 	{
 		void Rect(int x, int y, uint color, int sizeX = 1, int sizeY = 1);
-		void Rect(int x, int y, byte voxel, VisibleFace visibleFace = VisibleFace.Front, int sizeX = 1, int sizeY = 1);
+		void Rect(int x, int y, byte index, VisibleFace visibleFace = VisibleFace.Front, int sizeX = 1, int sizeY = 1);
 	}
 }

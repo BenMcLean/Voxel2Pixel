@@ -26,7 +26,7 @@ namespace Voxel2Pixel.Draw
 							renderer.Rect(
 								x: x,
 								y: model.SizeZ - 1 - z,
-								voxel: voxel,
+								index: voxel,
 								visibleFace: visibleFace);
 							break;
 						}
@@ -47,14 +47,14 @@ namespace Voxel2Pixel.Draw
 								renderer.Rect(
 									x: x * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY,
-									voxel: voxel,
+									index: voxel,
 									visibleFace: VisibleFace.Top,
 									sizeX: scaleX,
 									sizeY: 1);
 								renderer.Rect(
 									x: x * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY + 1,
-									voxel: voxel,
+									index: voxel,
 									visibleFace: VisibleFace.Front,
 									sizeX: scaleX,
 									sizeY: scaleY - 1);
@@ -63,7 +63,7 @@ namespace Voxel2Pixel.Draw
 								renderer.Rect(
 									x: x * scaleX,
 									y: (model.SizeZ - 1 - z) * scaleY,
-									voxel: voxel,
+									index: voxel,
 									visibleFace: VisibleFace.Front,
 									sizeX: scaleX,
 									sizeY: scaleY);
@@ -92,7 +92,7 @@ namespace Voxel2Pixel.Draw
 						renderer.Rect(
 							x: pixelX,
 							y: pixelY,
-							voxel: rightEdge,
+							index: rightEdge,
 							visibleFace: VisibleFace.Right);
 						continue;
 					}
@@ -108,7 +108,7 @@ namespace Voxel2Pixel.Draw
 							renderer.Rect(
 								x: pixelX,
 								y: pixelY,
-								voxel: voxelRight,
+								index: voxelRight,
 								visibleFace: VisibleFace.Right);
 							leftDone = true;
 						}
@@ -120,7 +120,7 @@ namespace Voxel2Pixel.Draw
 							renderer.Rect(
 								x: pixelX + 1,
 								y: pixelY,
-								voxel: voxelLeft,
+								index: voxelLeft,
 								visibleFace: VisibleFace.Left);
 							rightDone = true;
 						}
@@ -132,13 +132,13 @@ namespace Voxel2Pixel.Draw
 								renderer.Rect(
 									x: pixelX,
 									y: pixelY,
-									voxel: voxel,
+									index: voxel,
 									visibleFace: VisibleFace.Left);
 							if (!rightDone)
 								renderer.Rect(
 									x: pixelX + 1,
 									y: pixelY,
-									voxel: voxel,
+									index: voxel,
 									visibleFace: VisibleFace.Right);
 							break;
 						}
@@ -156,14 +156,14 @@ namespace Voxel2Pixel.Draw
 					renderer.Rect(
 						x: x * scaleX,
 						y: y * scaleY,
-						voxel: voxel,
+						index: voxel,
 						visibleFace: VisibleFace.Top,
 						sizeX: scaleX,
 						sizeY: 1);
 					renderer.Rect(
 						x: x * scaleX,
 						y: y * scaleY + 1,
-						voxel: voxel,
+						index: voxel,
 						visibleFace: VisibleFace.Right,
 						sizeX: scaleX,
 						sizeY: scaleY - 1);
@@ -172,7 +172,7 @@ namespace Voxel2Pixel.Draw
 					renderer.Rect(
 						x: x * scaleX,
 						y: y * scaleY,
-						voxel: voxel,
+						index: voxel,
 						visibleFace: VisibleFace.Right,
 						sizeX: scaleX,
 						sizeY: scaleY);
@@ -184,14 +184,14 @@ namespace Voxel2Pixel.Draw
 					renderer.Rect(
 						x: x * scaleX,
 						y: y * scaleY,
-						voxel: voxel,
+						index: voxel,
 						visibleFace: VisibleFace.Top,
 						sizeX: scaleX,
 						sizeY: 1);
 					renderer.Rect(
 						x: x * scaleX,
 						y: y * scaleY + 1,
-						voxel: voxel,
+						index: voxel,
 						visibleFace: VisibleFace.Left,
 						sizeX: scaleX,
 						sizeY: scaleY - 1);
@@ -200,7 +200,7 @@ namespace Voxel2Pixel.Draw
 					renderer.Rect(
 						x: x * scaleX,
 						y: y * scaleY,
-						voxel: voxel,
+						index: voxel,
 						visibleFace: VisibleFace.Left,
 						sizeX: scaleX,
 						sizeY: scaleY);
@@ -304,7 +304,7 @@ namespace Voxel2Pixel.Draw
 						renderer.Rect(
 							x: pixelX,
 							y: pixelY,
-							voxel: bottomEdge);
+							index: bottomEdge);
 						continue;
 					}
 					ushort startY = (ushort)Math.Max(model.SizeY - 1 - pixelY, 0),
@@ -323,7 +323,7 @@ namespace Voxel2Pixel.Draw
 							renderer.Rect(
 								x: pixelX,
 								y: pixelY,
-								voxel: voxelAbove);
+								index: voxelAbove);
 							higher = true;
 						}
 						if (!lower
@@ -334,7 +334,7 @@ namespace Voxel2Pixel.Draw
 							renderer.Rect(
 								x: pixelX,
 								y: pixelY + 1,
-								voxel: voxelFront,
+								index: voxelFront,
 								visibleFace: VisibleFace.Top);
 							lower = true;
 						}
@@ -345,13 +345,13 @@ namespace Voxel2Pixel.Draw
 								renderer.Rect(
 									x: pixelX,
 									y: pixelY,
-									voxel: voxel,
+									index: voxel,
 									visibleFace: VisibleFace.Top);
 							if (!lower)
 								renderer.Rect(
 									x: pixelX,
 									y: pixelY + 1,
-									voxel: voxel);
+									index: voxel);
 							break;
 						}
 						if (!higher
@@ -362,7 +362,7 @@ namespace Voxel2Pixel.Draw
 							renderer.Rect(
 								x: pixelX,
 								y: pixelY,
-								voxel: voxelBack);
+								index: voxelBack);
 							higher = true;
 						}
 						if (!lower
@@ -373,7 +373,7 @@ namespace Voxel2Pixel.Draw
 							renderer.Rect(
 								x: pixelX,
 								y: pixelY + 1,
-								voxel: voxelBelow,
+								index: voxelBelow,
 								visibleFace: VisibleFace.Top);
 							lower = true;
 						}
@@ -423,7 +423,7 @@ namespace Voxel2Pixel.Draw
 						x: x + (tile < 2 ? 0 : 2),
 						y: y + (tile == 0 || tile == 3 ? 2 : 0),
 						right: tile % 2 == 0,
-						voxel: voxel,
+						index: voxel,
 						visibleFace: visibleFace);
 					tiles[tile] = true;
 				}
@@ -638,7 +638,7 @@ namespace Voxel2Pixel.Draw
 						x: pixelX,
 						y: pixelY,
 						right: false,
-						voxel: voxel,
+						index: voxel,
 						visibleFace: VisibleFace.Top);
 			}
 			#endregion Isometric top left edge
@@ -655,7 +655,7 @@ namespace Voxel2Pixel.Draw
 						x: pixelX,
 						y: pixelY,
 						right: true,
-						voxel: voxel,
+						index: voxel,
 						visibleFace: VisibleFace.Top);
 			}
 			#endregion Isometric top right edge
@@ -674,13 +674,13 @@ namespace Voxel2Pixel.Draw
 						x: pixelX - 2,
 						y: pixelY,
 						right: false,
-						voxel: leftVoxel,
+						index: leftVoxel,
 						visibleFace: VisibleFace.Left);
 					renderer.Tri(
 						x: pixelX,
 						y: pixelY,
 						right: true,
-						voxel: leftVoxel,
+						index: leftVoxel,
 						visibleFace: VisibleFace.Right);
 				}
 				if (!IsOutside(0, voxelY, 0)
@@ -691,13 +691,13 @@ namespace Voxel2Pixel.Draw
 						x: pixelX,
 						y: pixelY,
 						right: true,
-						voxel: voxel,
+						index: voxel,
 						visibleFace: VisibleFace.Left);
 					renderer.Tri(
 						x: pixelX,
 						y: pixelY + 2,
 						right: false,
-						voxel: voxel,
+						index: voxel,
 						visibleFace: VisibleFace.Left);
 				}
 			}
@@ -717,13 +717,13 @@ namespace Voxel2Pixel.Draw
 						x: pixelX,
 						y: pixelY,
 						right: false,
-						voxel: rightVoxel,
+						index: rightVoxel,
 						visibleFace: VisibleFace.Left);
 					renderer.Tri(
 						x: pixelX + 2,
 						y: pixelY,
 						right: true,
-						voxel: rightVoxel,
+						index: rightVoxel,
 						visibleFace: VisibleFace.Right);
 				}
 				if (!IsOutside(voxelX, 0, 0)
@@ -734,13 +734,13 @@ namespace Voxel2Pixel.Draw
 						x: pixelX,
 						y: pixelY,
 						right: false,
-						voxel: voxel,
+						index: voxel,
 						visibleFace: VisibleFace.Right);
 					renderer.Tri(
 						x: pixelX,
 						y: pixelY + 2,
 						right: true,
-						voxel: voxel,
+						index: voxel,
 						visibleFace: VisibleFace.Right);
 				}
 			}
@@ -754,13 +754,13 @@ namespace Voxel2Pixel.Draw
 					x: modelSizeY2 - 2,
 					y: pixelHeight - 4,
 					right: false,
-					voxel: origin,
+					index: origin,
 					visibleFace: VisibleFace.Left);
 				renderer.Tri(
 					x: modelSizeY2,
 					y: pixelHeight - 4,
 					right: true,
-					voxel: origin,
+					index: origin,
 					visibleFace: VisibleFace.Right);
 			}
 			#endregion Isometric origin

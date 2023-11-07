@@ -46,7 +46,7 @@ namespace Voxel2PixelTest.Pack
 				voxelColors: new IVoxelColor[] { hazmatColor, hazmat2Color, hazmatColor, hazmat2Color },
 				path: "Hazmat.gif",
 				voxelOrigins: new int[][] { hazmatVoxelOrigin, hazmat2VoxelOrigin, hazmatVoxelOrigin, hazmat2VoxelOrigin },
-				frameDelay: 100);
+				frameDelay: 50);
 		}
 		[Fact]
 		public void PyramidTest() => Iso8Gif(

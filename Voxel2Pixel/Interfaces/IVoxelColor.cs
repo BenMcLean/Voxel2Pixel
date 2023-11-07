@@ -4,6 +4,6 @@ namespace Voxel2Pixel.Interfaces
 {
 	public interface IVoxelColor
 	{
-		uint this[byte voxel, VisibleFace visibleFace = VisibleFace.Front] { get; }
+		uint this[byte index, VisibleFace visibleFace = VisibleFace.Front] { get; }
 	}
 }

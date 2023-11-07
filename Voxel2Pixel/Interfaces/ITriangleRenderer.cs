@@ -16,6 +16,6 @@ namespace Voxel2Pixel.Interfaces
 		/// Draws a triangle 3 high and 2 wide
 		/// </summary>
 		/// <param name="right">Points right if true, else points left</param>
-		void Tri(int x, int y, bool right, byte voxel, VisibleFace visibleFace = VisibleFace.Front);
+		void Tri(int x, int y, bool right, byte index, VisibleFace visibleFace = VisibleFace.Front);
 	}
 }
