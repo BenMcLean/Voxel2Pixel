@@ -49,44 +49,48 @@ namespace Voxel2Pixel.Draw
 		}
 		public static void FrontPeek(IModel model, IRectangleRenderer renderer, byte scaleX = 6, byte scaleY = 6)
 		{
-			ushort width = model.SizeX,
-				height = model.SizeZ;
-			Voxel[] grid = new Voxel[width * height];
+			ushort voxelWidth = model.SizeX,
+				voxelHeight = model.SizeZ;
+			Voxel[] grid = new Voxel[voxelWidth * voxelHeight];
 			foreach (Voxel voxel in model
 				.Where(voxel => voxel.Index != 0))
-				if (width * (height - voxel.Z - 1) + voxel.X is int index
-					&& (!(grid[index] is Voxel old)
+				if (voxelWidth * (voxelHeight - voxel.Z - 1) + voxel.X is int i
+					&& (!(grid[i] is Voxel old)
 						|| old.Index == 0
 						|| old.Y > voxel.Y))
-					grid[index] = voxel;
-			foreach (Voxel voxel in grid
-				.Where(voxel => voxel.Index != 0))
-				if (voxel.Z >= height - 1
-					|| model[voxel.X, voxel.Y, (ushort)(voxel.Z + 1)] == 0)
-				{
-					renderer.Rect(
-						x: voxel.X * scaleX,
-						y: (height - 1 - voxel.Z) * scaleY,
-						index: voxel.Index,
-						visibleFace: VisibleFace.Top,
-						sizeX: scaleX,
-						sizeY: 1);
-					renderer.Rect(
-						x: voxel.X * scaleX,
-						y: (height - 1 - voxel.Z) * scaleY + 1,
-						index: voxel.Index,
-						visibleFace: VisibleFace.Front,
-						sizeX: scaleX,
-						sizeY: scaleY - 1);
-				}
-				else
-					renderer.Rect(
-						x: voxel.X * scaleX,
-						y: (height - 1 - voxel.Z) * scaleY,
-						index: voxel.Index,
-						visibleFace: VisibleFace.Front,
-						sizeX: scaleX,
-						sizeY: scaleY);
+					grid[i] = voxel;
+			ushort pixelWidth = (ushort)(voxelWidth * scaleX),
+				pixelHeight = (ushort)(voxelHeight * scaleY);
+			uint index = 0;
+			for (ushort y = 0; y < pixelHeight; y += scaleY)
+				for (ushort x = 0; x < pixelWidth; x += scaleX)
+					if (grid[index++] is Voxel voxel && voxel.Index != 0)
+						if (voxel.Z >= voxelHeight - 1
+						|| model[voxel.X, voxel.Y, (ushort)(voxel.Z + 1)] == 0)
+						{
+							renderer.Rect(
+								x: x,
+								y: y,
+								index: voxel.Index,
+								visibleFace: VisibleFace.Top,
+								sizeX: scaleX,
+								sizeY: 1);
+							renderer.Rect(
+								x: x,
+								y: (ushort)(y + 1),
+								index: voxel.Index,
+								visibleFace: VisibleFace.Front,
+								sizeX: scaleX,
+								sizeY: (ushort)(scaleY - 1));
+						}
+						else
+							renderer.Rect(
+								x: x,
+								y: y,
+								index: voxel.Index,
+								visibleFace: VisibleFace.Front,
+								sizeX: scaleX,
+								sizeY: scaleY);
 		}
 		#endregion Straight
 		#region Diagonal
@@ -100,15 +104,16 @@ namespace Voxel2Pixel.Draw
 		public static int DiagonalHeight(IModel model) => model.SizeZ;
 		public static void Diagonal(IModel model, IRectangleRenderer renderer)
 		{
-			ushort width = model.SizeX,
-				depth = model.SizeY,
-				height = model.SizeZ;
-			uint pixelWidth = (uint)(width + depth), index;
-			DistantShape[] grid = new DistantShape[pixelWidth * height];
+			ushort voxelWidth = model.SizeX,
+				voxelDepth = model.SizeY,
+				voxelHeight = model.SizeZ,
+				pixelWidth = (ushort)(voxelWidth + voxelDepth);
+			uint index;
+			DistantShape[] grid = new DistantShape[pixelWidth * voxelHeight];
 			foreach (Voxel voxel in model
 				.Where(voxel => voxel.Index != 0))
 			{
-				index = (uint)(pixelWidth * (height - voxel.Z - 1) + depth - voxel.Y - 1 + voxel.X);
+				index = (uint)(pixelWidth * (voxelHeight - voxel.Z - 1) + voxelDepth - voxel.Y - 1 + voxel.X);
 				uint distance = (uint)voxel.X + voxel.Y;
 				if (!(grid[index] is DistantShape left)
 					|| left.Index == 0
@@ -130,7 +135,7 @@ namespace Voxel2Pixel.Draw
 					};
 			}
 			index = 0;
-			for (ushort y = 0; y < height; y++)
+			for (ushort y = 0; y < voxelHeight; y++)
 				for (ushort x = 0; x < pixelWidth; x++)
 					if (grid[index++] is DistantShape rect && rect.Index != 0)
 						renderer.Rect(
@@ -149,15 +154,16 @@ namespace Voxel2Pixel.Draw
 		}
 		public static void DiagonalPeek(IModel model, IRectangleRenderer renderer, byte scaleX = 6, byte scaleY = 6)
 		{
-			ushort width = model.SizeX,
-				depth = model.SizeY,
-				height = model.SizeZ;
-			uint pixelWidth = (uint)(width + depth), index;
-			VoxelFace[] grid = new VoxelFace[pixelWidth * height];
+			ushort voxelWidth = model.SizeX,
+				voxelDepth = model.SizeY,
+				voxelHeight = model.SizeZ,
+				pixelWidth = (ushort)(voxelWidth + voxelDepth);
+			uint index;
+			VoxelFace[] grid = new VoxelFace[pixelWidth * voxelHeight];
 			foreach (Voxel voxel in model
 				.Where(voxel => voxel.Index != 0))
 			{
-				index = (uint)(pixelWidth * (height - voxel.Z - 1) + depth - voxel.Y - 1 + voxel.X);
+				index = (uint)(pixelWidth * (voxelHeight - voxel.Z - 1) + voxelDepth - voxel.Y - 1 + voxel.X);
 				uint distance = (uint)voxel.X + voxel.Y;
 				if (!(grid[index] is VoxelFace left)
 					|| left.Voxel.Index == 0
@@ -178,11 +184,11 @@ namespace Voxel2Pixel.Draw
 			}
 			index = 0;
 			pixelWidth *= scaleX;
-			int pixelHeight = height * scaleY;
-			for (int y = 0; y < pixelHeight; y += scaleY)
-				for (int x = 0; x < pixelWidth; x += scaleX)
+			ushort pixelHeight = (ushort)(voxelHeight * scaleY);
+			for (ushort y = 0; y < pixelHeight; y += scaleY)
+				for (ushort x = 0; x < pixelWidth; x += scaleX)
 					if (grid[index++] is VoxelFace face && face.Voxel.Index != 0)
-						if (face.Voxel.Z >= height - 1
+						if (face.Voxel.Z >= voxelHeight - 1
 							|| model[face.Voxel.X, face.Voxel.Y, (ushort)(face.Voxel.Z + 1)] == 0)
 						{
 							renderer.Rect(
@@ -194,11 +200,11 @@ namespace Voxel2Pixel.Draw
 								sizeY: 1);
 							renderer.Rect(
 								x: x,
-								y: y + 1,
+								y: (ushort)(y + 1),
 								index: face.Voxel.Index,
 								visibleFace: face.VisibleFace,
 								sizeX: scaleX,
-								sizeY: scaleY - 1);
+								sizeY: (ushort)(scaleY - 1));
 						}
 						else
 							renderer.Rect(

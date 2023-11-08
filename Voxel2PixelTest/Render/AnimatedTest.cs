@@ -61,14 +61,14 @@ namespace Voxel2PixelTest.Render
 				SizeY = 8,
 				SizeZ = 8,
 			};
-			int width = VoxelDraw.IsoWidth(empty),
-				height = VoxelDraw.IsoHeight(empty),
+			ushort width = (ushort)VoxelDraw.IsoWidth(empty),
+				height = (ushort)VoxelDraw.IsoHeight(empty),
 				start = 6;
 			IVoxelColor iVoxelColor = new NaiveDimmer(ArrayModelTest.RainbowPalette);
 			List<byte[]> frames = new List<byte[]>();
-			for (int sizeX = start; sizeX <= empty.SizeX; sizeX++)
-				for (int sizeY = start; sizeY <= empty.SizeY; sizeY++)
-					for (int sizeZ = start; sizeZ <= empty.SizeZ; sizeZ++)
+			for (ushort sizeX = start; sizeX <= empty.SizeX; sizeX++)
+				for (ushort sizeY = start; sizeY <= empty.SizeY; sizeY++)
+					for (ushort sizeZ = start; sizeZ <= empty.SizeZ; sizeZ++)
 					{
 						ArrayRenderer arrayRenderer = new ArrayRenderer
 						{
@@ -91,8 +91,8 @@ namespace Voxel2PixelTest.Render
 							voxelY: 0,
 							voxelZ: model.SizeZ - 1);
 						arrayRenderer.Rect(
-							x: pixelX,
-							y: pixelY,
+							x: (ushort)pixelX,
+							y: (ushort)pixelY,
 							color: 0xFFFFFFFF);
 						frames.Add(arrayRenderer.Image);
 					}

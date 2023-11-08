@@ -25,7 +25,7 @@ namespace Voxel2Pixel.Draw
 						{
 							renderer.Rect(
 								x: x,
-								y: model.SizeZ - 1 - z,
+								y: (ushort)(model.SizeZ - 1 - z),
 								index: voxel,
 								visibleFace: visibleFace);
 							break;
@@ -45,24 +45,24 @@ namespace Voxel2Pixel.Draw
 								|| model[x, y, (ushort)(z + 1)] == 0)
 							{
 								renderer.Rect(
-									x: x * scaleX,
-									y: (model.SizeZ - 1 - z) * scaleY,
+									x: (ushort)(x * scaleX),
+									y: (ushort)((model.SizeZ - 1 - z) * scaleY),
 									index: voxel,
 									visibleFace: VisibleFace.Top,
 									sizeX: scaleX,
 									sizeY: 1);
 								renderer.Rect(
-									x: x * scaleX,
-									y: (model.SizeZ - 1 - z) * scaleY + 1,
+									x: (ushort)(x * scaleX),
+									y: (ushort)((model.SizeZ - 1 - z) * scaleY + 1),
 									index: voxel,
 									visibleFace: VisibleFace.Front,
 									sizeX: scaleX,
-									sizeY: scaleY - 1);
+									sizeY: (ushort)(scaleY - 1));
 							}
 							else
 								renderer.Rect(
-									x: x * scaleX,
-									y: (model.SizeZ - 1 - z) * scaleY,
+									x: (ushort)(x * scaleX),
+									y: (ushort)((model.SizeZ - 1 - z) * scaleY),
 									index: voxel,
 									visibleFace: VisibleFace.Front,
 									sizeX: scaleX,
@@ -118,7 +118,7 @@ namespace Voxel2Pixel.Draw
 							&& voxelLeft != 0)
 						{
 							renderer.Rect(
-								x: pixelX + 1,
+								x: (ushort)(pixelX + 1),
 								y: pixelY,
 								index: voxelLeft,
 								visibleFace: VisibleFace.Left);
@@ -136,7 +136,7 @@ namespace Voxel2Pixel.Draw
 									visibleFace: VisibleFace.Left);
 							if (!rightDone)
 								renderer.Rect(
-									x: pixelX + 1,
+									x: (ushort)(pixelX + 1),
 									y: pixelY,
 									index: voxel,
 									visibleFace: VisibleFace.Right);
@@ -154,24 +154,24 @@ namespace Voxel2Pixel.Draw
 				if (peek)
 				{
 					renderer.Rect(
-						x: x * scaleX,
-						y: y * scaleY,
+						x: (ushort)(x * scaleX),
+						y: (ushort)(y * scaleY),
 						index: voxel,
 						visibleFace: VisibleFace.Top,
 						sizeX: scaleX,
 						sizeY: 1);
 					renderer.Rect(
-						x: x * scaleX,
-						y: y * scaleY + 1,
+						x: (ushort)(x * scaleX),
+						y: (ushort)(y * scaleY + 1),
 						index: voxel,
 						visibleFace: VisibleFace.Right,
 						sizeX: scaleX,
-						sizeY: scaleY - 1);
+						sizeY: (ushort)(scaleY - 1));
 				}
 				else
 					renderer.Rect(
-						x: x * scaleX,
-						y: y * scaleY,
+						x: (ushort)(x * scaleX),
+						y: (ushort)(y * scaleY),
 						index: voxel,
 						visibleFace: VisibleFace.Right,
 						sizeX: scaleX,
@@ -182,24 +182,24 @@ namespace Voxel2Pixel.Draw
 				if (peek)
 				{
 					renderer.Rect(
-						x: x * scaleX,
-						y: y * scaleY,
+						x: (ushort)(x * scaleX),
+						y: (ushort)(y * scaleY),
 						index: voxel,
 						visibleFace: VisibleFace.Top,
 						sizeX: scaleX,
 						sizeY: 1);
 					renderer.Rect(
-						x: x * scaleX,
-						y: y * scaleY + 1,
+						x: (ushort)(x * scaleX),
+						y: (ushort)(y * scaleY + 1),
 						index: voxel,
 						visibleFace: VisibleFace.Left,
 						sizeX: scaleX,
-						sizeY: scaleY - 1);
+						sizeY: (ushort)(scaleY - 1));
 				}
 				else
 					renderer.Rect(
-						x: x * scaleX,
-						y: y * scaleY,
+						x: (ushort)(x * scaleX),
+						y: (ushort)(y * scaleY),
 						index: voxel,
 						visibleFace: VisibleFace.Left,
 						sizeX: scaleX,
@@ -333,7 +333,7 @@ namespace Voxel2Pixel.Draw
 						{
 							renderer.Rect(
 								x: pixelX,
-								y: pixelY + 1,
+								y: (ushort)(pixelY + 1),
 								index: voxelFront,
 								visibleFace: VisibleFace.Top);
 							lower = true;
@@ -350,7 +350,7 @@ namespace Voxel2Pixel.Draw
 							if (!lower)
 								renderer.Rect(
 									x: pixelX,
-									y: pixelY + 1,
+									y: (ushort)(pixelY + 1),
 									index: voxel);
 							break;
 						}
@@ -372,7 +372,7 @@ namespace Voxel2Pixel.Draw
 						{
 							renderer.Rect(
 								x: pixelX,
-								y: pixelY + 1,
+								y: (ushort)(pixelY + 1),
 								index: voxelBelow,
 								visibleFace: VisibleFace.Top);
 							lower = true;
@@ -399,11 +399,11 @@ namespace Voxel2Pixel.Draw
 		}
 		public static void Iso(IModel model, ITriangleRenderer renderer)
 		{
-			int modelSizeX2 = model.SizeX * 2,
-				modelSizeY2 = model.SizeY * 2,
-				modelSizeZ4 = model.SizeZ * 4,
-				pixelWidth = modelSizeX2 + modelSizeY2,
-				pixelHeight = pixelWidth + modelSizeZ4;
+			ushort modelSizeX2 = (ushort)(model.SizeX * 2),
+				modelSizeY2 = (ushort)(model.SizeY * 2),
+				modelSizeZ4 = (ushort)(model.SizeZ * 4),
+				pixelWidth = (ushort)(modelSizeX2 + modelSizeY2),
+				pixelHeight = (ushort)(pixelWidth + modelSizeZ4);
 			bool evenSizeX = model.SizeX % 2 == 0,
 				evenSizeY = model.SizeY % 2 == 0;
 			bool[] tiles = new bool[4];
@@ -420,8 +420,8 @@ namespace Voxel2Pixel.Draw
 				if (!tiles[tile])
 				{
 					renderer.Tri(
-						x: x + (tile < 2 ? 0 : 2),
-						y: y + (tile == 0 || tile == 3 ? 2 : 0),
+						x: (ushort)(x + (tile < 2 ? 0 : 2)),
+						y: (ushort)(y + (tile == 0 || tile == 3 ? 2 : 0)),
 						right: tile % 2 == 0,
 						index: voxel,
 						visibleFace: visibleFace);
@@ -626,7 +626,7 @@ namespace Voxel2Pixel.Draw
 			}
 			#endregion Isometric main tiled area
 			#region Isometric top left edge
-			for (int pixelX = evenSizeX ? 0 : 2, pixelY = modelSizeX2 - (evenSizeX ? 2 : 4);
+			for (ushort pixelX = (ushort)(evenSizeX ? 0 : 2), pixelY = (ushort)(modelSizeX2 - (evenSizeX ? 2 : 4));
 				pixelX < modelSizeX2 && pixelY > 1;
 				pixelX += 4, pixelY -= 4)
 			{
@@ -643,7 +643,7 @@ namespace Voxel2Pixel.Draw
 			}
 			#endregion Isometric top left edge
 			#region Isometric top right edge
-			for (int pixelX = modelSizeX2 + 2, pixelY = 2;
+			for (ushort pixelX = (ushort)(modelSizeX2 + 2), pixelY = 2;
 				pixelX < pixelWidth && pixelY < modelSizeY2;
 				pixelX += 4, pixelY += 4)
 			{
@@ -660,7 +660,7 @@ namespace Voxel2Pixel.Draw
 			}
 			#endregion Isometric top right edge
 			#region Isometric bottom left edge
-			for (int pixelX = evenSizeX ? 0 : -2, pixelY = modelSizeX2 + modelSizeZ4 - (evenSizeX ? 4 : 6);
+			for (ushort pixelX = (ushort)(evenSizeX ? 0 : -2), pixelY = (ushort)(modelSizeX2 + modelSizeZ4 - (evenSizeX ? 4 : 6));
 				pixelX < modelSizeY2 && pixelY < pixelHeight;
 				pixelX += 4, pixelY += 4)
 			{
@@ -671,7 +671,7 @@ namespace Voxel2Pixel.Draw
 					&& leftVoxel != 0)
 				{
 					renderer.Tri(
-						x: pixelX - 2,
+						x: (ushort)(pixelX - 2),
 						y: pixelY,
 						right: false,
 						index: leftVoxel,
@@ -695,7 +695,7 @@ namespace Voxel2Pixel.Draw
 						visibleFace: VisibleFace.Left);
 					renderer.Tri(
 						x: pixelX,
-						y: pixelY + 2,
+						y: (ushort)(pixelY + 2),
 						right: false,
 						index: voxel,
 						visibleFace: VisibleFace.Left);
@@ -703,7 +703,7 @@ namespace Voxel2Pixel.Draw
 			}
 			#endregion Isometric bottom left edge
 			#region Isometric bottom right edge
-			for (int pixelX = modelSizeY2 + (evenSizeX != evenSizeY ? 0 : 2), pixelY = modelSizeX2 + modelSizeZ4 + modelSizeY2 - (evenSizeX != evenSizeY ? 6 : 8);
+			for (ushort pixelX = (ushort)(modelSizeY2 + (evenSizeX != evenSizeY ? 0 : 2)), pixelY = (ushort)(modelSizeX2 + modelSizeZ4 + modelSizeY2 - (evenSizeX != evenSizeY ? 6 : 8));
 				pixelX < pixelWidth;
 				pixelX += 4, pixelY -= 4)
 			{
@@ -720,7 +720,7 @@ namespace Voxel2Pixel.Draw
 						index: rightVoxel,
 						visibleFace: VisibleFace.Left);
 					renderer.Tri(
-						x: pixelX + 2,
+						x: (ushort)(pixelX + 2),
 						y: pixelY,
 						right: true,
 						index: rightVoxel,
@@ -738,7 +738,7 @@ namespace Voxel2Pixel.Draw
 						visibleFace: VisibleFace.Right);
 					renderer.Tri(
 						x: pixelX,
-						y: pixelY + 2,
+						y: (ushort)(pixelY + 2),
 						right: true,
 						index: voxel,
 						visibleFace: VisibleFace.Right);
@@ -751,14 +751,14 @@ namespace Voxel2Pixel.Draw
 				&& origin != 0)
 			{
 				renderer.Tri(
-					x: modelSizeY2 - 2,
-					y: pixelHeight - 4,
+					x: (ushort)(modelSizeY2 - 2),
+					y: (ushort)(pixelHeight - 4),
 					right: false,
 					index: origin,
 					visibleFace: VisibleFace.Left);
 				renderer.Tri(
 					x: modelSizeY2,
-					y: pixelHeight - 4,
+					y: (ushort)(pixelHeight - 4),
 					right: true,
 					index: origin,
 					visibleFace: VisibleFace.Right);

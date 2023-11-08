@@ -2,7 +2,7 @@
 
 namespace Voxel2Pixel.Render
 {
-    public class OffsetRenderer : TriangleRenderer
+	public class OffsetRenderer : TriangleRenderer
 	{
 		public IRectangleRenderer RectangleRenderer { get; set; }
 		public int OffsetX { get; set; } = 0;
@@ -10,13 +10,13 @@ namespace Voxel2Pixel.Render
 		public int ScaleX { get; set; } = 1;
 		public int ScaleY { get; set; } = 1;
 		#region IRectangleRenderer
-		public override void Rect(int x, int y, uint color, int sizeX = 1, int sizeY = 1) =>
+		public override void Rect(ushort x, ushort y, uint color, ushort sizeX = 1, ushort sizeY = 1) =>
 			RectangleRenderer.Rect(
-				x: x * ScaleX + OffsetX,
-				y: y * ScaleY + OffsetY,
+				x: (ushort)(x * ScaleX + OffsetX),
+				y: (ushort)(y * ScaleY + OffsetY),
 				color: color,
-				sizeX: sizeX * ScaleX,
-				sizeY: sizeY * ScaleY);
+				sizeX: (ushort)(sizeX * ScaleX),
+				sizeY: (ushort)(sizeY * ScaleY));
 		#endregion IRectangleRenderer
 	}
 }

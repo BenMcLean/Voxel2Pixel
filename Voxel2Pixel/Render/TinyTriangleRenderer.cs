@@ -15,12 +15,12 @@ namespace Voxel2Pixel.Render
 			pixelY = ((model.SizeX + model.SizeY - 1) + 2 * model.SizeZ - (voxelX + voxelY)) / 2 - voxelZ;
 		}
 		#region ITriangleRenderer
-		public virtual void Tri(int x, int y, bool right, uint color) =>
+		public virtual void Tri(ushort x, ushort y, bool right, uint color) =>
 			RectangleRenderer.Rect(
-				x: x / 2 + (right ? 0 : 1),
-				y: y / 4,
+				x: (ushort)(x / 2 + (right ? 0 : 1)),
+				y: (ushort)(y / 4),
 				color: color);
-		public virtual void Tri(int x, int y, bool right, byte voxel, VisibleFace visibleFace = VisibleFace.Front) => Tri(
+		public virtual void Tri(ushort x, ushort y, bool right, byte voxel, VisibleFace visibleFace = VisibleFace.Front) => Tri(
 			x: x,
 			y: y,
 			right: right,

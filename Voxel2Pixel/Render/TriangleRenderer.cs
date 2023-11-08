@@ -10,7 +10,7 @@ namespace Voxel2Pixel.Render
 	{
 		public virtual IVoxelColor VoxelColor { get; set; }
 		#region ITriangleRenderer
-		public virtual void Tri(int x, int y, bool right, uint color)
+		public virtual void Tri(ushort x, ushort y, bool right, uint color)
 		{
 			if (right)
 			{
@@ -20,40 +20,40 @@ namespace Voxel2Pixel.Render
 					color: color);
 				Rect(
 					x: x,
-					y: y + 1,
+					y: (ushort)(y + 1),
 					color: color,
 					sizeX: 2);
 				Rect(
 					x: x,
-					y: y + 2,
+					y: (ushort)(y + 2),
 					color: color);
 			}
 			else
 			{
 				Rect(
-					x: x + 1,
+					x: (ushort)(x + 1),
 					y: y,
 					color: color);
 				Rect(
 					x: x,
-					y: y + 1,
+					y: (ushort)(y + 1),
 					color: color,
 					sizeX: 2);
 				Rect(
-					x: x + 1,
-					y: y + 2,
+					x: (ushort)(x + 1),
+					y: (ushort)(y + 2),
 					color: color);
 			}
 		}
-		public virtual void Tri(int x, int y, bool right, byte voxel, VisibleFace visibleFace = VisibleFace.Front) => Tri(
+		public virtual void Tri(ushort x, ushort y, bool right, byte voxel, VisibleFace visibleFace = VisibleFace.Front) => Tri(
 			x: x,
 			y: y,
 			right: right,
 			color: VoxelColor[voxel, visibleFace]);
 		#endregion ITriangleRenderer
 		#region IRectangleRenderer
-		public abstract void Rect(int x, int y, uint color, int sizeX = 1, int sizeY = 1);
-		public virtual void Rect(int x, int y, byte voxel, VisibleFace visibleFace = VisibleFace.Front, int sizeX = 1, int sizeY = 1) => Rect(
+		public abstract void Rect(ushort x, ushort y, uint color, ushort sizeX = 1, ushort sizeY = 1);
+		public virtual void Rect(ushort x, ushort y, byte voxel, VisibleFace visibleFace = VisibleFace.Front, ushort sizeX = 1, ushort sizeY = 1) => Rect(
 			x: x,
 			y: y,
 			color: VoxelColor[voxel, visibleFace],
