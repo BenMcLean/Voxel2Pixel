@@ -29,8 +29,8 @@ namespace Voxel2PixelTest.Pack
 				hazmat2 = new VoxFileModel(@"..\..\..\Hazmat2.vox");
 			IVoxelColor hazmatColor = new NaiveDimmer(hazmat.Palette),
 				hazmat2Color = new NaiveDimmer(hazmat2.Palette);
-			int[] hazmatVoxelOrigin = new int[] { 7, 4, 0 },
-				hazmat2VoxelOrigin = new int[] { 7, 11, 0 };
+			ushort[] hazmatVoxelOrigin = new ushort[] { 7, 4, 0 },
+				hazmat2VoxelOrigin = new ushort[] { 7, 11, 0 };
 			Iso8Gif(
 				models: new IModel[]
 					{
@@ -45,7 +45,7 @@ namespace Voxel2PixelTest.Pack
 					},
 				voxelColors: new IVoxelColor[] { hazmatColor, hazmat2Color, hazmatColor, hazmat2Color },
 				path: "Hazmat.gif",
-				voxelOrigins: new int[][] { hazmatVoxelOrigin, hazmat2VoxelOrigin, hazmatVoxelOrigin, hazmat2VoxelOrigin },
+				voxelOrigins: new ushort[][] { hazmatVoxelOrigin, hazmat2VoxelOrigin, hazmatVoxelOrigin, hazmat2VoxelOrigin },
 				frameDelay: 50);
 		}
 		[Fact]
@@ -58,7 +58,7 @@ namespace Voxel2PixelTest.Pack
 			model: new ArrayModel(Pyramid2(16, 4)),
 			voxelColor: new NaiveDimmer(ArrayModelTest.RainbowPalette),
 			path: "Pyramid2Test.gif",
-			voxelOrigin: new int[] { 5, 0, 0 });
+			voxelOrigin: new ushort[] { 5, 0, 0 });
 		[Fact]
 		public void NumberCubeTest()
 		{
@@ -67,7 +67,7 @@ namespace Voxel2PixelTest.Pack
 				model: model,
 				voxelColor: new NaiveDimmer(model.Palette),
 				path: "NumberCubeTest.gif",
-				voxelOrigin: new int[] { 0, 0, 0 });
+				voxelOrigin: new ushort[] { 0, 0, 0 });
 		}
 		#endregion Tests
 		#region Model creation
@@ -107,19 +107,19 @@ namespace Voxel2PixelTest.Pack
 		}
 		#endregion Model creation
 		#region GIF
-		private static void Iso8Gif(IModel model, IVoxelColor voxelColor, string path, int[] voxelOrigin = null, int frameDelay = 150) => Iso8Gif(
+		private static void Iso8Gif(IModel model, IVoxelColor voxelColor, string path, ushort[] voxelOrigin = null, int frameDelay = 150) => Iso8Gif(
 			models: new IModel[] { model },
 			voxelColors: new IVoxelColor[] { voxelColor },
 			path: path,
-			voxelOrigins: voxelOrigin is null ? null : new int[][] { voxelOrigin },
+			voxelOrigins: voxelOrigin is null ? null : new ushort[][] { voxelOrigin },
 			frameDelay: frameDelay);
-		private static void Iso8Gif(IModel[] models, IVoxelColor[] voxelColors, string path, int[][] voxelOrigins = null, int frameDelay = 150)
+		private static void Iso8Gif(IModel[] models, IVoxelColor[] voxelColors, string path, ushort[][] voxelOrigins = null, int frameDelay = 150)
 		{
 			byte[][] sprites = IsoPacker.Iso8Outlined(
 				models: models,
 				voxelColors: voxelColors,
-				widths: out int[] widths,
-				pixelOrigins: out int[][] pixelOrigins,
+				widths: out ushort[] widths,
+				pixelOrigins: out ushort[][] pixelOrigins,
 				voxelOrigins: voxelOrigins);
 			//pixelOrigins = pixelOrigins.Iso8SouthWestPixelOrigins();
 			ushort pixelOriginX = (ushort)pixelOrigins.Select(origin => origin[0]).Max(),

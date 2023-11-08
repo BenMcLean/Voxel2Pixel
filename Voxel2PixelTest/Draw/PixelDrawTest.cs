@@ -32,17 +32,17 @@ namespace Voxel2PixelTest.Draw
 
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes, width * xScale * xTile, height * yScale * yTile)
 				.SaveAsPng("output.png");
-			byte[] isoSlant = bytes.IsoSlantDown(width * xScale * xTile);
+			byte[] isoSlant = bytes.IsoSlantDown((ushort)(width * xScale * xTile));
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(isoSlant, width * xScale * xTile * 2, isoSlant.Length / (width * xScale * xTile * 8))
 			.SaveAsPng("IsoSlantDown.png");
-			int isoWidth = width * xScale * xTile + height * yScale * yTile;
+			ushort isoWidth = (ushort)(width * xScale * xTile + height * yScale * yTile);
 			byte[] isoTile = bytes
 				.DrawPixel(128, 0, 0, 255, 0, 0, (ushort)(width * xScale * xTile))
 				.DrawPixel(0, 255, 0, 255, 1, 0, (ushort)(width * xScale * xTile))
 				.DrawPixel(0, 0, 255, 255, 0, 1, (ushort)(width * xScale * xTile))
 				.DrawPixel(128, 128, 128, 255, 1, 1, (ushort)(width * xScale * xTile))
-				.RotateCounter45(width * xScale * xTile);
-			int isoHeight = isoTile.Length / (isoWidth * 4);
+				.RotateCounter45((ushort)(width * xScale * xTile));
+			ushort isoHeight = (ushort)(isoTile.Length / (isoWidth * 4));
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(isoTile, isoWidth, isoHeight)
 			.SaveAsPng("rotated.png");
 			//Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes.Resize(800, 600, width * xScale * xTile), 800, 600)

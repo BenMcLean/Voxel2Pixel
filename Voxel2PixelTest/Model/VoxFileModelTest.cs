@@ -50,13 +50,13 @@ namespace Voxel2PixelTest.Model
 			byte[] cropped = arrayRenderer.Image
 				.Outline(width)
 				.TransparentCrop(
-				out _,
-				out _,
-				out int croppedWidth,
-				out int _,
-				threshold: 128,
-				width: width
-				);
+					out _,
+					out _,
+					out ushort croppedWidth,
+					out ushort _,
+					threshold: 128,
+					width: width
+					);
 			ImageMaker.Png(
 				width: croppedWidth,
 				bytes: cropped)

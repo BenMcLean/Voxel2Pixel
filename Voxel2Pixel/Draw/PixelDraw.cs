@@ -115,7 +115,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="insertWidth">width of insert or 0 to assume square texture</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>same texture with insert drawn</returns>
-		public static byte[] DrawInsert(this byte[] texture, int x, int y, byte[] insert, int insertWidth = 0, int width = 0)
+		public static byte[] DrawInsert(this byte[] texture, int x, int y, byte[] insert, ushort insertWidth = 0, ushort width = 0)
 		{
 			int insertX = 0, insertY = 0;
 			if (x < 0)
@@ -154,7 +154,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <param name="threshold">only draws pixel if alpha is higher than or equal to threshold</param>
 		/// <returns>same texture with insert drawn</returns>
-		public static byte[] DrawTransparentInsert(this byte[] texture, int x, int y, byte[] insert, int insertWidth = 0, int width = 0, byte threshold = 128)
+		public static byte[] DrawTransparentInsert(this byte[] texture, int x, int y, byte[] insert, int insertWidth = 0, ushort width = 0, byte threshold = 128)
 		{
 			int insertX = 0, insertY = 0;
 			if (x < 0)
@@ -191,7 +191,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="areaHeight">height of area or 0 to assume square area</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>same texture with padding drawn</returns>
-		public static byte[] DrawPadding(this byte[] texture, int x, int y, int areaWidth, int areaHeight, int width = 0)
+		public static byte[] DrawPadding(this byte[] texture, ushort x, ushort y, ushort areaWidth, ushort areaHeight, ushort width = 0)
 		{
 			if (areaHeight < 1) areaHeight = areaWidth;
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
@@ -216,8 +216,8 @@ namespace Voxel2Pixel.Draw
 			return texture;
 		}
 		/*
-		public static byte[] DrawTriangle(this byte[] texture, int color, int x, int y, int triangleWidth, int triangleHeight, int width = 0) => DrawTriangle(texture, (byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, triangleWidth, triangleHeight, width);
-		public static byte[] DrawTriangle(this byte[] texture, byte red, byte green, byte blue, byte alpha, int x, int y, int triangleWidth, int triangleHeight, int width = 0)
+		public static byte[] DrawTriangle(this byte[] texture, int color, int x, int y, int triangleWidth, int triangleHeight, ushort width = 0) => DrawTriangle(texture, (byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, triangleWidth, triangleHeight, width);
+		public static byte[] DrawTriangle(this byte[] texture, byte red, byte green, byte blue, byte alpha, int x, int y, int triangleWidth, int triangleHeight, ushort width = 0)
 		{
 			int textureWidth = width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width,
 				xSide = textureWidth << 2,
@@ -270,7 +270,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="texture">raw rgba8888 pixel data of source image</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data of identical size to source texture</returns>
-		public static byte[] FlipX(this byte[] texture, int width = 0)
+		public static byte[] FlipX(this byte[] texture, ushort width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
 			byte[] flipped = new byte[texture.Length];
@@ -284,7 +284,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="texture">raw rgba8888 pixel data of source image</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data of identical size to source texture</returns>
-		public static byte[] FlipY(this byte[] texture, int width = 0)
+		public static byte[] FlipY(this byte[] texture, ushort width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
 			byte[] flipped = new byte[texture.Length];
@@ -299,7 +299,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="texture">raw rgba8888 pixel data of source image</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data of newWidth = width + height - 1</returns>
-		public static byte[] RotateClockwise45Thin(this byte[] texture, int width = 0)
+		public static byte[] RotateClockwise45Thin(this byte[] texture, ushort width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
@@ -319,7 +319,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="texture">raw rgba8888 pixel data of source image</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data of newWidth = width + height</returns>
-		public static byte[] RotateClockwise45(this byte[] texture, int width = 0)
+		public static byte[] RotateClockwise45(this byte[] texture, ushort width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
@@ -339,7 +339,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="texture">raw rgba8888 pixel data of source image</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data where its width is the height of the source texture</returns>
-		public static byte[] RotateClockwise90(this byte[] texture, int width = 0)
+		public static byte[] RotateClockwise90(this byte[] texture, ushort width = 0)
 		{
 			int ySide2 = width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width,
 				xSide1 = ySide2 << 2,
@@ -356,7 +356,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="texture">raw rgba8888 pixel data of source image</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data of newWidth = width + height - 1</returns>
-		public static byte[] RotateClockwise135Thin(this byte[] texture, int width = 0)
+		public static byte[] RotateClockwise135Thin(this byte[] texture, ushort width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
@@ -376,7 +376,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="texture">raw rgba8888 pixel data of source image</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data of newWidth = width + height</returns>
-		public static byte[] RotateClockwise135(this byte[] texture, int width = 0)
+		public static byte[] RotateClockwise135(this byte[] texture, ushort width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
@@ -396,7 +396,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="texture">raw rgba8888 pixel data of source image</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data of identical size to source texture</returns>
-		public static byte[] Rotate180(this byte[] texture, int width = 0)
+		public static byte[] Rotate180(this byte[] texture, ushort width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
 			byte[] rotated = new byte[texture.Length];
@@ -411,7 +411,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="texture">raw rgba8888 pixel data of source image</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data of newWidth = width + height - 1</returns>
-		public static byte[] RotateCounter135Thin(this byte[] texture, int width = 0)
+		public static byte[] RotateCounter135Thin(this byte[] texture, ushort width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
@@ -431,7 +431,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="texture">raw rgba8888 pixel data of source image</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data of newWidth = width + height</returns>
-		public static byte[] RotateCounter135(this byte[] texture, int width = 0)
+		public static byte[] RotateCounter135(this byte[] texture, ushort width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
@@ -451,7 +451,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="texture">raw rgba8888 pixel data of source image</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data where its width is the height of the source texture</returns>
-		public static byte[] RotateCounter90(this byte[] texture, int width = 0)
+		public static byte[] RotateCounter90(this byte[] texture, ushort width = 0)
 		{
 			int ySide2 = width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width,
 				xSide1 = ySide2 << 2,
@@ -468,7 +468,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="texture">raw rgba8888 pixel data of source image</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data of newWidth = width + height - 1</returns>
-		public static byte[] RotateCounter45Thin(this byte[] texture, int width = 0)
+		public static byte[] RotateCounter45Thin(this byte[] texture, ushort width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
@@ -488,7 +488,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="texture">raw rgba8888 pixel data of source image</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data of newWidth = width + height</returns>
-		public static byte[] RotateCounter45(this byte[] texture, int width = 0)
+		public static byte[] RotateCounter45(this byte[] texture, ushort width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
@@ -510,7 +510,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="texture">raw rgba8888 pixel data of source image</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data of double the source texture width</returns>
-		public static byte[] IsoSlantDown(this byte[] texture, int width = 0)
+		public static byte[] IsoSlantDown(this byte[] texture, ushort width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
@@ -534,7 +534,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="texture">raw rgba8888 pixel data of source image</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data of double the source texture width</returns>
-		public static byte[] IsoSlantDownShort(this byte[] texture, int width = 0)
+		public static byte[] IsoSlantDownShort(this byte[] texture, ushort width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
@@ -556,7 +556,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="texture">raw rgba8888 pixel data of source image</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data of double the source texture width</returns>
-		public static byte[] IsoSlantUp(this byte[] texture, int width = 0)
+		public static byte[] IsoSlantUp(this byte[] texture, ushort width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
@@ -580,7 +580,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="texture">raw rgba8888 pixel data of source image</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data of double the source texture width</returns>
-		public static byte[] IsoSlantUpShort(this byte[] texture, int width = 0)
+		public static byte[] IsoSlantUpShort(this byte[] texture, ushort width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
@@ -602,7 +602,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="texture">raw rgba8888 pixel data of source image</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data where the width is derived from the source image size by the formula "newWidth = (width + height - 1) * 2"</returns>
-		public static byte[] IsoTile(this byte[] texture, int width = 0)
+		public static byte[] IsoTile(this byte[] texture, ushort width = 0)
 		{
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2,
@@ -629,7 +629,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="croppedHeight">height of selection</param>
 		/// <param name="width">width of source texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data of width croppedWidth or smaller if x is smaller than zero or if x + croppedWidth extends outside the source texture</returns>
-		public static byte[] Crop(this byte[] texture, int x, int y, int croppedWidth, int croppedHeight, int width = 0)
+		public static byte[] Crop(this byte[] texture, int x, int y, int croppedWidth, int croppedHeight, ushort width = 0)
 		{
 			if (x < 0)
 			{
@@ -669,10 +669,10 @@ namespace Voxel2Pixel.Draw
 		/// <param name="width">width of source texture or 0 to assume square texture</param>
 		/// <param name="threshold">alpha channel lower than this will be evaluated as transparent</param>
 		/// <returns>cropped texture</returns>
-		public static byte[] TransparentCrop(this byte[] texture, out int cutLeft, out int cutTop, out int croppedWidth, out int croppedHeight, int width = 0, byte threshold = 128)
+		public static byte[] TransparentCrop(this byte[] texture, out ushort cutLeft, out ushort cutTop, out ushort croppedWidth, out ushort croppedHeight, ushort width = 0, byte threshold = 128)
 		{
 			if (width < 1)
-				width = (int)(Math.Sqrt(texture.Length >> 2));
+				width = (ushort)Math.Sqrt(texture.Length >> 2);
 			TransparentCropInfo(texture, out cutLeft, out cutTop, out croppedWidth, out croppedHeight, width, threshold);
 			return texture.Crop(
 				x: cutLeft,
@@ -681,15 +681,15 @@ namespace Voxel2Pixel.Draw
 				croppedHeight: croppedHeight,
 				width: width);
 		}
-		public static void TransparentCropInfo(this byte[] texture, out int cutLeft, out int cutTop, out int croppedWidth, out int croppedHeight, int width = 0, byte threshold = 128)
+		public static void TransparentCropInfo(this byte[] texture, out ushort cutLeft, out ushort cutTop, out ushort croppedWidth, out ushort croppedHeight, ushort width = 0, byte threshold = 128)
 		{
 			if (width < 1)
-				width = (int)(Math.Sqrt(texture.Length >> 2));
+				width = (ushort)Math.Sqrt(texture.Length >> 2);
 			int xSide = width << 2,
 				indexTop, indexBottom;
 			for (indexTop = 3; indexTop < texture.Length && texture[indexTop] < threshold; indexTop += 4) { }
-			cutTop = indexTop / xSide;
-			indexTop = cutTop * xSide;
+			cutTop = (ushort)(indexTop / xSide);
+			indexTop = (ushort)(cutTop * xSide);
 			for (indexBottom = texture.Length - 1; indexBottom > indexTop && texture[indexBottom] < threshold; indexBottom -= 4) { }
 			int cutBottom = indexBottom / xSide + 1;
 			indexBottom = cutBottom * xSide;
@@ -703,19 +703,21 @@ namespace Voxel2Pixel.Draw
 				for (right = xSide - 1; right > indexRight && texture[indexRow + right] < threshold; right -= 4) { }
 				indexRight = Math.Max(indexRight, right);
 			}
-			cutLeft = indexLeft >> 2;
-			croppedWidth = width - ((xSide - indexRight) >> 2) - cutLeft;
-			croppedHeight = cutBottom - cutTop;
+			if (indexLeft >> 2 < 0)
+				throw new Exception(indexLeft.ToString());
+			cutLeft = (ushort)(indexLeft >> 2);
+			croppedWidth = (ushort)(width - ((xSide - indexRight) >> 2) - cutLeft);
+			croppedHeight = (ushort)(cutBottom - cutTop);
 		}
-		public static byte[] TransparentCropPlusOne(this byte[] texture, out int cutLeft, out int cutTop, out int croppedWidth, out int croppedHeight, int width = 0, byte threshold = 128)
+		public static byte[] TransparentCropPlusOne(this byte[] texture, out int cutLeft, out int cutTop, out int croppedWidth, out int croppedHeight, ushort width = 0, byte threshold = 128)
 		{
 			if (width < 1)
-				width = (int)(Math.Sqrt(texture.Length >> 2));
-			TransparentCropInfo(texture, out cutLeft, out cutTop, out croppedWidth, out croppedHeight, width, threshold);
-			cutLeft--;
-			cutTop--;
-			croppedWidth += 2;
-			croppedHeight += 2;
+				width = (ushort)Math.Sqrt(texture.Length >> 2);
+			TransparentCropInfo(texture, out ushort cutLeftShort, out ushort cutTopShort, out ushort croppedWidthShort, out ushort croppedHeightShort, width, threshold);
+			cutLeft = cutLeftShort - 1;
+			cutTop = cutTopShort - 1;
+			croppedWidth = croppedWidthShort + 2;
+			croppedHeight = croppedHeightShort + 2;
 			return new byte[croppedWidth * 4 * croppedHeight]
 				.DrawInsert(
 					x: 1,
@@ -726,14 +728,14 @@ namespace Voxel2Pixel.Draw
 						croppedWidth: croppedWidth - 2,
 						croppedHeight: croppedHeight - 2,
 						width: width),
-					insertWidth: croppedWidth - 2,
-					width: croppedWidth);
+					insertWidth: (ushort)(croppedWidth - 2),
+					width: (ushort)croppedWidth);
 		}
-		public static byte[] TransparentOutline(byte[] texture, int width = 0, byte threshold = 128) => UInt2ByteArray(TransparentOutline(Byte2UIntArray(texture), width, threshold));
-		public static uint[] TransparentOutline(uint[] texture, int width = 0, byte threshold = 128)
+		public static byte[] TransparentOutline(byte[] texture, ushort width = 0, byte threshold = 128) => UInt2ByteArray(TransparentOutline(Byte2UIntArray(texture), width, threshold));
+		public static uint[] TransparentOutline(uint[] texture, ushort width = 0, byte threshold = 128)
 		{
 			if (width < 1)
-				width = (int)Math.Sqrt(texture.Length);
+				width = (ushort)Math.Sqrt(texture.Length);
 			uint[] result = new uint[texture.Length];
 			Array.Copy(texture, result, result.Length);
 			int height = texture.Length / width;
@@ -797,14 +799,14 @@ namespace Voxel2Pixel.Draw
 		/// <param name="width">width of source texture or 0 to assume square texture</param>
 		/// <param name="threshold">alpha channel lower than this will be evaluated as transparent</param>
 		/// <returns>true if making a new texture was necessary</returns>
-		public static bool NeedsTransparentBorder(byte[] texture, out byte[] result, out int addLeft, out int addTop, out int resultWidth, out int resultHeight, int width = 0, byte threshold = 128)
+		public static bool NeedsTransparentBorder(byte[] texture, out byte[] result, out ushort addLeft, out ushort addTop, out ushort resultWidth, out ushort resultHeight, ushort width = 0, byte threshold = 128)
 		{
 			addLeft = 0;
 			addTop = 0;
 			if (width < 1)
-				width = (int)(Math.Sqrt(texture.Length >> 2));
-			int height = texture.Length / width,
-				xSide = width << 2;
+				width = (ushort)Math.Sqrt(texture.Length >> 2);
+			ushort height = (ushort)(texture.Length / width);
+			int xSide = width << 2;
 			resultWidth = width;
 			resultHeight = height;
 			for (int index = 3; index < xSide; index += 4)
@@ -849,11 +851,11 @@ namespace Voxel2Pixel.Draw
 					width: resultWidth);
 			return true;
 		}
-		public static byte[] Outline(this byte[] texture, int width = 0, uint color = 0x000000FF, byte threshold = 128) => Outline(texture, width, threshold, color.R(), color.G(), color.B(), color.A());
-		private static byte[] Outline(this byte[] texture, int width = 0, byte threshold = 128, params byte[] rgba)
+		public static byte[] Outline(this byte[] texture, ushort width = 0, uint color = 0x000000FF, byte threshold = 128) => Outline(texture, width, threshold, color.R(), color.G(), color.B(), color.A());
+		private static byte[] Outline(this byte[] texture, ushort width = 0, byte threshold = 128, params byte[] rgba)
 		{
 			if (width < 1)
-				width = (int)(Math.Sqrt(texture.Length >> 2));
+				width = (ushort)Math.Sqrt(texture.Length >> 2);
 			int xSide = width << 2;
 			byte[] result = new byte[texture.Length];
 			Array.Copy(texture, result, result.Length);
@@ -867,23 +869,23 @@ namespace Voxel2Pixel.Draw
 						Array.Copy(rgba, 0, result, rowIndex + index - 3, 4);
 			return result;
 		}
-		public static byte[] CropSprite(this byte[] sprite, int width, out int newWidth, out int[] newOrigin, params int[] origin)
+		public static byte[] CropSprite(this byte[] sprite, ushort width, out ushort newWidth, out ushort[] newOrigin, params ushort[] origin)
 		{
 			byte[] result = TransparentCrop(
 				texture: sprite,
-				cutLeft: out int cutLeft,
-				cutTop: out int cutTop,
+				cutLeft: out ushort cutLeft,
+				cutTop: out ushort cutTop,
 				croppedWidth: out newWidth,
 				croppedHeight: out _,
 				width: width);
-			newOrigin = new int[] { origin[0] - cutLeft, origin[1] - cutTop };
+			newOrigin = new ushort[] { (ushort)(origin[0] - cutLeft), (ushort)(origin[1] - cutTop) };
 			return result;
 		}
-		public static byte[][] CropSprites(this byte[][] sprites, int[] widths, int[][] pixelOrigins, out int[] newWidths, out int[][] newPixelOrigins)
+		public static byte[][] CropSprites(this byte[][] sprites, ushort[] widths, ushort[][] pixelOrigins, out ushort[] newWidths, out ushort[][] newPixelOrigins)
 		{
 			byte[][] newSprites = new byte[sprites.Length][];
-			newWidths = new int[widths.Length];
-			newPixelOrigins = new int[pixelOrigins.Length][];
+			newWidths = new ushort[widths.Length];
+			newPixelOrigins = new ushort[pixelOrigins.Length][];
 			for (int i = 0; i < sprites.Length; i++)
 			{
 				newSprites[i] = sprites[i].CropSprite(
@@ -894,24 +896,25 @@ namespace Voxel2Pixel.Draw
 			}
 			return newSprites;
 		}
-		public static byte[] CropOutlineSprite(this byte[] sprite, int width, out int newWidth, out int[] newOrigin, params int[] origin)
+		public static byte[] CropOutlineSprite(this byte[] sprite, ushort width, out ushort newWidth, out ushort[] newOrigin, params ushort[] origin)
 		{
 			byte[] result = TransparentCropPlusOne(
 				texture: sprite,
 				cutLeft: out int cutLeft,
 				cutTop: out int cutTop,
-				croppedWidth: out newWidth,
+				croppedWidth: out int croppedWidth,
 				croppedHeight: out _,
 				width: width)
-				.Outline(newWidth);
-			newOrigin = new int[] { origin[0] - cutLeft, origin[1] - cutTop };
+				.Outline((ushort)croppedWidth);
+			newWidth = (ushort)croppedWidth;
+			newOrigin = new ushort[] { (ushort)(origin[0] - cutLeft), (ushort)(origin[1] - cutTop) };
 			return result;
 		}
-		public static byte[][] CropOutlineSprites(this byte[][] sprites, int[] widths, int[][] pixelOrigins, out int[] newWidths, out int[][] newPixelOrigins)
+		public static byte[][] CropOutlineSprites(this byte[][] sprites, ushort[] widths, ushort[][] pixelOrigins, out ushort[] newWidths, out ushort[][] newPixelOrigins)
 		{
 			byte[][] newSprites = new byte[sprites.Length][];
-			newWidths = new int[widths.Length];
-			newPixelOrigins = new int[pixelOrigins.Length][];
+			newWidths = new ushort[widths.Length];
+			newPixelOrigins = new ushort[pixelOrigins.Length][];
 			for (int i = 0; i < sprites.Length; i++)
 			{
 				newSprites[i] = sprites[i].CropOutlineSprite(
@@ -930,7 +933,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="newHeight">height of newly resized texture</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data of width newWidth</returns>
-		public static byte[] Resize(this byte[] texture, int newWidth, int newHeight, int width = 0)
+		public static byte[] Resize(this byte[] texture, ushort newWidth, ushort newHeight, ushort width = 0)
 		{
 			if (newWidth < 1) throw new ArgumentOutOfRangeException("newWidth cannot be smaller than 1. Was: \"" + newWidth + "\"");
 			if (newHeight < 1) throw new ArgumentOutOfRangeException("newHeight cannot be smaller than 1. Was: \"" + newHeight + "\"");
@@ -955,7 +958,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="yFactor">number of times to tile vertically</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data of newWidth = width * xFactor</returns>
-		public static byte[] Tile(this byte[] texture, int width = 0, int xFactor = 2, int yFactor = 2)
+		public static byte[] Tile(this byte[] texture, ushort width = 0, ushort xFactor = 2, ushort yFactor = 2)
 		{
 			if (xFactor < 1 || yFactor < 1 || xFactor < 2 && yFactor < 2) return (byte[])texture.Clone();
 			byte[] tiled = new byte[texture.Length * xFactor * yFactor];
@@ -983,7 +986,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="yFactor">vertical scaling factor</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data of newWidth = width * xFactor</returns>
-		public static byte[] Upscale(this byte[] texture, int xFactor, int yFactor, int width = 0)
+		public static byte[] Upscale(this byte[] texture, ushort xFactor, ushort yFactor, ushort width = 0)
 		{
 			if (xFactor < 1 || yFactor < 1 || xFactor < 2 && yFactor < 2) return (byte[])texture.Clone();
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
@@ -1008,19 +1011,19 @@ namespace Voxel2Pixel.Draw
 			}
 			return scaled;
 		}
-		public static byte[][] UpscaleSprites(this byte[][] sprites, int[] widths, int[][] pixelOrigins, int xFactor, int yFactor, out int[] newWidths, out int[][] newPixelOrigins)
+		public static byte[][] UpscaleSprites(this byte[][] sprites, ushort[] widths, ushort[][] pixelOrigins, ushort xFactor, ushort yFactor, out ushort[] newWidths, out ushort[][] newPixelOrigins)
 		{
 			byte[][] newSprites = new byte[sprites.Length][];
-			newWidths = new int[widths.Length];
-			newPixelOrigins = new int[pixelOrigins.Length][];
+			newWidths = new ushort[widths.Length];
+			newPixelOrigins = new ushort[pixelOrigins.Length][];
 			for (int i = 0; i < sprites.Length; i++)
 			{
 				newSprites[i] = sprites[i].Upscale(
 					xFactor: xFactor,
 					yFactor: yFactor,
 					width: widths[i]);
-				newWidths[i] = widths[i] * xFactor;
-				newPixelOrigins[i] = new int[] { pixelOrigins[i][0] * xFactor, pixelOrigins[i][1] * yFactor };
+				newWidths[i] = (ushort)(widths[i] * xFactor);
+				newPixelOrigins[i] = new ushort[] { (ushort)(pixelOrigins[i][0] * xFactor), (ushort)(pixelOrigins[i][1] * yFactor) };
 			}
 			return newSprites;
 		}
@@ -1040,10 +1043,10 @@ namespace Voxel2Pixel.Draw
 			n |= n >> 16;
 			return ++n; // increment `n` and return
 		}
-		public static int Height(int length, int width = 0) =>
+		public static ushort Height(int length, ushort width = 0) =>
 			width > 0 ?
-				length / width >> 2
-				: (int)Math.Sqrt(length >> 2);
+				(ushort)(length / width >> 2)
+				: (ushort)Math.Sqrt(length >> 2);
 		public static byte R(this uint color) => (byte)(color >> 24);
 		public static byte G(this uint color) => (byte)(color >> 16);
 		public static byte B(this uint color) => (byte)(color >> 8);
