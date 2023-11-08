@@ -19,7 +19,7 @@ namespace Voxel2PixelTest.Model
 				sizeX: 10,
 				sizeY: 32,
 				sizeZ: 5));
-			int width = VoxelDraw.IsoWidth(model),
+			ushort width = VoxelDraw.IsoWidth(model),
 				height = VoxelDraw.IsoHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{

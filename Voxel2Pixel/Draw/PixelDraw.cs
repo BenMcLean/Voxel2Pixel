@@ -31,18 +31,18 @@ namespace Voxel2Pixel.Draw
 		/// <param name="color">rgba color to draw</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>same texture with pixel drawn</returns>
-		public static byte[] DrawPixel(this byte[] texture, uint color, int x, int y, int width = 0) => texture.DrawPixel((byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, width);
+		public static byte[] DrawPixel(this byte[] texture, uint color, ushort x, ushort y, ushort width = 0) => texture.DrawPixel((byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, width);
 		/// <summary>
 		/// Draws one pixel of the specified color
 		/// </summary>
 		/// <param name="texture">raw rgba8888 pixel data to be modified</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>same texture with pixel drawn</returns>
-		public static byte[] DrawPixel(this byte[] texture, byte red, byte green, byte blue, byte alpha, int x, int y, int width = 0)
+		public static byte[] DrawPixel(this byte[] texture, byte red, byte green, byte blue, byte alpha, ushort x, ushort y, ushort width = 0)
 		{
 			if (x < 0 || y < 0) return texture;
-			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
-				ySide = (width < 1 ? xSide : texture.Length / width) >> 2;
+			ushort xSide = (ushort)((width < 1 ? (ushort)Math.Sqrt(texture.Length >> 2) : width) << 2),
+				ySide = (ushort)((width < 1 ? xSide : texture.Length / width) >> 2);
 			x <<= 2; //x *= 4;
 			if (x >= xSide || y >= ySide) return texture;
 			int offset = y * xSide + x;
@@ -61,7 +61,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="y">upper left corner of rectangle</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>same texture with rectangle drawn</returns>
-		public static byte[] DrawRectangle(this byte[] texture, uint color, int x, int y, int rectWidth, int rectHeight, int width = 0) => texture.DrawRectangle((byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, rectWidth, rectHeight, width);
+		public static byte[] DrawRectangle(this byte[] texture, uint color, int x, int y, int rectWidth, int rectHeight, ushort width = 0) => texture.DrawRectangle((byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, rectWidth, rectHeight, width);
 		/// <summary>
 		/// Draws a rectangle of the specified color
 		/// </summary>
@@ -70,10 +70,10 @@ namespace Voxel2Pixel.Draw
 		/// <param name="y">upper left corner of rectangle</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>same texture with rectangle drawn</returns>
-		public static byte[] DrawRectangle(this byte[] texture, byte red, byte green, byte blue, byte alpha, int x, int y, int rectWidth = 1, int rectHeight = 1, int width = 0)
+		public static byte[] DrawRectangle(this byte[] texture, byte red, byte green, byte blue, byte alpha, int x, int y, int rectWidth = 1, int rectHeight = 1, ushort width = 0)
 		{
 			if (rectWidth == 1 && rectHeight == 1)
-				return texture.DrawPixel(red, green, blue, alpha, x, y, width);
+				return texture.DrawPixel(red, green, blue, alpha, (ushort)x, (ushort)y, width);
 			if (rectHeight < 1) rectHeight = rectWidth;
 			if (x < 0)
 			{
@@ -85,7 +85,7 @@ namespace Voxel2Pixel.Draw
 				rectHeight += y;
 				y = 0;
 			}
-			width = width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width;
+			width = width < 1 ? (ushort)Math.Sqrt(texture.Length >> 2) : width;
 			int height = texture.Length / width >> 2;
 			if (rectWidth < 1 || rectHeight < 1 || x >= width || y >= height) return texture;
 			rectWidth = Math.Min(rectWidth, width - x);

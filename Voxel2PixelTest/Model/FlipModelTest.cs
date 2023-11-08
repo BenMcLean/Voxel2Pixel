@@ -9,7 +9,7 @@ using Xunit;
 
 namespace Voxel2PixelTest.Model
 {
-    public class FlipModelTest
+	public class FlipModelTest
 	{
 		[Fact]
 		public void ArrayRendererTest()
@@ -20,7 +20,7 @@ namespace Voxel2PixelTest.Model
 			{
 				Model = voxModel,
 			};
-			int width = VoxelDraw.IsoWidth(model),
+			ushort width = VoxelDraw.IsoWidth(model),
 				height = VoxelDraw.IsoHeight(model);
 			List<byte[]> frames = new List<byte[]>();
 			void addFrame()

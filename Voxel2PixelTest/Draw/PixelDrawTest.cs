@@ -13,14 +13,14 @@ namespace Voxel2PixelTest.Draw
 		[Fact]
 		public void Test1()
 		{
-			int width = 2, height = 2, xScale = 32, yScale = 32, xTile = 1, yTile = 1;
+			ushort width = 2, height = 2, xScale = 32, yScale = 32, xTile = 1, yTile = 1;
 			byte[] bytes = new byte[width * height * 4]
 			.DrawPixel(255, 0, 0, 255, 0, 0, width)
 			.DrawPixel(0, 255, 0, 255, 1, 0, width)
 			.DrawPixel(0, 0, 255, 255, 0, 1, width)
 			.DrawPixel(128, 128, 128, 255, 1, 1, width)
 			.Upscale(xScale, yScale, width)
-			.DrawRectangle(0, 0, 0, 255, width * xScale / 4, height * yScale / 4, width * xScale / 4 * 2, height * yScale / 4 * 2, width * xScale);
+			.DrawRectangle(0, 0, 0, 255, width * xScale / 4, height * yScale / 4, width * xScale / 4 * 2, height * yScale / 4 * 2, (ushort)(width * xScale));
 			//.DrawTriangle(0, 128, 0, 255, 10, 10, 40, 40, width * xScale);
 			//.Rotate180(width * xScale);
 			//int swap = xScale;
@@ -37,10 +37,10 @@ namespace Voxel2PixelTest.Draw
 			.SaveAsPng("IsoSlantDown.png");
 			int isoWidth = width * xScale * xTile + height * yScale * yTile;
 			byte[] isoTile = bytes
-				.DrawPixel(128, 0, 0, 255, 0, 0, width * xScale * xTile)
-				.DrawPixel(0, 255, 0, 255, 1, 0, width * xScale * xTile)
-				.DrawPixel(0, 0, 255, 255, 0, 1, width * xScale * xTile)
-				.DrawPixel(128, 128, 128, 255, 1, 1, width * xScale * xTile)
+				.DrawPixel(128, 0, 0, 255, 0, 0, (ushort)(width * xScale * xTile))
+				.DrawPixel(0, 255, 0, 255, 1, 0, (ushort)(width * xScale * xTile))
+				.DrawPixel(0, 0, 255, 255, 0, 1, (ushort)(width * xScale * xTile))
+				.DrawPixel(128, 128, 128, 255, 1, 1, (ushort)(width * xScale * xTile))
 				.RotateCounter45(width * xScale * xTile);
 			int isoHeight = isoTile.Length / (isoWidth * 4);
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(isoTile, isoWidth, isoHeight)
@@ -83,7 +83,7 @@ namespace Voxel2PixelTest.Draw
 		[Fact]
 		public void DrawRectangleTest()
 		{
-			int width = 10, height = 10, xScale = 10, yScale = 10;
+			ushort width = 10, height = 10, xScale = 10, yScale = 10;
 			byte[] bytes = new byte[width * height * 4]
 				.DrawRectangle(0, 0, 0, 255, -5, -5, width + 5, height + 5, width)
 				.DrawRectangle(0, 0, 255, 255, 0, 5, 5, 5, width);

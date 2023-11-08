@@ -13,8 +13,8 @@ namespace Voxel2PixelTest.Render
 		public void TinyTest()
 		{
 			VoxFileModel model = new VoxFileModel(@"..\..\..\Hazmat.vox");
-			int width = VoxelDraw.IsoWidth(model) / 2,
-				height = VoxelDraw.IsoHeight(model) / 4;
+			ushort width = (ushort)(VoxelDraw.IsoWidth(model) / 2),
+				height = (ushort)(VoxelDraw.IsoHeight(model) / 4);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{
 				Image = new byte[width * 4 * height],

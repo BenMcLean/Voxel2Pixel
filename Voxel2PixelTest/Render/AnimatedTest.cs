@@ -20,7 +20,7 @@ namespace Voxel2PixelTest.Render
 				sizeX: 7,
 				sizeY: 4,
 				sizeZ: 7);
-			int width = VoxelDraw.IsoWidth(model),
+			ushort width = VoxelDraw.IsoWidth(model),
 				height = VoxelDraw.IsoHeight(model);
 			Random random = new Random();
 			IVoxelColor voxelColor = new NaiveDimmer(ArrayModelTest.RainbowPalette);

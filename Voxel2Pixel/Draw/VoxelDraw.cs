@@ -13,8 +13,8 @@ namespace Voxel2Pixel.Draw
 	public static class VoxelDraw
 	{
 		#region Straight
-		public static int FrontWidth(IModel model) => model.SizeX;
-		public static int FrontHeight(IModel model) => model.SizeZ;
+		public static ushort FrontWidth(IModel model) => model.SizeX;
+		public static ushort FrontHeight(IModel model) => model.SizeZ;
 		private struct VoxelY
 		{
 			public readonly ushort Y;
@@ -100,8 +100,8 @@ namespace Voxel2Pixel.Draw
 			public byte Index;
 			public VisibleFace VisibleFace;
 		}
-		public static int DiagonalWidth(IModel model) => model.SizeX + model.SizeY;
-		public static int DiagonalHeight(IModel model) => model.SizeZ;
+		public static ushort DiagonalWidth(IModel model) => (ushort)(model.SizeX + model.SizeY);
+		public static ushort DiagonalHeight(IModel model) => model.SizeZ;
 		public static void Diagonal(IModel model, IRectangleRenderer renderer)
 		{
 			ushort voxelWidth = model.SizeX,
@@ -144,8 +144,8 @@ namespace Voxel2Pixel.Draw
 							index: rect.Index,
 							visibleFace: rect.VisibleFace);
 		}
-		public static int DiagonalPeekWidth(IModel model, byte scaleX = 6) => (model.SizeX + model.SizeY) * scaleX;
-		public static int DiagonalPeekHeight(IModel model, byte scaleY = 6) => model.SizeZ * scaleY;
+		public static ushort DiagonalPeekWidth(IModel model, byte scaleX = 6) => (ushort)((model.SizeX + model.SizeY) * scaleX);
+		public static ushort DiagonalPeekHeight(IModel model, byte scaleY = 6) => (ushort)(model.SizeZ * scaleY);
 		public struct VoxelFace
 		{
 			public Voxel Voxel;
@@ -215,8 +215,8 @@ namespace Voxel2Pixel.Draw
 								sizeX: scaleX,
 								sizeY: scaleY);
 		}
-		public static int AboveWidth(IModel model) => model.SizeX;
-		public static int AboveHeight(IModel model) => model.SizeY + model.SizeZ;
+		public static ushort AboveWidth(IModel model) => model.SizeX;
+		public static ushort AboveHeight(IModel model) => (ushort)(model.SizeY + model.SizeZ);
 		public static void AboveLocate(out int pixelX, out int pixelY, IModel model, int voxelX = 0, int voxelY = 0, int voxelZ = 0)
 		{
 			pixelX = voxelX;
@@ -266,8 +266,8 @@ namespace Voxel2Pixel.Draw
 		}
 		#endregion Diagonal
 		#region Isometric
-		public static int IsoWidth(IModel model) => 2 * (model.SizeX + model.SizeY);
-		public static int IsoHeight(IModel model) => 2 * (model.SizeX + model.SizeY) + 4 * model.SizeZ - 1;
+		public static ushort IsoWidth(IModel model) => (ushort)(2 * (model.SizeX + model.SizeY));
+		public static ushort IsoHeight(IModel model) => (ushort)(2 * (model.SizeX + model.SizeY) + 4 * model.SizeZ - 1);
 		public static void IsoLocate(out int pixelX, out int pixelY, IModel model, int voxelX = 0, int voxelY = 0, int voxelZ = 0)
 		{
 			// To move one x+ in voxels is x + 2, y - 2 in pixels.
@@ -288,9 +288,9 @@ namespace Voxel2Pixel.Draw
 			Dictionary<uint, DistantShape> dictionary = new Dictionary<uint, DistantShape>();
 			void Tri(ushort pixelX, ushort pixelY, uint distance, byte index, VisibleFace visibleFace = VisibleFace.Front)
 			{
-				uint key = (uint)(pixelY << 16) | pixelX;
-				if (!dictionary.TryGetValue(key, out DistantShape old)
-						|| old.Distance > distance)
+				if ((uint)((pixelY << 16) | pixelX) is uint key
+					&& (!dictionary.TryGetValue(key, out DistantShape old)
+						|| old.Distance > distance))
 					dictionary[key] = new DistantShape
 					{
 						Distance = distance,

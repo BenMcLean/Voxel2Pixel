@@ -122,16 +122,16 @@ namespace Voxel2PixelTest.Pack
 				pixelOrigins: out int[][] pixelOrigins,
 				voxelOrigins: voxelOrigins);
 			//pixelOrigins = pixelOrigins.Iso8SouthWestPixelOrigins();
-			int pixelOriginX = pixelOrigins.Select(origin => origin[0]).Max(),
-				pixelOriginY = pixelOrigins.Select(origin => origin[1]).Max() + 2,
-				width = Enumerable.Range(0, sprites.Length)
+			ushort pixelOriginX = (ushort)pixelOrigins.Select(origin => origin[0]).Max(),
+				pixelOriginY = (ushort)(pixelOrigins.Select(origin => origin[1]).Max() + 2),
+				width = (ushort)Enumerable.Range(0, sprites.Length)
 					.Select(i => widths[i]
 						+ pixelOriginX - pixelOrigins[i][0]
 						).Max(),
-				height = Enumerable.Range(0, sprites.Length)
+				height = (ushort)(Enumerable.Range(0, sprites.Length)
 					.Select(i => PixelDraw.Height(sprites[i].Length, widths[i])
 						+ pixelOriginY - pixelOrigins[i][1]
-						).Max() + 1;
+						).Max() + 1);
 			ImageMaker.AnimatedGif(
 				scaleX: 4,
 				scaleY: 4,

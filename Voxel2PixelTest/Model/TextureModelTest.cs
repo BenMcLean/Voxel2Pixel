@@ -23,7 +23,7 @@ namespace Voxel2PixelTest.Model
 			{
 				SizeZ = 5,
 			};
-			int width = VoxelDraw.IsoWidth(model),
+			ushort width = VoxelDraw.IsoWidth(model),
 				height = VoxelDraw.IsoHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{
@@ -39,7 +39,7 @@ namespace Voxel2PixelTest.Model
 				bytes: arrayRenderer.Image)
 				.SaveAsPng("TextureModel.png");
 		}
-		public static byte[] TestTexture(int width, int height) =>
+		public static byte[] TestTexture(ushort width, ushort height) =>
 			new byte[16] {
 				255,0,0,255,
 				0,255,0,255,

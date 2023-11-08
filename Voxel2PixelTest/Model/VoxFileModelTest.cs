@@ -14,7 +14,7 @@ namespace Voxel2PixelTest.Model
 		public void ArrayRendererTest()
 		{
 			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
-			int width = VoxelDraw.IsoWidth(model),
+			ushort width = VoxelDraw.IsoWidth(model),
 				height = VoxelDraw.IsoHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{
@@ -34,7 +34,7 @@ namespace Voxel2PixelTest.Model
 		public void CropTest()
 		{
 			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
-			int width = VoxelDraw.IsoWidth(model),
+			ushort width = VoxelDraw.IsoWidth(model),
 				height = VoxelDraw.IsoHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{
@@ -75,8 +75,8 @@ namespace Voxel2PixelTest.Model
 			//};
 			ArrayModel model = new ArrayModel(ArrayModelTest.RainbowBox(7, 4, 7));
 			IVoxelColor voxelColor = new NaiveDimmer(ArrayModelTest.RainbowPalette);
-			int width = VoxelDraw.DiagonalWidth(model) + 2,
-				height = VoxelDraw.DiagonalHeight(model) + 2;
+			ushort width = VoxelDraw.DiagonalWidth(model),
+				height = VoxelDraw.DiagonalHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{
 				Image = new byte[width * 4 * height],

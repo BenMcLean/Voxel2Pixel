@@ -58,7 +58,7 @@ namespace Voxel2PixelTest.Draw
 		{
 			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
 			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
-			int width = VoxelDraw.DiagonalWidth(model);
+			ushort width = VoxelDraw.DiagonalWidth(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{
 				Image = new byte[width * 4 * model.SizeZ],
@@ -78,7 +78,7 @@ namespace Voxel2PixelTest.Draw
 		{
 			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
 			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
-			int width = VoxelDraw.DiagonalPeekWidth(model);
+			ushort width = VoxelDraw.DiagonalPeekWidth(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{
 				Image = new byte[width * 4 * VoxelDraw.DiagonalPeekHeight(model)],
@@ -98,7 +98,7 @@ namespace Voxel2PixelTest.Draw
 		{
 			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
 			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
-			int width = VoxelDraw.AboveWidth(model),
+			ushort width = VoxelDraw.AboveWidth(model),
 				height = VoxelDraw.AboveHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{
@@ -169,8 +169,8 @@ namespace Voxel2PixelTest.Draw
 		{
 			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
 			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
-			int width = (int)VoxelDraw.IsoWidth(model),
-				height = (int)VoxelDraw.IsoHeight(model);
+			ushort width = VoxelDraw.IsoWidth(model),
+				height = VoxelDraw.IsoHeight(model);
 			ArrayRenderer arrayRenderer = new ArrayRenderer
 			{
 				Image = new byte[width * 4 * height],
