@@ -135,9 +135,9 @@ namespace Voxel2Pixel.Model
 						if (leaf[i] is byte index && index != 0)
 							voxels.Add(new Voxel
 							{
-								X = (ushort)((x << 1) | (index & 1)),
-								Y = (ushort)((y << 1) | ((index >> 1) & 1)),
-								Z = (ushort)((z << 1) | ((index >> 2) & 1)),
+								X = (ushort)((x << 1) | (i & 1)),
+								Y = (ushort)((y << 1) | ((i >> 1) & 1)),
+								Z = (ushort)((z << 1) | ((i >> 2) & 1)),
 								Index = index,
 							});
 			}
