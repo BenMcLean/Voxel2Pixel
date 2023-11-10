@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
 
 namespace Voxel2Pixel.SVO
 {
-	public class SVO
+	public class SVO : IModel
 	{
 		public abstract class Node
 		{
@@ -51,6 +53,16 @@ namespace Voxel2Pixel.SVO
 		{
 			Root = new Branch();
 			foreach (Voxel voxel in voxels)
+				this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
+		}
+		#region IModel
+		public ushort SizeX { get; set; }
+		public ushort SizeY { get; set; }
+		public ushort SizeZ { get; set; }
+		public byte this[ushort x, ushort y, ushort z]
+		{
+			get => throw new NotImplementedException();
+			set
 			{
 				Node node = Root;
 				for (int level = 16; level > 1; level--)
@@ -58,18 +70,21 @@ namespace Voxel2Pixel.SVO
 						break;
 					else
 					{
-						byte childNumber = (byte)((((voxel.Z >> level) & 1) << 2) | (((voxel.Y >> level) & 1) << 1) | ((voxel.X >> level) & 1));
+						byte childNumber = (byte)((((z >> level) & 1) << 2) | (((y >> level) & 1) << 1) | ((x >> level) & 1));
 						if (branch[childNumber] is Node child)
 							node = child;
 						else
 							node = branch[childNumber] = new Branch();
 					}
 				Branch lastBranch = (Branch)node;
-				byte leafNumber = (byte)((((voxel.Z >> 1) & 1) << 2) | (((voxel.Y >> 1) & 1) << 1) | ((voxel.X >> 1) & 1));
+				byte leafNumber = (byte)((((z >> 1) & 1) << 2) | (((y >> 1) & 1) << 1) | ((x >> 1) & 1));
 				if (!(lastBranch[leafNumber] is Leaf leaf))
 					leaf = (Leaf)(lastBranch[leafNumber] = new Leaf());
-				leaf[(byte)(((voxel.Z & 1) << 2) | ((voxel.Y & 1) << 1) | (voxel.X >> 1) & 1)] = voxel.Index;
+				leaf[(byte)(((z & 1) << 2) | ((y & 1) << 1) | (x >> 1) & 1)] = value;
 			}
 		}
+		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+		public IEnumerator<Voxel> GetEnumerator() => throw new NotImplementedException();
+		#endregion IModel
 	}
 }
