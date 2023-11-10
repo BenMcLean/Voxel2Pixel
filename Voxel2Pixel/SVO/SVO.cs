@@ -104,7 +104,34 @@ namespace Voxel2Pixel.SVO
 			}
 		}
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-		public IEnumerator<Voxel> GetEnumerator() => throw new NotImplementedException();
+		public IEnumerator<Voxel> GetEnumerator()
+		{
+			List<Voxel> voxels = new List<Voxel>();
+			void Recurse(Node node, ushort x, ushort y, ushort z)
+			{
+				if (node is Branch branch)
+				{
+					for (byte i = 0; i < 8; i++)
+						if (branch[i] is Node child)
+							Recurse(
+								node: child,
+								x: (ushort)((x << 1) | (i & 1)),
+								y: (ushort)((y << 1) | ((i << 1) & 1)),
+								z: (ushort)((z << 1) | ((i << 2) & 1)));
+				}
+				else if (node is Leaf leaf)
+					for (byte i = 0; i < 8; i++)
+						if (leaf[i] is byte index && index != 0)
+							voxels.Add(new Voxel
+							{
+								X = (ushort)(x | (index & 1)),
+								Y = (ushort)(y | ((index << 1) & 1)),
+								Z = (ushort)(z | ((index << 2) & 1)),
+								Index = index,
+							});
+			}
+			return voxels.GetEnumerator();
+		}
 		#endregion IModel
 	}
 }
