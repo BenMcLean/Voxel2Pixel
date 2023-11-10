@@ -48,7 +48,7 @@ namespace Voxel2Pixel.SVO
 				set => this[(byte)((z > 0 ? 4 : 0) + (y > 0 ? 2 : 0) + (x > 0 ? 1 : 0))] = value;
 			}
 		}
-		Branch Root;
+		public readonly Branch Root;
 		public SVO(IEnumerable<Voxel> voxels)
 		{
 			Root = new Branch();
@@ -61,7 +61,27 @@ namespace Voxel2Pixel.SVO
 		public ushort SizeZ { get; set; }
 		public byte this[ushort x, ushort y, ushort z]
 		{
-			get => throw new NotImplementedException();
+			get
+			{
+				Node node = Root;
+				for (int level = 16; level > 1; level--)
+					if (!(node is Branch branch))
+						return 0;
+					else
+					{
+						byte childNumber = (byte)((((z >> level) & 1) << 2) | (((y >> level) & 1) << 1) | ((x >> level) & 1));
+						if (branch[childNumber] is Node child)
+							node = child;
+						else
+							return 0;
+					}
+				if (!(node is Branch lastBranch))
+					return 0;
+				byte leafNumber = (byte)((((z >> 1) & 1) << 2) | (((y >> 1) & 1) << 1) | ((x >> 1) & 1));
+				return lastBranch[leafNumber] is Leaf leaf ?
+					leaf[(byte)(((z & 1) << 2) | ((y & 1) << 1) | (x & 1))]
+					: (byte)0;
+			}
 			set
 			{
 				Node node = Root;
