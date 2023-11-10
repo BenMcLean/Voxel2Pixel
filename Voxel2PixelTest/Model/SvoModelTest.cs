@@ -27,6 +27,21 @@ namespace Voxel2PixelTest.Model
 		{
 			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
 			SvoModel svo = new SvoModel(model);
+			foreach (Voxel voxel in model)
+			{
+				Assert.Equal(
+					expected: voxel.Index,
+					actual: svo[voxel.X, voxel.Y, voxel.Z]);
+			}
+			Assert.Equal(
+				expected: model.Count(),
+				actual: svo.Count());
+			for (ushort x = 0; x < model.SizeX; x++)
+				for (ushort y = 0; y < model.SizeY; y++)
+					for (ushort z = 0; z < model.SizeZ; z++)
+						Assert.Equal(
+							expected: model[x, y, z],
+							actual: svo[x, y, z]);
 		}
 	}
 }

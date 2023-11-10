@@ -14,11 +14,13 @@ namespace Voxel2Pixel.Model
 		{
 			public virtual byte Header { get; }
 			public virtual bool IsLeaf => (Header & 0b10000000) > 0;
+			public abstract void Clear();
 		}
 		public class Branch : Node
 		{
 			public override byte Header => (byte)(Children.Length - 1);
 			protected Node[] Children = new Node[8];
+			public override void Clear() => NumberOfChildren = 8;
 			public Node this[byte index]
 			{
 				get => Children[index];
@@ -33,7 +35,8 @@ namespace Voxel2Pixel.Model
 		public class Leaf : Node
 		{
 			public override byte Header => 0b10000000;
-			public ulong Data = 0;
+			public ulong Data = 0ul;
+			public override void Clear() => Data = 0ul;
 			public byte this[byte index]
 			{
 				get => (byte)(Data >> (index << 3));
@@ -50,10 +53,16 @@ namespace Voxel2Pixel.Model
 				set => this[(byte)((z > 0 ? 4 : 0) + (y > 0 ? 2 : 0) + (x > 0 ? 1 : 0))] = value;
 			}
 		}
-		public readonly Branch Root;
+		public readonly Branch Root = new Branch();
+		public void Clear() => Root.Clear();
+		public SvoModel(IModel model) : this((IEnumerable<Voxel>)model)
+		{
+			SizeX = model.SizeX;
+			SizeY = model.SizeY;
+			SizeZ = model.SizeZ;
+		}
 		public SvoModel(IEnumerable<Voxel> voxels)
 		{
-			Root = new Branch();
 			foreach (Voxel voxel in voxels)
 				this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
 		}
@@ -117,18 +126,18 @@ namespace Voxel2Pixel.Model
 						if (branch[i] is Node child)
 							Recurse(
 								node: child,
-								x: (ushort)(x << 1 | i & 1),
-								y: (ushort)(y << 1 | i << 1 & 1),
-								z: (ushort)(z << 1 | i << 2 & 1));
+								x: (ushort)((x << 1) | (i & 1)),
+								y: (ushort)((y << 1) | ((i << 1) & 1)),
+								z: (ushort)((z << 1) | ((i << 2) & 1)));
 				}
 				else if (node is Leaf leaf)
 					for (byte i = 0; i < 8; i++)
 						if (leaf[i] is byte index && index != 0)
 							voxels.Add(new Voxel
 							{
-								X = (ushort)(x | index & 1),
-								Y = (ushort)(y | index << 1 & 1),
-								Z = (ushort)(z | index << 2 & 1),
+								X = (ushort)(x | (index & 1)),
+								Y = (ushort)(y | ((index << 1) & 1)),
+								Z = (ushort)(z | ((index << 2) & 1)),
 								Index = index,
 							});
 			}
