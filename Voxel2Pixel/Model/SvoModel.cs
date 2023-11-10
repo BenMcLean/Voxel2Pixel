@@ -2,11 +2,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using Voxel2Pixel.Interfaces;
-using Voxel2Pixel.Model;
 
-namespace Voxel2Pixel.SVO
+namespace Voxel2Pixel.Model
 {
-	public class SVO : IModel
+	/// <summary>
+	/// SVO stands for "Sparse Voxel Octree"
+	/// </summary>
+	public class SvoModel : IModel
 	{
 		public abstract class Node
 		{
@@ -35,7 +37,7 @@ namespace Voxel2Pixel.SVO
 			public byte this[byte index]
 			{
 				get => (byte)(Data >> (index << 3));
-				set => Data = (Data & ~(0xFFul << (index << 3))) | ((ulong)value << (index << 3));
+				set => Data = Data & ~(0xFFul << (index << 3)) | (ulong)value << (index << 3);
 			}
 			public byte this[bool x, bool y, bool z]
 			{
@@ -49,7 +51,7 @@ namespace Voxel2Pixel.SVO
 			}
 		}
 		public readonly Branch Root;
-		public SVO(IEnumerable<Voxel> voxels)
+		public SvoModel(IEnumerable<Voxel> voxels)
 		{
 			Root = new Branch();
 			foreach (Voxel voxel in voxels)
@@ -69,7 +71,7 @@ namespace Voxel2Pixel.SVO
 						return 0;
 					else
 					{
-						byte childNumber = (byte)((((z >> level) & 1) << 2) | (((y >> level) & 1) << 1) | ((x >> level) & 1));
+						byte childNumber = (byte)((z >> level & 1) << 2 | (y >> level & 1) << 1 | x >> level & 1);
 						if (branch[childNumber] is Node child)
 							node = child;
 						else
@@ -77,9 +79,9 @@ namespace Voxel2Pixel.SVO
 					}
 				if (!(node is Branch lastBranch))
 					return 0;
-				byte leafNumber = (byte)((((z >> 1) & 1) << 2) | (((y >> 1) & 1) << 1) | ((x >> 1) & 1));
+				byte leafNumber = (byte)((z >> 1 & 1) << 2 | (y >> 1 & 1) << 1 | x >> 1 & 1);
 				return lastBranch[leafNumber] is Leaf leaf ?
-					leaf[(byte)(((z & 1) << 2) | ((y & 1) << 1) | (x & 1))]
+					leaf[(byte)((z & 1) << 2 | (y & 1) << 1 | x & 1)]
 					: (byte)0;
 			}
 			set
@@ -90,17 +92,17 @@ namespace Voxel2Pixel.SVO
 						break;
 					else
 					{
-						byte childNumber = (byte)((((z >> level) & 1) << 2) | (((y >> level) & 1) << 1) | ((x >> level) & 1));
+						byte childNumber = (byte)((z >> level & 1) << 2 | (y >> level & 1) << 1 | x >> level & 1);
 						if (branch[childNumber] is Node child)
 							node = child;
 						else
 							node = branch[childNumber] = new Branch();
 					}
 				Branch lastBranch = (Branch)node;
-				byte leafNumber = (byte)((((z >> 1) & 1) << 2) | (((y >> 1) & 1) << 1) | ((x >> 1) & 1));
+				byte leafNumber = (byte)((z >> 1 & 1) << 2 | (y >> 1 & 1) << 1 | x >> 1 & 1);
 				if (!(lastBranch[leafNumber] is Leaf leaf))
 					leaf = (Leaf)(lastBranch[leafNumber] = new Leaf());
-				leaf[(byte)(((z & 1) << 2) | ((y & 1) << 1) | (x & 1))] = value;
+				leaf[(byte)((z & 1) << 2 | (y & 1) << 1 | x & 1)] = value;
 			}
 		}
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -115,18 +117,18 @@ namespace Voxel2Pixel.SVO
 						if (branch[i] is Node child)
 							Recurse(
 								node: child,
-								x: (ushort)((x << 1) | (i & 1)),
-								y: (ushort)((y << 1) | ((i << 1) & 1)),
-								z: (ushort)((z << 1) | ((i << 2) & 1)));
+								x: (ushort)(x << 1 | i & 1),
+								y: (ushort)(y << 1 | i << 1 & 1),
+								z: (ushort)(z << 1 | i << 2 & 1));
 				}
 				else if (node is Leaf leaf)
 					for (byte i = 0; i < 8; i++)
 						if (leaf[i] is byte index && index != 0)
 							voxels.Add(new Voxel
 							{
-								X = (ushort)(x | (index & 1)),
-								Y = (ushort)(y | ((index << 1) & 1)),
-								Z = (ushort)(z | ((index << 2) & 1)),
+								X = (ushort)(x | index & 1),
+								Y = (ushort)(y | index << 1 & 1),
+								Z = (ushort)(z | index << 2 & 1),
 								Index = index,
 							});
 			}

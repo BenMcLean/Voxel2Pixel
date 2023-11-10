@@ -1,16 +1,14 @@
 ﻿using System.Linq;
 using Voxel2Pixel.Model;
 using Xunit;
-using Voxel2Pixel.SVO;
-using static Voxel2Pixel.SVO.SVO;
+using static Voxel2Pixel.Model.SvoModel;
 
-namespace Voxel2PixelTest.SVO
+namespace Voxel2PixelTest.Model
 {
-	public class SvoTest
+	public class SvoModelTest
 	{
-		private readonly Xunit.Abstractions.ITestOutputHelper output;
-		public SvoTest(Xunit.Abstractions.ITestOutputHelper output) => this.output = output;
-
+		//private readonly Xunit.Abstractions.ITestOutputHelper output;
+		//public SvoTest(Xunit.Abstractions.ITestOutputHelper output) => this.output = output;
 		[Fact]
 		public void LeafTest()
 		{
@@ -28,7 +26,7 @@ namespace Voxel2PixelTest.SVO
 		public void ModelTest()
 		{
 			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
-			Voxel2Pixel.SVO.SVO svo = new Voxel2Pixel.SVO.SVO(model);
+			SvoModel svo = new SvoModel(model);
 		}
 	}
 }
