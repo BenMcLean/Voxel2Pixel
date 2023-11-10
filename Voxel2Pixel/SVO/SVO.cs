@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace VoxModel.SVO
+namespace Voxel2Pixel.SVO
 {
 	public class SVO
 	{
@@ -12,7 +12,7 @@ namespace VoxModel.SVO
 		public class Branch : Node
 		{
 			public override byte Header => (byte)(Children.Length - 1);
-			public Node[] Children;
+			public Node[] Children = new Node[8];
 			public byte NumberOfChildren
 			{
 				get => (byte)Children.Length;
@@ -39,5 +39,6 @@ namespace VoxModel.SVO
 				set => this[(byte)((z > 0 ? 4 : 0) + (y > 0 ? 2 : 0) + (x > 0 ? 1 : 0))] = value;
 			}
 		}
+		Branch Root;
 	}
 }

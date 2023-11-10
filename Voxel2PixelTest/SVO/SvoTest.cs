@@ -1,8 +1,8 @@
 ﻿using System.Linq;
 using Xunit;
-using static VoxModel.SVO.SVO;
+using static Voxel2Pixel.SVO.SVO;
 
-namespace VoxModelTest.SVO
+namespace Voxel2PixelTest.SVO
 {
 	public class SvoTest
 	{
