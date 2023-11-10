@@ -127,17 +127,17 @@ namespace Voxel2Pixel.Model
 							Recurse(
 								node: child,
 								x: (ushort)((x << 1) | (i & 1)),
-								y: (ushort)((y << 1) | ((i << 1) & 1)),
-								z: (ushort)((z << 1) | ((i << 2) & 1)));
+								y: (ushort)((y << 1) | ((i >> 1) & 1)),
+								z: (ushort)((z << 1) | ((i >> 2) & 1)));
 				}
 				else if (node is Leaf leaf)
 					for (byte i = 0; i < 8; i++)
 						if (leaf[i] is byte index && index != 0)
 							voxels.Add(new Voxel
 							{
-								X = (ushort)(x | (index & 1)),
-								Y = (ushort)(y | ((index << 1) & 1)),
-								Z = (ushort)(z | ((index << 2) & 1)),
+								X = (ushort)((x << 1) | (index & 1)),
+								Y = (ushort)((y << 1) | ((index >> 1) & 1)),
+								Z = (ushort)((z << 1) | ((index >> 2) & 1)),
 								Index = index,
 							});
 			}

@@ -33,6 +33,12 @@ namespace Voxel2PixelTest.Model
 					expected: voxel.Index,
 					actual: svo[voxel.X, voxel.Y, voxel.Z]);
 			}
+			foreach (Voxel voxel in svo)
+			{
+				Assert.Equal(
+					expected: model[voxel.X, voxel.Y, voxel.Z],
+					actual: voxel.Index);
+			}
 			Assert.Equal(
 				expected: model.Count(),
 				actual: svo.Count());
