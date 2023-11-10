@@ -80,7 +80,7 @@ namespace Voxel2Pixel.SVO
 				byte leafNumber = (byte)((((z >> 1) & 1) << 2) | (((y >> 1) & 1) << 1) | ((x >> 1) & 1));
 				if (!(lastBranch[leafNumber] is Leaf leaf))
 					leaf = (Leaf)(lastBranch[leafNumber] = new Leaf());
-				leaf[(byte)(((z & 1) << 2) | ((y & 1) << 1) | (x >> 1) & 1)] = value;
+				leaf[(byte)(((z & 1) << 2) | ((y & 1) << 1) | (x & 1))] = value;
 			}
 		}
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
