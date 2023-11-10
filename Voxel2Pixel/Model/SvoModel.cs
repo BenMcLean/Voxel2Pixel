@@ -132,6 +132,7 @@ namespace Voxel2Pixel.Model
 								Index = index,
 							});
 			}
+			Recurse(Root, 0, 0, 0);
 			return voxels.GetEnumerator();
 		}
 		#endregion IModel
