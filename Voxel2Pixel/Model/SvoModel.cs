@@ -21,10 +21,10 @@ namespace Voxel2Pixel.Model
 			public override byte Header => (byte)(Children.Length - 1);
 			protected Node[] Children = new Node[8];
 			public override void Clear() => NumberOfChildren = 8;
-			public Node this[byte index]
+			public Node this[byte octant]
 			{
-				get => Children[index];
-				set => Children[index] = value;
+				get => Children[octant];
+				set => Children[octant] = value;
 			}
 			public byte NumberOfChildren
 			{
@@ -37,10 +37,10 @@ namespace Voxel2Pixel.Model
 			public override byte Header => 0b10000000;
 			public ulong Data = 0ul;
 			public override void Clear() => Data = 0ul;
-			public byte this[byte index]
+			public byte this[byte octant]
 			{
-				get => (byte)(Data >> (index << 3));
-				set => Data = Data & ~(0xFFul << (index << 3)) | (ulong)value << (index << 3);
+				get => (byte)(Data >> (octant << 3));
+				set => Data = Data & ~(0xFFul << (octant << 3)) | (ulong)value << (octant << 3);
 			}
 			public byte this[bool x, bool y, bool z]
 			{
@@ -82,38 +82,38 @@ namespace Voxel2Pixel.Model
 						return 0;
 					else
 					{
-						byte childNumber = (byte)((z >> level & 1) << 2 | (y >> level & 1) << 1 | x >> level & 1);
-						if (branch[childNumber] is Node child)
+						byte octant = (byte)((z >> level & 1) << 2 | (y >> level & 1) << 1 | x >> level & 1);
+						if (branch[octant] is Node child)
 							node = child;
 						else
 							return 0;
 					}
-				if (!(node is Branch lastBranch))
-					return 0;
-				return lastBranch[(byte)((z >> 1 & 1) << 2 | (y >> 1 & 1) << 1 | x >> 1 & 1)] is Leaf leaf ?
-					leaf[(byte)((z & 1) << 2 | (y & 1) << 1 | x & 1)]
-					: (byte)0;
+				return node is Branch lastBranch
+					&& lastBranch[(byte)((z >> 1 & 1) << 2 | (y >> 1 & 1) << 1 | x >> 1 & 1)] is Leaf leaf ?
+						leaf[(byte)((z & 1) << 2 | (y & 1) << 1 | x & 1)]
+						: (byte)0;
 			}
 			set
 			{
 				if (this.IsOutside(x, y, z))
 					throw new IndexOutOfRangeException("[" + string.Join(", ", x, z, y) + "] is not within size [" + string.Join(", ", SizeX, SizeY, SizeZ) + "]!");
 				Node node = Root;
+				byte octant;
 				for (int level = 16; level > 1; level--)
 					if (!(node is Branch branch))
 						break;
 					else
 					{
-						byte childNumber = (byte)((z >> level & 1) << 2 | (y >> level & 1) << 1 | x >> level & 1);
-						if (branch[childNumber] is Node child)
+						octant = (byte)((z >> level & 1) << 2 | (y >> level & 1) << 1 | x >> level & 1);
+						if (branch[octant] is Node child)
 							node = child;
 						else
-							node = branch[childNumber] = new Branch();
+							node = branch[octant] = new Branch();
 					}
 				Branch lastBranch = (Branch)node;
-				byte leafNumber = (byte)((z >> 1 & 1) << 2 | (y >> 1 & 1) << 1 | x >> 1 & 1);
-				if (!(lastBranch[leafNumber] is Leaf leaf))
-					leaf = (Leaf)(lastBranch[leafNumber] = new Leaf());
+				octant = (byte)((z >> 1 & 1) << 2 | (y >> 1 & 1) << 1 | x >> 1 & 1);
+				if (!(lastBranch[octant] is Leaf leaf))
+					leaf = (Leaf)(lastBranch[octant] = new Leaf());
 				leaf[(byte)((z & 1) << 2 | (y & 1) << 1 | x & 1)] = value;
 			}
 		}
@@ -125,22 +125,22 @@ namespace Voxel2Pixel.Model
 			{
 				if (node is Branch branch)
 				{
-					for (byte i = 0; i < 8; i++)
-						if (branch[i] is Node child)
+					for (byte octant = 0; octant < 8; octant++)
+						if (branch[octant] is Node child)
 							Recurse(
 								node: child,
-								x: (ushort)((x << 1) | (i & 1)),
-								y: (ushort)((y << 1) | ((i >> 1) & 1)),
-								z: (ushort)((z << 1) | ((i >> 2) & 1)));
+								x: (ushort)((x << 1) | (octant & 1)),
+								y: (ushort)((y << 1) | ((octant >> 1) & 1)),
+								z: (ushort)((z << 1) | ((octant >> 2) & 1)));
 				}
 				else if (node is Leaf leaf)
-					for (byte i = 0; i < 8; i++)
-						if (leaf[i] is byte index && index != 0)
+					for (byte octant = 0; octant < 8; octant++)
+						if (leaf[octant] is byte index && index != 0)
 							voxels.Add(new Voxel
 							{
-								X = (ushort)((x << 1) | (i & 1)),
-								Y = (ushort)((y << 1) | ((i >> 1) & 1)),
-								Z = (ushort)((z << 1) | ((i >> 2) & 1)),
+								X = (ushort)((x << 1) | (octant & 1)),
+								Y = (ushort)((y << 1) | ((octant >> 1) & 1)),
+								Z = (ushort)((z << 1) | ((octant >> 2) & 1)),
 								Index = index,
 							});
 			}
