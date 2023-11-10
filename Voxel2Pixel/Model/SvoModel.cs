@@ -74,6 +74,8 @@ namespace Voxel2Pixel.Model
 		{
 			get
 			{
+				if (this.IsOutside(x, y, z))
+					throw new IndexOutOfRangeException("[" + string.Join(", ", x, z, y) + "] is not within size [" + string.Join(", ", SizeX, SizeY, SizeZ) + "]!");
 				Node node = Root;
 				for (int level = 16; level > 1; level--)
 					if (!(node is Branch branch))
@@ -88,13 +90,14 @@ namespace Voxel2Pixel.Model
 					}
 				if (!(node is Branch lastBranch))
 					return 0;
-				byte leafNumber = (byte)((z >> 1 & 1) << 2 | (y >> 1 & 1) << 1 | x >> 1 & 1);
-				return lastBranch[leafNumber] is Leaf leaf ?
+				return lastBranch[(byte)((z >> 1 & 1) << 2 | (y >> 1 & 1) << 1 | x >> 1 & 1)] is Leaf leaf ?
 					leaf[(byte)((z & 1) << 2 | (y & 1) << 1 | x & 1)]
 					: (byte)0;
 			}
 			set
 			{
+				if (this.IsOutside(x, y, z))
+					throw new IndexOutOfRangeException("[" + string.Join(", ", x, z, y) + "] is not within size [" + string.Join(", ", SizeX, SizeY, SizeZ) + "]!");
 				Node node = Root;
 				for (int level = 16; level > 1; level--)
 					if (!(node is Branch branch))
