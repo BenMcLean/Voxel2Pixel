@@ -1,5 +1,7 @@
 ﻿using System.Linq;
+using Voxel2Pixel.Model;
 using Xunit;
+using Voxel2Pixel.SVO;
 using static Voxel2Pixel.SVO.SVO;
 
 namespace Voxel2PixelTest.SVO
@@ -10,21 +12,23 @@ namespace Voxel2PixelTest.SVO
 		public SvoTest(Xunit.Abstractions.ITestOutputHelper output) => this.output = output;
 
 		[Fact]
-		public void ByteTest()
+		public void LeafTest()
 		{
 			byte[] bytes = Enumerable.Range(1, 8).Select(i => (byte)i).ToArray();
 			Leaf leaf = new Leaf();
 			for (byte i = 0; i < bytes.Length; i++)
 			{
-				output.WriteLine("before: " + string.Format("0x{0:X}", leaf.Data));
 				leaf[i] = bytes[i];
-				output.WriteLine("after: " + string.Format("0x{0:X}", leaf.Data));
-				output.WriteLine("bytes[" + i + "] = " + bytes[i] + ", leaf[" + i + "] = " + leaf[i]);
-			}
-			for (byte i = 0; i < bytes.Length; i++)
 				Assert.Equal(
 					expected: bytes[i],
 					actual: leaf[i]);
+			}
+		}
+		[Fact]
+		public void ModelTest()
+		{
+			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
+			Voxel2Pixel.SVO.SVO svo = new Voxel2Pixel.SVO.SVO(model);
 		}
 	}
 }
