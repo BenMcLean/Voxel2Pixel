@@ -141,28 +141,26 @@ namespace Voxel2Pixel.Model
 			{
 				if (this.IsOutside(x, y, z))
 					throw new IndexOutOfRangeException("[" + string.Join(", ", x, z, y) + "] is not within size [" + string.Join(", ", SizeX, SizeY, SizeZ) + "]!");
-				Node node = Root;
+				Branch branch = Root;
 				byte octant;
 				for (int level = 16; level > 1; level--)
 				{
-					Branch branch = (Branch)node;
 					octant = (byte)((z >> level & 1) << 2 | (y >> level & 1) << 1 | x >> level & 1);
-					if (branch[octant] is Node child)
-						node = child;
+					if (branch[octant] is Branch child)
+						branch = child;
 					else
 					{
 						if (value == 0)
 							return;
-						node = branch[octant] = new Branch(node, octant);
+						branch = (Branch)(branch[octant] = new Branch(branch, octant));
 					}
 				}
-				Branch lastBranch = (Branch)node;
 				octant = (byte)((z >> 1 & 1) << 2 | (y >> 1 & 1) << 1 | x >> 1 & 1);
-				if (!(lastBranch[octant] is Leaf leaf))
+				if (!(branch[octant] is Leaf leaf))
 				{
 					if (value == 0)
 						return;
-					leaf = (Leaf)(lastBranch[octant] = new Leaf(lastBranch, octant));
+					leaf = (Leaf)(branch[octant] = new Leaf(branch, octant));
 				}
 				leaf[(byte)((z & 1) << 2 | (y & 1) << 1 | x & 1)] = value;
 			}
