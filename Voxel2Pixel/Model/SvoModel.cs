@@ -55,14 +55,17 @@ namespace Voxel2Pixel.Model
 		}
 		public readonly Branch Root = new Branch();
 		public void Clear() => Root.Clear();
-		public SvoModel(IModel model) : this((IEnumerable<Voxel>)model)
+		public SvoModel(IModel model) : this(
+			voxels: model,
+			sizeX: model.SizeX,
+			sizeY: model.SizeY,
+			sizeZ: model.SizeZ)
+		{ }
+		public SvoModel(IEnumerable<Voxel> voxels, ushort sizeX, ushort sizeY, ushort sizeZ)
 		{
-			SizeX = model.SizeX;
-			SizeY = model.SizeY;
-			SizeZ = model.SizeZ;
-		}
-		public SvoModel(IEnumerable<Voxel> voxels)
-		{
+			SizeX = sizeX;
+			SizeY = sizeY;
+			SizeZ = sizeZ;
 			foreach (Voxel voxel in voxels)
 				this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
 		}
