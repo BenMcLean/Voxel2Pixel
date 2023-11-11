@@ -11,6 +11,7 @@ namespace Voxel2Pixel.Model
 	/// </summary>
 	public class SvoModel : IModel
 	{
+		#region Nested classes
 		public abstract class Node
 		{
 			public virtual byte Header { get; }
@@ -79,6 +80,8 @@ namespace Voxel2Pixel.Model
 				Octant = octant;
 			}
 		}
+		#endregion Nested classes
+		#region SvoModel
 		public readonly Branch Root = new Branch(null, 0);
 		public void Clear() => Root.Clear();
 		public SvoModel() { }
@@ -96,6 +99,24 @@ namespace Voxel2Pixel.Model
 			foreach (Voxel voxel in voxels)
 				this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
 		}
+		public int NodeCount
+		{
+			get
+			{
+				int nodes = 0;
+				void Recurse(Node node)
+				{
+					nodes++;
+					if (node is Branch branch)
+						for (byte octant = 0; octant < 8; octant++)
+							if (branch[octant] is Node child)
+								Recurse(child);
+				}
+				Recurse(Root);
+				return nodes;
+			}
+		}
+		#endregion SvoModel
 		#region IModel
 		public ushort SizeX { get; set; }
 		public ushort SizeY { get; set; }
@@ -186,22 +207,5 @@ namespace Voxel2Pixel.Model
 			return voxels.GetEnumerator();
 		}
 		#endregion IModel
-		public int NodeCount
-		{
-			get
-			{
-				int nodes = 0;
-				void Recurse(Node node)
-				{
-					nodes++;
-					if (node is Branch branch)
-						for (byte octant = 0; octant < 8; octant++)
-							if (branch[octant] is Node child)
-								Recurse(child);
-				}
-				Recurse(Root);
-				return nodes;
-			}
-		}
 	}
 }
