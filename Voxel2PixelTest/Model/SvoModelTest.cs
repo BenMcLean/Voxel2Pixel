@@ -8,7 +8,7 @@ namespace Voxel2PixelTest.Model
 	public class SvoModelTest
 	{
 		//private readonly Xunit.Abstractions.ITestOutputHelper output;
-		//public SvoTest(Xunit.Abstractions.ITestOutputHelper output) => this.output = output;
+		//public SvoModelTest(Xunit.Abstractions.ITestOutputHelper output) => this.output = output;
 		[Fact]
 		public void LeafTest()
 		{
@@ -48,6 +48,27 @@ namespace Voxel2PixelTest.Model
 						Assert.Equal(
 							expected: model[x, y, z],
 							actual: svo[x, y, z]);
+		}
+		[Fact]
+		public void TrimTest()
+		{
+			SvoModel svoModel = new SvoModel()
+			{
+				SizeX = 10,
+				SizeY = 10,
+				SizeZ = 10,
+			};
+			Assert.Equal(
+				expected: 1,
+				actual: svoModel.NodeCount);
+			svoModel[0, 0, 0] = 1;
+			Assert.Equal(
+				expected: 17,
+				actual: svoModel.NodeCount);
+			svoModel[0, 0, 0] = 0;
+			Assert.Equal(
+				expected: 1,
+				actual: svoModel.NodeCount);
 		}
 	}
 }
