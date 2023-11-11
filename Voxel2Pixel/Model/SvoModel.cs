@@ -128,7 +128,7 @@ namespace Voxel2Pixel.Model
 				if (this.IsOutside(x, y, z))
 					throw new IndexOutOfRangeException("[" + string.Join(", ", x, z, y) + "] is not within size [" + string.Join(", ", SizeX, SizeY, SizeZ) + "]!");
 				Branch branch = Root;
-				for (int level = 16; level > 1; level--)
+				for (int level = 15; level > 1; level--)
 					if (branch[(byte)((z >> level & 1) << 2 | (y >> level & 1) << 1 | x >> level & 1)] is Branch child)
 						branch = child;
 					else
@@ -143,7 +143,7 @@ namespace Voxel2Pixel.Model
 					throw new IndexOutOfRangeException("[" + string.Join(", ", x, z, y) + "] is not within size [" + string.Join(", ", SizeX, SizeY, SizeZ) + "]!");
 				Branch branch = Root;
 				byte octant;
-				for (int level = 16; level > 1; level--)
+				for (int level = 15; level > 1; level--)
 				{
 					octant = (byte)((z >> level & 1) << 2 | (y >> level & 1) << 1 | x >> level & 1);
 					if (branch[octant] is Branch child)

@@ -54,18 +54,27 @@ namespace Voxel2PixelTest.Model
 		{
 			SvoModel svoModel = new SvoModel()
 			{
-				SizeX = 10,
-				SizeY = 10,
-				SizeZ = 10,
+				SizeX = ushort.MaxValue,
+				SizeY = ushort.MaxValue,
+				SizeZ = ushort.MaxValue,
 			};
+			Assert.Equal(
+				expected: 0,
+				actual: svoModel[ushort.MaxValue - 1, ushort.MaxValue - 1, ushort.MaxValue - 1]);
 			Assert.Equal(
 				expected: 1,
 				actual: svoModel.NodeCount);
-			svoModel[0, 0, 0] = 1;
+			svoModel[ushort.MaxValue - 1, ushort.MaxValue - 1, ushort.MaxValue - 1] = 1;
 			Assert.Equal(
-				expected: 17,
+				expected: 1,
+				actual: svoModel[ushort.MaxValue - 1, ushort.MaxValue - 1, ushort.MaxValue - 1]);
+			Assert.Equal(
+				expected: 16,
 				actual: svoModel.NodeCount);
-			svoModel[0, 0, 0] = 0;
+			svoModel[ushort.MaxValue - 1, ushort.MaxValue - 1, ushort.MaxValue - 1] = 0;
+			Assert.Equal(
+				expected: 0,
+				actual: svoModel[ushort.MaxValue - 1, ushort.MaxValue - 1, ushort.MaxValue - 1]);
 			Assert.Equal(
 				expected: 1,
 				actual: svoModel.NodeCount);
