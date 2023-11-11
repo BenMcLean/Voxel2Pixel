@@ -127,20 +127,13 @@ namespace Voxel2Pixel.Model
 			{
 				if (this.IsOutside(x, y, z))
 					throw new IndexOutOfRangeException("[" + string.Join(", ", x, z, y) + "] is not within size [" + string.Join(", ", SizeX, SizeY, SizeZ) + "]!");
-				Node node = Root;
+				Branch branch = Root;
 				for (int level = 16; level > 1; level--)
-					if (!(node is Branch branch))
-						return 0;
+					if (branch[(byte)((z >> level & 1) << 2 | (y >> level & 1) << 1 | x >> level & 1)] is Branch child)
+						branch = child;
 					else
-					{
-						byte octant = (byte)((z >> level & 1) << 2 | (y >> level & 1) << 1 | x >> level & 1);
-						if (branch[octant] is Node child)
-							node = child;
-						else
-							return 0;
-					}
-				return node is Branch lastBranch
-					&& lastBranch[(byte)((z >> 1 & 1) << 2 | (y >> 1 & 1) << 1 | x >> 1 & 1)] is Leaf leaf ?
+						return 0;
+				return branch[(byte)((z >> 1 & 1) << 2 | (y >> 1 & 1) << 1 | x >> 1 & 1)] is Leaf leaf ?
 						leaf[(byte)((z & 1) << 2 | (y & 1) << 1 | x & 1)]
 						: (byte)0;
 			}
@@ -151,20 +144,18 @@ namespace Voxel2Pixel.Model
 				Node node = Root;
 				byte octant;
 				for (int level = 16; level > 1; level--)
-					if (!(node is Branch branch))
-						throw new InvalidCastException("Wrong node type. Expected: \"Branch\", Actual: \"" + node.GetType().Name + "\"");
+				{
+					Branch branch = (Branch)node;
+					octant = (byte)((z >> level & 1) << 2 | (y >> level & 1) << 1 | x >> level & 1);
+					if (branch[octant] is Node child)
+						node = child;
 					else
 					{
-						octant = (byte)((z >> level & 1) << 2 | (y >> level & 1) << 1 | x >> level & 1);
-						if (branch[octant] is Node child)
-							node = child;
-						else
-						{
-							if (value == 0)
-								return;
-							node = branch[octant] = new Branch(node, octant);
-						}
+						if (value == 0)
+							return;
+						node = branch[octant] = new Branch(node, octant);
 					}
+				}
 				Branch lastBranch = (Branch)node;
 				octant = (byte)((z >> 1 & 1) << 2 | (y >> 1 & 1) << 1 | x >> 1 & 1);
 				if (!(lastBranch[octant] is Leaf leaf))
