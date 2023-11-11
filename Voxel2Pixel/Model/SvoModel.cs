@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model
@@ -13,23 +14,37 @@ namespace Voxel2Pixel.Model
 		public abstract class Node
 		{
 			public virtual byte Header { get; }
+			public byte Octant { get; set; }
+			public Node Parent { get; set; }
 			public virtual bool IsLeaf => (Header & 0b10000000) > 0;
 			public abstract void Clear();
 		}
 		public class Branch : Node
 		{
 			public override byte Header => (byte)(Children.Length - 1);
-			protected Node[] Children = new Node[8];
+			public Node[] Children = new Node[8];
 			public override void Clear() => NumberOfChildren = 8;
 			public Node this[byte octant]
 			{
 				get => Children[octant];
-				set => Children[octant] = value;
+				set
+				{
+					Children[octant] = value;
+					if (value is null
+						&& Parent is Branch branch
+						&& !Children.Any(child => child is Node))
+						branch[Octant] = null;
+				}
 			}
 			public byte NumberOfChildren
 			{
 				get => (byte)Children.Length;
 				set => Children = new Node[Math.Min(value, (byte)8)];
+			}
+			public Branch(Node parent, byte octant)
+			{
+				Parent = parent;
+				Octant = octant;
 			}
 		}
 		public class Leaf : Node
@@ -40,7 +55,12 @@ namespace Voxel2Pixel.Model
 			public byte this[byte octant]
 			{
 				get => (byte)(Data >> (octant << 3));
-				set => Data = Data & ~(0xFFul << (octant << 3)) | (ulong)value << (octant << 3);
+				set
+				{
+					Data = Data & ~(0xFFul << (octant << 3)) | (ulong)value << (octant << 3);
+					if (Data == 0ul && Parent is Branch branch)
+						branch.Children[Octant] = null;
+				}
 			}
 			public byte this[bool x, bool y, bool z]
 			{
@@ -52,8 +72,13 @@ namespace Voxel2Pixel.Model
 				get => this[(byte)((z > 0 ? 4 : 0) + (y > 0 ? 2 : 0) + (x > 0 ? 1 : 0))];
 				set => this[(byte)((z > 0 ? 4 : 0) + (y > 0 ? 2 : 0) + (x > 0 ? 1 : 0))] = value;
 			}
+			public Leaf(Node parent, byte octant)
+			{
+				Parent = parent;
+				Octant = octant;
+			}
 		}
-		public readonly Branch Root = new Branch();
+		public readonly Branch Root = new Branch(null, 0);
 		public void Clear() => Root.Clear();
 		public SvoModel(IModel model) : this(
 			voxels: model,
@@ -111,12 +136,12 @@ namespace Voxel2Pixel.Model
 						if (branch[octant] is Node child)
 							node = child;
 						else
-							node = branch[octant] = new Branch();
+							node = branch[octant] = new Branch(node, octant);
 					}
 				Branch lastBranch = (Branch)node;
 				octant = (byte)((z >> 1 & 1) << 2 | (y >> 1 & 1) << 1 | x >> 1 & 1);
 				if (!(lastBranch[octant] is Leaf leaf))
-					leaf = (Leaf)(lastBranch[octant] = new Leaf());
+					leaf = (Leaf)(lastBranch[octant] = new Leaf(lastBranch, octant));
 				leaf[(byte)((z & 1) << 2 | (y & 1) << 1 | x & 1)] = value;
 			}
 		}

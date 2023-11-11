@@ -13,7 +13,7 @@ namespace Voxel2PixelTest.Model
 		public void LeafTest()
 		{
 			byte[] bytes = Enumerable.Range(1, 8).Select(i => (byte)i).ToArray();
-			Leaf leaf = new Leaf();
+			Leaf leaf = new Leaf(null, 0);
 			for (byte i = 0; i < bytes.Length; i++)
 			{
 				leaf[i] = bytes[i];
