@@ -26,6 +26,7 @@ namespace Voxel2Pixel.Model
 			public Node Parent { get; set; }
 			public virtual bool IsLeaf => (Header & 0b10000000) > 0;
 			public abstract void Clear();
+			public abstract void Write(Stream stream);
 		}
 		public class Branch : Node
 		{
@@ -59,21 +60,51 @@ namespace Voxel2Pixel.Model
 				Parent = parent;
 				using (BinaryReader reader = new BinaryReader(stream))
 				{
-					long position = reader.BaseStream.Position;
+					long start = reader.BaseStream.Position;
 					byte header = reader.ReadByte();
 					Octant = (byte)(header & 0b111);
 					uint[] children = new uint[((header >> 3) & 0b111) + 1];
-					for (byte child = 0; child < children.Length; child++)
+					children[0] = (uint)(children.Length << 2);
+					for (byte child = 1; child < children.Length; child++)
 						children[child] = reader.ReadUInt32();
 					for (byte child = 0; child < children.Length; child++)
 					{
-						reader.BaseStream.Position = position + children[child];
+						reader.BaseStream.Position = start + children[child];
 						header = reader.ReadByte();
 						reader.BaseStream.Position--;
 						byte octant = (byte)(header & 0b111);
 						this[octant] = (header & 0b10000000) > 0 ?
 							(Node)new Leaf(stream, this)
 							: new Branch(stream, this);
+					}
+				}
+			}
+			public override void Write(Stream stream)
+			{
+				using (BinaryWriter writer = new BinaryWriter(stream))
+				{
+					long start = writer.BaseStream.Position;
+					writer.Write(Header);
+					Node[] children = Children.Where(child => child is Node).ToArray();
+					uint[] offsets = null;
+					if (children.Length > 1)
+					{
+						offsets = new uint[children.Length - 1];
+						writer.BaseStream.Position += (children.Length - 2) << 2;
+					}
+					for (byte child = 0; child < children.Length; child++)
+					{
+						if (child > 0)
+							offsets[child - 1] = (uint)(writer.BaseStream.Position - start);
+						children[child].Write(stream);
+					}
+					if (children.Length > 1)
+					{
+						long position = writer.BaseStream.Position;
+						writer.BaseStream.Position = start + 1;
+						for (byte offset = 0; offset < offsets.Length; offset++)
+							writer.Write(offsets[offset]);
+						writer.BaseStream.Position = position;
 					}
 				}
 			}
@@ -116,6 +147,14 @@ namespace Voxel2Pixel.Model
 				{
 					Octant = (byte)(reader.ReadByte() & 0b111);
 					Data = reader.ReadUInt64();
+				}
+			}
+			public override void Write(Stream stream)
+			{
+				using (BinaryWriter writer = new BinaryWriter(stream))
+				{
+					writer.Write(Header);
+					writer.Write(Data);
 				}
 			}
 		}
