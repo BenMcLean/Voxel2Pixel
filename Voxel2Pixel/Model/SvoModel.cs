@@ -1,9 +1,9 @@
-﻿using CoenM.Encoding;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model
@@ -193,7 +193,7 @@ namespace Voxel2Pixel.Model
 		public SvoModel(Stream stream, ushort sizeX, ushort sizeY, ushort sizeZ) : this(sizeX, sizeY, sizeZ) => Root = new Branch(stream);
 		public SvoModel(string z85, ushort sizeX, ushort sizeY, ushort sizeZ) : this(sizeX, sizeY, sizeZ)
 		{
-			byte[] bytes = CoenM.Encoding.Z85.Decode(z85);
+			byte[] bytes = Cromulent.Encoding.Z85.FromZ85String(z85);
 			using (MemoryStream ms = new MemoryStream())
 			{
 				ms.Write(bytes, 0, bytes.Length);
@@ -214,10 +214,15 @@ namespace Voxel2Pixel.Model
 			{
 				Write(ms);
 				if (ms.Position % 4 is long four && four > 0)
-					ms.Position += 4 - four;
+					using (BinaryWriter writer = new BinaryWriter(
+						output: ms,
+						encoding: System.Text.Encoding.Default,
+						leaveOpen: true))
+						for (byte @byte = 0; @byte < 4 - four; @byte++)
+							writer.Write((byte)0);
 				bytes = ms.ToArray();
 			}
-			return CoenM.Encoding.Z85.Encode(bytes);
+			return Cromulent.Encoding.Z85.ToZ85String(bytes);
 		}
 		public uint NodeCount
 		{
