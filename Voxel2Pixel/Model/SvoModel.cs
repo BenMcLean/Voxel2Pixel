@@ -17,7 +17,7 @@ namespace Voxel2Pixel.Model
 		{
 			/// <summary>
 			/// Header bit 7: 0 for Branch, 1 for Leaf.
-			/// Header bits 6: Reserved
+			/// Header bit 6: Reserved
 			/// Header bits 5-3: For Branch only, number of children
 			/// Header bits 2-0: Octant of parent
 			/// </summary>
@@ -189,21 +189,18 @@ namespace Voxel2Pixel.Model
 			foreach (Voxel voxel in voxels)
 				this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
 		}
-		public SvoModel(Stream stream, ushort sizeX, ushort sizeY, ushort sizeZ) : this(sizeX, sizeY, sizeZ)
-		{
-			Root = new Branch(stream);
-		}
+		public SvoModel(Stream stream, ushort sizeX, ushort sizeY, ushort sizeZ) : this(sizeX, sizeY, sizeZ) => Root = new Branch(stream);
 		public SvoModel(ushort sizeX, ushort sizeY, ushort sizeZ) : this()
 		{
 			SizeX = sizeX;
 			SizeY = sizeY;
 			SizeZ = sizeZ;
 		}
-		public int NodeCount
+		public uint NodeCount
 		{
 			get
 			{
-				int nodes = 0;
+				uint nodes = 0;
 				void Recurse(Node node)
 				{
 					nodes++;
@@ -234,8 +231,8 @@ namespace Voxel2Pixel.Model
 					else
 						return 0;
 				return branch[(byte)((z >> 1 & 1) << 2 | (y >> 1 & 1) << 1 | x >> 1 & 1)] is Leaf leaf ?
-						leaf[(byte)((z & 1) << 2 | (y & 1) << 1 | x & 1)]
-						: (byte)0;
+					leaf[(byte)((z & 1) << 2 | (y & 1) << 1 | x & 1)]
+					: (byte)0;
 			}
 			set
 			{

@@ -72,7 +72,7 @@ namespace Voxel2PixelTest.Model
 				expected: 0,
 				actual: svoModel[ushort.MaxValue - 1, ushort.MaxValue - 1, ushort.MaxValue - 1]);
 			Assert.Equal(
-				expected: 1,
+				expected: 1u,
 				actual: svoModel.NodeCount);
 			svoModel[ushort.MaxValue - 1, ushort.MaxValue - 1, ushort.MaxValue - 1] = 1;
 			OutputNode(svoModel.Root);
@@ -80,7 +80,7 @@ namespace Voxel2PixelTest.Model
 				expected: 1,
 				actual: svoModel[ushort.MaxValue - 1, ushort.MaxValue - 1, ushort.MaxValue - 1]);
 			Assert.Equal(
-				expected: 16,
+				expected: 16u,
 				actual: svoModel.NodeCount);
 			svoModel[ushort.MaxValue - 1, ushort.MaxValue - 1, ushort.MaxValue - 1] = 0;
 			OutputNode(svoModel.Root);
@@ -88,7 +88,7 @@ namespace Voxel2PixelTest.Model
 				expected: 0,
 				actual: svoModel[ushort.MaxValue - 1, ushort.MaxValue - 1, ushort.MaxValue - 1]);
 			Assert.Equal(
-				expected: 1,
+				expected: 1u,
 				actual: svoModel.NodeCount);
 		}
 		[Fact]
