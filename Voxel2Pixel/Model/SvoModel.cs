@@ -58,18 +58,24 @@ namespace Voxel2Pixel.Model
 			public Branch(Stream stream, Node parent = null)
 			{
 				Parent = parent;
-				using (BinaryReader reader = new BinaryReader(stream))
+				using (BinaryReader reader = new BinaryReader(
+					input: stream,
+					encoding: System.Text.Encoding.Default,
+					leaveOpen: true))
 				{
 					long start = reader.BaseStream.Position;
 					byte header = reader.ReadByte();
 					Octant = (byte)(header & 0b111);
-					uint[] children = new uint[((header >> 3) & 0b111) + 1];
-					children[0] = (uint)(children.Length << 2);
-					for (byte child = 1; child < children.Length; child++)
-						children[child] = reader.ReadUInt32();
+					uint[] children = new uint[(byte)(((header >> 3) & 0b111) + 1)];
+					if (children.Length > 1)
+					{
+						for (byte child = 1; child < children.Length; child++)
+							children[child] = reader.ReadUInt32();
+					}
 					for (byte child = 0; child < children.Length; child++)
 					{
-						reader.BaseStream.Position = start + children[child];
+						if (child > 0)
+							reader.BaseStream.Position = start + children[child];
 						header = reader.ReadByte();
 						reader.BaseStream.Position--;
 						byte octant = (byte)(header & 0b111);
@@ -81,7 +87,10 @@ namespace Voxel2Pixel.Model
 			}
 			public override void Write(Stream stream)
 			{
-				using (BinaryWriter writer = new BinaryWriter(stream))
+				using (BinaryWriter writer = new BinaryWriter(
+					output: stream,
+					encoding: System.Text.Encoding.Default,
+					leaveOpen: true))
 				{
 					long start = writer.BaseStream.Position;
 					writer.Write(Header);
@@ -143,7 +152,10 @@ namespace Voxel2Pixel.Model
 			public Leaf(Stream stream, Node parent = null)
 			{
 				Parent = parent;
-				using (BinaryReader reader = new BinaryReader(stream))
+				using (BinaryReader reader = new BinaryReader(
+					input: stream,
+					encoding: System.Text.Encoding.Default,
+					leaveOpen: true))
 				{
 					Octant = (byte)(reader.ReadByte() & 0b111);
 					Data = reader.ReadUInt64();
@@ -151,7 +163,10 @@ namespace Voxel2Pixel.Model
 			}
 			public override void Write(Stream stream)
 			{
-				using (BinaryWriter writer = new BinaryWriter(stream))
+				using (BinaryWriter writer = new BinaryWriter(
+					output: stream,
+					encoding: System.Text.Encoding.Default,
+					leaveOpen: true))
 				{
 					writer.Write(Header);
 					writer.Write(Data);

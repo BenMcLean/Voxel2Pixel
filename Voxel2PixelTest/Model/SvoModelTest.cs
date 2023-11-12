@@ -99,6 +99,7 @@ namespace Voxel2PixelTest.Model
 			byte[] written;
 			using (MemoryStream ms = new MemoryStream())
 			{
+				svo.Root.Write(ms);
 				written = ms.ToArray();
 			}
 			using (MemoryStream ms2 = new MemoryStream(written))
