@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Voxel2Pixel.Interfaces;
 
@@ -14,6 +15,12 @@ namespace Voxel2Pixel.Model
 		#region Nested classes
 		public abstract class Node
 		{
+			/// <summary>
+			/// Header bit 7: 0 for Branch, 1 for Leaf.
+			/// Header bits 6: Reserved
+			/// Header bits 5-3: For Branch only, number of children
+			/// Header bits 2-0: Octant of parent
+			/// </summary>
 			public virtual byte Header { get; }
 			public byte Octant { get; set; }
 			public Node Parent { get; set; }
@@ -22,7 +29,7 @@ namespace Voxel2Pixel.Model
 		}
 		public class Branch : Node
 		{
-			public override byte Header => (byte)(Children.Length - 1);
+			public override byte Header => (byte)((((Children.Where(child => child is Node).Count() - 1) & 0b111) << 3) | Octant & 0b111);
 			protected Node[] Children = new Node[8];
 			public override void Clear() => NumberOfChildren = 8;
 			public Node this[byte octant]
@@ -47,10 +54,33 @@ namespace Voxel2Pixel.Model
 				Parent = parent;
 				Octant = octant;
 			}
+			public Branch(Stream stream, Node parent = null)
+			{
+				Parent = parent;
+				using (BinaryReader reader = new BinaryReader(stream))
+				{
+					long position = reader.BaseStream.Position;
+					byte header = reader.ReadByte();
+					Octant = (byte)(header & 0b111);
+					uint[] children = new uint[((header >> 3) & 0b111) + 1];
+					for (byte child = 0; child < children.Length; child++)
+						children[child] = reader.ReadUInt32();
+					for (byte child = 0; child < children.Length; child++)
+					{
+						reader.BaseStream.Position = position + children[child];
+						header = reader.ReadByte();
+						reader.BaseStream.Position--;
+						byte octant = (byte)(header & 0b111);
+						this[octant] = (header & 0b10000000) > 0 ?
+							(Node)new Leaf(stream, this)
+							: new Branch(stream, this);
+					}
+				}
+			}
 		}
 		public class Leaf : Node
 		{
-			public override byte Header => 0b10000000;
+			public override byte Header => (byte)(0b10000000 | Octant & 0b111);
 			public ulong Data = 0ul;
 			public override void Clear() => Data = 0ul;
 			public byte this[byte octant]
@@ -78,6 +108,15 @@ namespace Voxel2Pixel.Model
 			{
 				Parent = parent;
 				Octant = octant;
+			}
+			public Leaf(Stream stream, Node parent = null)
+			{
+				Parent = parent;
+				using (BinaryReader reader = new BinaryReader(stream))
+				{
+					Octant = (byte)(reader.ReadByte() & 0b111);
+					Data = reader.ReadUInt64();
+				}
 			}
 		}
 		#endregion Nested classes
