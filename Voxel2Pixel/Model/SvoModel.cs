@@ -99,7 +99,7 @@ namespace Voxel2Pixel.Model
 					if (children.Length > 1)
 					{
 						offsets = new uint[children.Length - 1];
-						writer.BaseStream.Position += (children.Length - 2) << 2;
+						writer.BaseStream.Position += (children.Length - 1) << 2;
 					}
 					for (byte child = 0; child < children.Length; child++)
 					{
