@@ -91,21 +91,14 @@ namespace Voxel2PixelTest.Model
 				expected: 1u,
 				actual: svoModel.NodeCount);
 		}
+
 		[Fact]
 		public void WriteReadTest()
 		{
 			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
-			SvoModel svo = new SvoModel(model), svo2;
-			byte[] written;
-			using (MemoryStream ms = new MemoryStream())
-			{
-				svo.Root.Write(ms);
-				written = ms.ToArray();
-			}
-			using (MemoryStream ms2 = new MemoryStream(written))
-			{
-				svo2 = new SvoModel(ms2, svo.SizeX, svo.SizeY, svo.SizeZ);
-			}
+			SvoModel svo = new SvoModel(model);
+			output.WriteLine(svo.Z85());
+			SvoModel svo2 = new SvoModel(svo.Z85(), svo.SizeX, svo.SizeY, svo.SizeZ);
 			foreach (Voxel voxel in svo)
 			{
 				Assert.Equal(

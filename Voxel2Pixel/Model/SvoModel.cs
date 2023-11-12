@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CoenM.Encoding;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -190,11 +191,33 @@ namespace Voxel2Pixel.Model
 				this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
 		}
 		public SvoModel(Stream stream, ushort sizeX, ushort sizeY, ushort sizeZ) : this(sizeX, sizeY, sizeZ) => Root = new Branch(stream);
+		public SvoModel(string z85, ushort sizeX, ushort sizeY, ushort sizeZ) : this(sizeX, sizeY, sizeZ)
+		{
+			byte[] bytes = CoenM.Encoding.Z85.Decode(z85);
+			using (MemoryStream ms = new MemoryStream())
+			{
+				ms.Write(bytes, 0, bytes.Length);
+				Root = new Branch(ms);
+			}
+		}
 		public SvoModel(ushort sizeX, ushort sizeY, ushort sizeZ) : this()
 		{
 			SizeX = sizeX;
 			SizeY = sizeY;
 			SizeZ = sizeZ;
+		}
+		public void Write(Stream stream) => Root.Write(stream);
+		public string Z85()
+		{
+			byte[] bytes;
+			using (MemoryStream ms = new MemoryStream())
+			{
+				Write(ms);
+				if (ms.Position % 4 is long four && four > 0)
+					ms.Position += 4 - four;
+				bytes = ms.ToArray();
+			}
+			return CoenM.Encoding.Z85.Encode(bytes);
 		}
 		public uint NodeCount
 		{
