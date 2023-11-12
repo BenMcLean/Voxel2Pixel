@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.IO;
+using System.Linq;
 using Voxel2Pixel.Model;
 using Xunit;
 using static Voxel2Pixel.Model.SvoModel;
@@ -7,8 +9,8 @@ namespace Voxel2PixelTest.Model
 {
 	public class SvoModelTest
 	{
-		//private readonly Xunit.Abstractions.ITestOutputHelper output;
-		//public SvoModelTest(Xunit.Abstractions.ITestOutputHelper output) => this.output = output;
+		private readonly Xunit.Abstractions.ITestOutputHelper output;
+		public SvoModelTest(Xunit.Abstractions.ITestOutputHelper output) => this.output = output;
 		[Fact]
 		public void LeafTest()
 		{
@@ -21,6 +23,13 @@ namespace Voxel2PixelTest.Model
 					expected: bytes[i],
 					actual: leaf[i]);
 			}
+			byte[] written;
+			using (MemoryStream ms = new MemoryStream())
+			{
+				leaf.Write(ms);
+				written = ms.ToArray();
+			}
+			output.WriteLine(BitConverter.ToString(written));
 		}
 		[Fact]
 		public void ModelTest()
@@ -58,6 +67,7 @@ namespace Voxel2PixelTest.Model
 				SizeY = ushort.MaxValue,
 				SizeZ = ushort.MaxValue,
 			};
+			OutputNode(svoModel.Root);
 			Assert.Equal(
 				expected: 0,
 				actual: svoModel[ushort.MaxValue - 1, ushort.MaxValue - 1, ushort.MaxValue - 1]);
@@ -65,6 +75,7 @@ namespace Voxel2PixelTest.Model
 				expected: 1,
 				actual: svoModel.NodeCount);
 			svoModel[ushort.MaxValue - 1, ushort.MaxValue - 1, ushort.MaxValue - 1] = 1;
+			OutputNode(svoModel.Root);
 			Assert.Equal(
 				expected: 1,
 				actual: svoModel[ushort.MaxValue - 1, ushort.MaxValue - 1, ushort.MaxValue - 1]);
@@ -72,12 +83,60 @@ namespace Voxel2PixelTest.Model
 				expected: 16,
 				actual: svoModel.NodeCount);
 			svoModel[ushort.MaxValue - 1, ushort.MaxValue - 1, ushort.MaxValue - 1] = 0;
+			OutputNode(svoModel.Root);
 			Assert.Equal(
 				expected: 0,
 				actual: svoModel[ushort.MaxValue - 1, ushort.MaxValue - 1, ushort.MaxValue - 1]);
 			Assert.Equal(
 				expected: 1,
 				actual: svoModel.NodeCount);
+		}
+		[Fact]
+		public void WriteReadTest()
+		{
+			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
+			SvoModel svo = new SvoModel(model), svo2;
+			byte[] written;
+			using (MemoryStream ms = new MemoryStream())
+			{
+				written = ms.ToArray();
+			}
+			using (MemoryStream ms2 = new MemoryStream(written))
+			{
+				svo2 = new SvoModel(ms2, svo.SizeX, svo.SizeY, svo.SizeZ);
+			}
+			foreach (Voxel voxel in svo)
+			{
+				Assert.Equal(
+					expected: voxel.Index,
+					actual: svo2[voxel.X, voxel.Y, voxel.Z]);
+			}
+			foreach (Voxel voxel in svo2)
+			{
+				Assert.Equal(
+					expected: svo[voxel.X, voxel.Y, voxel.Z],
+					actual: voxel.Index);
+			}
+			Assert.Equal(
+				expected: svo.Count(),
+				actual: svo2.Count());
+			for (ushort x = 0; x < model.SizeX; x++)
+				for (ushort y = 0; y < model.SizeY; y++)
+					for (ushort z = 0; z < model.SizeZ; z++)
+						Assert.Equal(
+							expected: svo[x, y, z],
+							actual: svo2[x, y, z]);
+		}
+		private void OutputNode(Node node)
+		{
+			byte[] written;
+			using (MemoryStream ms = new MemoryStream())
+			{
+				node.Write(ms);
+				written = ms.ToArray();
+			}
+			output.WriteLine(Convert.ToString(written[0], 2).PadLeft(8, '0'));
+			output.WriteLine(BitConverter.ToString(written));
 		}
 	}
 }

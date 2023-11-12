@@ -30,7 +30,7 @@ namespace Voxel2Pixel.Model
 		}
 		public class Branch : Node
 		{
-			public override byte Header => (byte)((((Children.Where(child => child is Node).Count() - 1) & 0b111) << 3) | Octant & 0b111);
+			public override byte Header => (byte)((((Math.Max(Children.Where(child => child is Node).Count() - 1, 0)) & 0b111) << 3) | Octant & 0b111);
 			protected Node[] Children = new Node[8];
 			public override void Clear() => NumberOfChildren = 8;
 			public Node this[byte octant]
@@ -169,13 +169,20 @@ namespace Voxel2Pixel.Model
 			sizeY: model.SizeY,
 			sizeZ: model.SizeZ)
 		{ }
-		public SvoModel(IEnumerable<Voxel> voxels, ushort sizeX, ushort sizeY, ushort sizeZ) : this()
+		public SvoModel(IEnumerable<Voxel> voxels, ushort sizeX, ushort sizeY, ushort sizeZ) : this(sizeX, sizeY, sizeZ)
+		{
+			foreach (Voxel voxel in voxels)
+				this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
+		}
+		public SvoModel(Stream stream, ushort sizeX, ushort sizeY, ushort sizeZ) : this(sizeX, sizeY, sizeZ)
+		{
+			Root = new Branch(stream);
+		}
+		public SvoModel(ushort sizeX, ushort sizeY, ushort sizeZ) : this()
 		{
 			SizeX = sizeX;
 			SizeY = sizeY;
 			SizeZ = sizeZ;
-			foreach (Voxel voxel in voxels)
-				this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
 		}
 		public int NodeCount
 		{
