@@ -63,19 +63,11 @@ namespace Voxel2Pixel.Model
 					encoding: System.Text.Encoding.Default,
 					leaveOpen: true))
 				{
-					long start = reader.BaseStream.Position;
 					byte header = reader.ReadByte();
 					Octant = (byte)(header & 0b111);
-					uint[] children = new uint[(byte)(((header >> 3) & 0b111) + 1)];
-					if (children.Length > 1)
+					byte children = (byte)(((header >> 3) & 0b111) + 1);
+					for (byte child = 0; child < children; child++)
 					{
-						for (byte child = 1; child < children.Length; child++)
-							children[child] = reader.ReadUInt32();
-					}
-					for (byte child = 0; child < children.Length; child++)
-					{
-						if (child > 0)
-							reader.BaseStream.Position = start + children[child];
 						header = reader.ReadByte();
 						reader.BaseStream.Position--;
 						byte octant = (byte)(header & 0b111);
@@ -92,29 +84,9 @@ namespace Voxel2Pixel.Model
 					encoding: System.Text.Encoding.Default,
 					leaveOpen: true))
 				{
-					long start = writer.BaseStream.Position;
 					writer.Write(Header);
-					Node[] children = Children.Where(child => child is Node).ToArray();
-					uint[] offsets = null;
-					if (children.Length > 1)
-					{
-						offsets = new uint[children.Length - 1];
-						writer.BaseStream.Position += (children.Length - 1) << 2;
-					}
-					for (byte child = 0; child < children.Length; child++)
-					{
-						if (child > 0)
-							offsets[child - 1] = (uint)(writer.BaseStream.Position - start);
-						children[child].Write(stream);
-					}
-					if (children.Length > 1)
-					{
-						long position = writer.BaseStream.Position;
-						writer.BaseStream.Position = start + 1;
-						for (byte offset = 0; offset < offsets.Length; offset++)
-							writer.Write(offsets[offset]);
-						writer.BaseStream.Position = position;
-					}
+					foreach (Node child in Children.Where(child => child is Node))
+						child.Write(stream);
 				}
 			}
 		}
@@ -209,7 +181,6 @@ namespace Voxel2Pixel.Model
 		}
 		public string Z85()
 		{
-			byte[] bytes;
 			using (MemoryStream ms = new MemoryStream())
 			{
 				Write(ms);
@@ -220,9 +191,8 @@ namespace Voxel2Pixel.Model
 						leaveOpen: true))
 						for (byte @byte = 0; @byte < 4 - four; @byte++)
 							writer.Write((byte)0);
-				bytes = ms.ToArray();
+				return Cromulent.Encoding.Z85.ToZ85String(ms.ToArray());
 			}
-			return Cromulent.Encoding.Z85.ToZ85String(bytes);
 		}
 		public uint NodeCount
 		{
