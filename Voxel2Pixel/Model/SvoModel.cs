@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
 using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model
@@ -191,15 +190,8 @@ namespace Voxel2Pixel.Model
 				this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
 		}
 		public SvoModel(Stream stream, ushort sizeX, ushort sizeY, ushort sizeZ) : this(sizeX, sizeY, sizeZ) => Root = new Branch(stream);
-		public SvoModel(string z85, ushort sizeX, ushort sizeY, ushort sizeZ) : this(sizeX, sizeY, sizeZ)
-		{
-			byte[] bytes = Cromulent.Encoding.Z85.FromZ85String(z85);
-			using (MemoryStream ms = new MemoryStream())
-			{
-				ms.Write(bytes, 0, bytes.Length);
-				Root = new Branch(ms);
-			}
-		}
+		public SvoModel(byte[] bytes, ushort sizeX, ushort sizeY, ushort sizeZ) : this(new MemoryStream(bytes), sizeX, sizeY, sizeZ) { }
+		public SvoModel(string z85, ushort sizeX, ushort sizeY, ushort sizeZ) : this(Cromulent.Encoding.Z85.FromZ85String(z85), sizeX, sizeY, sizeZ) { }
 		public SvoModel(ushort sizeX, ushort sizeY, ushort sizeZ) : this()
 		{
 			SizeX = sizeX;
@@ -207,6 +199,14 @@ namespace Voxel2Pixel.Model
 			SizeZ = sizeZ;
 		}
 		public void Write(Stream stream) => Root.Write(stream);
+		public byte[] Bytes()
+		{
+			using (MemoryStream ms = new MemoryStream())
+			{
+				Write(ms);
+				return ms.ToArray();
+			}
+		}
 		public string Z85()
 		{
 			byte[] bytes;
