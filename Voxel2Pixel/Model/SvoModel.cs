@@ -32,7 +32,7 @@ namespace Voxel2Pixel.Model
 		{
 			public override byte Header => (byte)((((Math.Max(Children.Where(child => child is Node).Count() - 1, 0)) & 0b111) << 3) | Octant & 0b111);
 			protected Node[] Children = new Node[8];
-			public override void Clear() => NumberOfChildren = 8;
+			public override void Clear() => Children = new Node[8];
 			public Node this[byte octant]
 			{
 				get => Children[octant];
@@ -44,11 +44,6 @@ namespace Voxel2Pixel.Model
 						&& !Children.Any(child => child is Node))
 						parent[Octant] = null;
 				}
-			}
-			public byte NumberOfChildren
-			{
-				get => (byte)Children.Length;
-				set => Children = new Node[Math.Min(value, (byte)8)];
 			}
 			public Branch(Node parent, byte octant)
 			{
@@ -63,15 +58,14 @@ namespace Voxel2Pixel.Model
 					encoding: System.Text.Encoding.Default,
 					leaveOpen: true))
 				{
-					byte header = reader.ReadByte();
+					byte header = reader.ReadByte(),
+						children = (byte)(((header >> 3) & 0b111) + 1);
 					Octant = (byte)(header & 0b111);
-					byte children = (byte)(((header >> 3) & 0b111) + 1);
 					for (byte child = 0; child < children; child++)
 					{
 						header = reader.ReadByte();
 						reader.BaseStream.Position--;
-						byte octant = (byte)(header & 0b111);
-						this[octant] = (header & 0b10000000) > 0 ?
+						this[(byte)(header & 0b111)] = (header & 0b10000000) > 0 ?
 							(Node)new Leaf(stream, this)
 							: new Branch(stream, this);
 					}
@@ -101,8 +95,7 @@ namespace Voxel2Pixel.Model
 				set
 				{
 					Data = Data & ~(0xFFul << (octant << 3)) | (ulong)value << (octant << 3);
-					if (Data == 0ul
-						&& Parent is Branch parent)
+					if (Data == 0ul && Parent is Branch parent)
 						parent[Octant] = null;
 				}
 			}
