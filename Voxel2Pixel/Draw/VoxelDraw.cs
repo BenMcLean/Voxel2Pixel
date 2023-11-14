@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
@@ -100,6 +101,7 @@ namespace Voxel2Pixel.Draw
 			public byte Index;
 			public VisibleFace VisibleFace;
 		}
+
 		public static ushort DiagonalWidth(IModel model) => (ushort)(model.SizeX + model.SizeY);
 		public static ushort DiagonalHeight(IModel model) => model.SizeZ;
 		public static void Diagonal(IModel model, IRectangleRenderer renderer)
@@ -356,6 +358,38 @@ namespace Voxel2Pixel.Draw
 					right: (((triangle.Key >> 1) ^ (triangle.Key >> 17)) & 1u) == oddWidth,
 					index: triangle.Value.Index,
 					visibleFace: triangle.Value.VisibleFace);
+		}
+		public static ushort IsoTileWidth(byte[] texture, ushort width = 0) => IsoTileWidth(texture.Length, width);
+		public static ushort IsoTileWidth(int textureLength, ushort width = 0)
+		{
+			if (width < 1)
+				width = (ushort)Math.Sqrt(textureLength >> 2);
+			return (ushort)((width + (ushort)((textureLength >> 2) / width)) << 1);
+		}
+		public static void IsoTile(ITriangleRenderer renderer, byte[] texture, ushort width = 0)
+		{
+			if (width < 1)
+				width = (ushort)Math.Sqrt(texture.Length >> 2);
+			ushort height = (ushort)((texture.Length >> 2) / width),
+				width2 = (ushort)(width << 1),
+				height2 = (ushort)(height << 1);
+			int offset = 0;
+			for (ushort y = 0; y < height2; y += 2)
+				for (ushort x = y; x < y + width2; x += 2)
+				{
+					uint color = (uint)texture[offset + 3] << 24 | (uint)texture[offset + 2] << 16 | (uint)texture[offset + 1] << 8 | texture[offset];
+					renderer.Tri(
+						x: x,
+						y: y,
+						right: false,
+						color: color);
+					renderer.Tri(
+						x: (ushort)(x + 2),
+						y: y,
+						right: true,
+						color: color);
+					offset += 4;
+				}
 		}
 		#endregion Isometric
 	}
