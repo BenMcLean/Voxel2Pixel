@@ -377,17 +377,20 @@ namespace Voxel2Pixel.Draw
 			for (ushort y = 0; y < height2; y += 2)
 				for (ushort x = y; x < y + width2; x += 2)
 				{
-					uint color = (uint)texture[offset + 3] << 24 | (uint)texture[offset + 2] << 16 | (uint)texture[offset + 1] << 8 | texture[offset];
-					renderer.Tri(
-						x: x,
-						y: y,
-						right: false,
-						color: color);
-					renderer.Tri(
-						x: (ushort)(x + 2),
-						y: y,
-						right: true,
-						color: color);
+					if (texture[offset] > 128)
+					{
+						uint color = (uint)texture[offset + 3] << 24 | (uint)texture[offset + 2] << 16 | (uint)texture[offset + 1] << 8 | texture[offset];
+						renderer.Tri(
+							x: x,
+							y: y,
+							right: false,
+							color: color);
+						renderer.Tri(
+							x: (ushort)(x + 2),
+							y: y,
+							right: true,
+							color: color);
+					}
 					offset += 4;
 				}
 		}
