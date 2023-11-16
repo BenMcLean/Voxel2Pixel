@@ -371,19 +371,42 @@ namespace Voxel2Pixel.Draw
 				width = (ushort)Math.Sqrt(textureLength >> 2);
 			return (ushort)((((textureLength >> 2) / width) << 2) + (width << 1) - 1);
 		}
+		public static void IsoSlantDown(ITriangleRenderer renderer, byte[] texture, ushort width = 0, byte threshold = 128)
+		{
+			if (width < 1)
+				width = (ushort)Math.Sqrt(texture.Length >> 2);
+			ushort height4 = (ushort)(((texture.Length >> 2) / width) << 2),
+				width2 = (ushort)(width << 1);
+			int index = 0;
+			for (ushort y = 0; y < height4; y += 4)
+				for (ushort x = 0; x < width2; x += 2, index += 4)
+					if (texture[index + 3] is byte alpha && alpha >= threshold)
+					{
+						uint color = (uint)texture[index] << 24 | (uint)texture[index + 1] << 16 | (uint)texture[index + 2] << 8 | alpha;
+						renderer.Tri(
+							x: x,
+							y: (ushort)(y + x),
+							right: true,
+							color: color);
+						renderer.Tri(
+							x: x,
+							y: (ushort)(y + x + 2),
+							right: false,
+							color: color);
+					}
+		}
 		public static void IsoSlantUp(ITriangleRenderer renderer, byte[] texture, ushort width = 0, byte threshold = 128)
 		{
 			if (width < 1)
 				width = (ushort)Math.Sqrt(texture.Length >> 2);
 			ushort height4 = (ushort)(((texture.Length >> 2) / width) << 2),
 				width2 = (ushort)(width << 1);
-			int offset = 0;
+			int index = 0;
 			for (ushort y = 0; y < height4; y += 4)
-				for (ushort x = 0; x < width2; x += 2)
-				{
-					if (texture[offset + 3] is byte alpha && alpha >= threshold)
+				for (ushort x = 0; x < width2; x += 2, index += 4)
+					if (texture[index + 3] is byte alpha && alpha >= threshold)
 					{
-						uint color = (uint)texture[offset] << 24 | (uint)texture[offset + 1] << 16 | (uint)texture[offset + 2] << 8 | alpha;
+						uint color = (uint)texture[index] << 24 | (uint)texture[index + 1] << 16 | (uint)texture[index + 2] << 8 | alpha;
 						renderer.Tri(
 							x: x,
 							y: (ushort)(width2 + y - x - 2),
@@ -395,8 +418,6 @@ namespace Voxel2Pixel.Draw
 							right: true,
 							color: color);
 					}
-					offset += 4;
-				}
 		}
 		#endregion Isometric
 	}

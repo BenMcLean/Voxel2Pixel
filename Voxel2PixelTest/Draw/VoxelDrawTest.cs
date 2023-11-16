@@ -31,7 +31,7 @@ namespace Voxel2PixelTest.Draw
 				Image = new byte[isoWidth * 4 * isoHeight],
 				Width = isoWidth,
 			};
-			VoxelDraw.IsoSlantUp(
+			VoxelDraw.IsoSlantDown(
 				renderer: array2xRenderer,
 				texture: arrayRenderer.Image,
 				width: width);
