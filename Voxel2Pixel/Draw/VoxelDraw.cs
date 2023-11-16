@@ -419,6 +419,39 @@ namespace Voxel2Pixel.Draw
 							color: color);
 					}
 		}
+		public static ushort IsoTileWidth(int textureLength, ushort width = 0)
+		{
+			if (width < 1)
+				width = (ushort)Math.Sqrt(textureLength >> 2);
+			ushort height = (ushort)((textureLength >> 2) / width);
+			return (ushort)((width + height) << 1);
+		}
+		public static ushort IsoTileHeight(int textureLength, ushort width = 0) => (ushort)(IsoTileWidth(textureLength, width) - 1);
+		public static void IsoTile(ITriangleRenderer renderer, byte[] texture, ushort width = 0, byte threshold = 128)
+		{
+			if (width < 1)
+				width = (ushort)Math.Sqrt(texture.Length >> 2);
+			ushort height = (ushort)((texture.Length >> 2) / width),
+				width2 = (ushort)(width << 1),
+				height2 = (ushort)(height << 1);
+			int index = 0;
+			for (ushort xStart = (ushort)(width2 - 1), yStart = (ushort)(width2 + height2 - 1); yStart > (ushort)(width2 - 1); xStart -= 2, yStart -= 2)
+				for (ushort x = xStart, y = yStart; x < xStart + width2; x += 2, y -= 2, index += 4)
+					if (texture[index + 3] is byte alpha && alpha >= threshold)
+					{
+						uint color = (uint)texture[index] << 24 | (uint)texture[index + 1] << 16 | (uint)texture[index + 2] << 8 | alpha;
+						renderer.Tri(
+							x: (ushort)(x - 1),
+							y: (ushort)(y - 3),
+							right: false,
+							color: color);
+						renderer.Tri(
+							x: (ushort)(x + 1),
+							y: (ushort)(y - 3),
+							right: true,
+							color: color);
+					}
+		}
 		#endregion Isometric
 	}
 }
