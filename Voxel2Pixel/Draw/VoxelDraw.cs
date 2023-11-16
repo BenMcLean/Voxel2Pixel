@@ -435,9 +435,9 @@ namespace Voxel2Pixel.Draw
 				width2 = (ushort)(width << 1),
 				height2 = (ushort)(height << 1);
 			int index = 0;
-			for (ushort xStart = (ushort)(width2 - 2), yStart = (ushort)(width2 + height2 - 4);
-				yStart > width2 - 4;
-				xStart -= 2, yStart -= 2)
+			for (ushort xStart = 0, yStart = (ushort)(width2 - 2);
+				yStart < width2 + height2 - 2;
+				xStart += 2, yStart += 2)
 				for (ushort x = xStart, y = yStart;
 					x < xStart + width2;
 					x += 2, y -= 2, index += 4)
