@@ -359,35 +359,39 @@ namespace Voxel2Pixel.Draw
 					index: triangle.Value.Index,
 					visibleFace: triangle.Value.VisibleFace);
 		}
-		public static ushort IsoTileWidth(byte[] texture, ushort width = 0) => IsoTileWidth(texture.Length, width);
-		public static ushort IsoTileWidth(int textureLength, ushort width = 0)
+		public static ushort IsoSlantWidth(int textureLength, ushort width = 0)
 		{
 			if (width < 1)
 				width = (ushort)Math.Sqrt(textureLength >> 2);
-			return (ushort)((width + (ushort)((textureLength >> 2) / width)) << 1);
+			return (ushort)(width << 1);
 		}
-		public static void IsoTile(ITriangleRenderer renderer, byte[] texture, ushort width = 0)
+		public static ushort IsoSlantHeight(int textureLength, ushort width = 0)
+		{
+			if (width < 1)
+				width = (ushort)Math.Sqrt(textureLength >> 2);
+			return (ushort)((((textureLength >> 2) / width) << 2) + (width << 1) - 1);
+		}
+		public static void IsoSlantUp(ITriangleRenderer renderer, byte[] texture, ushort width = 0, byte threshold = 128)
 		{
 			if (width < 1)
 				width = (ushort)Math.Sqrt(texture.Length >> 2);
-			ushort height = (ushort)((texture.Length >> 2) / width),
-				width2 = (ushort)(width << 1),
-				height2 = (ushort)(height << 1);
+			ushort height4 = (ushort)(((texture.Length >> 2) / width) << 2),
+				width2 = (ushort)(width << 1);
 			int offset = 0;
-			for (ushort y = 0; y < height2; y += 2)
-				for (ushort x = y; x < y + width2; x += 2)
+			for (ushort y = 0; y < height4; y += 4)
+				for (ushort x = 0; x < width2; x += 2)
 				{
-					if (texture[offset] > 128)
+					if (texture[offset + 3] is byte alpha && alpha >= threshold)
 					{
-						uint color = (uint)texture[offset + 3] << 24 | (uint)texture[offset + 2] << 16 | (uint)texture[offset + 1] << 8 | texture[offset];
+						uint color = (uint)texture[offset] << 24 | (uint)texture[offset + 1] << 16 | (uint)texture[offset + 2] << 8 | alpha;
 						renderer.Tri(
 							x: x,
-							y: y,
+							y: (ushort)(width2 + y - x - 2),
 							right: false,
 							color: color);
 						renderer.Tri(
-							x: (ushort)(x + 2),
-							y: y,
+							x: x,
+							y: (ushort)(width2 + y - x),
 							right: true,
 							color: color);
 					}
