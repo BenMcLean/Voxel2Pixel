@@ -359,12 +359,7 @@ namespace Voxel2Pixel.Draw
 					index: triangle.Value.Index,
 					visibleFace: triangle.Value.VisibleFace);
 		}
-		public static ushort IsoSlantWidth(int textureLength, ushort width = 0)
-		{
-			if (width < 1)
-				width = (ushort)Math.Sqrt(textureLength >> 2);
-			return (ushort)(width << 1);
-		}
+		public static ushort IsoSlantWidth(int textureLength, ushort width = 0) => (ushort)((width < 1 ? (ushort)Math.Sqrt(textureLength >> 2) : width) << 1);
 		public static ushort IsoSlantHeight(int textureLength, ushort width = 0)
 		{
 			if (width < 1)

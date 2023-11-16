@@ -13,7 +13,7 @@ namespace Voxel2PixelTest.Draw
 		[Fact]
 		public void IsoSlantTest()
 		{
-			VoxFileModel voxFileModel = new VoxFileModel(@"..\..\..\NumberCube.vox");
+			VoxFileModel voxFileModel = new VoxFileModel(@"..\..\..\UnevenSizes.vox");
 			IVoxelColor voxelColor = new NaiveDimmer(voxFileModel.Palette);
 			ushort width = voxFileModel.SizeX,
 				height = voxFileModel.SizeZ;
@@ -40,7 +40,7 @@ namespace Voxel2PixelTest.Draw
 		[Fact]
 		public void IsoTileTest()
 		{
-			VoxFileModel voxFileModel = new VoxFileModel(@"..\..\..\NumberCube.vox");
+			VoxFileModel voxFileModel = new VoxFileModel(@"..\..\..\UnevenSizes.vox");
 			IVoxelColor voxelColor = new NaiveDimmer(voxFileModel.Palette);
 			ushort width = voxFileModel.SizeX,
 				height = voxFileModel.SizeZ;
