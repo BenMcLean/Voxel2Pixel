@@ -426,9 +426,8 @@ namespace Voxel2Pixel.Draw
 		{
 			if (width < 1)
 				width = (ushort)Math.Sqrt(texture.Length >> 2);
-			ushort height = (ushort)((texture.Length >> 2) / width),
-				width2 = (ushort)(width << 1),
-				height2 = (ushort)(height << 1);
+			ushort width2 = (ushort)(width << 1),
+				height2 = (ushort)(((texture.Length >> 2) / width) << 1);
 			int index = 0;
 			for (ushort xStart = 0, yStart = (ushort)(width2 - 2);
 				yStart < width2 + height2 - 2;
