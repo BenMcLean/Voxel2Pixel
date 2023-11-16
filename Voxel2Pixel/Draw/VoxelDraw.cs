@@ -435,19 +435,23 @@ namespace Voxel2Pixel.Draw
 				width2 = (ushort)(width << 1),
 				height2 = (ushort)(height << 1);
 			int index = 0;
-			for (ushort xStart = (ushort)(width2 - 1), yStart = (ushort)(width2 + height2 - 1); yStart > (ushort)(width2 - 1); xStart -= 2, yStart -= 2)
-				for (ushort x = xStart, y = yStart; x < xStart + width2; x += 2, y -= 2, index += 4)
+			for (ushort xStart = (ushort)(width2 - 2), yStart = (ushort)(width2 + height2 - 4);
+				yStart > width2 - 4;
+				xStart -= 2, yStart -= 2)
+				for (ushort x = xStart, y = yStart;
+					x < xStart + width2;
+					x += 2, y -= 2, index += 4)
 					if (texture[index + 3] is byte alpha && alpha >= threshold)
 					{
 						uint color = (uint)texture[index] << 24 | (uint)texture[index + 1] << 16 | (uint)texture[index + 2] << 8 | alpha;
 						renderer.Tri(
-							x: (ushort)(x - 1),
-							y: (ushort)(y - 3),
+							x: x,
+							y: y,
 							right: false,
 							color: color);
 						renderer.Tri(
-							x: (ushort)(x + 1),
-							y: (ushort)(y - 3),
+							x: (ushort)(x + 2),
+							y: y,
 							right: true,
 							color: color);
 					}
