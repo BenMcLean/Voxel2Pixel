@@ -1142,6 +1142,18 @@ namespace Voxel2Pixel.Draw
 					| bytes[i + 3]);
 			return uints;
 		}
+		public static byte[] Write(this byte[] bytes, ushort @ushort, int index = 0)
+		{
+			bytes[index] = (byte)(@ushort >> 8);
+			bytes[index + 1] = (byte)@ushort;
+			return bytes;
+		}
+		public static byte[] Write(this byte[] bytes, uint @uint, int index = 0) => bytes
+			.Write((ushort)(@uint >> 16), index)
+			.Write((ushort)@uint, index + 2);
+		public static byte[] Write(this byte[] bytes, ulong @ulong, int index = 0) => bytes
+			.Write((uint)(@ulong >> 32), index)
+			.Write((uint)@ulong, index + 4);
 		public static T[] ConcatArrays<T>(params T[][] list)
 		{
 			T[] result = new T[list.Sum(a => a.Length)];
