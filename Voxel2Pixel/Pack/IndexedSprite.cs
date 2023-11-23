@@ -21,7 +21,7 @@ namespace Voxel2Pixel.Pack
 		#endregion ISprite
 		#region IndexedSprite
 		/// <summary>
-		/// x+ is right, y+ is up
+		/// x+ is right, y+ is down
 		/// </summary>
 		public byte[,] Pixels { get; set; }
 		/// <summary>
@@ -41,7 +41,8 @@ namespace Voxel2Pixel.Pack
 			ushort width = (ushort)pixels.GetLength(0),
 				height = (ushort)pixels.GetLength(1);
 			byte[] texture = new byte[(width * height) << 2];
-			for (int y = height - 1, index = 0; y >= 0; y--)
+			int index = 0;
+			for (ushort y = 0; y < height; y++)
 				for (ushort x = 0; x < width; x++, index += 4)
 					if (pixels[x, y] is byte pixel
 						&& (!transparent0 || pixel != 0))
