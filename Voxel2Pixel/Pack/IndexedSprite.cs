@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace Voxel2Pixel.Pack
 {
-	public class IndexedSprite : ISprite, IRectangleRenderer, ITriangleRenderer
+	public class IndexedSprite : ISprite, IRectangleRenderer, ITriangleRenderer, IVoxelColor
 	{
 		#region ISprite
 		public byte[] Texture => GetTexture();
@@ -19,8 +19,6 @@ namespace Voxel2Pixel.Pack
 		#region IndexedSprite
 		public byte[,] Pixels { get; set; }
 		public uint[] Palette { get; set; }
-		public uint Color(byte index, VisibleFace visibleFace = VisibleFace.Front) => Palette[Index(index, visibleFace)];
-		public static byte Index(byte voxel, VisibleFace visibleFace = VisibleFace.Front) => (byte)((byte)visibleFace + voxel);
 		public byte[] GetTexture(bool transparent0 = true) => GetTexture(Pixels, Palette, transparent0);
 		public byte[] GetTexture(uint[] palette, bool transparent0 = true) => GetTexture(Pixels, palette, transparent0);
 		public static byte[] GetTexture(byte[,] pixels, uint[] palette, bool transparent0 = true)
@@ -97,5 +95,9 @@ namespace Voxel2Pixel.Pack
 			}
 		}
 		#endregion ITriangleRenderer
+		#region IVoxelColor
+		public static byte Index(byte voxel, VisibleFace visibleFace = VisibleFace.Front) => (byte)((byte)visibleFace + voxel);
+		public uint this[byte index, VisibleFace visibleFace = VisibleFace.Front] => Palette[Index(index, visibleFace)];
+		#endregion IVoxelColor
 	}
 }
