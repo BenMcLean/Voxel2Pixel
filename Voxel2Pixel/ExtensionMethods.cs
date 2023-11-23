@@ -22,5 +22,6 @@ namespace Voxel2Pixel
 					palette[(byte)face + @byte] = color[@byte, face];
 			return palette;
 		}
+		public static VisibleFace VisibleFace(this byte @byte) => (VisibleFace)(@byte & 192);
 	}
 }
