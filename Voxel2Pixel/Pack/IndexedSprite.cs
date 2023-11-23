@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace Voxel2Pixel.Pack
 {
-	public class IndexedSprite : ISprite, IRectangleRenderer
+	public class IndexedSprite : ISprite, IRectangleRenderer, ITriangleRenderer
 	{
 		#region ISprite
 		public byte[] Texture => GetTexture();
@@ -44,12 +44,12 @@ namespace Voxel2Pixel.Pack
 		public void Rect(ushort x, ushort y, uint color, ushort sizeX = 1, ushort sizeY = 1)
 		{
 			if (Array.IndexOf(Palette, color) is int index && index >= 0)
-				Rect(x, y, (byte)index, sizeX, sizeY);
+				RectByte(x, y, (byte)index, sizeX, sizeY);
 			else
 				throw new KeyNotFoundException(color.ToString("X"));
 		}
-		public void Rect(ushort x, ushort y, byte index, VisibleFace visibleFace = VisibleFace.Front, ushort sizeX = 1, ushort sizeY = 1) => Rect(x, y, Index(index, visibleFace), sizeX, sizeY);
-		public void Rect(ushort x, ushort y, byte index, ushort sizeX = 1, ushort sizeY = 1)
+		public void Rect(ushort x, ushort y, byte index, VisibleFace visibleFace = VisibleFace.Front, ushort sizeX = 1, ushort sizeY = 1) => RectByte(x, y, Index(index, visibleFace), sizeX, sizeY);
+		public void RectByte(ushort x, ushort y, byte index, ushort sizeX = 1, ushort sizeY = 1)
 		{
 			sizeX = Math.Min((ushort)(x + sizeX), Width);
 			sizeY = Math.Min((ushort)(y + sizeY), Height);
@@ -58,5 +58,44 @@ namespace Voxel2Pixel.Pack
 					Pixels[x, y] = index;
 		}
 		#endregion IRectangleRenderer
+		#region ITriangleRenderer
+		public void Tri(ushort x, ushort y, bool right, uint color)
+		{
+			if (Array.IndexOf(Palette, color) is int index && index >= 0)
+				Tri(x, y, right, (byte)index);
+			else
+				throw new KeyNotFoundException(color.ToString("X"));
+		}
+		public void Tri(ushort x, ushort y, bool right, byte index, VisibleFace visibleFace) => Tri(x, y, right, Index(index, visibleFace));
+		public void Tri(ushort x, ushort y, bool right, byte index)
+		{
+			if (right)
+			{
+				RectByte(
+					x: x,
+					y: y,
+					index: index,
+					sizeX: 1,
+					sizeY: 3);
+				RectByte(
+					x: (ushort)(x + 1),
+					y: (ushort)(y + 1),
+					index: index);
+			}
+			else
+			{
+				RectByte(
+					x: (ushort)(x + 1),
+					y: y,
+					index: index,
+					sizeX: 1,
+					sizeY: 3);
+				RectByte(
+					x: x,
+					y: (ushort)(y + 1),
+					index: index);
+			}
+		}
+		#endregion ITriangleRenderer
 	}
 }
