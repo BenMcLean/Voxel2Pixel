@@ -1,4 +1,5 @@
-﻿using Voxel2Pixel.Draw;
+﻿using System.Buffers.Binary;
+using static System.MemoryExtensions;
 using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Pack
@@ -26,7 +27,11 @@ namespace Voxel2Pixel.Pack
 				for (ushort x = 0; x < width; x++, index += 4)
 					if (pixels[x, y] is byte pixel
 						&& (!transparent0 || pixel != 0))
-						texture.Write(palette[pixel], index);
+						BinaryPrimitives.WriteUInt32BigEndian(
+							destination: texture.AsSpan(
+								start: index,
+								length: 4),
+							value: palette[pixel]);
 			return texture;
 		}
 		#endregion IndexedSprite
