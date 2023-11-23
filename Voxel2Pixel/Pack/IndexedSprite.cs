@@ -7,6 +7,9 @@ using System.Collections.Generic;
 
 namespace Voxel2Pixel.Pack
 {
+	/// <summary>
+	/// If voxels are limited to only using color indices 1-63 or fewer then their renders can be stored as 256 color limited palette indexed sprites.
+	/// </summary>
 	public class IndexedSprite : ISprite, IRectangleRenderer, ITriangleRenderer, IVoxelColor
 	{
 		#region ISprite
@@ -20,7 +23,7 @@ namespace Voxel2Pixel.Pack
 		public byte[,] Pixels { get; set; }
 		public uint[] Palette { get; set; }
 		public byte[] GetTexture(bool transparent0 = true) => GetTexture(Pixels, Palette, transparent0);
-		public byte[] GetTexture(uint[] palette, bool transparent0 = true) => GetTexture(Pixels, palette, transparent0);
+		public byte[] GetTexture(uint[] palette, bool transparent0 = true) => GetTexture(Pixels, palette ?? Palette, transparent0);
 		public static byte[] GetTexture(byte[,] pixels, uint[] palette, bool transparent0 = true)
 		{
 			ushort width = (ushort)pixels.GetLength(0),
@@ -42,12 +45,12 @@ namespace Voxel2Pixel.Pack
 		public void Rect(ushort x, ushort y, uint color, ushort sizeX = 1, ushort sizeY = 1)
 		{
 			if (Array.IndexOf(Palette, color) is int index && index >= 0)
-				RectByte(x, y, (byte)index, sizeX, sizeY);
+				Rect(x, y, (byte)index, sizeX, sizeY);
 			else
 				throw new KeyNotFoundException(color.ToString("X"));
 		}
-		public void Rect(ushort x, ushort y, byte index, VisibleFace visibleFace = VisibleFace.Front, ushort sizeX = 1, ushort sizeY = 1) => RectByte(x, y, Index(index, visibleFace), sizeX, sizeY);
-		public void RectByte(ushort x, ushort y, byte index, ushort sizeX = 1, ushort sizeY = 1)
+		public void Rect(ushort x, ushort y, byte index, VisibleFace visibleFace, ushort sizeX = 1, ushort sizeY = 1) => Rect(x, y, Index(index, visibleFace), sizeX, sizeY);
+		public void Rect(ushort x, ushort y, byte index, ushort sizeX = 1, ushort sizeY = 1)
 		{
 			sizeX = Math.Min((ushort)(x + sizeX), Width);
 			sizeY = Math.Min((ushort)(y + sizeY), Height);
@@ -69,26 +72,26 @@ namespace Voxel2Pixel.Pack
 		{
 			if (right)
 			{
-				RectByte(
+				Rect(
 					x: x,
 					y: y,
 					index: index,
 					sizeX: 1,
 					sizeY: 3);
-				RectByte(
+				Rect(
 					x: (ushort)(x + 1),
 					y: (ushort)(y + 1),
 					index: index);
 			}
 			else
 			{
-				RectByte(
+				Rect(
 					x: (ushort)(x + 1),
 					y: y,
 					index: index,
 					sizeX: 1,
 					sizeY: 3);
-				RectByte(
+				Rect(
 					x: x,
 					y: (ushort)(y + 1),
 					index: index);
