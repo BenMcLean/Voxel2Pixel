@@ -8,7 +8,7 @@ using System.Collections.Generic;
 namespace Voxel2Pixel.Pack
 {
 	/// <summary>
-	/// If voxels are limited to only using color indices 1-63 or fewer then their renders can be stored as 256 color limited palette indexed sprites.
+	/// If a voxel model is limited to only using color indices 1-63 inclusive or fewer then its pixel sprite renders can be stored as 256 color limited palette indexed sprites.
 	/// </summary>
 	public class IndexedSprite : ISprite, IRectangleRenderer, ITriangleRenderer, IVoxelColor
 	{
@@ -20,7 +20,19 @@ namespace Voxel2Pixel.Pack
 		public ushort OriginY { get; set; }
 		#endregion ISprite
 		#region IndexedSprite
+		/// <summary>
+		/// x+ is right, y+ is up
+		/// </summary>
 		public byte[,] Pixels { get; set; }
+		/// <summary>
+		/// Palette is expected to be length 256 of Big Endian RGBA8888 32-bit colors.
+		/// 0 is the transparent color.
+		/// 1-63 are for Front face colors.
+		/// 65-127 are for Top face colors.
+		/// 129-191 are for Left face colors.
+		/// 193-255 are for Top face colors.
+		/// 64, 128 and 192 are unused.
+		/// </summary>
 		public uint[] Palette { get; set; }
 		public byte[] GetTexture(bool transparent0 = true) => GetTexture(Pixels, Palette, transparent0);
 		public byte[] GetTexture(uint[] palette, bool transparent0 = true) => GetTexture(Pixels, palette ?? Palette, transparent0);
