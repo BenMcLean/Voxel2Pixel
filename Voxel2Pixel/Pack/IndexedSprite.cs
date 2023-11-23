@@ -21,16 +21,17 @@ namespace Voxel2Pixel.Pack
 		#endregion ISprite
 		#region IndexedSprite
 		/// <summary>
-		/// x+ is right, y+ is down
+		/// Each pixel is an index corresponding to a color in Palette.
+		/// x+ is right, y+ is down.
 		/// </summary>
 		public byte[,] Pixels { get; set; }
 		/// <summary>
-		/// Palette is expected to be length 256 of Big Endian RGBA8888 32-bit colors.
+		/// Expected to be length 256 of Big Endian RGBA8888 32-bit colors.
 		/// 0 is the transparent color.
 		/// 1-63 are for Front face colors.
 		/// 65-127 are for Top face colors.
 		/// 129-191 are for Left face colors.
-		/// 193-255 are for Top face colors.
+		/// 193-255 are for Right face colors.
 		/// 64, 128 and 192 are unused.
 		/// </summary>
 		public uint[] Palette { get; set; }
