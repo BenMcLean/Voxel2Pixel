@@ -1071,19 +1071,18 @@ namespace Voxel2Pixel.Draw
 				| (int)(sA + change * (eA - sA)) & 0xFF;
 		}
 		public static uint LerpColor(this uint startColor, uint endColor, float change) => (uint)LerpColor((int)startColor, (int)endColor, change);
-		/// <param name="index">Palette indexes (one byte per pixel)</param>
+		/// <param name="indices">Palette indexes (one byte per pixel)</param>
 		/// <param name="palette">256 rgba8888 color values</param>
 		/// <returns>rgba8888 texture (four bytes per pixel)</returns>
-		public static byte[] Index2ByteArray(this byte[] index, uint[] palette)
+		public static byte[] Index2ByteArray(this byte[] indices, uint[] palette)
 		{
-			byte[] bytes = new byte[index.Length << 2];
-			for (int i = 0, j = 0; i < index.Length; i++)
-			{
-				bytes[j++] = (byte)(palette[index[i]] >> 24);
-				bytes[j++] = (byte)(palette[index[i]] >> 16);
-				bytes[j++] = (byte)(palette[index[i]] >> 8);
-				bytes[j++] = (byte)palette[index[i]];
-			}
+			byte[] bytes = new byte[indices.Length << 2];
+			for (int i = 0, j = 0; i < indices.Length; i++, j += 4)
+				BinaryPrimitives.WriteUInt32BigEndian(
+					destination: bytes.AsSpan(
+						start: j,
+						length: 4),
+					value: palette[indices[i]]);
 			return bytes;
 		}
 		public static uint[] PaletteFromTexture(this byte[] texture)
@@ -1124,13 +1123,12 @@ namespace Voxel2Pixel.Draw
 		public static byte[] UInt2ByteArray(this uint[] uints)
 		{
 			byte[] bytes = new byte[uints.Length << 2];
-			for (int i = 0, j = 0; i < uints.Length; i++)
-			{
-				bytes[j++] = (byte)(uints[i] >> 24);
-				bytes[j++] = (byte)(uints[i] >> 16);
-				bytes[j++] = (byte)(uints[i] >> 8);
-				bytes[j++] = (byte)uints[i];
-			}
+			for (int i = 0, j = 0; i < uints.Length; i++, j += 4)
+				BinaryPrimitives.WriteUInt32BigEndian(
+					destination: bytes.AsSpan(
+						start: j,
+						length: 4),
+					value: uints[i]);
 			return bytes;
 		}
 		/// <param name="bytes">rgba8888 color values (four bytes per pixel)</param>
@@ -1139,10 +1137,9 @@ namespace Voxel2Pixel.Draw
 		{
 			uint[] uints = new uint[bytes.Length >> 2];
 			for (int i = 0, j = 0; i < bytes.Length; i += 4)
-				uints[j++] = (uint)(bytes[i] << 24
-					| bytes[i + 1] << 16
-					| bytes[i + 2] << 8
-					| bytes[i + 3]);
+				uints[j++] = BinaryPrimitives.ReadUInt32BigEndian(bytes.AsSpan(
+					start: i,
+					length: 4));
 			return uints;
 		}
 		public static T[] ConcatArrays<T>(params T[][] list)
