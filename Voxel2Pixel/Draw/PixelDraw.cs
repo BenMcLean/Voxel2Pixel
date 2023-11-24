@@ -79,15 +79,19 @@ namespace Voxel2Pixel.Draw
 				offset = y * xSide + x4,
 				rectWidth4 = rectWidth << 2,
 				yStop = offset + xSide * rectHeight;
-			BinaryPrimitives.WriteUInt32BigEndian(
-				destination: texture.AsSpan(
-					start: offset,
-					length: 4),
-				value: color);
-			for (int x2 = offset + 4; x2 < offset + rectWidth4; x2 += 4)
-				Array.Copy(texture, offset, texture, x2, 4);
+			for (int x2 = offset; x2 < offset + rectWidth4; x2 += 4)
+				BinaryPrimitives.WriteUInt32BigEndian(
+					destination: texture.AsSpan(
+						start: x2,
+						length: 4),
+					value: color);
 			for (int y2 = offset + xSide; y2 < yStop; y2 += xSide)
-				Array.Copy(texture, offset, texture, y2, rectWidth4);
+				Array.Copy(
+					sourceArray: texture,
+					sourceIndex: offset,
+					destinationArray: texture,
+					destinationIndex: y2,
+					length: rectWidth4);
 			return texture;
 		}
 		/// <summary>
