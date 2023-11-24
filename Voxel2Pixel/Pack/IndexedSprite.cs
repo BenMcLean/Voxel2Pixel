@@ -113,7 +113,7 @@ namespace Voxel2Pixel.Pack
 		}
 		#endregion ITriangleRenderer
 		#region IVoxelColor
-		public static byte Index(byte voxel, VisibleFace visibleFace = VisibleFace.Front) => (byte)((byte)visibleFace + voxel);
+		public static byte Index(byte voxel, VisibleFace visibleFace = VisibleFace.Front) => (byte)(voxel < 64 ? (byte)visibleFace + voxel : voxel);
 		public uint this[byte index, VisibleFace visibleFace = VisibleFace.Front] => Palette[Index(index, visibleFace)];
 		#endregion IVoxelColor
 	}
