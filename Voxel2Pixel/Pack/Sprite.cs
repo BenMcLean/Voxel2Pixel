@@ -2,10 +2,11 @@
 using System.Linq;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
+using Voxel2Pixel.Model;
 
 namespace Voxel2Pixel.Pack
 {
-	public class Sprite : ISprite
+	public class Sprite : ISprite, IRectangleRenderer, ITriangleRenderer, IVoxelColor
 	{
 		#region ISprite
 		public byte[] Texture { get; set; }
@@ -22,6 +23,68 @@ namespace Voxel2Pixel.Pack
 			Width = width;
 		}
 		#endregion Sprite
+		#region IVoxelColor
+		public IVoxelColor VoxelColor { get; set; }
+		public uint this[byte index, VisibleFace visibleFace = VisibleFace.Front] => VoxelColor[index, visibleFace];
+		#endregion IVoxelColor
+		#region IRectangleRenderer
+		public virtual void Rect(ushort x, ushort y, uint color, ushort sizeX = 1, ushort sizeY = 1) =>
+			Texture.DrawRectangle(
+				x: x,
+				y: y,
+				color: color,
+				rectWidth: sizeX,
+				rectHeight: sizeY,
+				width: Width);
+		public virtual void Rect(ushort x, ushort y, byte index, VisibleFace visibleFace = VisibleFace.Front, ushort sizeX = 1, ushort sizeY = 1) => Rect(
+			x: x,
+			y: y,
+			color: this[index, visibleFace],
+			sizeX: sizeX,
+			sizeY: sizeY);
+		#endregion IRectangleRenderer
+		#region ITriangleRenderer
+		public virtual void Tri(ushort x, ushort y, bool right, uint color)
+		{
+			if (right)
+			{
+				Rect(
+					x: x,
+					y: y,
+					color: color);
+				Rect(
+					x: x,
+					y: (ushort)(y + 1),
+					color: color,
+					sizeX: 2);
+				Rect(
+					x: x,
+					y: (ushort)(y + 2),
+					color: color);
+			}
+			else
+			{
+				Rect(
+					x: (ushort)(x + 1),
+					y: y,
+					color: color);
+				Rect(
+					x: x,
+					y: (ushort)(y + 1),
+					color: color,
+					sizeX: 2);
+				Rect(
+					x: (ushort)(x + 1),
+					y: (ushort)(y + 2),
+					color: color);
+			}
+		}
+		public virtual void Tri(ushort x, ushort y, bool right, byte index, VisibleFace visibleFace = VisibleFace.Front) => Tri(
+			x: x,
+			y: y,
+			right: right,
+			color: this[index, visibleFace]);
+		#endregion ITriangleRenderer
 		public static IEnumerable<Sprite> SameSize(ushort addWidth, ushort addHeight, IEnumerable<ISprite> sprites) => SameSize(addWidth, addHeight, sprites.ToArray());
 		public static IEnumerable<Sprite> SameSize(IEnumerable<ISprite> sprites) => SameSize(sprites.ToArray());
 		public static IEnumerable<Sprite> SameSize(params ISprite[] sprites) => SameSize(0, 0, sprites);
