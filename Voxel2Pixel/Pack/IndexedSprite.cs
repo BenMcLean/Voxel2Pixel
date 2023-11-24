@@ -102,17 +102,6 @@ namespace Voxel2Pixel.Pack
 		public static byte Index(byte voxel, VisibleFace visibleFace = VisibleFace.Front) => (byte)(voxel < 64 ? (byte)visibleFace + voxel : voxel);
 		public virtual uint this[byte index, VisibleFace visibleFace = VisibleFace.Front] => Palette[Index(index, visibleFace)];
 		#endregion IVoxelColor
-		public static byte[,] DrawInsert(byte[,] bytes, byte[,] insert, ushort x = 0, ushort y = 0, bool skip0 = true)
-		{
-			ushort xStop = Math.Min((ushort)(x + insert.GetLength(0)), (ushort)bytes.GetLength(0)),
-				yStop = Math.Min((ushort)(y + insert.GetLength(1)), (ushort)bytes.GetLength(1));
-			for (ushort x1 = 0; x < xStop; x++, x1++)
-				for (ushort y1 = 0; y < yStop; y++, y1++)
-					if (insert[x1, y1] is byte @byte
-						&& (!skip0 || @byte != 0))
-						bytes[x, y] = @byte;
-			return bytes;
-		}
 		public static IEnumerable<IndexedSprite> SameSize(ushort addWidth, ushort addHeight, IEnumerable<IndexedSprite> sprites) => SameSize(addWidth, addHeight, sprites.ToArray());
 		public static IEnumerable<IndexedSprite> SameSize(IEnumerable<IndexedSprite> sprites) => SameSize(sprites.ToArray());
 		public static IEnumerable<IndexedSprite> SameSize(params IndexedSprite[] sprites) => SameSize(0, 0, sprites);
@@ -125,11 +114,11 @@ namespace Voxel2Pixel.Pack
 			foreach (IndexedSprite sprite in sprites)
 				yield return new IndexedSprite
 				{
-					Pixels = DrawInsert(
-						bytes: new byte[width, height],
-						insert: sprite.Pixels,
-						x: (ushort)(originX - sprite.OriginX),
-						y: (ushort)(originY - sprite.OriginY)),
+					Pixels = new byte[width, height]
+						.DrawInsert(
+							insert: sprite.Pixels,
+							x: (ushort)(originX - sprite.OriginX),
+							y: (ushort)(originY - sprite.OriginY)),
 					OriginX = originX,
 					OriginY = originY,
 				};

@@ -143,6 +143,17 @@ namespace Voxel2Pixel.Draw
 					Array.Copy(insert, y2, texture, y1, actualInsertXside);
 			return texture;
 		}
+		public static byte[,] DrawInsert(this byte[,] bytes, byte[,] insert, ushort x = 0, ushort y = 0, bool skip0 = true)
+		{
+			ushort xStop = Math.Min((ushort)(x + insert.GetLength(0)), (ushort)bytes.GetLength(0)),
+				yStop = Math.Min((ushort)(y + insert.GetLength(1)), (ushort)bytes.GetLength(1));
+			for (ushort x1 = 0; x < xStop; x++, x1++)
+				for (ushort y1 = 0; y < yStop; y++, y1++)
+					if (insert[x1, y1] is byte @byte
+						&& (!skip0 || @byte != 0))
+						bytes[x, y] = @byte;
+			return bytes;
+		}
 		/// <summary>
 		/// Draws a texture onto a different texture with simple transparency
 		/// </summary>
