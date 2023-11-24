@@ -14,6 +14,14 @@ namespace Voxel2Pixel.Pack
 		public ushort OriginX { get; set; }
 		public ushort OriginY { get; set; }
 		#endregion ISprite
+		#region Sprite
+		public Sprite() { }
+		public Sprite(ushort width, ushort height) : this()
+		{
+			Texture = new byte[(width * height) << 2];
+			Width = width;
+		}
+		#endregion Sprite
 		public static IEnumerable<Sprite> SameSize(ushort addWidth, ushort addHeight, IEnumerable<ISprite> sprites) => SameSize(addWidth, addHeight, sprites.ToArray());
 		public static IEnumerable<Sprite> SameSize(IEnumerable<ISprite> sprites) => SameSize(sprites.ToArray());
 		public static IEnumerable<Sprite> SameSize(params ISprite[] sprites) => SameSize(0, 0, sprites);

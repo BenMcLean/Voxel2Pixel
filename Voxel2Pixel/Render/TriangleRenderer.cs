@@ -45,18 +45,18 @@ namespace Voxel2Pixel.Render
 					color: color);
 			}
 		}
-		public virtual void Tri(ushort x, ushort y, bool right, byte voxel, VisibleFace visibleFace = VisibleFace.Front) => Tri(
+		public virtual void Tri(ushort x, ushort y, bool right, byte index, VisibleFace visibleFace = VisibleFace.Front) => Tri(
 			x: x,
 			y: y,
 			right: right,
-			color: VoxelColor[voxel, visibleFace]);
+			color: VoxelColor[index, visibleFace]);
 		#endregion ITriangleRenderer
 		#region IRectangleRenderer
 		public abstract void Rect(ushort x, ushort y, uint color, ushort sizeX = 1, ushort sizeY = 1);
-		public virtual void Rect(ushort x, ushort y, byte voxel, VisibleFace visibleFace = VisibleFace.Front, ushort sizeX = 1, ushort sizeY = 1) => Rect(
+		public virtual void Rect(ushort x, ushort y, byte index, VisibleFace visibleFace = VisibleFace.Front, ushort sizeX = 1, ushort sizeY = 1) => Rect(
 			x: x,
 			y: y,
-			color: VoxelColor[voxel, visibleFace],
+			color: VoxelColor[index, visibleFace],
 			sizeX: sizeX,
 			sizeY: sizeY);
 		#endregion IRectangleRenderer
