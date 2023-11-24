@@ -54,19 +54,10 @@ namespace Voxel2Pixel.Draw
 		/// <param name="y">upper left corner of rectangle</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>same texture with rectangle drawn</returns>
-		public static byte[] DrawRectangle(this byte[] texture, uint color, int x, int y, int rectWidth, int rectHeight, ushort width = 0) => texture.DrawRectangle((byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, rectWidth, rectHeight, width);
-		/// <summary>
-		/// Draws a rectangle of the specified color
-		/// </summary>
-		/// <param name="texture">raw rgba8888 pixel data to be modified</param>
-		/// <param name="x">upper left corner of rectangle</param>
-		/// <param name="y">upper left corner of rectangle</param>
-		/// <param name="width">width of texture or 0 to assume square texture</param>
-		/// <returns>same texture with rectangle drawn</returns>
-		public static byte[] DrawRectangle(this byte[] texture, byte red, byte green, byte blue, byte alpha, int x, int y, int rectWidth = 1, int rectHeight = 1, ushort width = 0)
+		public static byte[] DrawRectangle(this byte[] texture, uint color, int x, int y, int rectWidth = 1, int rectHeight = 1, ushort width = 0)
 		{
-			//if (rectWidth == 1 && rectHeight == 1)
-			//	return texture.DrawPixel(red, green, blue, alpha, (ushort)x, (ushort)y, width);
+			if (rectWidth == 1 && rectHeight == 1)
+				return texture.DrawPixel(color, (ushort)x, (ushort)y, width);
 			if (rectHeight < 1) rectHeight = rectWidth;
 			if (x < 0)
 			{
@@ -88,10 +79,11 @@ namespace Voxel2Pixel.Draw
 				offset = y * xSide + x4,
 				rectWidth4 = rectWidth << 2,
 				yStop = offset + xSide * rectHeight;
-			texture[offset] = red;
-			texture[offset + 1] = green;
-			texture[offset + 2] = blue;
-			texture[offset + 3] = alpha;
+			BinaryPrimitives.WriteUInt32BigEndian(
+				destination: texture.AsSpan(
+					start: offset,
+					length: 4),
+				value: color);
 			for (int x2 = offset + 4; x2 < offset + rectWidth4; x2 += 4)
 				Array.Copy(texture, offset, texture, x2, 4);
 			for (int y2 = offset + xSide; y2 < yStop; y2 += xSide)

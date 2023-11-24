@@ -20,7 +20,7 @@ namespace Voxel2PixelTest.Draw
 			.DrawPixel(0x0000FFFFu, 0, 1, width)
 			.DrawPixel(0x808080FFu, 1, 1, width)
 			.Upscale(xScale, yScale, width)
-			.DrawRectangle(0, 0, 0, 255, width * xScale / 4, height * yScale / 4, width * xScale / 4 * 2, height * yScale / 4 * 2, (ushort)(width * xScale));
+			.DrawRectangle(0xFFu, width * xScale / 4, height * yScale / 4, width * xScale / 4 * 2, height * yScale / 4 * 2, (ushort)(width * xScale));
 			//.DrawTriangle(0, 128, 0, 255, 10, 10, 40, 40, width * xScale);
 			//.Rotate180(width * xScale);
 			//int swap = xScale;
@@ -85,8 +85,8 @@ namespace Voxel2PixelTest.Draw
 		{
 			ushort width = 10, height = 10, xScale = 10, yScale = 10;
 			byte[] bytes = new byte[width * height * 4]
-				.DrawRectangle(0, 0, 0, 255, -5, -5, width + 5, height + 5, width)
-				.DrawRectangle(0, 0, 255, 255, 0, 5, 5, 5, width);
+				.DrawRectangle(0xFFu, -5, -5, width + 5, height + 5, width)
+				.DrawRectangle(0xFFFFu, 0, 5, 5, 5, width);
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes.Upscale(xScale, yScale), width * xScale, height * yScale)
 				.SaveAsPng("DrawRectangleTest.png");
 		}

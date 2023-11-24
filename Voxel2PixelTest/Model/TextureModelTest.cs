@@ -46,6 +46,6 @@ namespace Voxel2PixelTest.Model
 				0,0,255,255,
 				128,128,128,255}
 			.Upscale((ushort)(width / 2), (ushort)(height / 2), 2)
-			.DrawRectangle(0, 0, 0, 255, width / 4, height / 4, width / 2, height / 2, width);
+			.DrawRectangle(0xFFu, width / 4, height / 4, width / 2, height / 2, width);
 	}
 }
