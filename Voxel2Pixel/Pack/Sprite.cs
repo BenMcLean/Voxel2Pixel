@@ -39,5 +39,18 @@ namespace Voxel2Pixel.Pack
 					OriginY = originY,
 				};
 		}
+		public Sprite TransparentCrop(byte threshold = 128) => new Sprite
+		{
+			Texture = Texture.TransparentCrop(
+				cutLeft: out ushort cutLeft,
+				cutTop: out ushort cutTop,
+				croppedWidth: out ushort croppedWidth,
+				croppedHeight: out _,
+				width: Width,
+				threshold: threshold),
+			Width = croppedWidth,
+			OriginX = (ushort)(OriginX - cutLeft),
+			OriginY = (ushort)(OriginY - cutTop),
+		};
 	}
 }
