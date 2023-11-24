@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -31,25 +32,17 @@ namespace Voxel2Pixel.Draw
 		/// <param name="color">rgba color to draw</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>same texture with pixel drawn</returns>
-		public static byte[] DrawPixel(this byte[] texture, uint color, ushort x, ushort y, ushort width = 0) => texture.DrawPixel((byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, width);
-		/// <summary>
-		/// Draws one pixel of the specified color
-		/// </summary>
-		/// <param name="texture">raw rgba8888 pixel data to be modified</param>
-		/// <param name="width">width of texture or 0 to assume square texture</param>
-		/// <returns>same texture with pixel drawn</returns>
-		public static byte[] DrawPixel(this byte[] texture, byte red, byte green, byte blue, byte alpha, ushort x, ushort y, ushort width = 0)
+		public static byte[] DrawPixel(this byte[] texture, uint color, ushort x, ushort y, ushort width = 0)
 		{
-			if (x < 0 || y < 0) return texture;
 			ushort xSide = (ushort)((width < 1 ? (ushort)Math.Sqrt(texture.Length >> 2) : width) << 2),
 				ySide = (ushort)((width < 1 ? xSide : texture.Length / width) >> 2);
-			x <<= 2; //x *= 4;
+			x <<= 2;//x *= 4;
 			if (x >= xSide || y >= ySide) return texture;
-			int offset = y * xSide + x;
-			texture[offset] = red;
-			texture[offset + 1] = green;
-			texture[offset + 2] = blue;
-			texture[offset + 3] = alpha;
+			BinaryPrimitives.WriteUInt32BigEndian(
+				destination: texture.AsSpan(
+					start: y * xSide + x,
+					length: 4),
+				value: color);
 			return texture;
 		}
 		/// <summary>
@@ -72,8 +65,8 @@ namespace Voxel2Pixel.Draw
 		/// <returns>same texture with rectangle drawn</returns>
 		public static byte[] DrawRectangle(this byte[] texture, byte red, byte green, byte blue, byte alpha, int x, int y, int rectWidth = 1, int rectHeight = 1, ushort width = 0)
 		{
-			if (rectWidth == 1 && rectHeight == 1)
-				return texture.DrawPixel(red, green, blue, alpha, (ushort)x, (ushort)y, width);
+			//if (rectWidth == 1 && rectHeight == 1)
+			//	return texture.DrawPixel(red, green, blue, alpha, (ushort)x, (ushort)y, width);
 			if (rectHeight < 1) rectHeight = rectWidth;
 			if (x < 0)
 			{
@@ -862,8 +855,7 @@ namespace Voxel2Pixel.Draw
 					width: resultWidth);
 			return true;
 		}
-		public static byte[] Outline(this byte[] texture, ushort width = 0, uint color = 0x000000FF, byte threshold = 128) => Outline(texture, width, threshold, color.R(), color.G(), color.B(), color.A());
-		private static byte[] Outline(this byte[] texture, ushort width = 0, byte threshold = 128, params byte[] rgba)
+		public static byte[] Outline(this byte[] texture, ushort width = 0, uint color = 0x000000FFu, byte threshold = 128)
 		{
 			if (width < 1)
 				width = (ushort)Math.Sqrt(texture.Length >> 2);
@@ -877,7 +869,11 @@ namespace Voxel2Pixel.Draw
 						|| (index + 4 < xSide && texture[rowIndex + index + 4] >= threshold)
 						|| (rowIndex + index + xSide < texture.Length && texture[rowIndex + index + xSide] >= threshold)
 						|| (index > 3 && texture[rowIndex + index - 4] >= threshold)))
-						Array.Copy(rgba, 0, result, rowIndex + index - 3, 4);
+						BinaryPrimitives.WriteUInt32BigEndian(
+							destination: result.AsSpan(
+								start: rowIndex + index - 3,
+								length: 4),
+							value: color);
 			return result;
 		}
 		public static byte[] CropSprite(this byte[] sprite, ushort width, out ushort newWidth, out ushort[] newOrigin, params ushort[] origin)

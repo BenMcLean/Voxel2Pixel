@@ -15,10 +15,10 @@ namespace Voxel2PixelTest.Draw
 		{
 			ushort width = 2, height = 2, xScale = 32, yScale = 32, xTile = 1, yTile = 1;
 			byte[] bytes = new byte[width * height * 4]
-			.DrawPixel(255, 0, 0, 255, 0, 0, width)
-			.DrawPixel(0, 255, 0, 255, 1, 0, width)
-			.DrawPixel(0, 0, 255, 255, 0, 1, width)
-			.DrawPixel(128, 128, 128, 255, 1, 1, width)
+			.DrawPixel(0xFF0000FFu, 0, 0, width)
+			.DrawPixel(0x00FF00FFu, 1, 0, width)
+			.DrawPixel(0x0000FFFFu, 0, 1, width)
+			.DrawPixel(0x808080FFu, 1, 1, width)
 			.Upscale(xScale, yScale, width)
 			.DrawRectangle(0, 0, 0, 255, width * xScale / 4, height * yScale / 4, width * xScale / 4 * 2, height * yScale / 4 * 2, (ushort)(width * xScale));
 			//.DrawTriangle(0, 128, 0, 255, 10, 10, 40, 40, width * xScale);
@@ -37,10 +37,10 @@ namespace Voxel2PixelTest.Draw
 			.SaveAsPng("IsoSlantDown.png");
 			ushort isoWidth = (ushort)(width * xScale * xTile + height * yScale * yTile);
 			byte[] isoTile = bytes
-				.DrawPixel(128, 0, 0, 255, 0, 0, (ushort)(width * xScale * xTile))
-				.DrawPixel(0, 255, 0, 255, 1, 0, (ushort)(width * xScale * xTile))
-				.DrawPixel(0, 0, 255, 255, 0, 1, (ushort)(width * xScale * xTile))
-				.DrawPixel(128, 128, 128, 255, 1, 1, (ushort)(width * xScale * xTile))
+				.DrawPixel(0x800000FFu, 0, 0, (ushort)(width * xScale * xTile))
+				.DrawPixel(0x00FF00FFu, 1, 0, (ushort)(width * xScale * xTile))
+				.DrawPixel(0x0000FFFFu, 0, 1, (ushort)(width * xScale * xTile))
+				.DrawPixel(0x808080FFu, 1, 1, (ushort)(width * xScale * xTile))
 				.RotateCounter45((ushort)(width * xScale * xTile));
 			ushort isoHeight = (ushort)(isoTile.Length / (isoWidth * 4));
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(isoTile, isoWidth, isoHeight)
