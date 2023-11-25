@@ -1071,7 +1071,7 @@ namespace Voxel2Pixel.Draw
 				| (int)(sA + change * (eA - sA)) & 0xFF;
 		}
 		public static uint LerpColor(this uint startColor, uint endColor, float change) => (uint)LerpColor((int)startColor, (int)endColor, change);
-		/// <param name="indices">Palette indexes (one byte per pixel)</param>
+		/// <param name="indices">Palette indices (one byte per pixel)</param>
 		/// <param name="palette">256 rgba8888 color values</param>
 		/// <returns>rgba8888 texture (four bytes per pixel)</returns>
 		public static byte[] Index2ByteArray(this byte[] indices, uint[] palette)
@@ -1097,13 +1097,13 @@ namespace Voxel2Pixel.Draw
 		}
 		public static byte[] Byte2IndexArray(this byte[] bytes, uint[] palette)
 		{
-			byte[] indexes = new byte[bytes.Length >> 2];
+			byte[] indices = new byte[bytes.Length >> 2];
 			uint[] uints = bytes.Byte2UIntArray();
-			for (int i = 0; i < indexes.Length; i++)
-				indexes[i] = (byte)Math.Max(Array.IndexOf(palette, uints[i]), 0);
-			return indexes;
+			for (int i = 0; i < indices.Length; i++)
+				indices[i] = (byte)Math.Max(Array.IndexOf(palette, uints[i]), 0);
+			return indices;
 		}
-		/// <param name="indices">Palette indexes (one byte per pixel)</param>
+		/// <param name="indices">Palette indices (one byte per pixel)</param>
 		/// <param name="palette">256 rgba8888 color values</param>
 		/// <returns>rgba8888 texture (one int per pixel)</returns>
 		public static uint[] Index2UIntArray(this byte[] indices, uint[] palette) => indices.Select(@byte => palette[@byte]).ToArray();
