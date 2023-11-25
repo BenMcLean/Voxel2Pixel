@@ -1014,6 +1014,11 @@ namespace Voxel2Pixel.Draw
 			}
 			return scaled;
 		}
+		public static byte[] Upscale(this byte[] texture, ushort factorX, ushort factorY, out ushort newWidth, ushort width = 0)
+		{
+			newWidth = (ushort)((width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) * factorX);
+			return texture.Upscale(factorX, factorY, width);
+		}
 		public static byte[][] UpscaleSprites(this byte[][] sprites, ushort[] widths, ushort[][] pixelOrigins, ushort factorX, ushort factorY, out ushort[] newWidths, out ushort[][] newPixelOrigins)
 		{
 			byte[][] newSprites = new byte[sprites.Length][];

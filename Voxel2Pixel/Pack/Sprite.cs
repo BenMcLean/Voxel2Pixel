@@ -127,8 +127,12 @@ namespace Voxel2Pixel.Pack
 		/// <returns>upscaled copy</returns>
 		public Sprite Upscale(ushort factorX, ushort factorY = 1) => new Sprite
 		{
-			Texture = Texture.Upscale(factorX, factorY, Width),
-			Width = (ushort)(Width * factorX),
+			Texture = Texture.Upscale(
+				factorX: factorX,
+				factorY: factorY,
+				newWidth: out ushort newWidth,
+				width: Width),
+			Width = newWidth,
 			OriginX = (ushort)(OriginX * factorX),
 			OriginY = (ushort)(OriginY * factorY),
 		};
