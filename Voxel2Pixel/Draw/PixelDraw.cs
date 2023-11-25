@@ -1085,14 +1085,34 @@ namespace Voxel2Pixel.Draw
 					value: palette[indices[i]]);
 			return bytes;
 		}
+		public static HashSet<T> Append<T>(this HashSet<T> hashSet, params T[] other) => hashSet.Append(other.AsEnumerable());
+		/// <summary>
+		/// I understand why they decided to name it HashSet.UnionWith instead of HashSet.AddRange.
+		/// But I do not understand why UnionWith returns void instead of returning the HashSet.
+		/// </summary>
+		public static HashSet<T> Append<T>(this HashSet<T> hashSet, IEnumerable<T> other)
+		{
+			hashSet.UnionWith(other);
+			return hashSet;
+		}
+		public static List<T> Append<T>(this List<T> list, params T[] other) => list.Append(other.AsEnumerable());
+		public static List<T> Append<T>(this List<T> list, IEnumerable<T> other)
+		{
+			list.AddRange(other);
+			return list;
+		}
 		public static uint[] PaletteFromTexture(this byte[] texture)
 		{
-			HashSet<uint> palette = new HashSet<uint> { 0u };
-			foreach (uint pixel in texture.Byte2UIntArray())
-				if (palette.Add(pixel) && palette.Count >= byte.MaxValue)
-					break;
-			uint[] result = new uint[byte.MaxValue];
-			Array.Copy(palette.OrderBy(@uint => @uint).ToArray(), result, palette.Count);
+			uint[] palette = new HashSet<uint> { 0u }
+					.Append(texture.Byte2UIntArray())
+					.OrderBy(@uint => @uint)
+					.Take(byte.MaxValue)
+					.ToArray(),
+				result = new uint[byte.MaxValue];
+			Array.Copy(
+				sourceArray: palette,
+				destinationArray: result,
+				length: palette.Length);
 			return result;
 		}
 		public static byte[] Byte2IndexArray(this byte[] bytes, uint[] palette)
