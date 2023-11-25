@@ -1087,19 +1087,14 @@ namespace Voxel2Pixel.Draw
 		}
 		public static uint[] PaletteFromTexture(this byte[] texture)
 		{
-			List<uint> palette = new List<uint> { 0 };
+			HashSet<uint> palette = new HashSet<uint> { 0u };
 			foreach (uint pixel in texture.Byte2UIntArray())
-				if (!palette.Contains(pixel))
-				{
-					palette.Add(pixel);
-					if (palette.Count >= byte.MaxValue)
-						break;
-				}
+				if (palette.Add(pixel) && palette.Count >= byte.MaxValue)
+					break;
 			uint[] result = new uint[byte.MaxValue];
-			Array.Copy(palette.ToArray(), result, palette.Count);
+			Array.Copy(palette.OrderBy(@uint => @uint).ToArray(), result, palette.Count);
 			return result;
 		}
-		public static byte[] Byte2IndexArray(this byte[] bytes) => bytes.Byte2IndexArray(bytes.PaletteFromTexture());
 		public static byte[] Byte2IndexArray(this byte[] bytes, uint[] palette)
 		{
 			byte[] indexes = new byte[bytes.Length >> 2];
