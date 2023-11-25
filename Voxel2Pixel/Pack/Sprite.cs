@@ -112,31 +112,7 @@ namespace Voxel2Pixel.Pack
 					insertWidth: sprites[packingRectangle.Id].Width,
 					width: Width);
 		}
-		public static IEnumerable<Sprite> SameSize(ushort addWidth, ushort addHeight, params ISprite[] sprites) => SameSize(addWidth, addHeight, sprites.AsEnumerable());
-		public static IEnumerable<Sprite> SameSize(params ISprite[] sprites) => SameSize(0, 0, sprites);
-		public static IEnumerable<Sprite> SameSize(IEnumerable<ISprite> sprites) => SameSize(0, 0, sprites);
-		public static IEnumerable<Sprite> SameSize(ushort addWidth, ushort addHeight, IEnumerable<ISprite> sprites)
-		{
-			ushort originX = sprites.Select(sprite => sprite.OriginX).Max(),
-				originY = sprites.Select(sprite => sprite.OriginY).Max(),
-				width = (ushort)(sprites.Select(sprite => sprite.Width + originX - sprite.OriginX).Max() + addWidth),
-				height = (ushort)(sprites.Select(sprite => sprite.Height + originY - sprite.OriginY).Max() + addHeight);
-			int textureLength = width * height << 2;
-			foreach (ISprite sprite in sprites)
-				yield return new Sprite
-				{
-					Texture = new byte[textureLength]
-						.DrawInsert(
-							x: originX - sprite.OriginX,
-							y: originY - sprite.OriginY,
-							insert: sprite.Texture,
-							insertWidth: sprite.Width,
-							width: width),
-					Width = width,
-					OriginX = originX,
-					OriginY = originY,
-				};
-		}
+		public static IEnumerable<Sprite> SameSize(ushort addWidth = 0, ushort addHeight = 0, params ISprite[] sprites) => sprites.AsEnumerable().SameSize(addWidth, addHeight);
 		/// <returns>resized copy</returns>
 		public Sprite Resize(ushort croppedWidth, ushort croppedHeight) => Crop(0, 0, croppedWidth, croppedHeight);
 		/// <returns>lower right cropped copy</returns>
@@ -206,27 +182,13 @@ namespace Voxel2Pixel.Pack
 			OriginX = (ushort)(OriginX * factorX),
 			OriginY = (ushort)(OriginY * factorY),
 		};
-		public static IEnumerable<Sprite> AddFrameNumbers(uint color = 0xFFFFFFFF, params Sprite[] sprites) => AddFrameNumbers(sprites.AsEnumerable(), color);
-		public static IEnumerable<Sprite> AddFrameNumbers(IEnumerable<Sprite> frames, uint color = 0xFFFFFFFF)
-		{
-			int frame = 0;
-			foreach (Sprite sprite in frames)
-			{
-				sprite.Texture.Draw3x4(
-					@string: (++frame).ToString(),
-					width: sprite.Width,
-					x: 0,
-					y: sprite.Height - 4,
-					color: color);
-				yield return sprite;
-			}
-		}
+		public static IEnumerable<Sprite> AddFrameNumbers(uint color = 0xFFFFFFFF, params Sprite[] sprites) => sprites.AsEnumerable().AddFrameNumbers(color);
 		#endregion Image manipulation
 		#region Voxel drawing
 		public static IEnumerable<Sprite> Above4(IModel model, IVoxelColor voxelColor, params ushort[] voxelOrigin)
 		{
 			if (voxelOrigin is null || voxelOrigin.Length < 3)
-				voxelOrigin = new ushort[3];
+				voxelOrigin = model.BottomCenter();
 			TurnModel turnModel = new TurnModel
 			{
 				Model = model,
@@ -264,7 +226,7 @@ namespace Voxel2Pixel.Pack
 		public static IEnumerable<Sprite> Iso4(IModel model, IVoxelColor voxelColor, params ushort[] voxelOrigin)
 		{
 			if (voxelOrigin is null || voxelOrigin.Length < 3)
-				voxelOrigin = new ushort[3];
+				voxelOrigin = model.BottomCenter();
 			TurnModel turnModel = new TurnModel
 			{
 				Model = model,
@@ -302,7 +264,7 @@ namespace Voxel2Pixel.Pack
 		public static IEnumerable<Sprite> Iso8(IModel model, IVoxelColor voxelColor, params ushort[] voxelOrigin)
 		{
 			if (voxelOrigin is null || voxelOrigin.Length < 3)
-				voxelOrigin = new ushort[3];
+				voxelOrigin = model.BottomCenter();
 			TurnModel turnModel = new TurnModel
 			{
 				Model = model,
@@ -367,7 +329,7 @@ namespace Voxel2Pixel.Pack
 		public static IEnumerable<Sprite> Iso8Outlined(IModel model, IVoxelColor voxelColor, params ushort[] voxelOrigin)
 		{
 			if (voxelOrigin is null || voxelOrigin.Length < 3)
-				voxelOrigin = new ushort[3];
+				voxelOrigin = model.BottomCenter();
 			TurnModel turnModel = new TurnModel
 			{
 				Model = model,

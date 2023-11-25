@@ -2,7 +2,7 @@
 using System;
 using System.Linq;
 using static Voxel2Pixel.Draw.PixelDraw;
-using static Voxel2Pixel.Draw.DrawFont3x4;
+using static Voxel2Pixel.ExtensionMethods;
 using System.Collections.ObjectModel;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Pack;
@@ -30,7 +30,7 @@ namespace Voxel2PixelTest
 		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(int frameDelay = 25, ushort repeatCount = 0, params ISprite[] sprites) => sprites.AsEnumerable().AnimatedGif(frameDelay, repeatCount);
 		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(this IEnumerable<ISprite> sprites, int frameDelay = 25, ushort repeatCount = 0)
 		{
-			Sprite[] resized = Sprite.SameSize(sprites).ToArray();
+			Sprite[] resized = sprites.SameSize().ToArray();
 			SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> gif = new SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32>(resized[0].Width, resized[0].Height);
 			SixLabors.ImageSharp.Formats.Gif.GifMetadata gifMetaData = gif.Metadata.GetGifMetadata();
 			gifMetaData.RepeatCount = repeatCount;

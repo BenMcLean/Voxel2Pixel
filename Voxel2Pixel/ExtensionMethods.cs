@@ -1,6 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
+using Voxel2Pixel.Pack;
 
 namespace Voxel2Pixel
 {
@@ -23,5 +27,45 @@ namespace Voxel2Pixel
 			return palette;
 		}
 		public static VisibleFace VisibleFace(this byte @byte) => (VisibleFace)(@byte & 192);
+		public static ushort[] Center(this IModel model) => new ushort[3] { (ushort)(model.SizeX >> 1), (ushort)(model.SizeY >> 1), (ushort)(model.SizeZ >> 1) };
+		public static ushort[] BottomCenter(this IModel model) => new ushort[3] { (ushort)(model.SizeX >> 1), (ushort)(model.SizeY >> 1), 0 };
+		#region Sprite
+		public static IEnumerable<Sprite> AddFrameNumbers(this IEnumerable<Sprite> frames, uint color = 0xFFFFFFFF)
+		{
+			int frame = 0;
+			foreach (Sprite sprite in frames)
+			{
+				sprite.Texture.Draw3x4(
+					@string: (++frame).ToString(),
+					width: sprite.Width,
+					x: 0,
+					y: sprite.Height - 4,
+					color: color);
+				yield return sprite;
+			}
+		}
+		public static IEnumerable<Sprite> SameSize(this IEnumerable<ISprite> sprites, ushort addWidth = 0, ushort addHeight = 0)
+		{
+			ushort originX = sprites.Select(sprite => sprite.OriginX).Max(),
+				originY = sprites.Select(sprite => sprite.OriginY).Max(),
+				width = (ushort)(sprites.Select(sprite => sprite.Width + originX - sprite.OriginX).Max() + addWidth),
+				height = (ushort)(sprites.Select(sprite => sprite.Height + originY - sprite.OriginY).Max() + addHeight);
+			int textureLength = width * height << 2;
+			foreach (ISprite sprite in sprites)
+				yield return new Sprite
+				{
+					Texture = new byte[textureLength]
+						.DrawInsert(
+							x: originX - sprite.OriginX,
+							y: originY - sprite.OriginY,
+							insert: sprite.Texture,
+							insertWidth: sprite.Width,
+							width: width),
+					Width = width,
+					OriginX = originX,
+					OriginY = originY,
+				};
+		}
+		#endregion Sprite
 	}
 }
