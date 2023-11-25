@@ -206,6 +206,21 @@ namespace Voxel2Pixel.Pack
 			OriginX = (ushort)(OriginX * factorX),
 			OriginY = (ushort)(OriginY * factorY),
 		};
+		public static IEnumerable<Sprite> AddFrameNumbers(uint color = 0xFFFFFFFF, params Sprite[] sprites) => AddFrameNumbers(sprites.AsEnumerable(), color);
+		public static IEnumerable<Sprite> AddFrameNumbers(IEnumerable<Sprite> frames, uint color = 0xFFFFFFFF)
+		{
+			int frame = 0;
+			foreach (Sprite sprite in frames)
+			{
+				sprite.Texture.Draw3x4(
+					@string: (++frame).ToString(),
+					width: sprite.Width,
+					x: 0,
+					y: sprite.Height - 4,
+					color: color);
+				yield return sprite;
+			}
+		}
 		#endregion Image manipulation
 		#region Voxel drawing
 		public static IEnumerable<Sprite> Above4(IModel model, IVoxelColor voxelColor, params ushort[] voxelOrigin)
