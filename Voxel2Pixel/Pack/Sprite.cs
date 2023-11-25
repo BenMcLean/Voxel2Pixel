@@ -220,7 +220,7 @@ namespace Voxel2Pixel.Pack
 					model: turnModel,
 					renderer: sprite);
 				yield return sprite;
-				turnModel.ClockZ();
+				turnModel.CounterZ();
 			}
 		}
 		public static IEnumerable<Sprite> Iso4(IModel model, IVoxelColor voxelColor, params ushort[] voxelOrigin)
@@ -246,7 +246,7 @@ namespace Voxel2Pixel.Pack
 					voxelY: turnedY,
 					voxelZ: turnedZ);
 				ushort width = VoxelDraw.IsoWidth(turnModel);
-				Sprite2x sprite = new Sprite2x
+				Sprite sprite = new Sprite
 				{
 					Texture = new byte[width * VoxelDraw.IsoHeight(turnModel) << 2],
 					Width = width,
@@ -258,7 +258,7 @@ namespace Voxel2Pixel.Pack
 					model: turnModel,
 					renderer: sprite);
 				yield return sprite;
-				turnModel.ClockZ();
+				turnModel.CounterZ();
 			}
 		}
 		public static IEnumerable<Sprite> Iso8(IModel model, IVoxelColor voxelColor, params ushort[] voxelOrigin)
@@ -297,8 +297,8 @@ namespace Voxel2Pixel.Pack
 					renderer: sprite);
 				yield return sprite
 					.TransparentCrop()
-					.Upscale(5, 3);
-				turnModel.ClockZ();
+					.Upscale(5, 4);
+				turnModel.CounterZ();
 				turnModel.ReverseRotate(
 					x: out turnedX,
 					y: out turnedY,
@@ -311,84 +311,19 @@ namespace Voxel2Pixel.Pack
 					voxelX: turnedX,
 					voxelY: turnedY,
 					voxelZ: turnedZ);
-				width = VoxelDraw.IsoWidth(turnModel);
+				width = (ushort)(VoxelDraw.IsoWidth(turnModel) << 1);
 				sprite = new Sprite2x
 				{
 					Texture = new byte[width * VoxelDraw.IsoHeight(turnModel) << 2],
 					Width = width,
 					VoxelColor = voxelColor,
-					OriginX = (ushort)locateX,
+					OriginX = (ushort)(locateX << 1),
 					OriginY = (ushort)locateY,
 				};
 				VoxelDraw.Iso(
 					model: turnModel,
 					renderer: sprite);
 				yield return sprite.TransparentCrop();
-			}
-		}
-		public static IEnumerable<Sprite> Iso8Outlined(IModel model, IVoxelColor voxelColor, params ushort[] voxelOrigin)
-		{
-			if (voxelOrigin is null || voxelOrigin.Length < 3)
-				voxelOrigin = model.BottomCenter();
-			TurnModel turnModel = new TurnModel
-			{
-				Model = model,
-			};
-			for (byte angle = 0; angle < 4; angle++)
-			{
-				turnModel.ReverseRotate(
-					x: out ushort turnedX,
-					y: out ushort turnedY,
-					z: out ushort turnedZ,
-					coordinates: voxelOrigin);
-				VoxelDraw.AboveLocate(
-					pixelX: out int locateX,
-					pixelY: out int locateY,
-					model: turnModel,
-					voxelX: turnedX,
-					voxelY: turnedY,
-					voxelZ: turnedZ);
-				ushort width = VoxelDraw.AboveWidth(turnModel);
-				Sprite sprite = new Sprite
-				{
-					Texture = new byte[width * VoxelDraw.AboveHeight(turnModel) << 2],
-					Width = width,
-					VoxelColor = voxelColor,
-					OriginX = (ushort)locateX,
-					OriginY = (ushort)locateY,
-				};
-				VoxelDraw.Above(
-					model: turnModel,
-					renderer: sprite);
-				yield return sprite
-					.Upscale(5, 3)
-					.CropOutline();
-				turnModel.ClockZ();
-				turnModel.ReverseRotate(
-					x: out turnedX,
-					y: out turnedY,
-					z: out turnedZ,
-					coordinates: voxelOrigin);
-				VoxelDraw.IsoLocate(
-					pixelX: out locateX,
-					pixelY: out locateY,
-					model: turnModel,
-					voxelX: turnedX,
-					voxelY: turnedY,
-					voxelZ: turnedZ);
-				width = VoxelDraw.IsoWidth(turnModel);
-				sprite = new Sprite2x
-				{
-					Texture = new byte[width * VoxelDraw.IsoHeight(turnModel) << 2],
-					Width = width,
-					VoxelColor = voxelColor,
-					OriginX = (ushort)locateX,
-					OriginY = (ushort)locateY,
-				};
-				VoxelDraw.Iso(
-					model: turnModel,
-					renderer: sprite);
-				yield return sprite.CropOutline();
 			}
 		}
 		#endregion Voxel drawing

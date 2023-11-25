@@ -14,10 +14,10 @@ namespace Voxel2PixelTest.Pack
 		public void SoraGif()
 		{
 			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
-			Sprite.Above4(
+			Sprite.Iso8(
 					model: model,
-					voxelColor: new NaiveDimmer(model.Palette),
-					(ushort)(model.SizeX >> 1), (ushort)(model.SizeY >> 1), 0)
+					voxelColor: new NaiveDimmer(model.Palette))
+				.Select(sprite => sprite.CropOutline())
 				.SameSize()
 				.AddFrameNumbers()
 				.Select(sprite => sprite.Upscale(8, 8))
