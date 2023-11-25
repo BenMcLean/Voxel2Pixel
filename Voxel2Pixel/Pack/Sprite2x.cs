@@ -5,6 +5,11 @@
 	/// </summary>
 	public class Sprite2x : Sprite
 	{
+		#region Sprite2x
+		public Sprite2x() : base() { }
+		public Sprite2x(ushort width, ushort height) : base(width, height) { }
+		#endregion Sprite2x
+		#region Sprite
 		public override void Tri(ushort x, ushort y, bool right, uint color)
 		{
 			if (right)
@@ -43,6 +48,7 @@
 					color: color,
 					sizeX: 2);
 			}
+			#endregion Sprite
 		}
 	}
 }

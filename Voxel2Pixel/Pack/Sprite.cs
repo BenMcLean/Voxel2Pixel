@@ -284,7 +284,7 @@ namespace Voxel2Pixel.Pack
 					voxelY: turnedY,
 					voxelZ: turnedZ);
 				ushort width = VoxelDraw.IsoWidth(turnModel);
-				Sprite sprite = new Sprite
+				Sprite2x sprite = new Sprite2x
 				{
 					Texture = new byte[width * VoxelDraw.IsoHeight(turnModel) << 2],
 					Width = width,
@@ -333,7 +333,9 @@ namespace Voxel2Pixel.Pack
 				VoxelDraw.Above(
 					model: turnModel,
 					renderer: sprite);
-				yield return sprite;
+				yield return sprite
+					.TransparentCrop()
+					.Upscale(5, 3);
 				turnModel.ClockZ();
 				turnModel.ReverseRotate(
 					x: out turnedX,
@@ -348,7 +350,7 @@ namespace Voxel2Pixel.Pack
 					voxelY: turnedY,
 					voxelZ: turnedZ);
 				width = VoxelDraw.IsoWidth(turnModel);
-				sprite = new Sprite
+				sprite = new Sprite2x
 				{
 					Texture = new byte[width * VoxelDraw.IsoHeight(turnModel) << 2],
 					Width = width,
@@ -359,7 +361,72 @@ namespace Voxel2Pixel.Pack
 				VoxelDraw.Iso(
 					model: turnModel,
 					renderer: sprite);
-				yield return sprite;
+				yield return sprite.TransparentCrop();
+			}
+		}
+		public static IEnumerable<Sprite> Iso8Outlined(IModel model, IVoxelColor voxelColor, params ushort[] voxelOrigin)
+		{
+			if (voxelOrigin is null || voxelOrigin.Length < 3)
+				voxelOrigin = new ushort[3];
+			TurnModel turnModel = new TurnModel
+			{
+				Model = model,
+			};
+			for (byte angle = 0; angle < 4; angle++)
+			{
+				turnModel.ReverseRotate(
+					x: out ushort turnedX,
+					y: out ushort turnedY,
+					z: out ushort turnedZ,
+					coordinates: voxelOrigin);
+				VoxelDraw.AboveLocate(
+					pixelX: out int locateX,
+					pixelY: out int locateY,
+					model: turnModel,
+					voxelX: turnedX,
+					voxelY: turnedY,
+					voxelZ: turnedZ);
+				ushort width = VoxelDraw.AboveWidth(turnModel);
+				Sprite sprite = new Sprite
+				{
+					Texture = new byte[width * VoxelDraw.AboveHeight(turnModel) << 2],
+					Width = width,
+					VoxelColor = voxelColor,
+					OriginX = (ushort)locateX,
+					OriginY = (ushort)locateY,
+				};
+				VoxelDraw.Above(
+					model: turnModel,
+					renderer: sprite);
+				yield return sprite
+					.Upscale(5, 3)
+					.CropOutline();
+				turnModel.ClockZ();
+				turnModel.ReverseRotate(
+					x: out turnedX,
+					y: out turnedY,
+					z: out turnedZ,
+					coordinates: voxelOrigin);
+				VoxelDraw.IsoLocate(
+					pixelX: out locateX,
+					pixelY: out locateY,
+					model: turnModel,
+					voxelX: turnedX,
+					voxelY: turnedY,
+					voxelZ: turnedZ);
+				width = VoxelDraw.IsoWidth(turnModel);
+				sprite = new Sprite2x
+				{
+					Texture = new byte[width * VoxelDraw.IsoHeight(turnModel) << 2],
+					Width = width,
+					VoxelColor = voxelColor,
+					OriginX = (ushort)locateX,
+					OriginY = (ushort)locateY,
+				};
+				VoxelDraw.Iso(
+					model: turnModel,
+					renderer: sprite);
+				yield return sprite.CropOutline();
 			}
 		}
 		#endregion Voxel drawing
