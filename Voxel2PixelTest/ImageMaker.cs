@@ -13,17 +13,6 @@ namespace Voxel2PixelTest
 {
 	public static class ImageMaker
 	{
-		public static byte[][] AddFrameNumbers(this byte[][] frames, ushort width = 0, uint color = 0xFFFFFFFF)
-		{
-			for (int frame = 0; frame < frames.Length; frame++)
-				frames[frame].Draw3x4(
-					@string: frame.ToString(),
-					width: width,
-					x: 0,
-					y: Height(frames[frame].Length, width) - 4,
-					color: color);
-			return frames;
-		}
 		#region SixLabors.ImageSharp
 		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> Png(int width = 0, params byte[] bytes)
 		{

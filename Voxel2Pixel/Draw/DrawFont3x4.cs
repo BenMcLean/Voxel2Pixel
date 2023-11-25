@@ -277,5 +277,16 @@ namespace Voxel2Pixel.Draw
 			//		length: 4);
 			return texture;
 		}
+		public static byte[][] AddFrameNumbers(this byte[][] frames, ushort width = 0, uint color = 0xFFFFFFFF)
+		{
+			for (int frame = 0; frame < frames.Length; frame++)
+				frames[frame].Draw3x4(
+					@string: frame.ToString(),
+					width: width,
+					x: 0,
+					y: (frames[frame].Length / width >> 2) - 4,
+					color: color);
+			return frames;
+		}
 	}
 }
