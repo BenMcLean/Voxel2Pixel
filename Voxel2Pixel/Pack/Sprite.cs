@@ -20,7 +20,7 @@ namespace Voxel2Pixel.Pack
 		public Sprite() { }
 		public Sprite(ushort width, ushort height) : this()
 		{
-			Texture = new byte[(width * height) << 2];
+			Texture = new byte[width * height << 2];
 			Width = width;
 		}
 		#endregion Sprite
@@ -98,7 +98,10 @@ namespace Voxel2Pixel.Pack
 					height: (ushort)(sprites[i].Height + 2),
 					id: i))
 				.ToArray();
-			RectanglePacker.Pack(packingRectangles, out PackingRectangle bounds, PackingHints.TryByBiggerSide);
+			RectanglePacker.Pack(
+				rectangles: packingRectangles,
+				bounds: out PackingRectangle bounds,
+				packingHint: PackingHints.TryByBiggerSide);
 			Width = (ushort)PixelDraw.NextPowerOf2(bounds.BiggerSide);
 			Texture = new byte[Width * Width << 2];
 			foreach (PackingRectangle packingRectangle in packingRectangles)
@@ -118,7 +121,7 @@ namespace Voxel2Pixel.Pack
 				originY = sprites.Select(sprite => sprite.OriginY).Max(),
 				width = (ushort)(sprites.Select(sprite => sprite.Width + originX - sprite.OriginX).Max() + addWidth),
 				height = (ushort)(sprites.Select(sprite => sprite.Height + originY - sprite.OriginY).Max() + addHeight);
-			int textureLength = (width * height) << 2;
+			int textureLength = width * height << 2;
 			foreach (ISprite sprite in sprites)
 				yield return new Sprite
 				{
@@ -134,6 +137,10 @@ namespace Voxel2Pixel.Pack
 					OriginY = originY,
 				};
 		}
+		/// <returns>resized copy</returns>
+		public Sprite Resize(ushort croppedWidth, ushort croppedHeight) => Crop(0, 0, croppedWidth, croppedHeight);
+		/// <returns>lower right cropped copy</returns>
+		public Sprite Crop(ushort x, ushort y) => Crop(x, y, (ushort)(Width - x), (ushort)(Height - y));
 		/// <returns>cropped copy</returns>
 		public Sprite Crop(int x, int y, ushort croppedWidth, ushort croppedHeight) => new Sprite
 		{

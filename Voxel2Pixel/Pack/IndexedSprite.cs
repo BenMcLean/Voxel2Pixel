@@ -43,7 +43,7 @@ namespace Voxel2Pixel.Pack
 		{
 			ushort width = (ushort)pixels.GetLength(0),
 				height = (ushort)pixels.GetLength(1);
-			byte[] texture = new byte[(width * height) << 2];
+			byte[] texture = new byte[width * height << 2];
 			int index = 0;
 			for (ushort y = 0; y < height; y++)
 				for (ushort x = 0; x < width; x++, index += 4)
