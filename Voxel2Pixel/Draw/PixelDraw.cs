@@ -709,15 +709,15 @@ namespace Voxel2Pixel.Draw
 			croppedWidth = (ushort)(width - ((xSide - indexRight) >> 2) - cutLeft);
 			croppedHeight = (ushort)(cutBottom - cutTop);
 		}
-		public static byte[] TransparentCropPlusOne(this byte[] texture, out int cutLeft, out int cutTop, out int croppedWidth, out int croppedHeight, ushort width = 0, byte threshold = 128)
+		public static byte[] TransparentCropPlusOne(this byte[] texture, out int cutLeft, out int cutTop, out ushort croppedWidth, out ushort croppedHeight, ushort width = 0, byte threshold = 128)
 		{
 			if (width < 1)
 				width = (ushort)Math.Sqrt(texture.Length >> 2);
 			TransparentCropInfo(texture, out ushort cutLeftShort, out ushort cutTopShort, out ushort croppedWidthShort, out ushort croppedHeightShort, width, threshold);
 			cutLeft = cutLeftShort - 1;
 			cutTop = cutTopShort - 1;
-			croppedWidth = croppedWidthShort + 2;
-			croppedHeight = croppedHeightShort + 2;
+			croppedWidth = (ushort)(croppedWidthShort + 2);
+			croppedHeight = (ushort)(croppedHeightShort + 2);
 			return new byte[croppedWidth * 4 * croppedHeight]
 				.DrawInsert(
 					x: 1,
@@ -729,7 +729,7 @@ namespace Voxel2Pixel.Draw
 						croppedHeight: croppedHeight - 2,
 						width: width),
 					insertWidth: (ushort)(croppedWidth - 2),
-					width: (ushort)croppedWidth);
+					width: croppedWidth);
 		}
 		public static byte[] TransparentOutline(byte[] texture, ushort width = 0, byte threshold = 128) => UInt2ByteArray(TransparentOutline(Byte2UIntArray(texture), width, threshold));
 		public static uint[] TransparentOutline(uint[] texture, ushort width = 0, byte threshold = 128)
@@ -851,7 +851,7 @@ namespace Voxel2Pixel.Draw
 					width: resultWidth);
 			return true;
 		}
-		public static byte[] Outline(this byte[] texture, ushort width = 0, uint color = 0x000000FFu, byte threshold = 128)
+		public static byte[] Outline(this byte[] texture, ushort width = 0, uint color = 0xFFu, byte threshold = 128)
 		{
 			if (width < 1)
 				width = (ushort)Math.Sqrt(texture.Length >> 2);
@@ -905,11 +905,11 @@ namespace Voxel2Pixel.Draw
 				texture: sprite,
 				cutLeft: out int cutLeft,
 				cutTop: out int cutTop,
-				croppedWidth: out int croppedWidth,
+				croppedWidth: out ushort croppedWidth,
 				croppedHeight: out _,
 				width: width)
-				.Outline((ushort)croppedWidth);
-			newWidth = (ushort)croppedWidth;
+				.Outline(croppedWidth);
+			newWidth = croppedWidth;
 			newOrigin = new ushort[] { (ushort)(origin[0] - cutLeft), (ushort)(origin[1] - cutTop) };
 			return result;
 		}

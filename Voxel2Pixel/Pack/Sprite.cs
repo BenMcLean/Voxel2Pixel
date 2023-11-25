@@ -4,7 +4,6 @@ using System.Linq;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
-using Voxel2Pixel.Render;
 
 namespace Voxel2Pixel.Pack
 {
@@ -136,6 +135,14 @@ namespace Voxel2Pixel.Pack
 				};
 		}
 		/// <returns>cropped copy</returns>
+		public Sprite Crop(int x, int y, ushort croppedWidth, ushort croppedHeight) => new Sprite
+		{
+			Texture = Texture.Crop(x, y, croppedWidth, croppedHeight, Width),
+			Width = croppedWidth,
+			OriginX = (ushort)(OriginX - x),
+			OriginY = (ushort)(OriginY - y),
+		};
+		/// <returns>cropped copy</returns>
 		public Sprite TransparentCrop(byte threshold = 128) => new Sprite
 		{
 			Texture = Texture.TransparentCrop(
@@ -145,6 +152,37 @@ namespace Voxel2Pixel.Pack
 				croppedHeight: out _,
 				width: Width,
 				threshold: threshold),
+			Width = croppedWidth,
+			OriginX = (ushort)(OriginX - cutLeft),
+			OriginY = (ushort)(OriginY - cutTop),
+		};
+		/// <returns>cropped copy</returns>
+		public Sprite TransparentCropPlusOne(byte threshold = 128) => new Sprite
+		{
+			Texture = Texture.TransparentCropPlusOne(
+				cutLeft: out int cutLeft,
+				cutTop: out int cutTop,
+				croppedWidth: out ushort croppedWidth,
+				croppedHeight: out _,
+				width: Width,
+				threshold: threshold),
+			Width = croppedWidth,
+			OriginX = (ushort)(OriginX - cutLeft),
+			OriginY = (ushort)(OriginY - cutTop),
+		};
+		/// <returns>cropped and outlined copy</returns>
+		public Sprite CropOutline(uint color = 0xFFu) => new Sprite
+		{
+			Texture = Texture
+				.TransparentCropPlusOne(
+					cutLeft: out int cutLeft,
+					cutTop: out int cutTop,
+					croppedWidth: out ushort croppedWidth,
+					croppedHeight: out _,
+					width: Width)
+				.Outline(
+					width: croppedWidth,
+					color: color),
 			Width = croppedWidth,
 			OriginX = (ushort)(OriginX - cutLeft),
 			OriginY = (ushort)(OriginY - cutTop),
