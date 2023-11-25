@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.Collections.ObjectModel;
 
 namespace Voxel2Pixel.Draw
@@ -121,8 +122,7 @@ namespace Voxel2Pixel.Draw
 			0x6C00, // 0x7E ~ 011 110 000
 			0xA4A4  // 0x7F   101 010 101 010 // Alternative: Could even have a "full" 4x4 checkerboard
 		});
-		public static byte[] Draw3x4(this byte[] texture, string @string, int width = 0, int x = 0, int y = 0, uint color = 0xFFFFFFFF) => Draw3x4(texture, @string, width, x, y, (byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color);
-		public static byte[] Draw3x4(this byte[] texture, string @string, int width = 0, int x = 0, int y = 0, params byte[] rgba)
+		public static byte[] Draw3x4(this byte[] texture, string @string, int width = 0, int x = 0, int y = 0, uint color = 0xFFFFFFFF)
 		{
 			foreach (char @char in @string)
 			{
@@ -131,18 +131,16 @@ namespace Voxel2Pixel.Draw
 					width: width,
 					x: x,
 					y: y,
-					rgba: rgba);
+					color: color);
 				x += 4;
 			}
 			return texture;
 		}
-		public static byte[] Draw3x4(this byte[] texture, char @char, int width = 0, int x = 0, int y = 0, uint color = 0xFFFFFFFF) => Draw3x4(texture, @char, width, x, y, (byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color);
-		public static byte[] Draw3x4(this byte[] texture, char @char, int width = 0, int x = 0, int y = 0, params byte[] rgba)
+		public static byte[] Draw3x4(this byte[] texture, char @char, int width = 0, int x = 0, int y = 0, uint color = 0xFFFFFFFF)
 		{
 			if (width < 1)
 				width = (int)Math.Sqrt(texture.Length >> 2);
-			if (rgba.Length < 4
-				|| @char < 32
+			if (@char < 32
 				|| @char > 127
 				|| x < 0
 				|| y < 0
@@ -155,126 +153,90 @@ namespace Voxel2Pixel.Draw
 			if (start + 11 > texture.Length)
 				return texture;
 			if ((glyph & 0b1000000000000000) != 0)
-				Array.Copy(
-					sourceArray: rgba,
-					sourceIndex: 0,
-					destinationArray: texture,
-					destinationIndex: start,
-					length: 4);
+				BinaryPrimitives.WriteUInt32BigEndian(
+					destination: texture.AsSpan(
+						start: start,
+						length: 4),
+					value: color);
 			if ((glyph & 0b0100000000000000) != 0)
-				Array.Copy(
-					sourceArray: rgba,
-					sourceIndex: 0,
-					destinationArray: texture,
-					destinationIndex: start + 4,
-					length: 4);
+				BinaryPrimitives.WriteUInt32BigEndian(
+					destination: texture.AsSpan(
+						start: start + 4,
+						length: 4),
+					value: color);
 			if ((glyph & 0b0010000000000000) != 0)
-				Array.Copy(
-					sourceArray: rgba,
-					sourceIndex: 0,
-					destinationArray: texture,
-					destinationIndex: start + 8,
-					length: 4);
+				BinaryPrimitives.WriteUInt32BigEndian(
+					destination: texture.AsSpan(
+						start: start + 8,
+						length: 4),
+					value: color);
 			//if ((glyph & 0b0001000000000000) != 0)
-			//	Array.Copy(
-			//		sourceArray: rgba,
-			//		sourceIndex: 0,
-			//		destinationArray: texture,
-			//		destinationIndex: start + 12,
-			//		length: 4);
 			start += xSide;
 			if (start + 11 > texture.Length)
 				return texture;
 			if ((glyph & 0b0000100000000000) != 0)
-				Array.Copy(
-					sourceArray: rgba,
-					sourceIndex: 0,
-					destinationArray: texture,
-					destinationIndex: start,
-					length: 4);
+				BinaryPrimitives.WriteUInt32BigEndian(
+					destination: texture.AsSpan(
+						start: start,
+						length: 4),
+					value: color);
 			if ((glyph & 0b0000010000000000) != 0)
-				Array.Copy(
-					sourceArray: rgba,
-					sourceIndex: 0,
-					destinationArray: texture,
-					destinationIndex: start + 4,
-					length: 4);
+				BinaryPrimitives.WriteUInt32BigEndian(
+					destination: texture.AsSpan(
+						start: start + 4,
+						length: 4),
+					value: color);
 			if ((glyph & 0b0000001000000000) != 0)
-				Array.Copy(
-					sourceArray: rgba,
-					sourceIndex: 0,
-					destinationArray: texture,
-					destinationIndex: start + 8,
-					length: 4);
+				BinaryPrimitives.WriteUInt32BigEndian(
+					destination: texture.AsSpan(
+						start: start + 8,
+						length: 4),
+					value: color);
 			//if ((glyph & 0b0000000100000000) != 0)
-			//	Array.Copy(
-			//		sourceArray: rgba,
-			//		sourceIndex: 0,
-			//		destinationArray: texture,
-			//		destinationIndex: start + 12,
-			//		length: 4);
 			start += xSide;
 			if (start + 11 > texture.Length)
 				return texture;
 			if ((glyph & 0b0000000010000000) != 0)
-				Array.Copy(
-					sourceArray: rgba,
-					sourceIndex: 0,
-					destinationArray: texture,
-					destinationIndex: start,
-					length: 4);
+				BinaryPrimitives.WriteUInt32BigEndian(
+					destination: texture.AsSpan(
+						start: start,
+						length: 4),
+					value: color);
 			if ((glyph & 0b0000000001000000) != 0)
-				Array.Copy(
-					sourceArray: rgba,
-					sourceIndex: 0,
-					destinationArray: texture,
-					destinationIndex: start + 4,
-					length: 4);
+				BinaryPrimitives.WriteUInt32BigEndian(
+					destination: texture.AsSpan(
+						start: start + 4,
+						length: 4),
+					value: color);
 			if ((glyph & 0b0000000000100000) != 0)
-				Array.Copy(
-					sourceArray: rgba,
-					sourceIndex: 0,
-					destinationArray: texture,
-					destinationIndex: start + 8,
-					length: 4);
+				BinaryPrimitives.WriteUInt32BigEndian(
+					destination: texture.AsSpan(
+						start: start + 8,
+						length: 4),
+					value: color);
 			//if ((glyph & 0b0000000000010000) != 0)
-			//	Array.Copy(
-			//		sourceArray: rgba,
-			//		sourceIndex: 0,
-			//		destinationArray: texture,
-			//		destinationIndex: start + 12,
-			//		length: 4);
 			start += xSide;
 			if (start + 11 > texture.Length)
 				return texture;
 			if ((glyph & 0b0000000000001000) != 0)
-				Array.Copy(
-					sourceArray: rgba,
-					sourceIndex: 0,
-					destinationArray: texture,
-					destinationIndex: start,
-					length: 4);
+				BinaryPrimitives.WriteUInt32BigEndian(
+					destination: texture.AsSpan(
+						start: start,
+						length: 4),
+					value: color);
 			if ((glyph & 0b0000000000000100) != 0)
-				Array.Copy(
-					sourceArray: rgba,
-					sourceIndex: 0,
-					destinationArray: texture,
-					destinationIndex: start + 4,
-					length: 4);
+				BinaryPrimitives.WriteUInt32BigEndian(
+					destination: texture.AsSpan(
+						start: start + 4,
+						length: 4),
+					value: color);
 			if ((glyph & 0b0000000000000010) != 0)
-				Array.Copy(
-					sourceArray: rgba,
-					sourceIndex: 0,
-					destinationArray: texture,
-					destinationIndex: start + 8,
-					length: 4);
+				BinaryPrimitives.WriteUInt32BigEndian(
+					destination: texture.AsSpan(
+						start: start + 8,
+						length: 4),
+					value: color);
 			//if ((glyph & 0b0000000000000001) != 0)
-			//	Array.Copy(
-			//		sourceArray: rgba,
-			//		sourceIndex: 0,
-			//		destinationArray: texture,
-			//		destinationIndex: start + 12,
-			//		length: 4);
 			return texture;
 		}
 		public static byte[][] AddFrameNumbers(this byte[][] frames, ushort width = 0, uint color = 0xFFFFFFFF)
