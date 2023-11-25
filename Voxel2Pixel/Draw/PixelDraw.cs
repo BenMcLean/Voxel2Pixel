@@ -957,25 +957,25 @@ namespace Voxel2Pixel.Draw
 		/// Tile an image
 		/// </summary>
 		/// <param name="texture">raw rgba8888 pixel data of source image</param>
-		/// <param name="xFactor">number of times to tile horizontally</param>
-		/// <param name="yFactor">number of times to tile vertically</param>
+		/// <param name="factorX">number of times to tile horizontally</param>
+		/// <param name="factorY">number of times to tile vertically</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
-		/// <returns>new raw rgba8888 pixel data of newWidth = width * xFactor</returns>
-		public static byte[] Tile(this byte[] texture, ushort width = 0, ushort xFactor = 2, ushort yFactor = 2)
+		/// <returns>new raw rgba8888 pixel data of newWidth = width * factorX</returns>
+		public static byte[] Tile(this byte[] texture, ushort width = 0, ushort factorX = 2, ushort factorY = 2)
 		{
-			if (xFactor < 1 || yFactor < 1 || xFactor < 2 && yFactor < 2) return (byte[])texture.Clone();
-			byte[] tiled = new byte[texture.Length * xFactor * yFactor];
+			if (factorX < 1 || factorY < 1 || factorX < 2 && factorY < 2) return (byte[])texture.Clone();
+			byte[] tiled = new byte[texture.Length * factorX * factorY];
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
-				newXside = xSide * xFactor;
-			if (xFactor > 1)
+				newXside = xSide * factorX;
+			if (factorX > 1)
 				for (int y1 = 0, y2 = 0; y1 < texture.Length; y1 += xSide, y2 += newXside)
 					for (int x = 0; x < newXside; x += xSide)
 						Array.Copy(texture, y1, tiled, y2 + x, xSide);
 			else
 				Array.Copy(texture, tiled, texture.Length);
-			if (yFactor > 1)
+			if (factorY > 1)
 			{
-				int xScaledLength = texture.Length * xFactor;
+				int xScaledLength = texture.Length * factorX;
 				for (int y = xScaledLength; y < tiled.Length; y += xScaledLength)
 					Array.Copy(tiled, 0, tiled, y, xScaledLength);
 			}
@@ -988,33 +988,33 @@ namespace Voxel2Pixel.Draw
 		/// <param name="factorX">horizontal scaling factor</param>
 		/// <param name="factorY">vertical scaling factor</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
-		/// <returns>new raw rgba8888 pixel data of newWidth = width * xFactor</returns>
+		/// <returns>new raw rgba8888 pixel data of newWidth = width * factorX</returns>
 		public static byte[] Upscale(this byte[] texture, ushort factorX, ushort factorY, ushort width = 0)
 		{
 			if (factorX < 1 || factorY < 1 || factorX < 2 && factorY < 2) return (byte[])texture.Clone();
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
 				newXside = xSide * factorX,
-				newXsideYfactor = newXside * factorY;
+				newXsidefactorY = newXside * factorY;
 			byte[] scaled = new byte[texture.Length * factorY * factorX];
 			if (factorX < 2)
-				for (int y1 = 0, y2 = 0; y1 < texture.Length; y1 += xSide, y2 += newXsideYfactor)
-					for (int z = y2; z < y2 + newXsideYfactor; z += newXside)
+				for (int y1 = 0, y2 = 0; y1 < texture.Length; y1 += xSide, y2 += newXsidefactorY)
+					for (int z = y2; z < y2 + newXsidefactorY; z += newXside)
 						Array.Copy(texture, y1, scaled, z, xSide);
 			else
 			{
-				int xFactor4 = factorX << 2;
-				for (int y1 = 0, y2 = 0; y1 < texture.Length; y1 += xSide, y2 += newXsideYfactor)
+				int factorX4 = factorX << 2;
+				for (int y1 = 0, y2 = 0; y1 < texture.Length; y1 += xSide, y2 += newXsidefactorY)
 				{
-					for (int x1 = y1, x2 = y2; x1 < y1 + xSide; x1 += 4, x2 += xFactor4)
-						for (int z = 0; z < xFactor4; z += 4)
+					for (int x1 = y1, x2 = y2; x1 < y1 + xSide; x1 += 4, x2 += factorX4)
+						for (int z = 0; z < factorX4; z += 4)
 							Array.Copy(texture, x1, scaled, x2 + z, 4);
-					for (int z = y2 + newXside; z < y2 + newXsideYfactor; z += newXside)
+					for (int z = y2 + newXside; z < y2 + newXsidefactorY; z += newXside)
 						Array.Copy(scaled, y2, scaled, z, newXside);
 				}
 			}
 			return scaled;
 		}
-		public static byte[][] UpscaleSprites(this byte[][] sprites, ushort[] widths, ushort[][] pixelOrigins, ushort xFactor, ushort yFactor, out ushort[] newWidths, out ushort[][] newPixelOrigins)
+		public static byte[][] UpscaleSprites(this byte[][] sprites, ushort[] widths, ushort[][] pixelOrigins, ushort factorX, ushort factorY, out ushort[] newWidths, out ushort[][] newPixelOrigins)
 		{
 			byte[][] newSprites = new byte[sprites.Length][];
 			newWidths = new ushort[widths.Length];
@@ -1022,11 +1022,11 @@ namespace Voxel2Pixel.Draw
 			for (int i = 0; i < sprites.Length; i++)
 			{
 				newSprites[i] = sprites[i].Upscale(
-					factorX: xFactor,
-					factorY: yFactor,
+					factorX: factorX,
+					factorY: factorY,
 					width: widths[i]);
-				newWidths[i] = (ushort)(widths[i] * xFactor);
-				newPixelOrigins[i] = new ushort[] { (ushort)(pixelOrigins[i][0] * xFactor), (ushort)(pixelOrigins[i][1] * yFactor) };
+				newWidths[i] = (ushort)(widths[i] * factorX);
+				newPixelOrigins[i] = new ushort[] { (ushort)(pixelOrigins[i][0] * factorX), (ushort)(pixelOrigins[i][1] * factorY) };
 			}
 			return newSprites;
 		}

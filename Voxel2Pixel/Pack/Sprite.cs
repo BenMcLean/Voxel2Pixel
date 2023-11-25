@@ -85,10 +85,10 @@ namespace Voxel2Pixel.Pack
 			right: right,
 			color: this[index, visibleFace]);
 		#endregion ITriangleRenderer
-		public static IEnumerable<Sprite> SameSize(ushort addWidth, ushort addHeight, IEnumerable<ISprite> sprites) => SameSize(addWidth, addHeight, sprites.ToArray());
-		public static IEnumerable<Sprite> SameSize(IEnumerable<ISprite> sprites) => SameSize(sprites.ToArray());
+		public static IEnumerable<Sprite> SameSize(ushort addWidth, ushort addHeight, params ISprite[] sprites) => SameSize(addWidth, addHeight, sprites.AsEnumerable());
 		public static IEnumerable<Sprite> SameSize(params ISprite[] sprites) => SameSize(0, 0, sprites);
-		public static IEnumerable<Sprite> SameSize(ushort addWidth, ushort addHeight, params ISprite[] sprites)
+		public static IEnumerable<Sprite> SameSize(IEnumerable<ISprite> sprites) => SameSize(0, 0, sprites);
+		public static IEnumerable<Sprite> SameSize(ushort addWidth, ushort addHeight, IEnumerable<ISprite> sprites)
 		{
 			ushort originX = sprites.Select(sprite => sprite.OriginX).Max(),
 				originY = sprites.Select(sprite => sprite.OriginY).Max(),
@@ -110,6 +110,7 @@ namespace Voxel2Pixel.Pack
 					OriginY = originY,
 				};
 		}
+		/// <returns>cropped copy</returns>
 		public Sprite TransparentCrop(byte threshold = 128) => new Sprite
 		{
 			Texture = Texture.TransparentCrop(
@@ -123,6 +124,7 @@ namespace Voxel2Pixel.Pack
 			OriginX = (ushort)(OriginX - cutLeft),
 			OriginY = (ushort)(OriginY - cutTop),
 		};
+		/// <returns>upscaled copy</returns>
 		public Sprite Upscale(ushort factorX, ushort factorY = 1) => new Sprite
 		{
 			Texture = Texture.Upscale(factorX, factorY, Width),

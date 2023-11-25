@@ -91,8 +91,8 @@ namespace Voxel2Pixel.Pack
 				upscaledSprites = rawSprites.UpscaleSprites(
 					widths: rawWidths,
 					pixelOrigins: rawPixelOrigins,
-					xFactor: 5,
-					yFactor: 4,
+					factorX: 5,
+					factorY: 4,
 					newWidths: out ushort[] upscaledWidths,
 					newPixelOrigins: out ushort[][] upscaledPixelOrigins);
 			return upscaledSprites.CropSprites(
@@ -112,8 +112,8 @@ namespace Voxel2Pixel.Pack
 				upscaledSprites = rawSprites.UpscaleSprites(
 					widths: rawWidths,
 					pixelOrigins: rawPixelOrigins,
-					xFactor: 5,
-					yFactor: 4,
+					factorX: 5,
+					factorY: 4,
 					newWidths: out ushort[] upscaledWidths,
 					newPixelOrigins: out ushort[][] upscaledPixelOrigins);
 			return upscaledSprites.CropOutlineSprites(
