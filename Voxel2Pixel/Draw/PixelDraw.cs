@@ -1103,16 +1103,10 @@ namespace Voxel2Pixel.Draw
 				indexes[i] = (byte)Math.Max(Array.IndexOf(palette, uints[i]), 0);
 			return indexes;
 		}
-		/// <param name="index">Palette indexes (one byte per pixel)</param>
+		/// <param name="indices">Palette indexes (one byte per pixel)</param>
 		/// <param name="palette">256 rgba8888 color values</param>
 		/// <returns>rgba8888 texture (one int per pixel)</returns>
-		public static uint[] Index2UIntArray(this byte[] index, uint[] palette)
-		{
-			uint[] uints = new uint[index.Length];
-			for (int i = 0; i < index.Length; i++)
-				uints[i] = palette[index[i]];
-			return uints;
-		}
+		public static uint[] Index2UIntArray(this byte[] indices, uint[] palette) => indices.Select(@byte => palette[@byte]).ToArray();
 		/// <param name="ints">rgba8888 color values (one int per pixel)</param>
 		/// <returns>rgba8888 texture (four bytes per pixel)</returns>
 		public static byte[] UInt2ByteArray(this uint[] uints)
