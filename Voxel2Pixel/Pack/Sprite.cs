@@ -123,5 +123,12 @@ namespace Voxel2Pixel.Pack
 			OriginX = (ushort)(OriginX - cutLeft),
 			OriginY = (ushort)(OriginY - cutTop),
 		};
+		public Sprite Upscale(ushort factorX, ushort factorY = 1) => new Sprite
+		{
+			Texture = Texture.Upscale(factorX, factorY, Width),
+			Width = (ushort)(Width * factorX),
+			OriginX = (ushort)(OriginX * factorX),
+			OriginY = (ushort)(OriginY * factorY),
+		};
 	}
 }

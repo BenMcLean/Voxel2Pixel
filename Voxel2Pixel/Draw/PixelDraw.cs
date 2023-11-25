@@ -985,24 +985,24 @@ namespace Voxel2Pixel.Draw
 		/// Simple nearest-neighbor upscaling by integer multipliers
 		/// </summary>
 		/// <param name="texture">raw rgba8888 pixel data of source image</param>
-		/// <param name="xFactor">horizontal scaling factor</param>
-		/// <param name="yFactor">vertical scaling factor</param>
+		/// <param name="factorX">horizontal scaling factor</param>
+		/// <param name="factorY">vertical scaling factor</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>new raw rgba8888 pixel data of newWidth = width * xFactor</returns>
-		public static byte[] Upscale(this byte[] texture, ushort xFactor, ushort yFactor, ushort width = 0)
+		public static byte[] Upscale(this byte[] texture, ushort factorX, ushort factorY, ushort width = 0)
 		{
-			if (xFactor < 1 || yFactor < 1 || xFactor < 2 && yFactor < 2) return (byte[])texture.Clone();
+			if (factorX < 1 || factorY < 1 || factorX < 2 && factorY < 2) return (byte[])texture.Clone();
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
-				newXside = xSide * xFactor,
-				newXsideYfactor = newXside * yFactor;
-			byte[] scaled = new byte[texture.Length * yFactor * xFactor];
-			if (xFactor < 2)
+				newXside = xSide * factorX,
+				newXsideYfactor = newXside * factorY;
+			byte[] scaled = new byte[texture.Length * factorY * factorX];
+			if (factorX < 2)
 				for (int y1 = 0, y2 = 0; y1 < texture.Length; y1 += xSide, y2 += newXsideYfactor)
 					for (int z = y2; z < y2 + newXsideYfactor; z += newXside)
 						Array.Copy(texture, y1, scaled, z, xSide);
 			else
 			{
-				int xFactor4 = xFactor << 2;
+				int xFactor4 = factorX << 2;
 				for (int y1 = 0, y2 = 0; y1 < texture.Length; y1 += xSide, y2 += newXsideYfactor)
 				{
 					for (int x1 = y1, x2 = y2; x1 < y1 + xSide; x1 += 4, x2 += xFactor4)
@@ -1022,8 +1022,8 @@ namespace Voxel2Pixel.Draw
 			for (int i = 0; i < sprites.Length; i++)
 			{
 				newSprites[i] = sprites[i].Upscale(
-					xFactor: xFactor,
-					yFactor: yFactor,
+					factorX: xFactor,
+					factorY: yFactor,
 					width: widths[i]);
 				newWidths[i] = (ushort)(widths[i] * xFactor);
 				newPixelOrigins[i] = new ushort[] { (ushort)(pixelOrigins[i][0] * xFactor), (ushort)(pixelOrigins[i][1] * yFactor) };
