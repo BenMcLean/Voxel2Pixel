@@ -5,6 +5,11 @@
 	/// </summary>
 	public class IndexedSprite2x : IndexedSprite
 	{
+		#region IndexedSprite2x
+		public IndexedSprite2x() : base() { }
+		public IndexedSprite2x(ushort width, ushort height) : base(width, height) { }
+		#endregion IndexedSprite2x
+		#region IndexedSprite
 		public override void Tri(ushort x, ushort y, bool right, byte index)
 		{
 			Rect(
@@ -19,5 +24,6 @@
 				index: index,
 				sizeX: 2);
 		}
+		#endregion IndexedSprite
 	}
 }

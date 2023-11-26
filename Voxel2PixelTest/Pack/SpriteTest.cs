@@ -21,7 +21,7 @@ namespace Voxel2PixelTest.Pack
 				.SameSize()
 				.AddFrameNumbers()
 				.Select(sprite => sprite.Upscale(8, 8))
-				.AnimatedGif(frameDelay: 50)
+				.AnimatedGif(frameDelay: 100)
 				.SaveAsGif("Sora.gif");
 		}
 	}

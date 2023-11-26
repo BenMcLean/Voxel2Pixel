@@ -23,6 +23,13 @@ namespace Voxel2Pixel.Pack
 			Texture = new byte[width * height << 2];
 			Width = width;
 		}
+		public Sprite(ISprite sprite) : this()
+		{
+			Texture = sprite.Texture;
+			Width = sprite.Width;
+			OriginX = sprite.OriginX;
+			OriginY = sprite.OriginY;
+		}
 		#endregion Sprite
 		#region IVoxelColor
 		public IVoxelColor VoxelColor { get; set; }

@@ -37,6 +37,8 @@ namespace Voxel2Pixel.Pack
 		/// 64, 128 and 192 are unused.
 		/// </summary>
 		public virtual uint[] Palette { get; set; }
+		public IndexedSprite() { }
+		public IndexedSprite(ushort width, ushort height) : this() => Pixels = new byte[width, height];
 		public virtual byte[] GetTexture(bool transparent0 = true) => GetTexture(Pixels, Palette, transparent0);
 		public virtual byte[] GetTexture(uint[] palette, bool transparent0 = true) => GetTexture(Pixels, palette ?? Palette, transparent0);
 		public static byte[] GetTexture(byte[,] pixels, uint[] palette, bool transparent0 = true)
@@ -102,6 +104,7 @@ namespace Voxel2Pixel.Pack
 		public static byte Index(byte voxel, VisibleFace visibleFace = VisibleFace.Front) => (byte)(voxel < 64 ? (byte)visibleFace + voxel : voxel);
 		public virtual uint this[byte index, VisibleFace visibleFace = VisibleFace.Front] => Palette[Index(index, visibleFace)];
 		#endregion IVoxelColor
+		#region Image manipulation
 		public static IEnumerable<IndexedSprite> SameSize(ushort addWidth, ushort addHeight, IEnumerable<IndexedSprite> sprites) => SameSize(addWidth, addHeight, sprites.ToArray());
 		public static IEnumerable<IndexedSprite> SameSize(IEnumerable<IndexedSprite> sprites) => SameSize(sprites.ToArray());
 		public static IEnumerable<IndexedSprite> SameSize(params IndexedSprite[] sprites) => SameSize(0, 0, sprites);
@@ -123,5 +126,138 @@ namespace Voxel2Pixel.Pack
 					OriginY = originY,
 				};
 		}
+		#endregion Image manipulation
+		#region Voxel drawing
+		public static IEnumerable<IndexedSprite> Above4(IModel model, uint[] palette = null, params ushort[] voxelOrigin)
+		{
+			if (voxelOrigin is null || voxelOrigin.Length < 3)
+				voxelOrigin = model.BottomCenter();
+			TurnModel turnModel = new TurnModel
+			{
+				Model = model,
+			};
+			for (byte angle = 0; angle < 4; angle++)
+			{
+				turnModel.ReverseRotate(
+					x: out ushort turnedX,
+					y: out ushort turnedY,
+					z: out ushort turnedZ,
+					coordinates: voxelOrigin);
+				VoxelDraw.AboveLocate(
+					pixelX: out int locateX,
+					pixelY: out int locateY,
+					model: turnModel,
+					voxelX: turnedX,
+					voxelY: turnedY,
+					voxelZ: turnedZ);
+				IndexedSprite sprite = new IndexedSprite(VoxelDraw.AboveWidth(turnModel), VoxelDraw.AboveHeight(turnModel))
+				{
+					Palette = palette,
+					OriginX = (ushort)locateX,
+					OriginY = (ushort)locateY,
+				};
+				VoxelDraw.Above(
+					model: turnModel,
+					renderer: sprite);
+				yield return sprite;
+				turnModel.CounterZ();
+			}
+		}
+		public static IEnumerable<IndexedSprite> Iso4(IModel model, uint[] palette = null, params ushort[] voxelOrigin)
+		{
+			if (voxelOrigin is null || voxelOrigin.Length < 3)
+				voxelOrigin = model.BottomCenter();
+			TurnModel turnModel = new TurnModel
+			{
+				Model = model,
+			};
+			for (byte angle = 0; angle < 4; angle++)
+			{
+				turnModel.ReverseRotate(
+					x: out ushort turnedX,
+					y: out ushort turnedY,
+					z: out ushort turnedZ,
+					coordinates: voxelOrigin);
+				VoxelDraw.IsoLocate(
+					pixelX: out int locateX,
+					pixelY: out int locateY,
+					model: turnModel,
+					voxelX: turnedX,
+					voxelY: turnedY,
+					voxelZ: turnedZ);
+				ushort width = VoxelDraw.IsoWidth(turnModel);
+				IndexedSprite sprite = new IndexedSprite(VoxelDraw.IsoWidth(turnModel), VoxelDraw.IsoHeight(turnModel))
+				{
+					Palette = palette,
+					OriginX = (ushort)locateX,
+					OriginY = (ushort)locateY,
+				};
+				VoxelDraw.Iso(
+					model: turnModel,
+					renderer: sprite);
+				yield return sprite;
+				turnModel.CounterZ();
+			}
+		}
+		/*
+		public static IEnumerable<IndexedSprite> Iso8(IModel model, uint[] palette = null, params ushort[] voxelOrigin)
+		{
+			if (voxelOrigin is null || voxelOrigin.Length < 3)
+				voxelOrigin = model.BottomCenter();
+			TurnModel turnModel = new TurnModel
+			{
+				Model = model,
+			};
+			for (byte angle = 0; angle < 4; angle++)
+			{
+				turnModel.ReverseRotate(
+					x: out ushort turnedX,
+					y: out ushort turnedY,
+					z: out ushort turnedZ,
+					coordinates: voxelOrigin);
+				VoxelDraw.AboveLocate(
+					pixelX: out int locateX,
+					pixelY: out int locateY,
+					model: turnModel,
+					voxelX: turnedX,
+					voxelY: turnedY,
+					voxelZ: turnedZ);
+				IndexedSprite sprite = new IndexedSprite(VoxelDraw.AboveWidth(turnModel), VoxelDraw.AboveHeight(turnModel))
+				{
+					Palette = palette,
+					OriginX = (ushort)locateX,
+					OriginY = (ushort)locateY,
+				};
+				VoxelDraw.Above(
+					model: turnModel,
+					renderer: sprite);
+				yield return sprite.Upscale(5, 4);
+				turnModel.CounterZ();
+				turnModel.ReverseRotate(
+					x: out turnedX,
+					y: out turnedY,
+					z: out turnedZ,
+					coordinates: voxelOrigin);
+				VoxelDraw.IsoLocate(
+					pixelX: out locateX,
+					pixelY: out locateY,
+					model: turnModel,
+					voxelX: turnedX,
+					voxelY: turnedY,
+					voxelZ: turnedZ);
+				sprite = new IndexedSprite2x(VoxelDraw.IsoWidth(turnModel), VoxelDraw.IsoHeight(turnModel))
+				{
+					Palette = palette,
+					OriginX = (ushort)locateX,
+					OriginY = (ushort)locateY,
+				};
+				VoxelDraw.Iso(
+					model: turnModel,
+					renderer: sprite);
+				yield return sprite.TransparentCrop();
+			}
+		}
+		*/
+		#endregion Voxel drawing
 	}
 }
