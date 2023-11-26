@@ -10,10 +10,14 @@ namespace Voxel2PixelTest.Pack
 {
 	public class IndexedSpriteTest
 	{
+		/*
+		private readonly Xunit.Abstractions.ITestOutputHelper output;
+		public IndexedSpriteTest(Xunit.Abstractions.ITestOutputHelper output) => this.output = output;
 		[Fact]
 		public void NumberCubeGif()
 		{
 			VoxFileModel model = new VoxFileModel(@"..\..\..\NumberCube.vox");
+			output.WriteLine(string.Join(",", model.Palette.Select(@uint => @uint.ToString("X"))));
 			IndexedSprite.Above4(
 				model: model,
 				palette: new NaiveDimmer(model.Palette).CreatePalette())
@@ -23,6 +27,21 @@ namespace Voxel2PixelTest.Pack
 				.Select(sprite => sprite.Upscale(8, 8))
 				.AnimatedGif(frameDelay: 100)
 				.SaveAsGif("NumberCube.gif");
+		}
+		*/
+		[Fact]
+		public void RainbowPyramidGif()
+		{
+			ArrayModel model = new ArrayModel(ImageMaker.Pyramid(17));
+			IndexedSprite.Above4(
+				model: model,
+				palette: new NaiveDimmer(ImageMaker.RainbowPalette).CreatePalette())
+				.Select(sprite => new Sprite(sprite).Upscale(5, 4).CropOutline())
+				.SameSize()
+				.AddFrameNumbers()
+				.Select(sprite => sprite.Upscale(8, 8))
+				.AnimatedGif(frameDelay: 100)
+				.SaveAsGif("RainbowPyramid.gif");
 		}
 	}
 }
