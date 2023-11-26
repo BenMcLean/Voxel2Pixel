@@ -698,16 +698,51 @@ namespace Voxel2Pixel.Draw
 			{
 				int left;
 				for (left = 3; left < indexLeft && texture[indexRow + left] < threshold; left += 4) { }
-				indexLeft = Math.Min(indexLeft, left);
+				if (left < indexLeft)
+					indexLeft = left;
 				int right;
 				for (right = xSide - 1; right > indexRight && texture[indexRow + right] < threshold; right -= 4) { }
-				indexRight = Math.Max(indexRight, right);
+				if (right < indexRight)
+					indexRight = right;
 			}
 			if (indexLeft >> 2 < 0)
 				throw new Exception(indexLeft.ToString());
 			cutLeft = (ushort)(indexLeft >> 2);
 			croppedWidth = (ushort)(width - ((xSide - indexRight) >> 2) - cutLeft);
 			croppedHeight = (ushort)(cutBottom - cutTop);
+		}
+		public static void TransparentCropInfo(this byte[,] bytes, out ushort cutLeft, out ushort cutTop, out ushort croppedWidth, out ushort croppedHeight, byte transparent = 0)
+		{
+			ushort width = (ushort)bytes.GetLength(0),
+				height = (ushort)bytes.GetLength(1),
+				cutRight = width,
+				cutBottom = height;
+			cutLeft = width;
+			cutTop = height;
+			for (ushort x = 0; x < width; x++)
+			{
+				ushort top;
+				for (top = 1; top <= height && bytes[x, height - top] == transparent; top++) { }
+				if (top < cutTop)
+					cutTop = top;
+				ushort bottom;
+				for (bottom = 0; bottom < height && bytes[x, bottom] == transparent; bottom++) { }
+				if (bottom < cutBottom)
+					cutBottom = bottom;
+			}
+			croppedHeight = (ushort)(height - cutTop - cutBottom);
+			for (ushort y = cutTop; y < height - cutBottom; y++)
+			{
+				ushort left;
+				for (left = 0; left < width && bytes[left, y] == transparent; left++) { }
+				if (left < cutLeft)
+					cutLeft = left;
+				ushort right;
+				for (right = 1; right < height && bytes[width - right, y] == transparent; right++) { }
+				if (right < cutRight)
+					cutRight = right;
+			}
+			croppedWidth = (ushort)(width - cutLeft - cutRight);
 		}
 		public static byte[] TransparentCropPlusOne(this byte[] texture, out int cutLeft, out int cutTop, out ushort croppedWidth, out ushort croppedHeight, ushort width = 0, byte threshold = 128)
 		{
