@@ -33,10 +33,10 @@ namespace Voxel2PixelTest.Pack
 		public void RainbowPyramidGif()
 		{
 			ArrayModel model = new ArrayModel(ImageMaker.Pyramid(17));
-			IndexedSprite.Above4(
+			IndexedSprite.Iso4(
 				model: model,
 				palette: new NaiveDimmer(ImageMaker.RainbowPalette).CreatePalette())
-				.Select(sprite => new Sprite(sprite).Upscale(5, 4).CropOutline())
+				.Select(sprite => new Sprite(sprite).CropOutline())
 				.SameSize()
 				.AddFrameNumbers()
 				.Select(sprite => sprite.Upscale(8, 8))

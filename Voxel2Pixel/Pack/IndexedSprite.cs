@@ -126,6 +126,15 @@ namespace Voxel2Pixel.Pack
 					OriginY = originY,
 				};
 		}
+		/// <returns>upscaled copy</returns>
+		public IndexedSprite Upscale(ushort factorX, ushort factorY = 1) => new IndexedSprite
+		{
+			Pixels = Pixels.Upscale(
+				factorX: factorX,
+				factorY: factorY),
+			OriginX = (ushort)(OriginX * factorX),
+			OriginY = (ushort)(OriginY * factorY),
+		};
 		#endregion Image manipulation
 		#region Voxel drawing
 		public static IEnumerable<IndexedSprite> Above4(IModel model, uint[] palette = null, params ushort[] voxelOrigin)

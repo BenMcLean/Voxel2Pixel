@@ -1035,6 +1035,21 @@ namespace Voxel2Pixel.Draw
 			}
 			return newSprites;
 		}
+		public static byte[,] Upscale(this byte[,] bytes, ushort factorX, ushort factorY)
+		{
+			ushort width = (ushort)bytes.GetLength(0),
+				height = (ushort)bytes.GetLength(1);
+			byte[,] scaled = new byte[width * factorX, height * factorY];
+			for (ushort x1 = 0, x2 = 0; x1 < width; x1++, x2 += factorX)
+				for (ushort y1 = 0, y2 = 0; y1 < height; y1++, y2 += factorX)
+				{
+					byte @byte = bytes[x1, y1];
+					for (ushort x = 0; x < factorX; x++)
+						for (ushort y = 0; y < factorY; y++)
+							scaled[x2 + x, y2 + y] = @byte;
+				}
+			return scaled;
+		}
 		#endregion Image manipulation
 		#region Utilities
 		/// <summary>
