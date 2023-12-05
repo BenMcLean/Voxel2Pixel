@@ -1195,6 +1195,18 @@ namespace Voxel2Pixel.Draw
 					value: uints[i]);
 			return bytes;
 		}
+		public static byte[,] OneDToTwoD(this byte[] bytes, ushort width = 0)
+		{
+			if (width < 1)
+				width = (ushort)Math.Sqrt(bytes.Length);
+			ushort height = (ushort)(bytes.Length / width);
+			byte[,] twoD = new byte[width, height];
+			int index = 0;
+			for (ushort y = 0; y < height; y++)
+				for (ushort x = 0; x < width; x++, index++)
+					twoD[x, y] = bytes[index];
+			return twoD;
+		}
 		/// <param name="bytes">rgba8888 color values (four bytes per pixel)</param>
 		/// <returns>rgba8888 texture (one int per pixel)</returns>
 		public static uint[] Byte2UIntArray(this byte[] bytes)

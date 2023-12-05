@@ -39,6 +39,12 @@ namespace Voxel2Pixel.Pack
 		public virtual uint[] Palette { get; set; }
 		public IndexedSprite() { }
 		public IndexedSprite(ushort width, ushort height) : this() => Pixels = new byte[width, height];
+		public IndexedSprite(ISprite sprite) : this()
+		{
+			byte[] texture = sprite.Texture;
+			Palette = texture.PaletteFromTexture();
+			Pixels = texture.Byte2IndexArray(Palette).OneDToTwoD(sprite.Width);
+		}
 		public virtual byte[] GetTexture(bool transparent0 = true) => GetTexture(Pixels, Palette, transparent0);
 		public virtual byte[] GetTexture(uint[] palette, bool transparent0 = true) => GetTexture(Pixels, palette ?? Palette, transparent0);
 		public static byte[] GetTexture(byte[,] pixels, uint[] palette, bool transparent0 = true)

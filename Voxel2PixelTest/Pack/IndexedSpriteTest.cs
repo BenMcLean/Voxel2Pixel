@@ -44,20 +44,20 @@ namespace Voxel2PixelTest.Pack
 				.AnimatedGif(frameDelay: 100)
 				.SaveAsGif("RainbowPyramid.gif");
 		}
-		[Fact]
-		public void RainbowPyramidGif()
-		{
-			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
-			ushort[] voxelOrigin = model.BottomCenter();
-			VoxelDraw.IsoLocate(
-				pixelX: out int originX,
-				pixelY: out int originY,
-				model: model,
-			Sprite sprite = new Sprite2x(VoxelDraw.IsoWidth(model), (ushort)(VoxelDraw.IsoHeight(model) << 1))
-			{
-				VoxelColor = new NaiveDimmer(model.Palette),
-			};
+		//[Fact]
+		//public void RainbowPyramidGif()
+		//{
+		//	VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
+		//	ushort[] voxelOrigin = model.BottomCenter();
+		//	VoxelDraw.IsoLocate(
+		//		pixelX: out int originX,
+		//		pixelY: out int originY,
+		//		model: model,
+		//	Sprite sprite = new Sprite2x(VoxelDraw.IsoWidth(model), (ushort)(VoxelDraw.IsoHeight(model) << 1))
+		//	{
+		//		VoxelColor = new NaiveDimmer(model.Palette),
+		//	};
 
-		}
+		//}
 	}
 }
