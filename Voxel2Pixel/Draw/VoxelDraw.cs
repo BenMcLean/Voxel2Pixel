@@ -270,6 +270,7 @@ namespace Voxel2Pixel.Draw
 		#region Isometric
 		public static ushort IsoWidth(IModel model) => (ushort)(2 * (model.SizeX + model.SizeY));
 		public static ushort IsoHeight(IModel model) => (ushort)(2 * (model.SizeX + model.SizeY) + 4 * model.SizeZ - 1);
+		public static void IsoLocate(out int pixelX, out int pixelY, IModel model, ushort[] voxelCoordinates) => IsoLocate(out pixelX, out pixelY, model, voxelCoordinates[0], voxelCoordinates[1], voxelCoordinates[2]);
 		public static void IsoLocate(out int pixelX, out int pixelY, IModel model, int voxelX = 0, int voxelY = 0, int voxelZ = 0)
 		{
 			// To move one x+ in voxels is x + 2, y - 2 in pixels.
