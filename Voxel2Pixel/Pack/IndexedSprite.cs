@@ -105,11 +105,11 @@ namespace Voxel2Pixel.Pack
 		public virtual void Rect(ushort x, ushort y, byte index, VisibleFace visibleFace, ushort sizeX = 1, ushort sizeY = 1) => Rect(x, y, Index(index, visibleFace), sizeX, sizeY);
 		public virtual void Rect(ushort x, ushort y, byte index, ushort sizeX = 1, ushort sizeY = 1)
 		{
-			sizeX = Math.Min((ushort)(x + sizeX), Width);
-			sizeY = Math.Min((ushort)(y + sizeY), Height);
-			for (; x < sizeX; x++)
-				for (; y < sizeY; y++)
-					Pixels[x, y] = index;
+			ushort stopX = Math.Min((ushort)(x + sizeX), Width),
+				stopY = Math.Min((ushort)(y + sizeY), Height);
+			for (ushort x1 = x; x1 < stopX; x1++)
+				for (ushort y1 = y; y1 < stopY; y1++)
+					Pixels[x1, y1] = index;
 		}
 		#endregion IRectangleRenderer
 		#region ITriangleRenderer
