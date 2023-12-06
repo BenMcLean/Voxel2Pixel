@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Voxel2Pixel.Draw;
+using System.IO;
 
 namespace Voxel2Pixel.Pack
 {
@@ -44,6 +45,34 @@ namespace Voxel2Pixel.Pack
 			byte[] texture = sprite.Texture;
 			Palette = texture.PaletteFromTexture();
 			Pixels = texture.Byte2IndexArray(Palette).OneDToTwoD(sprite.Width);
+		}
+		public IndexedSprite(Stream stream) : this()
+		{
+			using (BinaryReader reader = new BinaryReader(
+				input: stream,
+				encoding: System.Text.Encoding.Default,
+				leaveOpen: true))
+			{
+				Palette = reader.ReadBytes(1024).Byte2UIntArray();
+				ushort width = reader.ReadUInt16(),
+					height = reader.ReadUInt16();
+				Pixels = reader.ReadBytes(width * height).OneDToTwoD(width);
+			}
+		}
+		public void Write(Stream stream)
+		{
+			if (Palette.Length != 256)
+				throw new IndexOutOfRangeException("Palette.Length expected to be 256. Was: " + Palette.Length);
+			using (BinaryWriter writer = new BinaryWriter(
+				output: stream,
+				encoding: System.Text.Encoding.Default,
+				leaveOpen: true))
+			{
+				writer.Write(Palette.UInt2ByteArray());
+				writer.Write(Width);
+				writer.Write(Height);
+				writer.Write(Pixels.TwoDToOneD());
+			}
 		}
 		public virtual byte[] GetTexture(bool transparent0 = true) => GetTexture(Pixels, Palette, transparent0);
 		public virtual byte[] GetTexture(uint[] palette, bool transparent0 = true) => GetTexture(Pixels, palette ?? Palette, transparent0);
