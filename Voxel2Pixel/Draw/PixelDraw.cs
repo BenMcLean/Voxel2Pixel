@@ -631,6 +631,8 @@ namespace Voxel2Pixel.Draw
 		/// <returns>new raw rgba8888 pixel data of width croppedWidth or smaller if x is smaller than zero or if x + croppedWidth extends outside the source texture</returns>
 		public static byte[] Crop(this byte[] texture, int x, int y, int croppedWidth, int croppedHeight, ushort width = 0)
 		{
+			if (width < 1)
+				width = (ushort)Math.Sqrt(texture.Length >> 2);
 			if (x < 0)
 			{
 				croppedWidth += x;
@@ -673,7 +675,14 @@ namespace Voxel2Pixel.Draw
 		{
 			if (width < 1)
 				width = (ushort)Math.Sqrt(texture.Length >> 2);
-			TransparentCropInfo(texture, out cutLeft, out cutTop, out croppedWidth, out croppedHeight, width, threshold);
+			TransparentCropInfo(
+				texture: texture,
+				cutLeft: out cutLeft,
+				cutTop: out cutTop,
+				croppedWidth: out croppedWidth,
+				croppedHeight: out croppedHeight,
+				width: width,
+				threshold: threshold);
 			return texture.Crop(
 				x: cutLeft,
 				y: cutTop,
@@ -708,7 +717,7 @@ namespace Voxel2Pixel.Draw
 			if (indexLeft >> 2 < 0)
 				throw new Exception(indexLeft.ToString());
 			cutLeft = (ushort)(indexLeft >> 2);
-			croppedWidth = (ushort)(width - ((xSide - indexRight) >> 2) - cutLeft);
+			croppedWidth = (ushort)(width - (indexRight >> 2) - cutLeft);
 			croppedHeight = (ushort)(cutBottom - cutTop);
 		}
 		public static void TransparentCropInfo(this byte[,] bytes, out ushort cutLeft, out ushort cutTop, out ushort croppedWidth, out ushort croppedHeight, byte transparent = 0)
@@ -748,7 +757,14 @@ namespace Voxel2Pixel.Draw
 		{
 			if (width < 1)
 				width = (ushort)Math.Sqrt(texture.Length >> 2);
-			TransparentCropInfo(texture, out ushort cutLeftShort, out ushort cutTopShort, out ushort croppedWidthShort, out ushort croppedHeightShort, width, threshold);
+			TransparentCropInfo(
+				texture: texture,
+				cutLeft: out ushort cutLeftShort,
+				cutTop: out ushort cutTopShort,
+				croppedWidth: out ushort croppedWidthShort,
+				croppedHeight: out ushort croppedHeightShort,
+				width: width,
+				threshold: threshold);
 			cutLeft = cutLeftShort - 1;
 			cutTop = cutTopShort - 1;
 			croppedWidth = (ushort)(croppedWidthShort + 2);
@@ -770,9 +786,12 @@ namespace Voxel2Pixel.Draw
 		public static uint[] TransparentOutline(uint[] texture, ushort width = 0, byte threshold = 128)
 		{
 			if (width < 1)
-				width = (ushort)Math.Sqrt(texture.Length);
+				width = (ushort)Math.Sqrt(texture.Length >> 2);
 			uint[] result = new uint[texture.Length];
-			Array.Copy(texture, result, result.Length);
+			Array.Copy(
+				sourceArray: texture,
+				destinationArray: result,
+				length: result.Length);
 			int height = texture.Length / width;
 			int Index(int x, int y) => x * width + y;
 			List<uint> neighbors = new List<uint>(9);
