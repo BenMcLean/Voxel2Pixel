@@ -6,7 +6,7 @@ using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model
 {
-	public class DictionaryModel : IModel
+	public class DictionaryModel : IEditableModel
 	{
 		#region DictionaryModel
 		private readonly Dictionary<ulong, byte> Dictionary = new Dictionary<ulong, byte>();
@@ -36,7 +36,7 @@ namespace Voxel2Pixel.Model
 			}
 		}
 		#endregion DictionaryModel
-		#region IModel
+		#region IEditableModel
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 		public IEnumerator<Voxel> GetEnumerator() => Dictionary
 			.Select(voxel => new Voxel
@@ -62,6 +62,7 @@ namespace Voxel2Pixel.Model
 					Dictionary[Encode(x, y, z)] = value;
 			}
 		}
-		#endregion IModel
+		public byte Set(Voxel voxel) => this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
+		#endregion IEditableModel
 	}
 }

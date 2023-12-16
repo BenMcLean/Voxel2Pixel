@@ -4,7 +4,7 @@ using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model
 {
-	public class ArrayModel : IModel, ITurnable
+	public class ArrayModel : IEditableModel, ITurnable
 	{
 		public ArrayModel(byte[][][] voxels) => Array = voxels;
 		public ArrayModel(ArrayModel other) : this(other.Array.DeepCopy()) { }
@@ -15,11 +15,16 @@ namespace Voxel2Pixel.Model
 				Array[voxel.X][voxel.Y][voxel.Z] = voxel.Index;
 		}
 		public byte[][][] Array { get; set; }
-		#region IModel
+		#region IEditableModel
 		public ushort SizeX => (ushort)Array.Length;
 		public ushort SizeY => (ushort)Array[0].Length;
 		public ushort SizeZ => (ushort)Array[0][0].Length;
-		public byte this[ushort x, ushort y, ushort z] => !this.IsOutside(x, y, z) ? Array[x][y][z] : (byte)0;
+		public byte this[ushort x, ushort y, ushort z]
+		{
+			get => !this.IsOutside(x, y, z) ? Array[x][y][z] : (byte)0;
+			set => Array[x][y][z] = value;
+		}
+		public byte Set(Voxel voxel) => this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 		public IEnumerator<Voxel> GetEnumerator()
 		{
@@ -29,7 +34,7 @@ namespace Voxel2Pixel.Model
 						if (Array[x][y][z] is byte @byte && @byte != 0)
 							yield return new Voxel(x, y, z, @byte);
 		}
-		#endregion IModel
+		#endregion IEditableModel
 		#region ITurnable
 		public ITurnable CounterX()
 		{

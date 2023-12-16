@@ -10,20 +10,25 @@ namespace Voxel2Pixel.Model
 	/// <summary>
 	/// SVO stands for "Sparse Voxel Octree"
 	/// </summary>
-	public class SvoModel : IModel
+	public class SvoModel : IEditableModel
 	{
 		#region Nested classes
 		public abstract class Node
 		{
 			/// <summary>
 			/// Header bit 7: 0 for Branch, 1 for Leaf.
-			/// Header bit 6: Reserved
-			/// Header bits 5-3: For Branch only, number of children
-			/// Header bits 2-0: Octant of parent
+			/// Header bit 6: Unused
+			/// Header bits 5-3: For Branch only, number of children (1-8) minus one
+			/// Header bit 2: Z of octant
+			/// Header bit 1: Y of octant
+			/// Header bit 0: X of octant
 			/// </summary>
 			public virtual byte Header { get; }
 			public byte Octant { get; set; }
-			public Node Parent { get; set; }
+			public byte OctantX => (byte)(Octant & 1);
+			public byte OctantY => (byte)((Octant >> 1) & 1);
+			public byte OctantZ => (byte)((Octant >> 2) & 1);
+			public Node Parent { get; set; } = null;
 			public virtual bool IsLeaf => (Header & 0b10000000) > 0;
 			public abstract void Clear();
 			public abstract void Write(Stream stream);
@@ -84,7 +89,7 @@ namespace Voxel2Pixel.Model
 				}
 			}
 		}
-		public class Leaf : Node
+		public class Leaf : Node, IEnumerable<Voxel>, IEnumerable
 		{
 			public override byte Header => (byte)(0b10000000 | Octant & 0b111);
 			public ulong Data = 0ul;
@@ -205,7 +210,7 @@ namespace Voxel2Pixel.Model
 			}
 		}
 		#endregion SvoModel
-		#region IModel
+		#region IEditableModel
 		public ushort SizeX { get; set; }
 		public ushort SizeY { get; set; }
 		public ushort SizeZ { get; set; }
@@ -253,6 +258,7 @@ namespace Voxel2Pixel.Model
 				leaf[(byte)((z & 1) << 2 | (y & 1) << 1 | x & 1)] = value;
 			}
 		}
+		public byte Set(Voxel voxel) => this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 		public IEnumerator<Voxel> GetEnumerator()
 		{
@@ -283,6 +289,6 @@ namespace Voxel2Pixel.Model
 			Recurse(Root, 0, 0, 0);
 			return voxels.GetEnumerator();
 		}
-		#endregion IModel
+		#endregion IEditableModel
 	}
 }
