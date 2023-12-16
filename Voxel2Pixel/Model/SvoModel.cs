@@ -258,7 +258,6 @@ namespace Voxel2Pixel.Model
 				leaf[(byte)((z & 1) << 2 | (y & 1) << 1 | x & 1)] = value;
 			}
 		}
-		public byte Set(Voxel voxel) => this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 		public IEnumerator<Voxel> GetEnumerator()
 		{

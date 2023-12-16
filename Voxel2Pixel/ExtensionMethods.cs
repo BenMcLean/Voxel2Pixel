@@ -27,6 +27,7 @@ namespace Voxel2Pixel
 			return palette;
 		}
 		public static VisibleFace VisibleFace(this byte @byte) => (VisibleFace)(@byte & 192);
+		public static byte Set(this IEditableModel model, Voxel voxel) => model[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
 		public static ushort[] Center(this IModel model) => new ushort[3] { (ushort)(model.SizeX >> 1), (ushort)(model.SizeY >> 1), (ushort)(model.SizeZ >> 1) };
 		public static ushort[] BottomCenter(this IModel model) => new ushort[3] { (ushort)(model.SizeX >> 1), (ushort)(model.SizeY >> 1), 0 };
 		#region Sprite

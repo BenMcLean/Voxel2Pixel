@@ -62,7 +62,6 @@ namespace Voxel2Pixel.Model
 					Dictionary[Encode(x, y, z)] = value;
 			}
 		}
-		public byte Set(Voxel voxel) => this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
 		#endregion IEditableModel
 	}
 }

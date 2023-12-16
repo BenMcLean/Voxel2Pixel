@@ -24,7 +24,6 @@ namespace Voxel2Pixel.Model
 			get => !this.IsOutside(x, y, z) ? Array[x][y][z] : (byte)0;
 			set => Array[x][y][z] = value;
 		}
-		public byte Set(Voxel voxel) => this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 		public IEnumerator<Voxel> GetEnumerator()
 		{
