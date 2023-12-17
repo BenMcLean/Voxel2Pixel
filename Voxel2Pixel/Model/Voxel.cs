@@ -2,15 +2,15 @@
 
 namespace Voxel2Pixel.Model
 {
-	public struct Voxel
+	public struct Voxel : IEquatable<Voxel>
 	{
 		public ushort X, Y, Z;
 		public byte Index;
-		public ushort this[int index]
+		public ushort this[int @int]
 		{
 			get
 			{
-				switch (index)
+				switch (@int)
 				{
 					case 0:
 						return X;
@@ -26,7 +26,7 @@ namespace Voxel2Pixel.Model
 			}
 			set
 			{
-				switch (index)
+				switch (@int)
 				{
 					case 0:
 						X = value;
@@ -45,9 +45,10 @@ namespace Voxel2Pixel.Model
 				}
 			}
 		}
-		public ushort[] @ushort => new ushort[4] { X, Y, Z, Index };
+		public ushort[] ToArray => new ushort[4] { X, Y, Z, Index };
 		public Voxel(params ushort[] @ushort) : this(@ushort, (byte)@ushort[3]) { }
 		public Voxel(ushort[] @ushort, byte index) : this(@ushort[0], @ushort[1], @ushort[2], index) { }
+		public Voxel(Voxel voxel) : this(voxel.X, voxel.Y, voxel.Z, voxel.Index) { }
 		public Voxel(ushort x, ushort y, ushort z, byte index)
 		{
 			X = x;
@@ -57,11 +58,12 @@ namespace Voxel2Pixel.Model
 		}
 		public static bool operator ==(Voxel a, Voxel b) => a.Equals(b);
 		public static bool operator !=(Voxel a, Voxel b) => !a.Equals(b);
-		public override bool Equals(object o) =>
-			o is Voxel v
-			&& X == v.X
-			&& Y == v.Y
-			&& Z == v.Z
-			&& Index == v.Index;
+		public override bool Equals(object o) => o is Voxel v && Equals(v);
+		public bool Equals(Voxel other) =>
+			X == other.X
+			&& Y == other.Y
+			&& Z == other.Z
+			&& Index == other.Index;
+		public override int GetHashCode() => HashCode.Combine(X, Y, Z, Index);
 	}
 }
