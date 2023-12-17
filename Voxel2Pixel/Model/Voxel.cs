@@ -55,5 +55,13 @@ namespace Voxel2Pixel.Model
 			Z = z;
 			Index = index;
 		}
+		public static bool operator ==(Voxel a, Voxel b) => a.Equals(b);
+		public static bool operator !=(Voxel a, Voxel b) => !a.Equals(b);
+		public override bool Equals(object o) =>
+			o is Voxel v
+			&& X == v.X
+			&& Y == v.Y
+			&& Z == v.Z
+			&& Index == v.Index;
 	}
 }

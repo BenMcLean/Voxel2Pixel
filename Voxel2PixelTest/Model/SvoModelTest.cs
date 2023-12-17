@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using Voxel2Pixel;
 using Voxel2Pixel.Model;
 using Xunit;
 using static Voxel2Pixel.Model.SvoModel;
@@ -32,6 +33,18 @@ namespace Voxel2PixelTest.Model
 			output.WriteLine(BitConverter.ToString(written));
 		}
 		[Fact]
+		public void CountTest()
+		{
+			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
+			SvoModel svo = new SvoModel(model);
+			Assert.Equal(
+				expected: svo.ListVoxels().Count(),
+				actual: svo.Count());
+			Assert.Equal(
+				expected: model.Count(),
+				actual: svo.Count());
+		}
+		[Fact]
 		public void ModelTest()
 		{
 			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
@@ -57,6 +70,40 @@ namespace Voxel2PixelTest.Model
 						Assert.Equal(
 							expected: model[x, y, z],
 							actual: svo[x, y, z]);
+		}
+		[Fact]
+		public void OneVoxelTest()
+		{
+			SvoModel svoModel = new SvoModel()
+			{
+				SizeX = ushort.MaxValue,
+				SizeY = ushort.MaxValue,
+				SizeZ = ushort.MaxValue,
+			};
+			Voxel voxel = new Voxel
+			{
+				X = ushort.MaxValue - 1,
+				Y = ushort.MaxValue - 1,
+				Z = ushort.MaxValue - 1,
+				Index = 1,
+			};
+			svoModel.Set(voxel);
+			Voxel voxel2 = svoModel.First();
+			void CompareBinary(ushort a, ushort b) => output.WriteLine(
+				Convert.ToString(a, 2)
+				+ Environment.NewLine
+				+ Convert.ToString(b, 2));
+			output.WriteLine("X:");
+			CompareBinary(voxel.X, voxel2.X);
+			output.WriteLine("Y:");
+			CompareBinary(voxel.Y, voxel2.Y);
+			output.WriteLine("Z:");
+			CompareBinary(voxel.Z, voxel2.Z);
+			output.WriteLine("Index:");
+			CompareBinary(voxel.Index, voxel2.Index);
+			Assert.Equal(
+				expected: voxel,
+				actual: voxel2);
 		}
 		[Fact]
 		public void TrimTest()

@@ -30,6 +30,25 @@ namespace Voxel2Pixel.Model
 			public byte OctantZ => (byte)((Octant >> 2) & 1);
 			public Node Parent { get; set; } = null;
 			public virtual bool IsLeaf => (Header & 0b10000000) > 0;
+			public void Position(out ushort x, out ushort y, out ushort z)
+			{
+				Stack<Node> stack = new Stack<Node>();
+				Node current = this;
+				while (current is Node)
+				{
+					stack.Push(current);
+					current = current.Parent;
+				}
+				ushort count = (ushort)(17 - stack.Count);
+				x = 0; y = 0; z = 0;
+				while (stack.Count > 0 && stack.Pop() is Node node)
+				{
+					x = (ushort)((x << 1) | node.OctantX);
+					y = (ushort)((y << 1) | node.OctantY);
+					z = (ushort)((z << 1) | node.OctantZ);
+				}
+				x <<= count; y <<= count; z <<= count;
+			}
 			public abstract void Clear();
 			public abstract void Write(Stream stream);
 		}
@@ -49,6 +68,16 @@ namespace Voxel2Pixel.Model
 						&& !Children.Any(child => child is Node))
 						parent[Octant] = null;
 				}
+			}
+			public Node First => Children
+				.Where(child => child is Node)
+				.FirstOrDefault();
+			public Node Next(byte octant)
+			{
+				for (byte child = (byte)(octant + 1); child < Children.Length; child++)
+					if (Children[child] is Node node)
+						return node;
+				return null;
 			}
 			public Branch(Node parent, byte octant)
 			{
@@ -142,6 +171,24 @@ namespace Voxel2Pixel.Model
 					writer.Write(Data);
 				}
 			}
+			#region IEnumerable<Voxel>
+			IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+			public IEnumerator<Voxel> GetEnumerator()
+			{
+				if (Data == 0u)
+					yield break;
+				Position(out ushort x, out ushort y, out ushort z);
+				for (byte octant = 0; octant < 8; octant++)
+					if (this[octant] is byte index && index != 0)
+						yield return new Voxel
+						{
+							X = (ushort)(x | (octant & 1)),
+							Y = (ushort)(y | ((octant >> 1) & 1)),
+							Z = (ushort)(z | ((octant >> 2) & 1)),
+							Index = index,
+						};
+			}
+			#endregion IEnumerable<Voxel>
 		}
 		#endregion Nested classes
 		#region SvoModel
@@ -261,6 +308,31 @@ namespace Voxel2Pixel.Model
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 		public IEnumerator<Voxel> GetEnumerator()
 		{
+			Stack<Branch> stack = new Stack<Branch>();
+			Branch current = Root;
+			while (current is Branch)
+			{
+				stack.Push(current);
+				current = current.First as Branch;
+			}
+			while (stack.Count > 0 && stack.Pop() is Branch popped)
+			{
+				if (stack.Count > 13)
+					for (byte octant = 0; octant < 8; octant++)
+						if (popped[octant] is Leaf leaf)
+							foreach (Voxel voxel in leaf)
+								yield return voxel;
+				if (popped.Parent is Branch parent
+					&& parent.Next(popped.Octant) is Branch child)
+					while (child is Branch)
+					{
+						stack.Push(child);
+						child = child.First as Branch;
+					}
+			}
+		}
+		public List<Voxel> ListVoxels()
+		{
 			List<Voxel> voxels = new List<Voxel>();
 			void Recurse(Node node, ushort x, ushort y, ushort z)
 			{
@@ -286,7 +358,7 @@ namespace Voxel2Pixel.Model
 							});
 			}
 			Recurse(Root, 0, 0, 0);
-			return voxels.GetEnumerator();
+			return voxels;
 		}
 		#endregion IEditableModel
 	}
