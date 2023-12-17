@@ -30,8 +30,8 @@ namespace Voxel2Pixel.Model
 			for (ushort x = 0; x < SizeX; x++)
 				for (ushort y = 0; y < SizeY; y++)
 					for (ushort z = 0; z < SizeZ; z++)
-						if (Array[x][y][z] is byte @byte && @byte != 0)
-							yield return new Voxel(x, y, z, @byte);
+						if (Array[x][y][z] is byte index && index != 0)
+							yield return new Voxel(x, y, z, index);
 		}
 		#endregion IEditableModel
 		#region ITurnable

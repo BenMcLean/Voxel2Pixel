@@ -52,7 +52,7 @@ namespace Voxel2Pixel.Model
 			public abstract void Clear();
 			public abstract void Write(Stream stream);
 		}
-		public class Branch : Node
+		public class Branch : Node, IEnumerable<Node>, IEnumerable
 		{
 			public override byte Header => (byte)((((Math.Max(Children.Where(child => child is Node).Count() - 1, 0)) & 0b111) << 3) | Octant & 0b111);
 			protected Node[] Children = new Node[8];
@@ -69,9 +69,6 @@ namespace Voxel2Pixel.Model
 						parent[Octant] = null;
 				}
 			}
-			public Node First => Children
-				.Where(child => child is Node)
-				.FirstOrDefault();
 			public Node Next(byte octant)
 			{
 				for (byte child = (byte)(octant + 1); child < Children.Length; child++)
@@ -113,10 +110,16 @@ namespace Voxel2Pixel.Model
 					leaveOpen: true))
 				{
 					writer.Write(Header);
-					foreach (Node child in Children.Where(child => child is Node))
+					foreach (Node child in this)
 						child.Write(stream);
 				}
 			}
+			#region IEnumerable<Node>
+			IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+			public IEnumerator<Node> GetEnumerator() => Children
+				.Where(child => child is Node)
+				.GetEnumerator();
+			#endregion IEnumerable<Node>
 		}
 		public class Leaf : Node, IEnumerable<Voxel>, IEnumerable
 		{
@@ -309,12 +312,15 @@ namespace Voxel2Pixel.Model
 		public IEnumerator<Voxel> GetEnumerator()
 		{
 			Stack<Branch> stack = new Stack<Branch>();
-			Branch current = Root;
-			while (current is Branch)
+			void Push(Branch branch)
 			{
-				stack.Push(current);
-				current = current.First as Branch;
+				while (branch is Branch)
+				{
+					stack.Push(branch);
+					branch = branch.First() as Branch;
+				}
 			}
+			Push(Root);
 			while (stack.Count > 0 && stack.Pop() is Branch popped)
 			{
 				if (stack.Count > 13)
@@ -324,11 +330,7 @@ namespace Voxel2Pixel.Model
 								yield return voxel;
 				if (popped.Parent is Branch parent
 					&& parent.Next(popped.Octant) is Branch child)
-					while (child is Branch)
-					{
-						stack.Push(child);
-						child = child.First as Branch;
-					}
+					Push(child);
 			}
 		}
 		#endregion IEditableModel
