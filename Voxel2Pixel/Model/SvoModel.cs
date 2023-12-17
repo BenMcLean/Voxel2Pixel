@@ -331,35 +331,6 @@ namespace Voxel2Pixel.Model
 					}
 			}
 		}
-		public List<Voxel> ListVoxels()
-		{
-			List<Voxel> voxels = new List<Voxel>();
-			void Recurse(Node node, ushort x, ushort y, ushort z)
-			{
-				if (node is Branch branch)
-				{
-					for (byte octant = 0; octant < 8; octant++)
-						if (branch[octant] is Node child)
-							Recurse(
-								node: child,
-								x: (ushort)((x << 1) | (octant & 1)),
-								y: (ushort)((y << 1) | ((octant >> 1) & 1)),
-								z: (ushort)((z << 1) | ((octant >> 2) & 1)));
-				}
-				else if (node is Leaf leaf)
-					for (byte octant = 0; octant < 8; octant++)
-						if (leaf[octant] is byte index && index != 0)
-							voxels.Add(new Voxel
-							{
-								X = (ushort)((x << 1) | (octant & 1)),
-								Y = (ushort)((y << 1) | ((octant >> 1) & 1)),
-								Z = (ushort)((z << 1) | ((octant >> 2) & 1)),
-								Index = index,
-							});
-			}
-			Recurse(Root, 0, 0, 0);
-			return voxels;
-		}
 		#endregion IEditableModel
 	}
 }

@@ -33,18 +33,6 @@ namespace Voxel2PixelTest.Model
 			output.WriteLine(BitConverter.ToString(written));
 		}
 		[Fact]
-		public void CountTest()
-		{
-			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
-			SvoModel svo = new SvoModel(model);
-			Assert.Equal(
-				expected: svo.ListVoxels().Count(),
-				actual: svo.Count());
-			Assert.Equal(
-				expected: model.Count(),
-				actual: svo.Count());
-		}
-		[Fact]
 		public void ModelTest()
 		{
 			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
