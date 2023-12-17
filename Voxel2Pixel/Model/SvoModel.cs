@@ -324,10 +324,9 @@ namespace Voxel2Pixel.Model
 			while (stack.Count > 0 && stack.Pop() is Branch popped)
 			{
 				if (stack.Count > 13)
-					for (byte octant = 0; octant < 8; octant++)
-						if (popped[octant] is Leaf leaf)
-							foreach (Voxel voxel in leaf)
-								yield return voxel;
+					foreach (Leaf leaf in popped.Where(node => node is Leaf))
+						foreach (Voxel voxel in leaf)
+							yield return voxel;
 				if (popped.Parent is Branch parent
 					&& parent.Next(popped.Octant) is Branch child)
 					Push(child);
