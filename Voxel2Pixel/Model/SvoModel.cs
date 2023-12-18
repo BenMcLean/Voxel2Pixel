@@ -30,7 +30,7 @@ namespace Voxel2Pixel.Model
 			public byte OctantZ => (byte)((Octant >> 2) & 1);
 			public Node Parent { get; set; } = null;
 			public virtual bool IsLeaf => (Header & 0b10000000) > 0;
-			public void Position(out ushort x, out ushort y, out ushort z)
+			public virtual void Position(out ushort x, out ushort y, out ushort z)
 			{
 				Stack<Node> stack = new Stack<Node>();
 				Node current = this;
@@ -54,7 +54,7 @@ namespace Voxel2Pixel.Model
 		}
 		public class Branch : Node, IEnumerable<Node>, IEnumerable
 		{
-			public override byte Header => (byte)((((Math.Max(Children.Where(child => child is Node).Count() - 1, 0)) & 0b111) << 3) | Octant & 0b111);
+			public override byte Header => (byte)((((Math.Max(Children.OfType<Node>().Count() - 1, 0)) & 0b111) << 3) | Octant & 0b111);
 			protected Node[] Children = new Node[8];
 			public override void Clear() => Children = new Node[8];
 			public Node this[byte octant]
@@ -116,9 +116,7 @@ namespace Voxel2Pixel.Model
 			}
 			#region IEnumerable<Node>
 			IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-			public IEnumerator<Node> GetEnumerator() => Children
-				.Where(child => child is Node)
-				.GetEnumerator();
+			public IEnumerator<Node> GetEnumerator() => Children.OfType<Node>().GetEnumerator();
 			#endregion IEnumerable<Node>
 		}
 		public class Leaf : Node, IEnumerable<Voxel>, IEnumerable
@@ -173,6 +171,17 @@ namespace Voxel2Pixel.Model
 					writer.Write(Header);
 					writer.Write(Data);
 				}
+			}
+			public Voxel Voxel(byte octant)
+			{
+				Position(out ushort x, out ushort y, out ushort z);
+				return new Voxel
+				{
+					X = (ushort)(x | (octant & 1)),
+					Y = (ushort)(y | ((octant >> 1) & 1)),
+					Z = (ushort)(z | ((octant >> 2) & 1)),
+					Index = this[octant],
+				};
 			}
 			#region IEnumerable<Voxel>
 			IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -321,14 +330,14 @@ namespace Voxel2Pixel.Model
 				}
 			}
 			Push(Root);
-			while (stack.Count > 0 && stack.Pop() is Branch popped)
+			while (stack.Count > 0 && stack.Pop() is Branch branch)
 			{
 				if (stack.Count > 13)
-					foreach (Leaf leaf in popped.Where(node => node is Leaf))
+					foreach (Leaf leaf in branch.OfType<Leaf>())
 						foreach (Voxel voxel in leaf)
 							yield return voxel;
-				if (popped.Parent is Branch parent
-					&& parent.Next(popped.Octant) is Branch child)
+				if (branch.Parent is Branch parent
+					&& parent.Next(branch.Octant) is Branch child)
 					Push(child);
 			}
 		}
