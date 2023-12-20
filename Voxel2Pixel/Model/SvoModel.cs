@@ -49,9 +49,9 @@ namespace Voxel2Pixel.Model
 				}
 				x <<= count; y <<= count; z <<= count;
 			}
-			public virtual int Depth()
+			public virtual byte Depth()
 			{
-				int depth = 0;
+				byte depth = 0;
 				for (Node current = this; current is Node; current = current.Parent, depth++) { }
 				return depth;
 			}
@@ -82,7 +82,7 @@ namespace Voxel2Pixel.Model
 						return node;
 				return null;
 			}
-			public Branch(Node parent, byte octant)
+			public Branch(Node parent = null, byte octant = 0)
 			{
 				Parent = parent;
 				Octant = octant;
@@ -210,7 +210,7 @@ namespace Voxel2Pixel.Model
 		}
 		#endregion Nested classes
 		#region SvoModel
-		public readonly Branch Root = new Branch(null, 0);
+		public readonly Branch Root = new Branch();
 		public void Clear() => Root.Clear();
 		public SvoModel() { }
 		public SvoModel(IModel model) : this(
@@ -222,7 +222,7 @@ namespace Voxel2Pixel.Model
 		public SvoModel(IEnumerable<Voxel> voxels, ushort sizeX, ushort sizeY, ushort sizeZ) : this(sizeX, sizeY, sizeZ)
 		{
 			foreach (Voxel voxel in voxels)
-				this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
+				this.Set(voxel);
 		}
 		public SvoModel(Stream stream, ushort sizeX, ushort sizeY, ushort sizeZ) : this(sizeX, sizeY, sizeZ) => Root = new Branch(stream);
 		public SvoModel(byte[] bytes, ushort sizeX, ushort sizeY, ushort sizeZ) : this(new MemoryStream(bytes), sizeX, sizeY, sizeZ) { }
@@ -327,7 +327,7 @@ namespace Voxel2Pixel.Model
 		public IEnumerator<Voxel> GetEnumerator()
 		{
 			Stack<Branch> stack = new Stack<Branch>();
-			void Push(Branch branch)
+			void push(Branch branch)
 			{
 				while (branch is Branch)
 				{
@@ -335,16 +335,16 @@ namespace Voxel2Pixel.Model
 					branch = branch.First() as Branch;
 				}
 			}
-			Push(Root);
+			push(Root);
 			while (stack.Count > 0 && stack.Pop() is Branch branch)
 			{
-				if (stack.Count > 13)
+				if (stack.Count == 14)
 					foreach (Leaf leaf in branch.OfType<Leaf>())
 						foreach (Voxel voxel in leaf)
 							yield return voxel;
 				if (branch.Parent is Branch parent
 					&& parent.Next(branch.Octant) is Branch child)
-					Push(child);
+					push(child);
 			}
 		}
 		#endregion IEditableModel
@@ -366,7 +366,7 @@ namespace Voxel2Pixel.Model
 				throw new IndexOutOfRangeException("[" + string.Join(", ", x, 0, z) + "] is not within size [" + string.Join(", ", SizeX, SizeY, SizeZ) + "]!");
 			Stack<Branch> stack = new Stack<Branch>();
 			byte left(byte count) => (byte)(((z >> (16 - count)) & 1) << 2 | (x >> (16 - count)) & 1);
-			void Push(Branch branch)
+			void push(Branch branch)
 			{
 				while (branch is Branch)
 				{
@@ -376,7 +376,7 @@ namespace Voxel2Pixel.Model
 						?? branch[(byte)(octant | 2)] as Branch;
 				}
 			}
-			Push(Root);
+			push(Root);
 			while (stack.Count > 0 && stack.Pop() is Branch branch)
 			{
 				if (stack.Count == 14)
@@ -401,7 +401,7 @@ namespace Voxel2Pixel.Model
 				if ((branch.Octant & 2) == 0
 					&& branch.Parent is Branch parent
 					&& parent[(byte)(branch.Octant | 2)] is Branch child)
-					Push(child);
+					push(child);
 			}
 			return 0;
 		}
