@@ -49,6 +49,12 @@ namespace Voxel2Pixel.Model
 				}
 				x <<= count; y <<= count; z <<= count;
 			}
+			public virtual int Depth()
+			{
+				int depth = 0;
+				for (Node current = this; current is Node; current = current.Parent, depth++) { }
+				return depth;
+			}
 			public abstract void Clear();
 			public abstract void Write(Stream stream);
 		}
@@ -342,5 +348,63 @@ namespace Voxel2Pixel.Model
 			}
 		}
 		#endregion IEditableModel
+		#region VoxelDraw
+		public void Front(IRectangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Front)
+		{
+			for (ushort x = 0; x < SizeX; x++)
+				for (ushort z = 0; z < SizeZ; z++)
+					if (LowestY(x, z) is byte index && index != 0)
+						renderer.Rect(
+							x: x,
+							y: z,
+							index: index,
+							visibleFace: visibleFace);
+		}
+		public byte LowestY(ushort x, ushort z)
+		{
+			if (this.IsOutside(x, 0, z))
+				throw new IndexOutOfRangeException("[" + string.Join(", ", x, 0, z) + "] is not within size [" + string.Join(", ", SizeX, SizeY, SizeZ) + "]!");
+			Stack<Branch> stack = new Stack<Branch>();
+			byte left(byte count) => (byte)(((z >> count) & 1) << 2 | (x >> count) & 1);
+			void Push(Branch branch)
+			{
+				while (branch is Branch)
+				{
+					stack.Push(branch);
+					byte octant = left((byte)stack.Count);
+					branch = branch[octant] as Branch
+						?? branch[(byte)(octant | 2)] as Branch;
+				}
+			}
+			Push(Root);
+			while (stack.Count > 0 && stack.Pop() is Branch branch)
+			{
+				if (stack.Count > 13)
+				{
+					byte octant = left(14),
+						final = left(15);
+					if (branch[octant] is Leaf leaf)
+					{
+						if (leaf[final] is byte index1 && index1 != 0)
+							return index1;
+						else if (leaf[(byte)(final | 2)] is byte index2 && index2 != 0)
+							return index2;
+					}
+					else if (branch[(byte)(octant | 2)] is Leaf leaf2)
+					{
+						if (leaf2[final] is byte index1 && index1 != 0)
+							return index1;
+						else if (leaf2[(byte)(final | 2)] is byte index2 && index2 != 0)
+							return index2;
+					}
+				}
+				if ((branch.Octant & 2) == 0
+					&& branch.Parent is Branch parent
+					&& parent[(byte)(branch.Octant | 2)] is Branch child)
+					Push(child);
+			}
+			return 0;
+		}
+		#endregion VoxelDraw
 	}
 }

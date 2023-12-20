@@ -1,8 +1,12 @@
-﻿using System;
+﻿using SixLabors.ImageSharp;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Voxel2Pixel;
+using Voxel2Pixel.Color;
 using Voxel2Pixel.Model;
+using Voxel2Pixel.Pack;
 using Xunit;
 using static Voxel2Pixel.Model.SvoModel;
 
@@ -12,6 +16,10 @@ namespace Voxel2PixelTest.Model
 	{
 		private readonly Xunit.Abstractions.ITestOutputHelper output;
 		public SvoModelTest(Xunit.Abstractions.ITestOutputHelper output) => this.output = output;
+		private void CompareBinary(ushort a, ushort b) => output.WriteLine(
+			Convert.ToString(a, 2)
+			+ Environment.NewLine
+			+ Convert.ToString(b, 2));
 		[Fact]
 		public void LeafTest()
 		{
@@ -77,10 +85,6 @@ namespace Voxel2PixelTest.Model
 			};
 			svoModel.Set(voxel);
 			Voxel voxel2 = svoModel.First();
-			void CompareBinary(ushort a, ushort b) => output.WriteLine(
-				Convert.ToString(a, 2)
-				+ Environment.NewLine
-				+ Convert.ToString(b, 2));
 			output.WriteLine("X:");
 			CompareBinary(voxel.X, voxel2.X);
 			output.WriteLine("Y:");
@@ -164,6 +168,53 @@ namespace Voxel2PixelTest.Model
 			}
 			output.WriteLine(Convert.ToString(written[0], 2).PadLeft(8, '0'));
 			output.WriteLine(BitConverter.ToString(written));
+		}
+		[Fact]
+		public void LeftTest()
+		{
+			Random rng = new Random();
+			ushort Next()
+			{
+				byte[] two = new byte[2];
+				rng.NextBytes(two);
+				return (ushort)(two[0] << 8 | two[1]);
+			}
+			ushort x = Next(), z = Next();
+			byte left(byte count) => (byte)(((z >> count) & 1) << 2 | (x >> count) & 1);
+			Stack<byte> octants = new Stack<byte>();
+			while (octants.Count < 17)
+				octants.Push(left((byte)octants.Count));
+			ushort x2 = 0, z2 = 0;
+			while (octants.Count > 0 && octants.Pop() is byte @byte)
+			{
+				x2 = (ushort)((x2 << 1) | @byte & 1);
+				z2 = (ushort)((z2 << 1) | (@byte >> 2) & 1);
+			}
+			output.WriteLine("X:");
+			CompareBinary(x, x2);
+			output.WriteLine("Z:");
+			CompareBinary(z, z2);
+			Assert.Equal(
+				expected: x,
+				actual: x2);
+			Assert.Equal(
+				expected: z,
+				actual: z2);
+		}
+		[Fact]
+		public void FrontDrawTest()
+		{
+			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
+			SvoModel svo = new SvoModel(model);
+			Sprite sprite = new Sprite(svo.SizeX, svo.SizeZ)
+			{
+				VoxelColor = new NaiveDimmer(model.Palette),
+			};
+			svo.Front(sprite);
+			sprite
+				.Upscale(8, 8)
+				.Png()
+				.SaveAsPng("SvoModelFront.png");
 		}
 	}
 }

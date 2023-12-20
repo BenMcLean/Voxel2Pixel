@@ -1,6 +1,4 @@
-﻿using Voxel2Pixel.Model;
-
-namespace Voxel2Pixel.Interfaces
+﻿namespace Voxel2Pixel.Interfaces
 {
 	public interface IEditableModel : IModel
 	{
