@@ -356,7 +356,7 @@ namespace Voxel2Pixel.Model
 					if (LowestY(x, z) is byte index && index != 0)
 						renderer.Rect(
 							x: x,
-							y: z,
+							y: (ushort)(SizeZ - 1 - z),
 							index: index,
 							visibleFace: visibleFace);
 		}
@@ -365,7 +365,7 @@ namespace Voxel2Pixel.Model
 			if (this.IsOutside(x, 0, z))
 				throw new IndexOutOfRangeException("[" + string.Join(", ", x, 0, z) + "] is not within size [" + string.Join(", ", SizeX, SizeY, SizeZ) + "]!");
 			Stack<Branch> stack = new Stack<Branch>();
-			byte left(byte count) => (byte)(((z >> count) & 1) << 2 | (x >> count) & 1);
+			byte left(byte count) => (byte)(((z >> (16 - count)) & 1) << 2 | (x >> (16 - count)) & 1);
 			void Push(Branch branch)
 			{
 				while (branch is Branch)
@@ -379,10 +379,10 @@ namespace Voxel2Pixel.Model
 			Push(Root);
 			while (stack.Count > 0 && stack.Pop() is Branch branch)
 			{
-				if (stack.Count > 13)
+				if (stack.Count == 14)
 				{
-					byte octant = left(14),
-						final = left(15);
+					byte octant = left(15),
+						final = left(16);
 					if (branch[octant] is Leaf leaf)
 					{
 						if (leaf[final] is byte index1 && index1 != 0)
