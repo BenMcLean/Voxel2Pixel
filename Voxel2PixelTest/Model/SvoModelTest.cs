@@ -216,5 +216,20 @@ namespace Voxel2PixelTest.Model
 				.Png()
 				.SaveAsPng("SvoModelFront.png");
 		}
+		[Fact]
+		public void DiagonalDrawTest()
+		{
+			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
+			SvoModel svo = new SvoModel(model);
+			Sprite sprite = new Sprite((ushort)(svo.SizeX + svo.SizeY), svo.SizeZ)
+			{
+				VoxelColor = new NaiveDimmer(model.Palette),
+			};
+			svo.Diagonal(sprite);
+			sprite
+				.Upscale(8, 8)
+				.Png()
+				.SaveAsPng("SvoModelDiagonal.png");
+		}
 	}
 }

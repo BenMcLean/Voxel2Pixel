@@ -430,6 +430,56 @@ namespace Voxel2Pixel.Model
 			}
 			return 0;
 		}
+		public void Diagonal(IRectangleRenderer renderer)
+		{
+			ushort pixelWidth = (ushort)(SizeX + SizeY);
+			for (ushort voxelZ = 0, pixelY = (ushort)(SizeZ - 1);
+				voxelZ < SizeZ;
+				voxelZ++, pixelY = (ushort)(SizeZ - 1 - voxelZ))
+				for (ushort pixelX = 0; pixelX < pixelWidth; pixelX++)
+					for (ushort voxelX = (ushort)Math.Max(SizeX - 1 - pixelX, 0), voxelY = (ushort)Math.Max(0, pixelX - SizeX - 1);
+						voxelX < SizeX && voxelY < SizeY;
+						voxelX++, voxelY++)
+					{
+						if (FindVoxel(
+							x: voxelX,
+							y: voxelY,
+							z: voxelZ,
+							node: out Node node,
+							octant: out byte octant) is byte index && index != 0)
+						{
+							renderer.Rect(
+								x: pixelX,
+								y: pixelY,
+								index: index,
+								visibleFace: VisibleFace.Left);
+							break;
+						}
+						else
+						{
+							//TODO: use node and octant to skip over empty voxels by adding to voxelX and voxelY
+						}
+						if (voxelX + 1 < SizeX)
+							if (FindVoxel(
+								x: (ushort)(voxelX + 1),
+								y: voxelY,
+								z: voxelZ,
+								node: out Node node2,
+								octant: out byte octant2) is byte index2 && index2 != 0)
+							{
+								renderer.Rect(
+									x: pixelX,
+									y: pixelY,
+									index: index2,
+									visibleFace: VisibleFace.Right);
+								break;
+							}
+							else
+							{
+								//TODO: use node2 and octant2 to skip over empty voxels by adding to voxelX and voxelY
+							}
+					}
+		}
 		#endregion VoxelDraw
 	}
 }
