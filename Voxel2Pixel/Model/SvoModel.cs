@@ -288,20 +288,12 @@ namespace Voxel2Pixel.Model
 		public ushort SizeZ { get; set; }
 		public byte this[ushort x, ushort y, ushort z]
 		{
-			get
-			{
-				if (this.IsOutside(x, y, z))
-					throw new IndexOutOfRangeException("[" + string.Join(", ", x, y, z) + "] is not within size [" + string.Join(", ", SizeX, SizeY, SizeZ) + "]!");
-				Branch branch = Root;
-				for (int level = 15; level > 1; level--)
-					if (branch[(byte)((z >> level & 1) << 2 | (y >> level & 1) << 1 | x >> level & 1)] is Branch child)
-						branch = child;
-					else
-						return 0;
-				return branch[(byte)((z >> 1 & 1) << 2 | (y >> 1 & 1) << 1 | x >> 1 & 1)] is Leaf leaf ?
-					leaf[(byte)((z & 1) << 2 | (y & 1) << 1 | x & 1)]
-					: (byte)0;
-			}
+			get => FindVoxel(
+				x: x,
+				y: y,
+				z: z,
+				node: out _,
+				octant: out _);
 			set
 			{
 				if (this.IsOutside(x, y, z))
@@ -329,6 +321,32 @@ namespace Voxel2Pixel.Model
 				}
 				leaf[(byte)((z & 1) << 2 | (y & 1) << 1 | x & 1)] = value;
 			}
+		}
+		public byte FindVoxel(ushort x, ushort y, ushort z, out Node node, out byte octant)
+		{
+			if (this.IsOutside(x, y, z))
+				throw new IndexOutOfRangeException("[" + string.Join(", ", x, y, z) + "] is not within size [" + string.Join(", ", SizeX, SizeY, SizeZ) + "]!");
+			Branch branch = Root;
+			for (int level = 15; level > 1; level--)
+			{
+				octant = (byte)((z >> level & 1) << 2 | (y >> level & 1) << 1 | x >> level & 1);
+				if (branch[octant] is Branch child)
+					branch = child;
+				else
+				{
+					node = branch;
+					return 0;
+				}
+			}
+			octant = (byte)((z >> 1 & 1) << 2 | (y >> 1 & 1) << 1 | x >> 1 & 1);
+			if (branch[octant] is Leaf leaf)
+			{
+				node = leaf;
+				octant = (byte)((z & 1) << 2 | (y & 1) << 1 | x & 1);
+				return leaf[octant];
+			}
+			node = branch;
+			return 0;
 		}
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 		public IEnumerator<Voxel> GetEnumerator()
@@ -411,34 +429,6 @@ namespace Voxel2Pixel.Model
 					push(child);
 			}
 			return 0;
-		}
-		public bool FindVoxel(ushort x, ushort y, ushort z, out byte index, out Node node, out byte octant)
-		{
-			if (this.IsOutside(x, y, z))
-				throw new IndexOutOfRangeException("[" + string.Join(", ", x, y, z) + "] is not within size [" + string.Join(", ", SizeX, SizeY, SizeZ) + "]!");
-			index = 0;
-			Branch branch = Root;
-			for (int level = 15; level > 1; level--)
-			{
-				octant = (byte)((z >> level & 1) << 2 | (y >> level & 1) << 1 | x >> level & 1);
-				if (branch[octant] is Branch child)
-					branch = child;
-				else
-				{
-					node = branch;
-					return false;
-				}
-			}
-			octant = (byte)((z >> 1 & 1) << 2 | (y >> 1 & 1) << 1 | x >> 1 & 1);
-			if (branch[octant] is Leaf leaf)
-			{
-				node = leaf;
-				octant = (byte)((z & 1) << 2 | (y & 1) << 1 | x & 1);
-				index = leaf[octant];
-				return index != 0;
-			}
-			node = branch;
-			return false;
 		}
 		#endregion VoxelDraw
 	}
