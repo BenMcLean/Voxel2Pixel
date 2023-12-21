@@ -437,7 +437,7 @@ namespace Voxel2Pixel.Model
 				voxelZ < SizeZ;
 				voxelZ++, pixelY = (ushort)(SizeZ - 1 - voxelZ))
 				for (ushort pixelX = 0; pixelX < pixelWidth; pixelX++)
-					for (ushort voxelX = (ushort)Math.Max(SizeX - 1 - pixelX, 0), voxelY = (ushort)Math.Max(0, pixelX - SizeX - 1);
+					for (ushort voxelX = (ushort)Math.Max(0, pixelX - SizeY - 1), voxelY = (ushort)Math.Max(SizeY - 1 - pixelX, 0);
 						voxelX < SizeX && voxelY < SizeY;
 						voxelX++, voxelY++)
 					{
@@ -452,7 +452,7 @@ namespace Voxel2Pixel.Model
 								x: pixelX,
 								y: pixelY,
 								index: index,
-								visibleFace: VisibleFace.Left);
+								visibleFace: VisibleFace.Right);
 							break;
 						}
 						else
@@ -471,7 +471,7 @@ namespace Voxel2Pixel.Model
 									x: pixelX,
 									y: pixelY,
 									index: index2,
-									visibleFace: VisibleFace.Right);
+									visibleFace: VisibleFace.Left);
 								break;
 							}
 							else
