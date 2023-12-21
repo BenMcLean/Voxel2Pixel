@@ -55,6 +55,7 @@ namespace Voxel2Pixel.Model
 				for (Node current = this; current is Node; current = current.Parent, depth++) { }
 				return depth;
 			}
+			public virtual ushort Size => (ushort)(1 << Depth());
 			public abstract void Clear();
 			public abstract void Write(Stream stream);
 		}
@@ -150,6 +151,7 @@ namespace Voxel2Pixel.Model
 				get => this[(byte)((z > 0 ? 4 : 0) + (y > 0 ? 2 : 0) + (x > 0 ? 1 : 0))];
 				set => this[(byte)((z > 0 ? 4 : 0) + (y > 0 ? 2 : 0) + (x > 0 ? 1 : 0))] = value;
 			}
+			public override ushort Size => 2;
 			public Leaf(Node parent, byte octant)
 			{
 				Parent = parent;
@@ -266,9 +268,8 @@ namespace Voxel2Pixel.Model
 				{
 					nodes++;
 					if (node is Branch branch)
-						for (byte octant = 0; octant < 8; octant++)
-							if (branch[octant] is Node child)
-								Recurse(child);
+						foreach (Node child in branch)
+							Recurse(child);
 				}
 				Recurse(Root);
 				return nodes;
