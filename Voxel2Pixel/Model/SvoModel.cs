@@ -56,6 +56,12 @@ namespace Voxel2Pixel.Model
 				return depth;
 			}
 			public virtual ushort Size => (ushort)(1 << Depth());
+			public virtual void Edge(out ushort x, out ushort y, out ushort z)
+			{
+				Position(out x, out y, out z);
+				ushort size = Size;
+				x += size; y += size; z += size;
+			}
 			public abstract void Clear();
 			public abstract void Write(Stream stream);
 		}
@@ -405,6 +411,34 @@ namespace Voxel2Pixel.Model
 					push(child);
 			}
 			return 0;
+		}
+		public bool FindVoxel(ushort x, ushort y, ushort z, out byte index, out Node node, out byte octant)
+		{
+			if (this.IsOutside(x, y, z))
+				throw new IndexOutOfRangeException("[" + string.Join(", ", x, y, z) + "] is not within size [" + string.Join(", ", SizeX, SizeY, SizeZ) + "]!");
+			index = 0;
+			Branch branch = Root;
+			for (int level = 15; level > 1; level--)
+			{
+				octant = (byte)((z >> level & 1) << 2 | (y >> level & 1) << 1 | x >> level & 1);
+				if (branch[octant] is Branch child)
+					branch = child;
+				else
+				{
+					node = branch;
+					return false;
+				}
+			}
+			octant = (byte)((z >> 1 & 1) << 2 | (y >> 1 & 1) << 1 | x >> 1 & 1);
+			if (branch[octant] is Leaf leaf)
+			{
+				node = leaf;
+				octant = (byte)((z & 1) << 2 | (y & 1) << 1 | x & 1);
+				index = leaf[octant];
+				return index != 0;
+			}
+			node = branch;
+			return false;
 		}
 		#endregion VoxelDraw
 	}
