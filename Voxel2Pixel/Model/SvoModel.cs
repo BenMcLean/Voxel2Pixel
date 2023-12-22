@@ -437,12 +437,12 @@ namespace Voxel2Pixel.Model
 				voxelZ < SizeZ;
 				voxelZ++, pixelY = (ushort)(SizeZ - 1 - voxelZ))
 				for (ushort pixelX = 0; pixelX < pixelWidth; pixelX++)
-					for (ushort voxelX = (ushort)Math.Max(0, pixelX - SizeY),
-							voxelY = (ushort)Math.Max(SizeY - 1 - pixelX, 0);
-						voxelX < SizeX && voxelY < SizeY;
-						voxelX++, voxelY++)
+				{
+					ushort voxelXStart = (ushort)Math.Max(0, pixelX + 1 - SizeY),
+						voxelYStart = (ushort)Math.Max(SizeY - 1 - pixelX, 0);
+					for (ushort voxelX = voxelXStart, voxelY = voxelYStart;
+						voxelX < SizeX && voxelY < SizeY;)
 					{
-						bool leftSide = pixelX < SizeY - 1;
 						if (FindVoxel(
 							x: voxelX,
 							y: voxelY,
@@ -454,33 +454,21 @@ namespace Voxel2Pixel.Model
 								x: pixelX,
 								y: pixelY,
 								index: index,
-								visibleFace: VisibleFace.Left);
+								visibleFace: voxelX - voxelXStart < voxelY - voxelYStart ?
+									VisibleFace.Right
+									: VisibleFace.Left);
 							break;
 						}
 						else
 						{
+							if (voxelX - voxelXStart < voxelY - voxelYStart)
+								voxelX++;
+							else
+								voxelY++;
 							//TODO: use node and octant to skip over empty voxels by adding to voxelX and voxelY
 						}
-						if (voxelY + 1 < SizeY)
-							if (FindVoxel(
-								x: voxelX,
-								y: (ushort)(voxelY + 1),
-								z: voxelZ,
-								node: out Node node2,
-								octant: out byte octant2) is byte index2 && index2 != 0)
-							{
-								renderer.Rect(
-									x: pixelX,
-									y: pixelY,
-									index: index2,
-									visibleFace: VisibleFace.Right);
-								break;
-							}
-							else
-							{
-								//TODO: use node2 and octant2 to skip over empty voxels by adding to voxelX and voxelY
-							}
 					}
+				}
 		}
 		#endregion VoxelDraw
 	}
