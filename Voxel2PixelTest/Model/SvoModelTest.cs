@@ -221,7 +221,7 @@ namespace Voxel2PixelTest.Model
 		[Fact]
 		public void DiagonalDrawTest()
 		{
-			VoxFileModel model = new VoxFileModel(@"..\..\..\Hazmat.vox");
+			VoxFileModel model = new VoxFileModel(@"..\..\..\Hazmat2.vox");
 			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
 			SvoModel svo = new SvoModel(model);
 			Sprite[] sprites = new Sprite[2]

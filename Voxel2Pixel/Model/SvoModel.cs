@@ -438,11 +438,13 @@ namespace Voxel2Pixel.Model
 				voxelZ++, pixelY = (ushort)(SizeZ - 1 - voxelZ))
 				for (ushort pixelX = 0; pixelX < pixelWidth; pixelX++)
 				{
-					ushort voxelXStart = (ushort)Math.Max(0, pixelX + 1 - SizeY),
-						voxelYStart = (ushort)Math.Max(SizeY - 1 - pixelX, 0);
-					for (ushort voxelX = voxelXStart, voxelY = voxelYStart;
-						voxelX < SizeX && voxelY < SizeY;)
+					ushort voxelXStart = (ushort)Math.Max(0, pixelX - (SizeY - 1)),
+						voxelYStart = (ushort)Math.Max(SizeY - 1 - pixelX, 0),
+						voxelX = voxelXStart,
+						voxelY = voxelYStart;
+					while (voxelX < SizeX && voxelY < SizeY)
 					{
+						bool left = pixelX < SizeY - 1;
 						if (FindVoxel(
 							x: voxelX,
 							y: voxelY,
@@ -454,14 +456,18 @@ namespace Voxel2Pixel.Model
 								x: pixelX,
 								y: pixelY,
 								index: index,
-								visibleFace: voxelX - voxelXStart < voxelY - voxelYStart ?
-									VisibleFace.Right
-									: VisibleFace.Left);
+								visibleFace: left && voxelX - voxelXStart >= voxelY - voxelYStart
+									|| !left && voxelX - voxelXStart > voxelY - voxelYStart ?
+									VisibleFace.Left
+									: VisibleFace.Right);
 							break;
 						}
 						else
 						{
-							if (voxelX - voxelXStart < voxelY - voxelYStart)
+							//on the left side, we want voxelY++ first
+							//on the right side, we want voxelX++ first
+							if (left && voxelX - voxelXStart < voxelY - voxelYStart
+								|| !left && voxelX - voxelXStart <= voxelY - voxelYStart)
 								voxelX++;
 							else
 								voxelY++;
