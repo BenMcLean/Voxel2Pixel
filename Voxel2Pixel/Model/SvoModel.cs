@@ -437,10 +437,12 @@ namespace Voxel2Pixel.Model
 				voxelZ < SizeZ;
 				voxelZ++, pixelY = (ushort)(SizeZ - 1 - voxelZ))
 				for (ushort pixelX = 0; pixelX < pixelWidth; pixelX++)
-					for (ushort voxelX = (ushort)Math.Max(0, pixelX - SizeY - 1), voxelY = (ushort)Math.Max(SizeY - 1 - pixelX, 0);
+					for (ushort voxelX = (ushort)Math.Max(0, pixelX - SizeY),
+							voxelY = (ushort)Math.Max(SizeY - 1 - pixelX, 0);
 						voxelX < SizeX && voxelY < SizeY;
 						voxelX++, voxelY++)
 					{
+						bool leftSide = pixelX < SizeY - 1;
 						if (FindVoxel(
 							x: voxelX,
 							y: voxelY,
@@ -452,17 +454,17 @@ namespace Voxel2Pixel.Model
 								x: pixelX,
 								y: pixelY,
 								index: index,
-								visibleFace: VisibleFace.Right);
+								visibleFace: VisibleFace.Left);
 							break;
 						}
 						else
 						{
 							//TODO: use node and octant to skip over empty voxels by adding to voxelX and voxelY
 						}
-						if (voxelX + 1 < SizeX)
+						if (voxelY + 1 < SizeY)
 							if (FindVoxel(
-								x: (ushort)(voxelX + 1),
-								y: voxelY,
+								x: voxelX,
+								y: (ushort)(voxelY + 1),
 								z: voxelZ,
 								node: out Node node2,
 								octant: out byte octant2) is byte index2 && index2 != 0)
@@ -471,7 +473,7 @@ namespace Voxel2Pixel.Model
 									x: pixelX,
 									y: pixelY,
 									index: index2,
-									visibleFace: VisibleFace.Left);
+									visibleFace: VisibleFace.Right);
 								break;
 							}
 							else

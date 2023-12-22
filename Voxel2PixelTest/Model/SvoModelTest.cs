@@ -5,6 +5,8 @@ using System.IO;
 using System.Linq;
 using Voxel2Pixel;
 using Voxel2Pixel.Color;
+using Voxel2Pixel.Draw;
+using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Pack;
 using Xunit;
@@ -219,17 +221,27 @@ namespace Voxel2PixelTest.Model
 		[Fact]
 		public void DiagonalDrawTest()
 		{
-			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
+			VoxFileModel model = new VoxFileModel(@"..\..\..\Hazmat.vox");
+			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
 			SvoModel svo = new SvoModel(model);
-			Sprite sprite = new Sprite((ushort)(svo.SizeX + svo.SizeY), svo.SizeZ)
+			Sprite[] sprites = new Sprite[2]
 			{
-				VoxelColor = new NaiveDimmer(model.Palette),
+				new Sprite((ushort)(svo.SizeX + svo.SizeY), svo.SizeZ)
+				{
+					VoxelColor = voxelColor,
+				},
+				new Sprite((ushort)(svo.SizeX + svo.SizeY), svo.SizeZ)
+				{
+					VoxelColor = voxelColor,
+				}
 			};
-			svo.Diagonal(sprite);
-			sprite
-				.Upscale(8, 8)
-				.Png()
-				.SaveAsPng("SvoModelDiagonal.png");
+			svo.Diagonal(sprites[0]);
+			VoxelDraw.Diagonal(svo, sprites[1]);
+			sprites
+				.AddFrameNumbers()
+				.Select(sprite => sprite.Upscale(16, 16))
+				.AnimatedGif(frameDelay: 100)
+				.SaveAsGif("SvoModelDiagonal.gif");
 		}
 	}
 }
