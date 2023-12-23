@@ -3,7 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Voxel2Pixel.Interfaces;
+using static Voxel2Pixel.Model.SvoModel;
 
 namespace Voxel2Pixel.Model
 {
@@ -49,18 +51,29 @@ namespace Voxel2Pixel.Model
 				}
 				x <<= count; y <<= count; z <<= count;
 			}
-			public virtual byte Depth()
+			public virtual byte Depth
 			{
-				byte depth = 0;
-				for (Node current = this; current is Node; current = current.Parent, depth++) { }
-				return depth;
+				get
+				{
+					byte depth = 0;
+					for (Node current = this; current is Node; current = current.Parent, depth++) { }
+					return depth;
+				}
 			}
-			public virtual ushort Size => (ushort)(1 << Depth());
+			public virtual ushort Size => (ushort)(1 << (16 - Depth));
 			public virtual void Edge(out ushort x, out ushort y, out ushort z)
 			{
 				Position(out x, out y, out z);
 				ushort size = Size;
 				x += size; y += size; z += size;
+			}
+			public virtual void Edge(byte octant, out ushort x, out ushort y, out ushort z)
+			{
+				Position(out x, out y, out z);
+				ushort size = (ushort)(1 << (15 - Depth));
+				x += (ushort)(size * ((octant & 1) + 1));
+				y += (ushort)(size * (((octant >> 1) & 1) + 1));
+				z += (ushort)(size * (((octant >> 2) & 1) + 1));
 			}
 			public abstract void Clear();
 			public abstract void Write(Stream stream);
@@ -300,7 +313,7 @@ namespace Voxel2Pixel.Model
 					throw new IndexOutOfRangeException("[" + string.Join(", ", x, y, z) + "] is not within size [" + string.Join(", ", SizeX, SizeY, SizeZ) + "]!");
 				Branch branch = Root;
 				byte octant;
-				for (int level = 15; level > 1; level--)
+				for (byte level = 15; level > 1; level--)
 				{
 					octant = (byte)((z >> level & 1) << 2 | (y >> level & 1) << 1 | x >> level & 1);
 					if (branch[octant] is Branch child)
@@ -327,7 +340,7 @@ namespace Voxel2Pixel.Model
 			if (this.IsOutside(x, y, z))
 				throw new IndexOutOfRangeException("[" + string.Join(", ", x, y, z) + "] is not within size [" + string.Join(", ", SizeX, SizeY, SizeZ) + "]!");
 			Branch branch = Root;
-			for (int level = 15; level > 1; level--)
+			for (byte level = 15; level > 1; level--)
 			{
 				octant = (byte)((z >> level & 1) << 2 | (y >> level & 1) << 1 | x >> level & 1);
 				if (branch[octant] is Branch child)
@@ -475,6 +488,45 @@ namespace Voxel2Pixel.Model
 						}
 					}
 				}
+		}
+		public string PrintStuff(ushort x, ushort y, ushort z)
+		{
+			if (this.IsOutside(x, y, z))
+				throw new IndexOutOfRangeException("[" + string.Join(", ", x, y, z) + "] is not within size [" + string.Join(", ", SizeX, SizeY, SizeZ) + "]!");
+			StringBuilder sb = new StringBuilder();
+			string print(Node node, byte @byte = 0)
+			{
+				node.Position(out ushort x1, out ushort y1, out ushort z1);
+				node.Edge(@byte, out ushort edgeX, out ushort edgeY, out ushort edgeZ);
+				return string.Join(", ",
+					"x: " + x1,
+					"y: " + y1,
+					"z: " + z1,
+					"depth: " + node.Depth,
+					"size: " + node.Size,
+					"edgeX: " + edgeX,
+					"edgeY: " + edgeY,
+					"edgeZ: " + edgeZ);
+			}
+			byte octant;
+			Branch branch = Root;
+			for (int level = 15; level > 1; level--)
+			{
+				octant = (byte)((z >> level & 1) << 2 | (y >> level & 1) << 1 | x >> level & 1);
+				sb.AppendLine(print(branch, octant));
+				if (branch[octant] is Branch child)
+					branch = child;
+				else
+					return sb.ToString();
+			}
+			octant = (byte)((z >> 1 & 1) << 2 | (y >> 1 & 1) << 1 | x >> 1 & 1);
+			if (branch[octant] is Leaf leaf)
+			{
+				octant = (byte)((z & 1) << 2 | (y & 1) << 1 | x & 1);
+				sb.AppendLine("leaf! " + print(leaf, octant));
+				return sb.ToString();
+			}
+			return sb.ToString();
 		}
 		#endregion VoxelDraw
 	}

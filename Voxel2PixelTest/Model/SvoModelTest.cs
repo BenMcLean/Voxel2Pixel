@@ -243,5 +243,9 @@ namespace Voxel2PixelTest.Model
 				.AnimatedGif(frameDelay: 100)
 				.SaveAsGif("SvoModelDiagonal.gif");
 		}
+		[Fact]
+		public void PrintStuff() =>
+			output.WriteLine(new SvoModel(new VoxFileModel(@"..\..\..\NumberCube.vox"))
+				.PrintStuff(1, 1, 1));
 	}
 }
