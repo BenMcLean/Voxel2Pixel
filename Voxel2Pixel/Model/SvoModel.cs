@@ -438,13 +438,13 @@ namespace Voxel2Pixel.Model
 				voxelZ++, pixelY = (ushort)(SizeZ - 1 - voxelZ))
 				for (ushort pixelX = 0; pixelX < pixelWidth; pixelX++)
 				{
+					bool left = pixelX < SizeY;
 					ushort voxelXStart = (ushort)Math.Max(0, pixelX - SizeY),
-						voxelYStart = (ushort)Math.Max(SizeY - 1 - pixelX, 0),
+						voxelYStart = (ushort)Math.Max(0, SizeY - 1 - pixelX),
 						voxelX = voxelXStart,
 						voxelY = voxelYStart;
 					while (voxelX < SizeX && voxelY < SizeY)
 					{
-						bool left = pixelX < SizeY;
 						if (FindVoxel(
 							x: voxelX,
 							y: voxelY,
