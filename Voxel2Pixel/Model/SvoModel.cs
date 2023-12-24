@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Voxel2Pixel.Interfaces;
-using static Voxel2Pixel.Model.SvoModel;
 
 namespace Voxel2Pixel.Model
 {
@@ -60,7 +59,7 @@ namespace Voxel2Pixel.Model
 					return depth;
 				}
 			}
-			public virtual ushort Size => (ushort)(1 << (16 - Depth));
+			public virtual ushort Size => (ushort)((1 << (17 - Depth)) - 1);
 			public virtual void Edge(out ushort x, out ushort y, out ushort z)
 			{
 				Position(out x, out y, out z);
@@ -70,7 +69,7 @@ namespace Voxel2Pixel.Model
 			public virtual void Edge(byte octant, out ushort x, out ushort y, out ushort z)
 			{
 				Position(out x, out y, out z);
-				ushort size = (ushort)(1 << (15 - Depth));
+				ushort size = (ushort)Math.Max(1, 1 << (16 - Depth));
 				x += (ushort)(size * ((octant & 1) + 1));
 				y += (ushort)(size * (((octant >> 1) & 1) + 1));
 				z += (ushort)(size * (((octant >> 2) & 1) + 1));
@@ -170,7 +169,8 @@ namespace Voxel2Pixel.Model
 				get => this[(byte)((z > 0 ? 4 : 0) + (y > 0 ? 2 : 0) + (x > 0 ? 1 : 0))];
 				set => this[(byte)((z > 0 ? 4 : 0) + (y > 0 ? 2 : 0) + (x > 0 ? 1 : 0))] = value;
 			}
-			public override ushort Size => 2;
+			public override byte Depth => 16;
+			public override ushort Size => 1;
 			public Leaf(Node parent, byte octant)
 			{
 				Parent = parent;
@@ -354,8 +354,8 @@ namespace Voxel2Pixel.Model
 			octant = (byte)((z >> 1 & 1) << 2 | (y >> 1 & 1) << 1 | x >> 1 & 1);
 			if (branch[octant] is Leaf leaf)
 			{
-				node = leaf;
 				octant = (byte)((z & 1) << 2 | (y & 1) << 1 | x & 1);
+				node = leaf;
 				return leaf[octant];
 			}
 			node = branch;
@@ -477,14 +477,34 @@ namespace Voxel2Pixel.Model
 						}
 						else
 						{
-							//on the left side, we want voxelY++ first
-							//on the right side, we want voxelX++ first
-							if (left && voxelX - voxelXStart < voxelY - voxelYStart
+							if (node.Depth < 2)
+								break;
+							if (node is Leaf)
+								//on the left side, we want voxelY++ first
+								//on the right side, we want voxelX++ first
+								if (left && voxelX - voxelXStart < voxelY - voxelYStart
 								|| !left && voxelX - voxelXStart <= voxelY - voxelYStart)
-								voxelX++;
+									voxelX++;
+								else
+									voxelY++;
 							else
-								voxelY++;
-							//TODO: use node and octant to skip over empty voxels by adding to voxelX and voxelY
+							{
+								node.Edge(
+									octant: octant,
+									x: out ushort edgeX,
+									y: out ushort edgeY,
+									z: out _);
+								if (edgeX - voxelX <= edgeY - voxelY)
+								{
+									voxelY += (ushort)(edgeX - voxelX);
+									voxelX = edgeX;
+								}
+								else
+								{
+									voxelX += (ushort)(edgeY - voxelY);
+									voxelY = edgeY;
+								}
+							}
 						}
 					}
 				}
@@ -504,6 +524,7 @@ namespace Voxel2Pixel.Model
 					"z: " + z1,
 					"depth: " + node.Depth,
 					"size: " + node.Size,
+					"octant: " + Convert.ToString(@byte, 2).PadLeft(3, '0'),
 					"edgeX: " + edgeX,
 					"edgeY: " + edgeY,
 					"edgeZ: " + edgeZ);
@@ -520,6 +541,7 @@ namespace Voxel2Pixel.Model
 					return sb.ToString();
 			}
 			octant = (byte)((z >> 1 & 1) << 2 | (y >> 1 & 1) << 1 | x >> 1 & 1);
+			sb.AppendLine("last branch! " + print(branch, octant));
 			if (branch[octant] is Leaf leaf)
 			{
 				octant = (byte)((z & 1) << 2 | (y & 1) << 1 | x & 1);
