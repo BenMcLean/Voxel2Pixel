@@ -126,7 +126,12 @@ namespace Voxel2Pixel.Draw
 				ySide = (width < 1 ? xSide : texture.Length / width) >> 2;
 			if (y > ySide) return texture;
 			if (xSide == insertXside && x == 0 && insertX == 0)
-				Array.Copy(insert, insertY * insertXside, texture, y * xSide, Math.Min(insert.Length - insertY * insertXside + insertX, texture.Length - y * xSide));
+				Array.Copy(
+					sourceArray: insert,
+					sourceIndex: insertY * insertXside,
+					destinationArray: texture,
+					destinationIndex: y * xSide,
+					length: Math.Min(insert.Length - insertY * insertXside + insertX, texture.Length - y * xSide));
 			else
 				for (int y1 = y * xSide + x, y2 = insertY * insertXside + insertX; y1 + actualInsertXside < texture.Length && y2 < insert.Length; y1 += xSide, y2 += insertXside)
 					Array.Copy(
@@ -183,7 +188,12 @@ namespace Voxel2Pixel.Draw
 			for (int y1 = y * xSide + x, y2 = insertY * insertXside + insertX; y1 < texture.Length && y2 < insert.Length; y1 += xSide, y2 += insertXside)
 				for (int x1 = 0; x1 < actualInsertXside; x1 += 4)
 					if (insert[y2 + x1 + 3] >= threshold)
-						Array.Copy(insert, y2 + x1, texture, y1 + x1, 4);
+						Array.Copy(
+							sourceArray: insert,
+							sourceIndex: y2 + x1,
+							destinationArray: texture,
+							destinationIndex: y1 + x1,
+							length: 4);
 			return texture;
 		}
 		/// <summary>
@@ -208,15 +218,35 @@ namespace Voxel2Pixel.Draw
 			if (x4 > xSide || offset > texture.Length)
 				return texture;
 			if (y > 0)
-				Array.Copy(texture, offset + xSide, texture, offset, Math.Min(areaWidth4, xSide - x4));
+				Array.Copy(
+					sourceArray: texture,
+					sourceIndex: offset + xSide,
+					destinationArray: texture,
+					destinationIndex: offset,
+					length: Math.Min(areaWidth4, xSide - x4));
 			if (y + areaHeight < ySide)
-				Array.Copy(texture, stop - xSide, texture, stop, Math.Min(areaWidth4, xSide - x4));
+				Array.Copy(
+					sourceArray: texture,
+					sourceIndex: stop - xSide,
+					destinationArray: texture,
+					destinationIndex: stop,
+					length: Math.Min(areaWidth4, xSide - x4));
 			for (int y1 = Math.Max(x4, offset); y1 <= stop; y1 += xSide)
 			{
 				if (x > 0)
-					Array.Copy(texture, y1, texture, y1 - 4, 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: y1,
+						destinationArray: texture,
+						destinationIndex: y1 - 4,
+						length: 4);
 				if (x4 + areaWidth4 < xSide)
-					Array.Copy(texture, y1 + areaWidth4 - 4, texture, y1 + areaWidth4, 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: y1 + areaWidth4 - 4,
+						destinationArray: texture,
+						destinationIndex: y1 + areaWidth4,
+						length: 4);
 			}
 			return texture;
 		}
@@ -280,7 +310,12 @@ namespace Voxel2Pixel.Draw
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
 			byte[] flipped = new byte[texture.Length];
 			for (int y = 0; y < flipped.Length; y += xSide)
-				Array.Copy(texture, y, flipped, flipped.Length - xSide - y, xSide);
+				Array.Copy(
+					sourceArray: texture,
+					sourceIndex: y,
+					destinationArray: flipped,
+					destinationIndex: flipped.Length - xSide - y,
+					length: xSide);
 			return flipped;
 		}
 		/// <summary>
@@ -295,7 +330,12 @@ namespace Voxel2Pixel.Draw
 			byte[] flipped = new byte[texture.Length];
 			for (int y = 0; y < flipped.Length; y += xSide)
 				for (int x = 0; x < xSide; x += 4)
-					Array.Copy(texture, y + x, flipped, y + xSide - 4 - x, 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: y + x,
+						destinationArray: flipped,
+						destinationIndex: y + xSide - 4 - x,
+						length: 4);
 			return flipped;
 		}
 		/// <summary>
@@ -313,8 +353,18 @@ namespace Voxel2Pixel.Draw
 			for (int y1 = texture.Length - xSide, y2 = newXside * ySide - newXside; y1 < texture.Length; y1 += 4, y2 += newXside + 4)
 				for (int x1 = y1, x2 = y2; x1 >= 0; x1 -= xSide, x2 += -newXside + 4)
 				{
-					Array.Copy(texture, x1, rotated, x2, 4);
-					Array.Copy(texture, x1, rotated, x2 + newXside, 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: rotated,
+						destinationIndex: x2,
+						length: 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: rotated,
+						destinationIndex: x2 + newXside,
+						length: 4);
 				}
 			return rotated;
 		}
@@ -333,8 +383,18 @@ namespace Voxel2Pixel.Draw
 			for (int y1 = texture.Length - xSide, y2 = newXside * ySide - newXside; y1 < texture.Length; y1 += 4, y2 += newXside + 4)
 				for (int x1 = y1, x2 = y2; x1 >= 0; x1 -= xSide, x2 += -newXside + 4)
 				{
-					Array.Copy(texture, x1, rotated, x2, 4);
-					Array.Copy(texture, x1, rotated, x2 + 4, 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: rotated,
+						destinationIndex: x2,
+						length: 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: rotated,
+						destinationIndex: x2 + 4,
+						length: 4);
 				}
 			return rotated;
 		}
@@ -352,7 +412,12 @@ namespace Voxel2Pixel.Draw
 			byte[] rotated = new byte[texture.Length];
 			for (int y1 = 0, y2 = xSide2 - 4; y1 < texture.Length; y1 += xSide1, y2 -= 4)
 				for (int x1 = y1, x2 = y2; x1 < y1 + xSide1; x1 += 4, x2 += xSide2)
-					Array.Copy(texture, x1, rotated, x2, 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: rotated,
+						destinationIndex: x2,
+						length: 4);
 			return rotated;
 		}
 		/// <summary>
@@ -370,8 +435,18 @@ namespace Voxel2Pixel.Draw
 			for (int y1 = texture.Length - 4, y2 = newXside * (xSide >> 2) - newXside; y1 > 0; y1 -= xSide, y2 += newXside + 4)
 				for (int x1 = y1, x2 = y2; x1 > y1 - xSide; x1 -= 4, x2 += -newXside + 4)
 				{
-					Array.Copy(texture, x1, rotated, x2, 4);
-					Array.Copy(texture, x1, rotated, x2 + newXside, 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: rotated,
+						destinationIndex: x2,
+						length: 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: rotated,
+						destinationIndex: x2 + newXside,
+						length: 4);
 				}
 			return rotated;
 		}
@@ -390,8 +465,18 @@ namespace Voxel2Pixel.Draw
 			for (int y1 = texture.Length - 4, y2 = newXside * (xSide >> 2) - newXside; y1 > 0; y1 -= xSide, y2 += newXside + 4)
 				for (int x1 = y1, x2 = y2; x1 > y1 - xSide; x1 -= 4, x2 += -newXside + 4)
 				{
-					Array.Copy(texture, x1, rotated, x2, 4);
-					Array.Copy(texture, x1, rotated, x2 + 4, 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: rotated,
+						destinationIndex: x2,
+						length: 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: rotated,
+						destinationIndex: x2 + 4,
+						length: 4);
 				}
 			return rotated;
 		}
@@ -407,7 +492,12 @@ namespace Voxel2Pixel.Draw
 			byte[] rotated = new byte[texture.Length];
 			for (int y1 = 0, y2 = texture.Length - xSide; y1 < texture.Length; y1 += xSide, y2 -= xSide)
 				for (int x1 = y1, x2 = y2 + xSide - 4; x1 < y1 + xSide; x1 += 4, x2 -= 4)
-					Array.Copy(texture, x1, rotated, x2, 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: rotated,
+						destinationIndex: x2,
+						length: 4);
 			return rotated;
 		}
 		/// <summary>
@@ -425,8 +515,18 @@ namespace Voxel2Pixel.Draw
 			for (int y1 = xSide - 4, y2 = newXside * ySide - newXside; y1 >= 0; y1 -= 4, y2 += newXside + 4)
 				for (int x1 = y1, x2 = y2; x1 < texture.Length; x1 += xSide, x2 += -newXside + 4)
 				{
-					Array.Copy(texture, x1, rotated, x2, 4);
-					Array.Copy(texture, x1, rotated, x2 + newXside, 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: rotated,
+						destinationIndex: x2,
+						length: 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: rotated,
+						destinationIndex: x2 + newXside,
+						length: 4);
 				}
 			return rotated;
 		}
@@ -445,8 +545,18 @@ namespace Voxel2Pixel.Draw
 			for (int y1 = xSide - 4, y2 = newXside * ySide - newXside; y1 >= 0; y1 -= 4, y2 += newXside + 4)
 				for (int x1 = y1, x2 = y2; x1 < texture.Length; x1 += xSide, x2 += -newXside + 4)
 				{
-					Array.Copy(texture, x1, rotated, x2, 4);
-					Array.Copy(texture, x1, rotated, x2 + 4, 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: rotated,
+						destinationIndex: x2,
+						length: 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: rotated,
+						destinationIndex: x2 + 4,
+						length: 4);
 				}
 			return rotated;
 		}
@@ -464,7 +574,12 @@ namespace Voxel2Pixel.Draw
 			byte[] rotated = new byte[texture.Length];
 			for (int y1 = 0, y2 = texture.Length - xSide2; y1 < texture.Length; y1 += xSide1, y2 += 4)
 				for (int x1 = y1, x2 = y2; x1 < y1 + xSide1; x1 += 4, x2 -= xSide2)
-					Array.Copy(texture, x1, rotated, x2, 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: rotated,
+						destinationIndex: x2,
+						length: 4);
 			return rotated;
 		}
 		/// <summary>
@@ -482,8 +597,18 @@ namespace Voxel2Pixel.Draw
 			for (int y1 = 0, y2 = newXside * (xSide >> 2) - newXside; y1 < texture.Length; y1 += xSide, y2 += newXside + 4)
 				for (int x1 = y1, x2 = y2; x1 < y1 + xSide; x1 += 4, x2 += -newXside + 4)
 				{
-					Array.Copy(texture, x1, rotated, x2, 4);
-					Array.Copy(texture, x1, rotated, x2 + newXside, 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: rotated,
+						destinationIndex: x2,
+						length: 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: rotated,
+						destinationIndex: x2 + newXside,
+						length: 4);
 				}
 			return rotated;
 		}
@@ -502,8 +627,18 @@ namespace Voxel2Pixel.Draw
 			for (int y1 = 0, y2 = newXside * (xSide >> 2) - newXside; y1 < texture.Length; y1 += xSide, y2 += newXside + 4)
 				for (int x1 = y1, x2 = y2; x1 < y1 + xSide; x1 += 4, x2 += -newXside + 4)
 				{
-					Array.Copy(texture, x1, rotated, x2, 4);
-					Array.Copy(texture, x1, rotated, x2 + 4, 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: rotated,
+						destinationIndex: x2,
+						length: 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: rotated,
+						destinationIndex: x2 + 4,
+						length: 4);
 				}
 			return rotated;
 		}
@@ -525,11 +660,36 @@ namespace Voxel2Pixel.Draw
 			for (int y1 = 0, y2 = 0; y1 < texture.Length; y1 += xSide, y2 += newXside2)
 				for (int x1 = y1, x2 = y2; x1 < y1 + xSide; x1 += 4, x2 += newXside + 8)
 				{
-					Array.Copy(texture, x1, slanted, x2, 4);
-					Array.Copy(texture, x1, slanted, x2 + newXside, 4);
-					Array.Copy(texture, x1, slanted, x2 + newXside + 4, 4);
-					Array.Copy(slanted, x2 + newXside, slanted, x2 + newXside2, 8);
-					Array.Copy(texture, x1, slanted, x2 + newXside2 + newXside + 4, 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: slanted,
+						destinationIndex: x2,
+						length: 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: slanted,
+						destinationIndex: x2 + newXside,
+						length: 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: slanted,
+						destinationIndex: x2 + newXside + 4,
+						length: 4);
+					Array.Copy(
+						sourceArray: slanted,
+						sourceIndex: x2 + newXside,
+						destinationArray: slanted,
+						destinationIndex: x2 + newXside2,
+						length: 8);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: slanted,
+						destinationIndex: x2 + newXside2 + newXside + 4,
+						length: 4);
 				}
 			return slanted;
 		}
@@ -548,10 +708,30 @@ namespace Voxel2Pixel.Draw
 			for (int y1 = 0, y2 = 0; y1 < texture.Length; y1 += xSide, y2 += newXside)
 				for (int x1 = y1, x2 = y2; x1 < y1 + xSide; x1 += 4, x2 += newXside + 8)
 				{
-					Array.Copy(texture, x1, slanted, x2, 4);
-					Array.Copy(texture, x1, slanted, x2 + newXside, 4);
-					Array.Copy(texture, x1, slanted, x2 + newXside + 4, 4);
-					Array.Copy(texture, x1, slanted, x2 + newXside + newXside + 4, 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: slanted,
+						destinationIndex: x2,
+						length: 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: slanted,
+						destinationIndex: x2 + newXside,
+						length: 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: slanted,
+						destinationIndex: x2 + newXside + 4,
+						length: 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: slanted,
+						destinationIndex: x2 + newXside + newXside + 4,
+						length: 4);
 				}
 			return slanted;
 		}
@@ -571,11 +751,36 @@ namespace Voxel2Pixel.Draw
 			for (int y1 = 0, y2 = newXside * ((xSide >> 2) + 2); y1 < texture.Length; y1 += xSide, y2 += newXside2)
 				for (int x1 = y1, x2 = y2; x1 < y1 + xSide; x1 += 4, x2 += -newXside + 8)
 				{
-					Array.Copy(texture, x1, slanted, x2, 4);
-					Array.Copy(texture, x1, slanted, x2 - newXside, 4);
-					Array.Copy(texture, x1, slanted, x2 - newXside + 4, 4);
-					Array.Copy(slanted, x2 - newXside, slanted, x2 - newXside2, 8);
-					Array.Copy(texture, x1, slanted, x2 - newXside2 - newXside + 4, 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: slanted,
+						destinationIndex: x2,
+						length: 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: slanted,
+						destinationIndex: x2 - newXside,
+						length: 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: slanted,
+						destinationIndex: x2 - newXside + 4,
+						length: 4);
+					Array.Copy(
+						sourceArray: slanted,
+						sourceIndex: x2 - newXside,
+						destinationArray: slanted,
+						destinationIndex: x2 - newXside2,
+						length: 8);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: slanted,
+						destinationIndex: x2 - newXside2 - newXside + 4,
+						length: 4);
 				}
 			return slanted;
 		}
@@ -594,10 +799,30 @@ namespace Voxel2Pixel.Draw
 			for (int y1 = 0, y2 = newXside * ((xSide >> 2) + 1); y1 < texture.Length; y1 += xSide, y2 += newXside)
 				for (int x1 = y1, x2 = y2; x1 < y1 + xSide; x1 += 4, x2 += -newXside + 8)
 				{
-					Array.Copy(texture, x1, slanted, x2, 4);
-					Array.Copy(texture, x1, slanted, x2 - newXside, 4);
-					Array.Copy(texture, x1, slanted, x2 - newXside + 4, 4);
-					Array.Copy(texture, x1, slanted, x2 - newXside - newXside + 4, 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: slanted,
+						destinationIndex: x2,
+						length: 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: slanted,
+						destinationIndex: x2 - newXside,
+						length: 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: slanted,
+						destinationIndex: x2 - newXside + 4,
+						length: 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: slanted,
+						destinationIndex: x2 - newXside - newXside + 4,
+						length: 4);
 				}
 			return slanted;
 		}
@@ -616,9 +841,24 @@ namespace Voxel2Pixel.Draw
 			for (int y1 = 0, y2 = newXside * (xSide >> 2) - newXside; y1 < texture.Length; y1 += xSide, y2 += newXside + 8)
 				for (int x1 = y1, x2 = y2; x1 < y1 + xSide; x1 += 4, x2 += -newXside + 8)
 				{
-					Array.Copy(texture, x1, tile, x2, 4);
-					Array.Copy(texture, x1, tile, x2 + 4, 4);
-					Array.Copy(tile, x2, tile, x2 + newXside, 8);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: tile,
+						destinationIndex: x2,
+						length: 4);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: x1,
+						destinationArray: tile,
+						destinationIndex: x2 + 4,
+						length: 4);
+					Array.Copy(
+						sourceArray: tile,
+						sourceIndex: x2,
+						destinationArray: tile,
+						destinationIndex: x2 + newXside,
+						length: 8);
 				}
 			return tile;
 		}
@@ -662,7 +902,12 @@ namespace Voxel2Pixel.Draw
 				croppedWidth = xSide - x;
 			byte[] cropped = new byte[croppedWidth * croppedHeight];
 			for (int y1 = y * xSide + x, y2 = 0; y2 < cropped.Length; y1 += xSide, y2 += croppedWidth)
-				Array.Copy(texture, y1, cropped, y2, croppedWidth);
+				Array.Copy(
+					sourceArray: texture,
+					sourceIndex: y1,
+					destinationArray: cropped,
+					destinationIndex: y2,
+					length: croppedWidth);
 			return cropped;
 		}
 		/// <summary>
@@ -1003,12 +1248,20 @@ namespace Voxel2Pixel.Draw
 			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
 			byte[] resized = new byte[newWidth * newHeight];
 			if (newWidth == xSide)
-				Array.Copy(texture, resized, Math.Min(texture.Length, resized.Length));
+				Array.Copy(
+					sourceArray: texture,
+					destinationArray: resized,
+					length: Math.Min(texture.Length, resized.Length));
 			else
 			{
 				int newXside = Math.Min(xSide, newWidth);
 				for (int y1 = 0, y2 = 0; y1 < texture.Length && y2 < resized.Length; y1 += xSide, y2 += newWidth)
-					Array.Copy(texture, y1, resized, y2, newXside);
+					Array.Copy(
+						sourceArray: texture,
+						sourceIndex: y1,
+						destinationArray: resized,
+						destinationIndex: y2,
+						length: newXside);
 			}
 			return resized;
 		}
@@ -1029,14 +1282,27 @@ namespace Voxel2Pixel.Draw
 			if (factorX > 1)
 				for (int y1 = 0, y2 = 0; y1 < texture.Length; y1 += xSide, y2 += newXside)
 					for (int x = 0; x < newXside; x += xSide)
-						Array.Copy(texture, y1, tiled, y2 + x, xSide);
+						Array.Copy(
+							sourceArray: texture,
+							sourceIndex: y1,
+							destinationArray: tiled,
+							destinationIndex: y2 + x,
+							length: xSide);
 			else
-				Array.Copy(texture, tiled, texture.Length);
+				Array.Copy(
+					sourceArray: texture,
+					destinationArray: tiled,
+					length: texture.Length);
 			if (factorY > 1)
 			{
 				int xScaledLength = texture.Length * factorX;
 				for (int y = xScaledLength; y < tiled.Length; y += xScaledLength)
-					Array.Copy(tiled, 0, tiled, y, xScaledLength);
+					Array.Copy(
+						sourceArray: tiled,
+						sourceIndex: 0,
+						destinationArray: tiled,
+						destinationIndex: y,
+						length: xScaledLength);
 			}
 			return tiled;
 		}
@@ -1058,7 +1324,12 @@ namespace Voxel2Pixel.Draw
 			if (factorX < 2)
 				for (int y1 = 0, y2 = 0; y1 < texture.Length; y1 += xSide, y2 += newXsidefactorY)
 					for (int z = y2; z < y2 + newXsidefactorY; z += newXside)
-						Array.Copy(texture, y1, scaled, z, xSide);
+						Array.Copy(
+							sourceArray: texture,
+							sourceIndex: y1,
+							destinationArray: scaled,
+							destinationIndex: z,
+							length: xSide);
 			else
 			{
 				int factorX4 = factorX << 2;
@@ -1066,9 +1337,19 @@ namespace Voxel2Pixel.Draw
 				{
 					for (int x1 = y1, x2 = y2; x1 < y1 + xSide; x1 += 4, x2 += factorX4)
 						for (int z = 0; z < factorX4; z += 4)
-							Array.Copy(texture, x1, scaled, x2 + z, 4);
+							Array.Copy(
+								sourceArray: texture,
+								sourceIndex: x1,
+								destinationArray: scaled,
+								destinationIndex: x2 + z,
+								length: 4);
 					for (int z = y2 + newXside; z < y2 + newXsidefactorY; z += newXside)
-						Array.Copy(scaled, y2, scaled, z, newXside);
+						Array.Copy(
+							sourceArray: scaled,
+							sourceIndex: y2,
+							destinationArray: scaled,
+							destinationIndex: z,
+							length: newXside);
 				}
 			}
 			return scaled;
