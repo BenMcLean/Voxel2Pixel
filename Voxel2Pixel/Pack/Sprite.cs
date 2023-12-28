@@ -7,14 +7,20 @@ using Voxel2Pixel.Model;
 
 namespace Voxel2Pixel.Pack
 {
-	public class Sprite : ISprite, IRectangleRenderer, ITriangleRenderer, IVoxelColor
+	public class Sprite : Dictionary<string, Point>, ISprite, IRectangleRenderer, ITriangleRenderer, IVoxelColor
 	{
 		#region ISprite
 		public byte[] Texture { get; set; }
 		public ushort Width { get; set; }
 		public ushort Height => (ushort)((Texture.Length >> 2) / Width);
-		public ushort OriginX { get; set; }
-		public ushort OriginY { get; set; }
+		public const string Origin = "Origin";
+		public Sprite AddRange(params KeyValuePair<string, Point>[] points) => AddRange(points.AsEnumerable());
+		public Sprite AddRange(IEnumerable<KeyValuePair<string, Point>> points)
+		{
+			foreach (KeyValuePair<string, Point> point in points)
+				this[point.Key] = point.Value;
+			return this;
+		}
 		#endregion ISprite
 		#region Sprite
 		public Sprite() { }
@@ -27,8 +33,8 @@ namespace Voxel2Pixel.Pack
 		{
 			Texture = sprite.Texture;
 			Width = sprite.Width;
-			OriginX = sprite.OriginX;
-			OriginY = sprite.OriginY;
+			foreach (KeyValuePair<string, Point> point in sprite)
+				this[point.Key] = point.Value;
 		}
 		#endregion Sprite
 		#region IVoxelColor
@@ -125,70 +131,100 @@ namespace Voxel2Pixel.Pack
 		/// <returns>lower right cropped copy</returns>
 		public Sprite Crop(ushort x, ushort y) => Crop(x, y, (ushort)(Width - x), (ushort)(Height - y));
 		/// <returns>cropped copy</returns>
-		public Sprite Crop(int x, int y, ushort croppedWidth, ushort croppedHeight) => new Sprite
+		public Sprite Crop(int x, int y, ushort croppedWidth, ushort croppedHeight)
 		{
-			Texture = Texture.Crop(x, y, croppedWidth, croppedHeight, Width),
-			Width = croppedWidth,
-			OriginX = (ushort)(OriginX - x),
-			OriginY = (ushort)(OriginY - y),
-		};
+			Sprite sprite = new Sprite
+			{
+				Texture = Texture.Crop(x, y, croppedWidth, croppedHeight, Width),
+				Width = croppedWidth,
+			};
+			foreach (KeyValuePair<string, Point> point in this)
+				sprite[point.Key] = new Point(
+					X: (ushort)(point.Value.X - x),
+					Y: (ushort)(point.Value.Y - y));
+			return sprite;
+		}
 		/// <returns>cropped copy</returns>
-		public Sprite TransparentCrop(byte threshold = 128) => new Sprite
+		public Sprite TransparentCrop(byte threshold = 128)
 		{
-			Texture = Texture.TransparentCrop(
+			Sprite sprite = new Sprite
+			{
+				Texture = Texture.TransparentCrop(
 				cutLeft: out ushort cutLeft,
 				cutTop: out ushort cutTop,
 				croppedWidth: out ushort croppedWidth,
 				croppedHeight: out _,
 				width: Width,
 				threshold: threshold),
-			Width = croppedWidth,
-			OriginX = (ushort)(OriginX - cutLeft),
-			OriginY = (ushort)(OriginY - cutTop),
-		};
+				Width = croppedWidth,
+			};
+			foreach (KeyValuePair<string, Point> point in this)
+				sprite[point.Key] = new Point(
+					X: (ushort)(point.Value.X - cutLeft),
+					Y: (ushort)(point.Value.Y - cutTop));
+			return sprite;
+		}
 		/// <returns>cropped copy</returns>
-		public Sprite TransparentCropPlusOne(byte threshold = 128) => new Sprite
+		public Sprite TransparentCropPlusOne(byte threshold = 128)
 		{
-			Texture = Texture.TransparentCropPlusOne(
-				cutLeft: out int cutLeft,
-				cutTop: out int cutTop,
-				croppedWidth: out ushort croppedWidth,
-				croppedHeight: out _,
-				width: Width,
-				threshold: threshold),
-			Width = croppedWidth,
-			OriginX = (ushort)(OriginX - cutLeft),
-			OriginY = (ushort)(OriginY - cutTop),
-		};
-		/// <returns>cropped and outlined copy</returns>
-		public Sprite CropOutline(uint color = 0xFFu) => new Sprite
-		{
-			Texture = Texture
-				.TransparentCropPlusOne(
+			Sprite sprite = new Sprite
+			{
+				Texture = Texture.TransparentCropPlusOne(
 					cutLeft: out int cutLeft,
 					cutTop: out int cutTop,
 					croppedWidth: out ushort croppedWidth,
 					croppedHeight: out _,
-					width: Width)
-				.Outline(
-					width: croppedWidth,
-					color: color),
-			Width = croppedWidth,
-			OriginX = (ushort)(OriginX - cutLeft),
-			OriginY = (ushort)(OriginY - cutTop),
-		};
-		/// <returns>upscaled copy</returns>
-		public Sprite Upscale(ushort factorX, ushort factorY = 1) => new Sprite
+					width: Width,
+					threshold: threshold),
+				Width = croppedWidth,
+			};
+			foreach (KeyValuePair<string, Point> point in this)
+				sprite[point.Key] = new Point(
+					X: (ushort)(point.Value.X - cutLeft),
+					Y: (ushort)(point.Value.Y - cutTop));
+			return sprite;
+		}
+		/// <returns>cropped and outlined copy</returns>
+		public Sprite CropOutline(uint color = 0xFFu)
 		{
-			Texture = Texture.Upscale(
-				factorX: factorX,
-				factorY: factorY,
-				newWidth: out ushort newWidth,
-				width: Width),
-			Width = newWidth,
-			OriginX = (ushort)(OriginX * factorX),
-			OriginY = (ushort)(OriginY * factorY),
-		};
+			Sprite sprite = new Sprite
+			{
+				Texture = Texture
+					.TransparentCropPlusOne(
+						cutLeft: out int cutLeft,
+						cutTop: out int cutTop,
+						croppedWidth: out ushort croppedWidth,
+						croppedHeight: out _,
+						width: Width)
+					.Outline(
+						width: croppedWidth,
+						color: color),
+				Width = croppedWidth,
+			};
+			foreach (KeyValuePair<string, Point> point in this)
+				sprite[point.Key] = new Point(
+					X: (ushort)(point.Value.X - cutLeft),
+					Y: (ushort)(point.Value.Y - cutTop));
+			return sprite;
+		}
+		/// <returns>upscaled copy</returns>
+		public Sprite Upscale(ushort factorX, ushort factorY = 1)
+		{
+			Sprite sprite = new Sprite
+			{
+				Texture = Texture.Upscale(
+					factorX: factorX,
+					factorY: factorY,
+					newWidth: out ushort newWidth,
+					width: Width),
+				Width = newWidth,
+			};
+			foreach (KeyValuePair<string, Point> point in this)
+				sprite[point.Key] = new Point(
+					X: (ushort)(point.Value.X * factorX),
+					Y: (ushort)(point.Value.Y * factorY));
+			return sprite;
+		}
 		public static IEnumerable<Sprite> AddFrameNumbers(uint color = 0xFFFFFFFF, params Sprite[] sprites) => sprites.AsEnumerable().AddFrameNumbers(color);
 		#endregion Image manipulation
 		#region Voxel drawing
@@ -220,9 +256,10 @@ namespace Voxel2Pixel.Pack
 					Texture = new byte[width * VoxelDraw.AboveHeight(turnModel) << 2],
 					Width = width,
 					VoxelColor = voxelColor,
-					OriginX = (ushort)locateX,
-					OriginY = (ushort)locateY,
 				};
+				sprite[Origin] = new Point(
+					X: (ushort)locateX,
+					Y: (ushort)locateY);
 				VoxelDraw.Above(
 					model: turnModel,
 					renderer: sprite);
@@ -258,9 +295,10 @@ namespace Voxel2Pixel.Pack
 					Texture = new byte[width * VoxelDraw.IsoHeight(turnModel) << 2],
 					Width = width,
 					VoxelColor = voxelColor,
-					OriginX = (ushort)locateX,
-					OriginY = (ushort)locateY,
 				};
+				sprite[Origin] = new Point(
+					X: (ushort)locateX,
+					Y: (ushort)locateY);
 				VoxelDraw.Iso(
 					model: turnModel,
 					renderer: sprite);
@@ -296,9 +334,10 @@ namespace Voxel2Pixel.Pack
 					Texture = new byte[width * VoxelDraw.AboveHeight(turnModel) << 2],
 					Width = width,
 					VoxelColor = voxelColor,
-					OriginX = (ushort)locateX,
-					OriginY = (ushort)locateY,
 				};
+				sprite[Origin] = new Point(
+					X: (ushort)locateX,
+					Y: (ushort)locateY);
 				VoxelDraw.Above(
 					model: turnModel,
 					renderer: sprite);
@@ -324,9 +363,10 @@ namespace Voxel2Pixel.Pack
 					Texture = new byte[width * VoxelDraw.IsoHeight(turnModel) << 2],
 					Width = width,
 					VoxelColor = voxelColor,
-					OriginX = (ushort)(locateX << 1),
-					OriginY = (ushort)locateY,
 				};
+				sprite[Origin] = new Point(
+					X: (ushort)(locateX << 1),
+					Y: (ushort)locateY);
 				VoxelDraw.Iso(
 					model: turnModel,
 					renderer: sprite);

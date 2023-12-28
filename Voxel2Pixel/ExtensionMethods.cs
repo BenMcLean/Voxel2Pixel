@@ -45,27 +45,28 @@ namespace Voxel2Pixel
 				yield return sprite;
 			}
 		}
+		/// <summary>
+		/// Warning: the new sprites only retain the Origin point, dropping all other points.
+		/// </summary>
 		public static IEnumerable<Sprite> SameSize(this IEnumerable<ISprite> sprites, ushort addWidth = 0, ushort addHeight = 0)
 		{
-			ushort originX = sprites.Select(sprite => sprite.OriginX).Max(),
-				originY = sprites.Select(sprite => sprite.OriginY).Max(),
-				width = (ushort)(sprites.Select(sprite => sprite.Width + originX - sprite.OriginX).Max() + addWidth),
-				height = (ushort)(sprites.Select(sprite => sprite.Height + originY - sprite.OriginY).Max() + addHeight);
+			ushort originX = sprites.Select(sprite => sprite.TryGetValue(Sprite.Origin, out Point value) ? value.X : (ushort)0).Max(),
+				originY = sprites.Select(sprite => sprite.TryGetValue(Sprite.Origin, out Point value) ? value.Y : (ushort)0).Max(),
+				width = (ushort)(sprites.Select(sprite => sprite.Width + originX - (sprite.TryGetValue(Sprite.Origin, out Point value) ? value.X : (ushort)0)).Max() + addWidth),
+				height = (ushort)(sprites.Select(sprite => sprite.Height + originY - (sprite.TryGetValue(Sprite.Origin, out Point value) ? value.Y : (ushort)0)).Max() + addHeight);
 			int textureLength = width * height << 2;
 			foreach (ISprite sprite in sprites)
 				yield return new Sprite
 				{
 					Texture = new byte[textureLength]
 						.DrawInsert(
-							x: originX - sprite.OriginX,
-							y: originY - sprite.OriginY,
+							x: originX - (sprite.TryGetValue(Sprite.Origin, out Point value) ? value.X : (ushort)0),
+							y: originY - (sprite.TryGetValue(Sprite.Origin, out Point valueY) ? valueY.Y : (ushort)0),
 							insert: sprite.Texture,
 							insertWidth: sprite.Width,
 							width: width),
 					Width = width,
-					OriginX = originX,
-					OriginY = originY,
-				};
+				}.AddRange(new KeyValuePair<string, Point>(Sprite.Origin, new Point(X: originX, Y: originY)));
 		}
 		#endregion Sprite
 	}
