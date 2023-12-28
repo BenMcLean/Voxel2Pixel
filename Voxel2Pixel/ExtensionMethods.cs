@@ -50,18 +50,17 @@ namespace Voxel2Pixel
 		/// </summary>
 		public static IEnumerable<Sprite> SameSize(this IEnumerable<ISprite> sprites, ushort addWidth = 0, ushort addHeight = 0)
 		{
-			ushort originX = sprites.Select(sprite => sprite.TryGetValue(Sprite.Origin, out Point value) ? value.X : (ushort)0).Max(),
-				originY = sprites.Select(sprite => sprite.TryGetValue(Sprite.Origin, out Point value) ? value.Y : (ushort)0).Max(),
-				width = (ushort)(sprites.Select(sprite => sprite.Width + originX - (sprite.TryGetValue(Sprite.Origin, out Point value) ? value.X : (ushort)0)).Max() + addWidth),
-				height = (ushort)(sprites.Select(sprite => sprite.Height + originY - (sprite.TryGetValue(Sprite.Origin, out Point value) ? value.Y : (ushort)0)).Max() + addHeight);
-			int textureLength = width * height << 2;
+			int originX = sprites.Select(sprite => sprite.TryGetValue(Sprite.Origin, out Point value) ? value.X : 0).Max(),
+				originY = sprites.Select(sprite => sprite.TryGetValue(Sprite.Origin, out Point value) ? value.Y : 0).Max();
+			ushort width = (ushort)(sprites.Select(sprite => sprite.Width + originX - (sprite.TryGetValue(Sprite.Origin, out Point value) ? value.X : 0)).Max() + addWidth),
+				height = (ushort)(sprites.Select(sprite => sprite.Height + originY - (sprite.TryGetValue(Sprite.Origin, out Point value) ? value.Y : 0)).Max() + addHeight);
 			foreach (ISprite sprite in sprites)
 				yield return new Sprite
 				{
-					Texture = new byte[textureLength]
+					Texture = new byte[width * height << 2]
 						.DrawInsert(
-							x: originX - (sprite.TryGetValue(Sprite.Origin, out Point value) ? value.X : (ushort)0),
-							y: originY - (sprite.TryGetValue(Sprite.Origin, out Point valueY) ? valueY.Y : (ushort)0),
+							x: originX - (sprite.TryGetValue(Sprite.Origin, out Point valueX) ? valueX.X : 0),
+							y: originY - (sprite.TryGetValue(Sprite.Origin, out Point valueY) ? valueY.Y : 0),
 							insert: sprite.Texture,
 							insertWidth: sprite.Width,
 							width: width),
