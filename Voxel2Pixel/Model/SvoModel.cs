@@ -33,9 +33,9 @@ namespace Voxel2Pixel.Model
 			public virtual bool IsLeaf => (Header & 0b10000000) > 0;
 			public virtual void Position(out ushort x, out ushort y, out ushort z)
 			{
-				Stack<Node> stack = new Stack<Node>();
+				Stack<Node> stack = new();
 				Node current = this;
-				while (current is Node)
+				while (current is not null)
 				{
 					stack.Push(current);
 					current = current.Parent;
@@ -55,7 +55,7 @@ namespace Voxel2Pixel.Model
 				get
 				{
 					byte depth = 0;
-					for (Node current = this; current is Node; current = current.Parent, depth++) { }
+					for (Node current = this; current is not null; current = current.Parent, depth++) { }
 					return depth;
 				}
 			}
@@ -90,7 +90,7 @@ namespace Voxel2Pixel.Model
 					Children[octant] = value;
 					if (value is null
 						&& Parent is Branch parent
-						&& !Children.Any(child => child is Node))
+						&& !Children.Any(child => child is not null))
 						parent[Octant] = null;
 				}
 			}
@@ -109,7 +109,7 @@ namespace Voxel2Pixel.Model
 			public Branch(Stream stream, Node parent = null)
 			{
 				Parent = parent;
-				using (BinaryReader reader = new BinaryReader(
+				using (BinaryReader reader = new(
 					input: stream,
 					encoding: System.Text.Encoding.Default,
 					leaveOpen: true))
@@ -122,14 +122,14 @@ namespace Voxel2Pixel.Model
 						header = reader.ReadByte();
 						reader.BaseStream.Position--;
 						this[(byte)(header & 0b111)] = (header & 0b10000000) > 0 ?
-							(Node)new Leaf(stream, this)
+							new Leaf(stream, this)
 							: new Branch(stream, this);
 					}
 				}
 			}
 			public override void Write(Stream stream)
 			{
-				using (BinaryWriter writer = new BinaryWriter(
+				using (BinaryWriter writer = new(
 					output: stream,
 					encoding: System.Text.Encoding.Default,
 					leaveOpen: true))
@@ -179,7 +179,7 @@ namespace Voxel2Pixel.Model
 			public Leaf(Stream stream, Node parent = null)
 			{
 				Parent = parent;
-				using (BinaryReader reader = new BinaryReader(
+				using (BinaryReader reader = new(
 					input: stream,
 					encoding: System.Text.Encoding.Default,
 					leaveOpen: true))
@@ -190,7 +190,7 @@ namespace Voxel2Pixel.Model
 			}
 			public override void Write(Stream stream)
 			{
-				using (BinaryWriter writer = new BinaryWriter(
+				using (BinaryWriter writer = new(
 					output: stream,
 					encoding: System.Text.Encoding.Default,
 					leaveOpen: true))
@@ -217,13 +217,17 @@ namespace Voxel2Pixel.Model
 				Position(out ushort x, out ushort y, out ushort z);
 				for (byte octant = 0; octant < 8; octant++)
 					if (this[octant] is byte index && index != 0)
-						yield return new Voxel((ushort)(x | (octant & 1)), (ushort)(y | ((octant >> 1) & 1)), (ushort)(z | ((octant >> 2) & 1)), index);
+						yield return new Voxel(
+							X: (ushort)(x | (octant & 1)),
+							Y: (ushort)(y | ((octant >> 1) & 1)),
+							Z: (ushort)(z | ((octant >> 2) & 1)),
+							Index: index);
 			}
 			#endregion IEnumerable<Voxel>
 		}
 		#endregion Nested classes
 		#region SvoModel
-		public readonly Branch Root = new Branch();
+		public readonly Branch Root = new();
 		public void Clear() => Root.Clear();
 		public SvoModel() { }
 		public SvoModel(IModel model) : this(
@@ -249,7 +253,7 @@ namespace Voxel2Pixel.Model
 		public void Write(Stream stream) => Root.Write(stream);
 		public byte[] Bytes()
 		{
-			using (MemoryStream ms = new MemoryStream())
+			using (MemoryStream ms = new())
 			{
 				Write(ms);
 				return ms.ToArray();
@@ -257,7 +261,7 @@ namespace Voxel2Pixel.Model
 		}
 		public string Z85()
 		{
-			using (MemoryStream ms = new MemoryStream())
+			using (MemoryStream ms = new())
 			{
 				Write(ms);
 				if (ms.Position % 4 is long four && four > 0)
@@ -318,7 +322,7 @@ namespace Voxel2Pixel.Model
 					}
 				}
 				octant = (byte)((z >> 1 & 1) << 2 | (y >> 1 & 1) << 1 | x >> 1 & 1);
-				if (!(branch[octant] is Leaf leaf))
+				if (branch[octant] is not Leaf leaf)
 				{
 					if (value == 0)
 						return;
@@ -356,10 +360,10 @@ namespace Voxel2Pixel.Model
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 		public IEnumerator<Voxel> GetEnumerator()
 		{
-			Stack<Branch> stack = new Stack<Branch>();
+			Stack<Branch> stack = new();
 			void push(Branch branch)
 			{
-				while (branch is Branch)
+				while (branch is not null)
 				{
 					stack.Push(branch);
 					branch = branch.First() as Branch;
@@ -394,11 +398,11 @@ namespace Voxel2Pixel.Model
 		{
 			if (this.IsOutside(x, 0, z))
 				throw new IndexOutOfRangeException("[" + string.Join(", ", x, 0, z) + "] is not within size [" + string.Join(", ", SizeX, SizeY, SizeZ) + "]!");
-			Stack<Branch> stack = new Stack<Branch>();
+			Stack<Branch> stack = new();
 			byte left(byte count) => (byte)(((z >> (16 - count)) & 1) << 2 | (x >> (16 - count)) & 1);
 			void push(Branch branch)
 			{
-				while (branch is Branch)
+				while (branch is not null)
 				{
 					stack.Push(branch);
 					byte octant = left((byte)stack.Count);
@@ -505,8 +509,8 @@ namespace Voxel2Pixel.Model
 		{
 			if (this.IsOutside(x, y, z))
 				throw new IndexOutOfRangeException("[" + string.Join(", ", x, y, z) + "] is not within size [" + string.Join(", ", SizeX, SizeY, SizeZ) + "]!");
-			StringBuilder sb = new StringBuilder();
-			string print(Node node, byte @byte = 0)
+			StringBuilder sb = new();
+			static string print(Node node, byte @byte = 0)
 			{
 				node.Position(out ushort x1, out ushort y1, out ushort z1);
 				node.Edge(@byte, out ushort edgeX, out ushort edgeY, out ushort edgeZ);

@@ -9,23 +9,24 @@ namespace Voxel2Pixel.Draw
 	/// <summary>
 	/// I have been forced into a situation where X and Y mean something different in 2D space from what they mean in 3D space. Not only do the coordinates not match, but 3D is upside down when compared to 2D. I hate this. I hate it so much. But I'm stuck with it if I want my software to be interoperable with other existing software.
 	/// In 2D space for pixels, X+ means east/right, Y+ means down. This is dictated by how 2D raster graphics are typically stored.
-	/// In 3D space for voxels, I'm following the MagicaVoxel convention, which is Z+up, right-handed, so X+ means east/right, Y+ means forwards/north and Z+ means up.
+	/// In 3D space for voxels, I'm following the MagicaVoxel convention, which is Z+up, right-handed, so X+ means right/east, Y+ means forwards/north and Z+ means up.
 	/// </summary>
 	public static class VoxelDraw
 	{
+		#region Records
+		private readonly record struct VoxelY(ushort Y, byte Index)
+		{
+			public VoxelY(Voxel voxel) : this(Y: voxel.Y, Index: voxel.Index) { }
+		}
+		private readonly record struct DistantShape(uint Distance, byte Index, VisibleFace VisibleFace);
+		private readonly record struct VoxelFace(Voxel Voxel, VisibleFace VisibleFace)
+		{
+			public readonly uint Distance => (uint)Voxel.X + Voxel.Y;
+		}
+		#endregion Records
 		#region Straight
 		public static ushort FrontWidth(IModel model) => model.SizeX;
 		public static ushort FrontHeight(IModel model) => model.SizeZ;
-		private struct VoxelY
-		{
-			public readonly ushort Y;
-			public readonly byte Index;
-			public VoxelY(Voxel voxel)
-			{
-				Y = voxel.Y;
-				Index = voxel.Index;
-			}
-		}
 		public static void Front(IModel model, IRectangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Front)
 		{
 			ushort width = model.SizeX,
@@ -95,13 +96,6 @@ namespace Voxel2Pixel.Draw
 		}
 		#endregion Straight
 		#region Diagonal
-		private struct DistantShape
-		{
-			public uint Distance;
-			public byte Index;
-			public VisibleFace VisibleFace;
-		}
-
 		public static ushort DiagonalWidth(IModel model) => (ushort)(model.SizeX + model.SizeY);
 		public static ushort DiagonalHeight(IModel model) => model.SizeZ;
 		public static void Diagonal(IModel model, IRectangleRenderer renderer)
@@ -148,12 +142,6 @@ namespace Voxel2Pixel.Draw
 		}
 		public static ushort DiagonalPeekWidth(IModel model, byte scaleX = 6) => (ushort)((model.SizeX + model.SizeY) * scaleX);
 		public static ushort DiagonalPeekHeight(IModel model, byte scaleY = 6) => (ushort)(model.SizeZ * scaleY);
-		public struct VoxelFace
-		{
-			public Voxel Voxel;
-			public VisibleFace VisibleFace;
-			public uint Distance => (uint)Voxel.X + Voxel.Y;
-		}
 		public static void DiagonalPeek(IModel model, IRectangleRenderer renderer, byte scaleX = 6, byte scaleY = 6)
 		{
 			ushort voxelWidth = model.SizeX,
@@ -288,7 +276,7 @@ namespace Voxel2Pixel.Draw
 				voxelDepth = model.SizeY,
 				voxelHeight = model.SizeZ,
 				pixelHeight = (ushort)(2 * (voxelWidth + voxelDepth) + 4 * voxelHeight - 1);
-			Dictionary<uint, DistantShape> dictionary = new Dictionary<uint, DistantShape>();
+			Dictionary<uint, DistantShape> dictionary = [];
 			void Tri(ushort pixelX, ushort pixelY, uint distance, byte index, VisibleFace visibleFace = VisibleFace.Front)
 			{
 				if ((uint)((pixelY << 16) | pixelX) is uint key

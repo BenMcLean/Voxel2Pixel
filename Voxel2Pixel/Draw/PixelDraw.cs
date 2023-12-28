@@ -1044,7 +1044,7 @@ namespace Voxel2Pixel.Draw
 				length: result.Length);
 			int height = texture.Length / width;
 			int Index(int x, int y) => x * width + y;
-			List<uint> neighbors = new List<uint>(9);
+			List<uint> neighbors = new(9);
 			void Add(int x, int y)
 			{
 				if (x >= 0 && y >= 0 && x < width && y < height
@@ -1185,7 +1185,7 @@ namespace Voxel2Pixel.Draw
 				croppedWidth: out newWidth,
 				croppedHeight: out _,
 				width: width);
-			newOrigin = new ushort[] { (ushort)(origin[0] - cutLeft), (ushort)(origin[1] - cutTop) };
+			newOrigin = [(ushort)(origin[0] - cutLeft), (ushort)(origin[1] - cutTop)];
 			return result;
 		}
 		public static byte[][] CropSprites(this byte[][] sprites, ushort[] widths, ushort[][] pixelOrigins, out ushort[] newWidths, out ushort[][] newPixelOrigins)
@@ -1214,7 +1214,7 @@ namespace Voxel2Pixel.Draw
 				width: width)
 				.Outline(croppedWidth);
 			newWidth = croppedWidth;
-			newOrigin = new ushort[] { (ushort)(origin[0] - cutLeft), (ushort)(origin[1] - cutTop) };
+			newOrigin = [(ushort)(origin[0] - cutLeft), (ushort)(origin[1] - cutTop)];
 			return result;
 		}
 		public static byte[][] CropOutlineSprites(this byte[][] sprites, ushort[] widths, ushort[][] pixelOrigins, out ushort[] newWidths, out ushort[][] newPixelOrigins)
@@ -1371,7 +1371,7 @@ namespace Voxel2Pixel.Draw
 					factorY: factorY,
 					width: widths[i]);
 				newWidths[i] = (ushort)(widths[i] * factorX);
-				newPixelOrigins[i] = new ushort[] { (ushort)(pixelOrigins[i][0] * factorX), (ushort)(pixelOrigins[i][1] * factorY) };
+				newPixelOrigins[i] = [(ushort)(pixelOrigins[i][0] * factorX), (ushort)(pixelOrigins[i][1] * factorY)];
 			}
 			return newSprites;
 		}
@@ -1547,7 +1547,7 @@ namespace Voxel2Pixel.Draw
 		public static uint[] LoadPalette(Stream stream)
 		{
 			uint[] result;
-			using (StreamReader streamReader = new StreamReader(stream))
+			using (StreamReader streamReader = new(stream))
 			{
 				string line;
 				while (string.IsNullOrWhiteSpace(line = streamReader.ReadLine().Trim())) { }

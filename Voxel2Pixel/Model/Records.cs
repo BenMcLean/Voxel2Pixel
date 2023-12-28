@@ -2,4 +2,11 @@
 {
 	public readonly record struct Point(ushort X, ushort Y);
 	public readonly record struct Voxel(ushort X, ushort Y, ushort Z, byte Index);
+	public enum VisibleFace : byte
+	{
+		Front = 0,
+		Top = 64,
+		Left = 128,
+		Right = 192,
+	}
 }
