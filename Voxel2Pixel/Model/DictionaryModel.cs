@@ -39,13 +39,12 @@ namespace Voxel2Pixel.Model
 		#region IEditableModel
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 		public IEnumerator<Voxel> GetEnumerator() => Dictionary
-			.Select(voxel => new Voxel
-			{
-				X = (ushort)voxel.Key,
-				Y = (ushort)(voxel.Key >> 16),
-				Z = (ushort)(voxel.Key >> 32),
-				Index = voxel.Value,
-			}).GetEnumerator();
+			.Select(voxel => new Voxel(
+				X: (ushort)voxel.Key,
+				Y: (ushort)(voxel.Key >> 16),
+				Z: (ushort)(voxel.Key >> 32),
+				Index: voxel.Value))
+			.GetEnumerator();
 		public ushort SizeX { get; set; } = 0;
 		public ushort SizeY { get; set; } = 0;
 		public ushort SizeZ { get; set; } = 0;

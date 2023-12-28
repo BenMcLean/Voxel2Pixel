@@ -78,13 +78,11 @@ namespace Voxel2PixelTest.Model
 				SizeY = ushort.MaxValue,
 				SizeZ = ushort.MaxValue,
 			};
-			Voxel voxel = new Voxel
-			{
-				X = ushort.MaxValue - 1,
-				Y = ushort.MaxValue - 1,
-				Z = ushort.MaxValue - 1,
-				Index = 1,
-			};
+			Voxel voxel = new Voxel(
+				X: ushort.MaxValue - 1,
+				Y: ushort.MaxValue - 1,
+				Z: ushort.MaxValue - 1,
+				Index: 1);
 			svoModel.Set(voxel);
 			Voxel voxel2 = svoModel.First();
 			output.WriteLine("X:");

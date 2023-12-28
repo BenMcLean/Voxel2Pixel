@@ -202,13 +202,11 @@ namespace Voxel2Pixel.Model
 			public Voxel Voxel(byte octant)
 			{
 				Position(out ushort x, out ushort y, out ushort z);
-				return new Voxel
-				{
-					X = (ushort)(x | (octant & 1)),
-					Y = (ushort)(y | ((octant >> 1) & 1)),
-					Z = (ushort)(z | ((octant >> 2) & 1)),
-					Index = this[octant],
-				};
+				return new Voxel(
+					X: (ushort)(x | (octant & 1)),
+					Y: (ushort)(y | ((octant >> 1) & 1)),
+					Z: (ushort)(z | ((octant >> 2) & 1)),
+					Index: this[octant]);
 			}
 			#region IEnumerable<Voxel>
 			IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -219,13 +217,7 @@ namespace Voxel2Pixel.Model
 				Position(out ushort x, out ushort y, out ushort z);
 				for (byte octant = 0; octant < 8; octant++)
 					if (this[octant] is byte index && index != 0)
-						yield return new Voxel
-						{
-							X = (ushort)(x | (octant & 1)),
-							Y = (ushort)(y | ((octant >> 1) & 1)),
-							Z = (ushort)(z | ((octant >> 2) & 1)),
-							Index = index,
-						};
+						yield return new Voxel((ushort)(x | (octant & 1)), (ushort)(y | ((octant >> 1) & 1)), (ushort)(z | ((octant >> 2) & 1)), index);
 			}
 			#endregion IEnumerable<Voxel>
 		}
