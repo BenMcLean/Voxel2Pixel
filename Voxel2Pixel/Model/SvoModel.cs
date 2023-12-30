@@ -478,13 +478,11 @@ namespace Voxel2Pixel.Model
 							if (node.Depth < 2)
 								break;
 							if (node is Leaf)
-								//on the left side, we want voxelY++ first
-								//on the right side, we want voxelX++ first
-								if (yFirst && voxelX - voxelXStart < voxelY - voxelYStart
-									|| !yFirst && voxelX - voxelXStart <= voxelY - voxelYStart)
-									voxelX++;
-								else
+								if (yFirst && voxelX - voxelXStart >= voxelY - voxelYStart
+									|| !yFirst && voxelX - voxelXStart > voxelY - voxelYStart)
 									voxelY++;
+								else
+									voxelX++;
 							else
 							{
 								node.Edge(
@@ -492,14 +490,23 @@ namespace Voxel2Pixel.Model
 									x: out ushort edgeX,
 									y: out ushort edgeY,
 									z: out _);
-								if (edgeX - voxelX <= edgeY - voxelY)
+								if (yFirst && edgeX - voxelXStart <= edgeY - voxelYStart
+									|| !yFirst && edgeX - voxelXStart < edgeY - voxelYStart)
 								{
-									voxelY += (ushort)(edgeX - voxelX);
+									voxelY = getY(
+										startX: voxelXStart,
+										startY: voxelYStart,
+										newX: edgeX,
+										yFirst: yFirst);
 									voxelX = edgeX;
 								}
 								else
 								{
-									voxelX += (ushort)(edgeY - voxelY);
+									voxelX = getX(
+										startX: voxelXStart,
+										startY: voxelYStart,
+										newY: edgeY,
+										yFirst: yFirst);
 									voxelY = edgeY;
 								}
 							}
