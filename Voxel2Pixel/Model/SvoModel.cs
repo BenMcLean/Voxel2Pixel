@@ -441,13 +441,15 @@ namespace Voxel2Pixel.Model
 		}
 		public void Diagonal(IRectangleRenderer renderer)
 		{
+			static ushort getX(ushort startX, ushort startY, ushort newY, bool yFirst = false) => (ushort)(startX + newY - startY - (yFirst && startY != newY ? 1 : 0));
+			static ushort getY(ushort startX, ushort startY, ushort newX, bool yFirst = false) => (ushort)(startY + newX - startX - (yFirst || startX == newX ? 0 : 1));
 			ushort pixelWidth = (ushort)(SizeX + SizeY);
 			for (ushort voxelZ = 0, pixelY = (ushort)(SizeZ - 1);
 				voxelZ < SizeZ;
 				voxelZ++, pixelY = (ushort)(SizeZ - 1 - voxelZ))
 				for (ushort pixelX = 0; pixelX < pixelWidth; pixelX++)
 				{
-					bool left = pixelX < SizeY;
+					bool yFirst = pixelX < SizeY;
 					ushort voxelXStart = (ushort)Math.Max(0, pixelX - SizeY),
 						voxelYStart = (ushort)Math.Max(0, SizeY - 1 - pixelX),
 						voxelX = voxelXStart,
@@ -465,8 +467,8 @@ namespace Voxel2Pixel.Model
 								x: pixelX,
 								y: pixelY,
 								index: index,
-								visibleFace: left && voxelX - voxelXStart >= voxelY - voxelYStart
-									|| !left && voxelX - voxelXStart > voxelY - voxelYStart ?
+								visibleFace: yFirst && voxelX - voxelXStart >= voxelY - voxelYStart
+									|| !yFirst && voxelX - voxelXStart > voxelY - voxelYStart ?
 									VisibleFace.Left
 									: VisibleFace.Right);
 							break;
@@ -478,8 +480,8 @@ namespace Voxel2Pixel.Model
 							if (node is Leaf)
 								//on the left side, we want voxelY++ first
 								//on the right side, we want voxelX++ first
-								if (left && voxelX - voxelXStart < voxelY - voxelYStart
-								|| !left && voxelX - voxelXStart <= voxelY - voxelYStart)
+								if (yFirst && voxelX - voxelXStart < voxelY - voxelYStart
+									|| !yFirst && voxelX - voxelXStart <= voxelY - voxelYStart)
 									voxelX++;
 								else
 									voxelY++;
