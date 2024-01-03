@@ -69,10 +69,12 @@ namespace Voxel2Pixel.Model
 			public virtual void Edge(byte octant, out ushort x, out ushort y, out ushort z)
 			{
 				Position(out x, out y, out z);
-				ushort size = (ushort)Math.Max(1, 1 << (16 - Depth));
-				x += (ushort)(size * ((octant & 1) + 1));
-				y += (ushort)(size * (((octant >> 1) & 1) + 1));
-				z += (ushort)(size * (((octant >> 2) & 1) + 1));
+				byte depth = Depth;
+				ushort outer = (ushort)(1 << (17 - depth)),
+					inner = (ushort)(1 << (16 - depth));
+				x += (octant & 1) > 0 ? outer : inner;
+				y += (octant & 2) > 0 ? outer : inner;
+				z += (octant & 4) > 0 ? outer : inner;
 			}
 			public abstract void Clear();
 			public abstract void Write(Stream stream);
@@ -490,8 +492,8 @@ namespace Voxel2Pixel.Model
 									x: out ushort edgeX,
 									y: out ushort edgeY,
 									z: out _);
-								if (yFirst && edgeX - voxelXStart <= edgeY - voxelYStart
-									|| !yFirst && edgeX - voxelXStart < edgeY - voxelYStart)
+								if (yFirst && edgeX - voxelXStart < edgeY - voxelYStart
+									|| !yFirst && edgeX - voxelXStart <= edgeY - voxelYStart)
 								{
 									voxelY = getY(
 										startX: voxelXStart,

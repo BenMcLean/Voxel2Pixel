@@ -245,5 +245,46 @@ namespace Voxel2PixelTest.Model
 		public void PrintStuff() =>
 			output.WriteLine(new SvoModel(new VoxFileModel(@"..\..\..\NumberCube.vox"))
 				.PrintStuff(1, 1, 1));
+		/*
+		[Fact]
+		public void TurtleTest()
+		{
+			static ushort expected(ushort startX, ushort startY, ushort newX, bool yFirst = false)
+			{
+				ushort x = startX,
+					y = startY;
+				while (x != newX)
+				{
+					if (yFirst && x - startX < y - startY
+						|| !yFirst && x - startX <= y - startY)
+						x++;
+					else
+						y++;
+				}
+				return y;
+			}
+			static ushort actual(ushort startX, ushort startY, ushort newX, bool yFirst = false) => (ushort)(startY + newX - startX - (yFirst || (startX == newX) ? 0 : 1));
+			//startX + newY - startY - (((startY != newY) && yFirst) ? 1 : 0)
+			for (ushort startX = 0; startX < 9; startX++)
+				for (ushort startY = 0; startY < 9; startY++)
+					for (ushort newX = startX; newX < startX + 9; newX++)
+					{
+						output.WriteLine(string.Join(", ",
+							"startX: " + startX,
+							"startY: " + startY,
+							"newX: " + newX,
+							"expected newY false: " + expected(startX, startY, newX, false),
+							"actual newY false: " + actual(startX, startY, newX, false),
+							"expected newY true: " + expected(startX, startY, newX, true),
+							"actual newY true: " + actual(startX, startY, newX, true)));
+						Assert.Equal(
+							expected: expected(startX, startY, newX, false),
+							actual: actual(startX, startY, newX, false));
+						Assert.Equal(
+							expected: expected(startX, startY, newX, true),
+							actual: actual(startX, startY, newX, true));
+					}
+		}
+		*/
 	}
 }
