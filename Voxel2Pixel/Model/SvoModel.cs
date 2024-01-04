@@ -516,6 +516,79 @@ namespace Voxel2Pixel.Model
 					}
 				}
 		}
+		public void Above(IRectangleRenderer renderer)
+		{
+			static ushort getY(ushort startY, ushort startZ, ushort newZ, bool zFirst = false) => (ushort)(startY + newZ - startZ - (zFirst && startZ != newZ ? 1 : 0));
+			static ushort getZ(ushort startY, ushort startZ, ushort newY, bool zFirst = false) => (ushort)(startZ + newY - startY - (zFirst || startY == newY ? 0 : 1));
+			ushort pixelHeight = (ushort)(SizeY + SizeZ);
+			for (ushort x = 0; x < SizeX; x++)
+				for (ushort pixelY = 0; pixelY < pixelHeight; pixelY++)
+				{
+					bool zFirst = pixelY < SizeY;
+					ushort voxelYStart = (ushort)Math.Max(0, SizeY - 1 - pixelY),
+						voxelZStart = (ushort)Math.Min(SizeZ - 1, pixelHeight - 1 - pixelY),
+						voxelY = voxelYStart;
+					int voxelZ = voxelZStart;
+					while (voxelY < SizeY && voxelZ >= 0)
+					{
+						if (FindVoxel(
+							x: x,
+							y: voxelY,
+							z: (ushort)voxelZ,
+							node: out Node node,
+							octant: out byte octant) is byte index && index != 0)
+						{
+							renderer.Rect(
+								x: x,
+								y: pixelY,
+								index: index,
+								visibleFace: zFirst && voxelY - voxelYStart > voxelZStart - voxelZ
+									|| !zFirst && voxelY - voxelYStart >= voxelZStart - voxelZ ?
+									VisibleFace.Front
+									: VisibleFace.Top);
+							break;
+						}
+						else
+						{
+							if (node.Depth < 2)
+								break;
+							//if (node is Leaf)
+							if (zFirst && voxelY - voxelYStart > voxelZStart - voxelZ
+								|| !zFirst && voxelY - voxelYStart >= voxelZStart - voxelZ)
+								voxelZ--;
+							else
+								voxelY++;
+							//else
+							//{
+							//	node.Edge(
+							//		octant: octant,
+							//		x: out ushort edgeX,
+							//		y: out ushort edgeY,
+							//		z: out _);
+							//	if (yFirst && edgeX - voxelXStart < edgeY - voxelYStart
+							//		|| !yFirst && edgeX - voxelXStart <= edgeY - voxelYStart)
+							//	{
+							//		voxelY = getY(
+							//			startX: voxelXStart,
+							//			startY: voxelYStart,
+							//			newX: edgeX,
+							//			yFirst: yFirst);
+							//		voxelX = edgeX;
+							//	}
+							//	else
+							//	{
+							//		voxelX = getX(
+							//			startX: voxelXStart,
+							//			startY: voxelYStart,
+							//			newY: edgeY,
+							//			yFirst: yFirst);
+							//		voxelY = edgeY;
+							//	}
+							//}
+						}
+					}
+				}
+		}
 		public string PrintStuff(ushort x, ushort y, ushort z)
 		{
 			if (this.IsOutside(x, y, z))

@@ -242,6 +242,31 @@ namespace Voxel2PixelTest.Model
 				.SaveAsGif("SvoModelDiagonal.gif");
 		}
 		[Fact]
+		public void AboveDrawTest()
+		{
+			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
+			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
+			SvoModel svo = new SvoModel(model);
+			Sprite[] sprites = new Sprite[2]
+			{
+				new Sprite(svo.SizeX, (ushort)(svo.SizeY + svo.SizeZ))
+				{
+					VoxelColor = voxelColor,
+				},
+				new Sprite(svo.SizeX, (ushort)(svo.SizeY + svo.SizeZ))
+				{
+					VoxelColor = voxelColor,
+				}
+			};
+			svo.Above(sprites[0]);
+			VoxelDraw.Above(svo, sprites[1]);
+			sprites
+				.AddFrameNumbers()
+				.Select(sprite => sprite.Upscale(16, 16))
+				.AnimatedGif(frameDelay: 100)
+				.SaveAsGif("SvoModelAbove.gif");
+		}
+		[Fact]
 		public void PrintStuff() =>
 			output.WriteLine(new SvoModel(new VoxFileModel(@"..\..\..\NumberCube.vox"))
 				.PrintStuff(1, 1, 1));
