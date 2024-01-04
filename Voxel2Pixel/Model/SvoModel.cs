@@ -565,6 +565,7 @@ namespace Voxel2Pixel.Model
 									y: out ushort _,
 									z: out ushort edgeZ);
 								edgeZ--;
+								//TODO: The current issue occurs when Z is in one of the upper octants but not when it is in one of the lower octants. Fixing it will require a new method that returns the inner edges of an empty octant instead of the outer edges. Probably most efficient to make one specifically for this Y+,Z- use case.
 								node.Edge(
 									octant: octant,
 									x: out ushort _,
