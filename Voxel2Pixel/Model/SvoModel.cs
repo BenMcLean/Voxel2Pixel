@@ -519,7 +519,7 @@ namespace Voxel2Pixel.Model
 		public void Above(IRectangleRenderer renderer)
 		{
 			static ushort getY(ushort startY, ushort startZ, ushort newZ, bool zFirst = false) => (ushort)(startY + newZ - startZ - (zFirst && startZ != newZ ? 1 : 0));
-			static ushort getZ(ushort startY, ushort startZ, ushort newY, bool zFirst = false) => (ushort)(startZ + newY - startY - (zFirst || startY == newY ? 0 : 1));
+			static int getZ(ushort startY, ushort startZ, ushort newY, bool zFirst = false) => startZ - (newY - startY) - (zFirst || startY == newY ? 0 : 1);
 			ushort pixelHeight = (ushort)(SizeY + SizeZ);
 			for (ushort x = 0; x < SizeX; x++)
 				for (ushort pixelY = 0; pixelY < pixelHeight; pixelY++)
@@ -552,39 +552,44 @@ namespace Voxel2Pixel.Model
 						{
 							if (node.Depth < 2)
 								break;
-							//if (node is Leaf)
-							if (zFirst && voxelY - voxelYStart > voxelZStart - voxelZ
-								|| !zFirst && voxelY - voxelYStart >= voxelZStart - voxelZ)
-								voxelZ--;
+							if (node is Leaf)
+								if (zFirst && voxelY - voxelYStart > voxelZStart - voxelZ
+									|| !zFirst && voxelY - voxelYStart >= voxelZStart - voxelZ)
+									voxelZ--;
+								else
+									voxelY++;
 							else
-								voxelY++;
-							//else
-							//{
-							//	node.Edge(
-							//		octant: octant,
-							//		x: out ushort _,
-							//		y: out ushort edgeY,
-							//		z: out ushort edgeZ);
-							//	if (zFirst && edgeY - voxelYStart < voxelZStart - edgeZ
-							//		|| !zFirst && edgeY - voxelYStart <= voxelZStart - edgeZ)
-							//	{
-							//		voxelZ = getZ(
-							//			startY: voxelYStart,
-							//			startZ: voxelZStart,
-							//			newY: edgeY,
-							//			zFirst: zFirst);
-							//		voxelY = edgeY;
-							//	}
-							//	else
-							//	{
-							//		voxelY = getY(
-							//			startY: voxelYStart,
-							//			startZ: voxelZStart,
-							//			newZ: edgeZ,
-							//			zFirst: zFirst);
-							//		voxelZ = edgeZ;
-							//	}
-							//}
+							{
+								node.Position(
+									x: out ushort _,
+									y: out ushort _,
+									z: out ushort edgeZ);
+								edgeZ--;
+								node.Edge(
+									octant: octant,
+									x: out ushort _,
+									y: out ushort edgeY,
+									z: out ushort _);
+								if (zFirst && edgeY - voxelYStart < voxelZStart - edgeZ
+									|| !zFirst && edgeY - voxelYStart <= voxelZStart - edgeZ)
+								{
+									voxelZ = getZ(
+										startY: voxelYStart,
+										startZ: voxelZStart,
+										newY: edgeY,
+										zFirst: zFirst);
+									voxelY = edgeY;
+								}
+								else
+								{
+									voxelY = getY(
+										startY: voxelYStart,
+										startZ: voxelZStart,
+										newZ: edgeZ,
+										zFirst: zFirst);
+									voxelZ = edgeZ;
+								}
+							}
 						}
 					}
 				}
