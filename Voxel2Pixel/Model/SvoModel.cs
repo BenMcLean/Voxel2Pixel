@@ -562,27 +562,27 @@ namespace Voxel2Pixel.Model
 							//{
 							//	node.Edge(
 							//		octant: octant,
-							//		x: out ushort edgeX,
+							//		x: out ushort _,
 							//		y: out ushort edgeY,
-							//		z: out _);
-							//	if (yFirst && edgeX - voxelXStart < edgeY - voxelYStart
-							//		|| !yFirst && edgeX - voxelXStart <= edgeY - voxelYStart)
+							//		z: out ushort edgeZ);
+							//	if (zFirst && edgeY - voxelYStart < voxelZStart - edgeZ
+							//		|| !zFirst && edgeY - voxelYStart <= voxelZStart - edgeZ)
 							//	{
-							//		voxelY = getY(
-							//			startX: voxelXStart,
+							//		voxelZ = getZ(
 							//			startY: voxelYStart,
-							//			newX: edgeX,
-							//			yFirst: yFirst);
-							//		voxelX = edgeX;
+							//			startZ: voxelZStart,
+							//			newY: edgeY,
+							//			zFirst: zFirst);
+							//		voxelY = edgeY;
 							//	}
 							//	else
 							//	{
-							//		voxelX = getX(
-							//			startX: voxelXStart,
+							//		voxelY = getY(
 							//			startY: voxelYStart,
-							//			newY: edgeY,
-							//			yFirst: yFirst);
-							//		voxelY = edgeY;
+							//			startZ: voxelZStart,
+							//			newZ: edgeZ,
+							//			zFirst: zFirst);
+							//		voxelZ = edgeZ;
 							//	}
 							//}
 						}
