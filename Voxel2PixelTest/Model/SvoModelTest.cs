@@ -273,37 +273,37 @@ namespace Voxel2PixelTest.Model
 		[Fact]
 		public void TurtleTest()
 		{
-			static int expected(ushort startY, ushort startZ, ushort newY, bool zFirst = false)
+			static ushort expected(ushort startY, ushort startZ, ushort newZ, bool zFirst = false)
 			{
 				ushort y = startY;
 				int z = startZ;
-				while (y != newY)
+				while (z != newZ)
 					if (zFirst && y - startY < startZ - z
 						|| !zFirst && y - startY <= startZ - z)
 						y++;
 					else
 						z--;
-				return z;
+				return y;
 			}
-			static int actual(ushort startY, ushort startZ, ushort newY, bool zFirst = false) => startZ - (newY - startY) + (!zFirst && startY != newY ? 1 : 0);
+			static ushort actual(ushort startY, ushort startZ, ushort newZ, bool zFirst = false) => (ushort)(startY + startZ - newZ - (zFirst && startZ != newZ ? 1 : 0));
 			for (ushort startY = 10; startY < 19; startY++)
 				for (ushort startZ = 10; startZ < 19; startZ++)
-					for (ushort newY = startY; newY < startY + 9; newY++)
+					for (ushort newZ = startZ; newZ > startZ - 9; newZ--)
 					{
 						output.WriteLine(string.Join(", ",
 							"startX: " + startY,
 							"startY: " + startZ,
-							"newY: " + newY,
-							"expected newZ false: " + expected(startY, startZ, newY, false),
-							"actual newZ false: " + actual(startY, startZ, newY, false),
-							"expected newZ true: " + expected(startY, startZ, newY, true),
-							"actual newZ true: " + actual(startY, startZ, newY, true)));
+							"newZ: " + newZ,
+							"expected newY false: " + expected(startY, startZ, newZ, false),
+							"actual newY false: " + actual(startY, startZ, newZ, false),
+							"expected newY true: " + expected(startY, startZ, newZ, true),
+							"actual newY true: " + actual(startY, startZ, newZ, true)));
 						Assert.Equal(
-							expected: expected(startY, startZ, newY, false),
-							actual: actual(startY, startZ, newY, false));
+							expected: expected(startY, startZ, newZ, false),
+							actual: actual(startY, startZ, newZ, false));
 						Assert.Equal(
-							expected: expected(startY, startZ, newY, true),
-							actual: actual(startY, startZ, newY, true));
+							expected: expected(startY, startZ, newZ, true),
+							actual: actual(startY, startZ, newZ, true));
 					}
 		}
 	}
