@@ -278,14 +278,14 @@ namespace Voxel2PixelTest.Model
 				ushort y = startY;
 				int z = startZ;
 				while (z != newZ)
-					if (zFirst && y - startY < startZ - z
-						|| !zFirst && y - startY <= startZ - z)
-						y++;
-					else
+					if (zFirst && y - startY > startZ - z
+						|| !zFirst && y - startY >= startZ - z)
 						z--;
+					else
+						y++;
 				return y;
 			}
-			static ushort actual(ushort startY, ushort startZ, ushort newZ, bool zFirst = false) => (ushort)(startY + startZ - newZ - (zFirst && startZ != newZ ? 1 : 0));
+			static ushort actual(ushort startY, ushort startZ, ushort newZ, bool zFirst = false) => (ushort)(startY + startZ - newZ - (!zFirst && startZ != newZ ? 1 : 0));
 			for (ushort startY = 10; startY < 19; startY++)
 				for (ushort startZ = 10; startZ < 19; startZ++)
 					for (ushort newZ = startZ; newZ > startZ - 9; newZ--)
