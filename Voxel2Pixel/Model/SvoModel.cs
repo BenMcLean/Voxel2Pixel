@@ -529,7 +529,7 @@ namespace Voxel2Pixel.Model
 		public void Above(IRectangleRenderer renderer)
 		{
 			static ushort getY(ushort startY, ushort startZ, ushort newZ, bool zFirst = false) => (ushort)(startY + startZ - newZ - (!zFirst && startZ != newZ ? 1 : 0));
-			static int getZ(ushort startY, ushort startZ, ushort newY, bool zFirst = false) => startZ - (newY - startY) + (!zFirst && startY != newY ? 1 : 0);
+			static int getZ(ushort startY, ushort startZ, ushort newY, bool zFirst = false) => startZ - (newY - startY) + (zFirst && startY != newY ? 1 : 0);
 			ushort pixelHeight = (ushort)(SizeY + SizeZ);
 			for (ushort x = 0; x < SizeX; x++)
 				for (ushort pixelY = 0; pixelY < pixelHeight; pixelY++)
