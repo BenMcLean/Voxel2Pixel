@@ -84,7 +84,7 @@ namespace Voxel2Pixel.Model
 					inner = (ushort)(1 << (16 - depth));
 				x += (octant & 1) > 0 ? outer : inner;
 				y += (octant & 2) > 0 ? outer : inner;
-				z = @ushort + ((octant & 4) > 0 ? inner : 0);
+				z = @ushort + ((octant & 4) > 0 ? inner : 0) - 1;
 			}
 			public abstract void Clear();
 			public abstract void Write(Stream stream);
@@ -528,8 +528,8 @@ namespace Voxel2Pixel.Model
 		}
 		public void Above(IRectangleRenderer renderer)
 		{
-			static ushort getY(ushort startY, ushort startZ, ushort newZ, bool zFirst = false) => (ushort)(startY + startZ - newZ - (!zFirst && startZ != newZ ? 1 : 0));
-			static int getZ(ushort startY, ushort startZ, ushort newY, bool zFirst = false) => startZ - (newY - startY) + (zFirst && startY != newY ? 1 : 0);
+			static ushort getY(ushort startY, int startZ, int newZ, bool zFirst = false) => (ushort)(startY + startZ - newZ - (!zFirst && startZ != newZ ? 1 : 0));
+			static int getZ(ushort startY, int startZ, ushort newY, bool zFirst = false) => startZ - (newY - startY) + (zFirst && startY != newY ? 1 : 0);
 			ushort pixelHeight = (ushort)(SizeY + SizeZ);
 			for (ushort x = 0; x < SizeX; x++)
 				for (ushort pixelY = 0; pixelY < pixelHeight; pixelY++)
@@ -570,14 +570,11 @@ namespace Voxel2Pixel.Model
 									voxelY++;
 							else
 							{
-								//TODO: The current issue occurs when Z is in one of the upper octants but not when it is in one of the lower octants. Fixing it will require a new method that returns the inner edges of an empty octant instead of the outer edges. Probably most efficient to make one specifically for this Y+,Z- use case.
 								node.EdgeNegativeZ(
 									octant: octant,
 									x: out _,
 									y: out ushort edgeY,
 									z: out int edgeZ);
-								//if (edgeZ > 0)
-								//	edgeZ--;
 								if (zFirst && edgeY - voxelYStart < voxelZStart - edgeZ
 									|| !zFirst && edgeY - voxelYStart <= voxelZStart - edgeZ)
 								{
@@ -593,7 +590,7 @@ namespace Voxel2Pixel.Model
 									voxelY = getY(
 										startY: voxelYStart,
 										startZ: voxelZStart,
-										newZ: (ushort)edgeZ,
+										newZ: edgeZ,
 										zFirst: zFirst);
 									voxelZ = edgeZ;
 								}

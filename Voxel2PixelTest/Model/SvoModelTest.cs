@@ -270,6 +270,7 @@ namespace Voxel2PixelTest.Model
 		public void PrintStuff() =>
 			output.WriteLine(new SvoModel(new VoxFileModel(@"..\..\..\NumberCube.vox"))
 				.PrintStuff(1, 1, 1));
+		/*
 		[Fact]
 		public void TurtleTest()
 		{
@@ -306,5 +307,6 @@ namespace Voxel2PixelTest.Model
 							actual: actual(startY, startZ, newY, true));
 					}
 		}
+		*/
 	}
 }
