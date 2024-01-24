@@ -308,5 +308,34 @@ namespace Voxel2PixelTest.Model
 					}
 		}
 		*/
+		[Fact]
+		public void AnimatedTest()
+		{
+			ushort voxelWidth = 5,
+				voxelDepth = voxelWidth,
+				voxelHeight = voxelWidth,
+				pixelWidth = voxelWidth,
+				pixelHeight = (ushort)(voxelDepth + voxelHeight + 1);
+			IVoxelColor voxelColor = new NaiveDimmer(ImageMaker.RainbowPalette);
+			List<Sprite> frames = new();
+			for (ushort z = 0; z < voxelHeight; z++)
+				for (ushort x = 0; x < voxelWidth; x++)
+					for (ushort y = 0; y < voxelDepth; y++)
+					{
+						SvoModel model = new(voxelWidth, voxelDepth, voxelHeight);
+						model[x, y, z] = 1;
+						Sprite sprite = new(pixelWidth, pixelHeight)
+						{
+							VoxelColor = voxelColor,
+						};
+						model.Above(sprite);
+						frames.Add(sprite
+							.Upscale(4, 4)
+							.Draw3x4Bottom(string.Join(",", x, y, z))
+							.Upscale(6, 6));
+					}
+			frames.AnimatedGif(frameDelay: 75)
+				.SaveAsGif("AnimatedTest.gif");
+		}
 	}
 }

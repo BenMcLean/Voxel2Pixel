@@ -15,12 +15,12 @@ namespace Voxel2PixelTest.Draw
 		{
 			ushort width = 2, height = 2, xScale = 32, yScale = 32, xTile = 1, yTile = 1;
 			byte[] bytes = new byte[width * height * 4]
-			.DrawPixel(0xFF0000FFu, 0, 0, width)
-			.DrawPixel(0x00FF00FFu, 1, 0, width)
-			.DrawPixel(0x0000FFFFu, 0, 1, width)
-			.DrawPixel(0x808080FFu, 1, 1, width)
-			.Upscale(xScale, yScale, width)
-			.DrawRectangle(0xFFu, width * xScale / 4, height * yScale / 4, width * xScale / 4 * 2, height * yScale / 4 * 2, (ushort)(width * xScale));
+				.DrawPixel(0xFF0000FFu, 0, 0, width)
+				.DrawPixel(0x00FF00FFu, 1, 0, width)
+				.DrawPixel(0x0000FFFFu, 0, 1, width)
+				.DrawPixel(0x808080FFu, 1, 1, width)
+				.Upscale(xScale, yScale, width)
+				.DrawRectangle(0xFFu, width * xScale / 4, height * yScale / 4, width * xScale / 4 * 2, height * yScale / 4 * 2, (ushort)(width * xScale));
 			//.DrawTriangle(0, 128, 0, 255, 10, 10, 40, 40, width * xScale);
 			//.Rotate180(width * xScale);
 			//int swap = xScale;
@@ -34,7 +34,7 @@ namespace Voxel2PixelTest.Draw
 				.SaveAsPng("output.png");
 			byte[] isoSlant = bytes.IsoSlantDown((ushort)(width * xScale * xTile));
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(isoSlant, width * xScale * xTile * 2, isoSlant.Length / (width * xScale * xTile * 8))
-			.SaveAsPng("IsoSlantDown.png");
+				.SaveAsPng("IsoSlantDown.png");
 			ushort isoWidth = (ushort)(width * xScale * xTile + height * yScale * yTile);
 			byte[] isoTile = bytes
 				.DrawPixel(0x800000FFu, 0, 0, (ushort)(width * xScale * xTile))
@@ -44,7 +44,7 @@ namespace Voxel2PixelTest.Draw
 				.RotateCounter45((ushort)(width * xScale * xTile));
 			ushort isoHeight = (ushort)(isoTile.Length / (isoWidth * 4));
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(isoTile, isoWidth, isoHeight)
-			.SaveAsPng("rotated.png");
+				.SaveAsPng("rotated.png");
 			//Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes.Resize(800, 600, width * xScale * xTile), 800, 600)
 			//	.SaveAsPng("800x600.png");
 			byte[] stamp = (byte[])isoTile.Clone();
@@ -78,7 +78,7 @@ namespace Voxel2PixelTest.Draw
 					threshold: 1,
 					width: isoWidth);
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(isoTile, isoWidth, isoHeight)
-			.SaveAsPng("stamped.png");
+				.SaveAsPng("stamped.png");
 		}
 		[Fact]
 		public void DrawRectangleTest()

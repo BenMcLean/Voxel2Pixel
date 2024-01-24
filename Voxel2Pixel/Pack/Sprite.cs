@@ -203,9 +203,24 @@ namespace Voxel2Pixel.Pack
 		}.AddRange(this.Select(point => new KeyValuePair<string, Point>(
 			key: point.Key,
 			value: new Point(
-				X: (ushort)(point.Value.X * factorX),
-				Y: (ushort)(point.Value.Y * factorY)))));
+				X: point.Value.X * factorX,
+				Y: point.Value.Y * factorY))));
 		public static IEnumerable<Sprite> AddFrameNumbers(uint color = 0xFFFFFFFF, params Sprite[] sprites) => sprites.AsEnumerable().AddFrameNumbers(color);
+		public Sprite Draw3x4(string @string, int x = 0, int y = 0, uint color = 0xFFFFFFFF)
+		{
+			Texture.Draw3x4(
+				@string: @string,
+				width: Width,
+				x: x,
+				y: y,
+				color: color);
+			return this;
+		}
+		public Sprite Draw3x4Bottom(string @string, uint color = 0xFFFFFFFF) => Draw3x4(
+			@string: @string,
+			x: 0,
+			y: Height - 4,
+			color: color);
 		#endregion Image manipulation
 		#region Voxel drawing
 		public static IEnumerable<Sprite> Above4(IModel model, IVoxelColor voxelColor, params ushort[] voxelOrigin)
