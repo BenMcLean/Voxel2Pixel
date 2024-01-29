@@ -26,7 +26,7 @@ namespace Voxel2PixelTest.Model
 		public void LeafTest()
 		{
 			byte[] bytes = Enumerable.Range(1, 8).Select(i => (byte)i).ToArray();
-			Leaf leaf = new Leaf(null, 0);
+			Leaf leaf = new(null, 0);
 			for (byte i = 0; i < bytes.Length; i++)
 			{
 				leaf[i] = bytes[i];
@@ -35,7 +35,7 @@ namespace Voxel2PixelTest.Model
 					actual: leaf[i]);
 			}
 			byte[] written;
-			using (MemoryStream ms = new MemoryStream())
+			using (MemoryStream ms = new())
 			{
 				leaf.Write(ms);
 				written = ms.ToArray();
@@ -45,8 +45,8 @@ namespace Voxel2PixelTest.Model
 		[Fact]
 		public void ModelTest()
 		{
-			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
-			SvoModel svo = new SvoModel(model);
+			VoxFileModel model = new(@"..\..\..\Sora.vox");
+			SvoModel svo = new(model);
 			foreach (Voxel voxel in model)
 			{
 				Assert.Equal(
@@ -72,13 +72,13 @@ namespace Voxel2PixelTest.Model
 		[Fact]
 		public void OneVoxelTest()
 		{
-			SvoModel svoModel = new SvoModel()
+			SvoModel svoModel = new()
 			{
 				SizeX = ushort.MaxValue,
 				SizeY = ushort.MaxValue,
 				SizeZ = ushort.MaxValue,
 			};
-			Voxel voxel = new Voxel(
+			Voxel voxel = new(
 				X: ushort.MaxValue - 1,
 				Y: ushort.MaxValue - 1,
 				Z: ushort.MaxValue - 1,
@@ -100,7 +100,7 @@ namespace Voxel2PixelTest.Model
 		[Fact]
 		public void TrimTest()
 		{
-			SvoModel svoModel = new SvoModel()
+			SvoModel svoModel = new()
 			{
 				SizeX = ushort.MaxValue,
 				SizeY = ushort.MaxValue,
@@ -133,9 +133,9 @@ namespace Voxel2PixelTest.Model
 		[Fact]
 		public void WriteReadTest()
 		{
-			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
-			SvoModel svo = new SvoModel(model),
-				svo2 = new SvoModel(svo.Z85(), svo.SizeX, svo.SizeY, svo.SizeZ);
+			VoxFileModel model = new(@"..\..\..\Sora.vox");
+			SvoModel svo = new(model),
+				svo2 = new(svo.Z85(), svo.SizeX, svo.SizeY, svo.SizeZ);
 			foreach (Voxel voxel in svo)
 			{
 				Assert.Equal(
@@ -161,7 +161,7 @@ namespace Voxel2PixelTest.Model
 		private void OutputNode(Node node)
 		{
 			byte[] written;
-			using (MemoryStream ms = new MemoryStream())
+			using (MemoryStream ms = new())
 			{
 				node.Write(ms);
 				written = ms.ToArray();
@@ -172,7 +172,7 @@ namespace Voxel2PixelTest.Model
 		[Fact]
 		public void LeftTest()
 		{
-			Random rng = new Random();
+			Random rng = new();
 			ushort Next()
 			{
 				byte[] two = new byte[2];
@@ -181,7 +181,7 @@ namespace Voxel2PixelTest.Model
 			}
 			ushort x = Next(), z = Next();
 			byte left(byte count) => (byte)(((z >> count) & 1) << 2 | (x >> count) & 1);
-			Stack<byte> octants = new Stack<byte>();
+			Stack<byte> octants = new();
 			while (octants.Count < 17)
 				octants.Push(left((byte)octants.Count));
 			ushort x2 = 0, z2 = 0;
@@ -204,9 +204,9 @@ namespace Voxel2PixelTest.Model
 		[Fact]
 		public void FrontDrawTest()
 		{
-			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
-			SvoModel svo = new SvoModel(model);
-			Sprite sprite = new Sprite(svo.SizeX, svo.SizeZ)
+			VoxFileModel model = new(@"..\..\..\Sora.vox");
+			SvoModel svo = new(model);
+			Sprite sprite = new(svo.SizeX, svo.SizeZ)
 			{
 				VoxelColor = new NaiveDimmer(model.Palette),
 			};
@@ -219,9 +219,9 @@ namespace Voxel2PixelTest.Model
 		[Fact]
 		public void DiagonalDrawTest()
 		{
-			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
+			VoxFileModel model = new(@"..\..\..\Sora.vox");
 			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
-			SvoModel svo = new SvoModel(model);
+			SvoModel svo = new(model);
 			Sprite[] sprites = new Sprite[2]
 			{
 				new Sprite((ushort)(svo.SizeX + svo.SizeY), svo.SizeZ)
@@ -244,16 +244,16 @@ namespace Voxel2PixelTest.Model
 		[Fact]
 		public void AboveDrawTest()
 		{
-			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
+			VoxFileModel model = new(@"..\..\..\Sora.vox");
 			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
-			SvoModel svo = new SvoModel(model);
+			SvoModel svo = new(model);
 			Sprite[] sprites = new Sprite[2]
 			{
-				new Sprite(svo.SizeX, (ushort)(svo.SizeY + svo.SizeZ))
+				new(svo.SizeX, (ushort)(svo.SizeY + svo.SizeZ))
 				{
 					VoxelColor = voxelColor,
 				},
-				new Sprite(svo.SizeX, (ushort)(svo.SizeY + svo.SizeZ))
+				new(svo.SizeX, (ushort)(svo.SizeY + svo.SizeZ))
 				{
 					VoxelColor = voxelColor,
 				}
@@ -336,6 +336,36 @@ namespace Voxel2PixelTest.Model
 					}
 			frames.AnimatedGif(frameDelay: 75)
 				.SaveAsGif("AnimatedTest.gif");
+		}
+		private class CountRenderer : IRectangleRenderer
+		{
+			public int Count { get; set; } = 0;
+			public void Rect(ushort x, ushort y, uint color, ushort sizeX = 1, ushort sizeY = 1) => Count += sizeX * sizeY;
+			public void Rect(ushort x, ushort y, byte index, VisibleFace visibleFace = VisibleFace.Front, ushort sizeX = 1, ushort sizeY = 1) => Count += sizeX * sizeY;
+		}
+		[Fact]
+		public void CountTest()
+		{
+			ushort voxelDepth = 5,
+				voxelHeight = 5;
+			List<Voxel2Pixel.Model.Point> points = new();
+			CountRenderer countRenderer = new();
+			for (ushort z = 0; z < voxelHeight; z++)
+				for (ushort y = 0; y < voxelDepth; y++)
+				{
+					SvoModel model = new(1, voxelDepth, voxelHeight);
+					model[0, y, z] = 1;
+					countRenderer.Count = 0;
+					model.Above(countRenderer);
+					if (countRenderer.Count != 2)
+						points.Add(new Voxel2Pixel.Model.Point
+						{
+							X = y,
+							Y = z,
+						});
+				}
+			output.WriteLine("Count = " + points.Count());
+			output.WriteLine(string.Join(",", points.Select(p => "(" + p.X + "," + p.Y + ")")));
 		}
 	}
 }
