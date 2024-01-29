@@ -366,6 +366,7 @@ namespace Voxel2PixelTest.Model
 				}
 			output.WriteLine("Count = " + points.Count());
 			output.WriteLine(string.Join(",", points.Select(p => "(" + p.X + "," + p.Y + ")")));
+			Assert.Empty(points);
 		}
 	}
 }
