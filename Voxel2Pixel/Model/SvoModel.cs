@@ -66,20 +66,22 @@ namespace Voxel2Pixel.Model
 				ushort size = Size;
 				x += size; y += size; z += size;
 			}
-			public virtual void Edge(byte octant, out ushort x, out ushort y, out ushort z)
+			public virtual void Edge(byte octant, out ushort x, out ushort y, out ushort z) => Edge(octant: octant, x: out x, y: out y, z: out z, depth: out _);
+			public virtual void Edge(byte octant, out ushort x, out ushort y, out ushort z, out byte depth)
 			{
 				Position(out x, out y, out z);
-				byte depth = Depth;
+				depth = Depth;
 				ushort outer = (ushort)(1 << (17 - depth)),
 					inner = (ushort)(1 << (16 - depth));
 				x += (octant & 1) > 0 ? outer : inner;
 				y += (octant & 2) > 0 ? outer : inner;
 				z += (octant & 4) > 0 ? outer : inner;
 			}
-			public virtual void EdgeNegativeZ(byte octant, out ushort x, out ushort y, out int z)
+			public virtual void EdgeNegativeZ(byte octant, out ushort x, out ushort y, out int z) => EdgeNegativeZ(octant: octant, x: out x, y: out y, z: out z, depth: out _);
+			public virtual void EdgeNegativeZ(byte octant, out ushort x, out ushort y, out int z, out byte depth)
 			{
 				Position(out x, out y, z: out ushort @ushort);
-				byte depth = Depth;
+				depth = Depth;
 				ushort outer = (ushort)(1 << (17 - depth)),
 					inner = (ushort)(1 << (16 - depth));
 				x += (octant & 1) > 0 ? outer : inner;
@@ -487,7 +489,13 @@ namespace Voxel2Pixel.Model
 						}
 						else
 						{
-							if (node.Depth < 2)
+							node.Edge(
+								octant: octant,
+								x: out ushort edgeX,
+								y: out ushort edgeY,
+								z: out _,
+								depth: out byte depth);
+							if (depth < 2)
 								break;
 							if (node is Leaf)
 								if (yFirst && voxelX - voxelXStart >= voxelY - voxelYStart
@@ -497,11 +505,6 @@ namespace Voxel2Pixel.Model
 									voxelX++;
 							else
 							{
-								node.Edge(
-									octant: octant,
-									x: out ushort edgeX,
-									y: out ushort edgeY,
-									z: out _);
 								if (yFirst && edgeX - voxelXStart < edgeY - voxelYStart
 									|| !yFirst && edgeX - voxelXStart <= edgeY - voxelYStart)
 								{
@@ -560,7 +563,13 @@ namespace Voxel2Pixel.Model
 						}
 						else
 						{
-							if (node.Depth < 2)
+							node.EdgeNegativeZ(
+								octant: octant,
+								x: out _,
+								y: out ushort edgeY,
+								z: out int edgeZ,
+								depth: out byte depth);
+							if (depth < 2)
 								break;
 							if (node is Leaf)
 								if (zFirst && voxelY - voxelYStart > voxelZStart - voxelZ
@@ -570,11 +579,6 @@ namespace Voxel2Pixel.Model
 									voxelY++;
 							else
 							{
-								node.EdgeNegativeZ(
-									octant: octant,
-									x: out _,
-									y: out ushort edgeY,
-									z: out int edgeZ);
 								if (zFirst && edgeY - voxelYStart <= voxelZStart - edgeZ
 									|| !zFirst && edgeY - voxelYStart < voxelZStart - edgeZ)
 								{
