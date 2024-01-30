@@ -347,7 +347,7 @@ namespace Voxel2PixelTest.Model
 		public void CountTest()
 		{
 			ushort voxelDepth = 5,
-				voxelHeight = 5;
+				voxelHeight = voxelDepth;
 			List<Voxel2Pixel.Model.Point> points = new();
 			CountRenderer countRenderer = new();
 			for (ushort z = 0; z < voxelHeight; z++)

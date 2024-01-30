@@ -575,8 +575,8 @@ namespace Voxel2Pixel.Model
 									x: out _,
 									y: out ushort edgeY,
 									z: out int edgeZ);
-								if (zFirst && edgeY - voxelYStart < voxelZStart - edgeZ
-									|| !zFirst && edgeY - voxelYStart <= voxelZStart - edgeZ)
+								if (zFirst && edgeY - voxelYStart <= voxelZStart - edgeZ
+									|| !zFirst && edgeY - voxelYStart < voxelZStart - edgeZ)
 								{
 									voxelZ = getZ(
 										startY: voxelYStart,
@@ -599,6 +599,8 @@ namespace Voxel2Pixel.Model
 					}
 				}
 		}
+		#endregion VoxelDraw
+		#region Debug
 		public string PrintStuff(ushort x, ushort y, ushort z)
 		{
 			if (this.IsOutside(x, y, z))
@@ -640,6 +642,6 @@ namespace Voxel2Pixel.Model
 			}
 			return sb.ToString();
 		}
-		#endregion VoxelDraw
+		#endregion Debug
 	}
 }
