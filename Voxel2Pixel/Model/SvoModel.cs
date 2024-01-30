@@ -455,8 +455,6 @@ namespace Voxel2Pixel.Model
 		}
 		public void Diagonal(IRectangleRenderer renderer)
 		{
-			static ushort getX(ushort startX, ushort startY, ushort newY, bool yFirst = false) => (ushort)(startX + newY - startY - (yFirst && startY != newY ? 1 : 0));
-			static ushort getY(ushort startX, ushort startY, ushort newX, bool yFirst = false) => (ushort)(startY + newX - startX - (yFirst || startX == newX ? 0 : 1));
 			ushort pixelWidth = (ushort)(SizeX + SizeY);
 			for (ushort voxelZ = 0, pixelY = (ushort)(SizeZ - 1);
 				voxelZ < SizeZ;
@@ -508,20 +506,12 @@ namespace Voxel2Pixel.Model
 								if (yFirst && edgeX - voxelXStart < edgeY - voxelYStart
 									|| !yFirst && edgeX - voxelXStart <= edgeY - voxelYStart)
 								{
-									voxelY = getY(
-										startX: voxelXStart,
-										startY: voxelYStart,
-										newX: edgeX,
-										yFirst: yFirst);
+									voxelY = (ushort)(voxelYStart + edgeX - voxelXStart - (yFirst || voxelXStart == edgeX ? 0 : 1));
 									voxelX = edgeX;
 								}
 								else
 								{
-									voxelX = getX(
-										startX: voxelXStart,
-										startY: voxelYStart,
-										newY: edgeY,
-										yFirst: yFirst);
+									voxelX = (ushort)(voxelXStart + edgeY - voxelYStart - (yFirst && voxelXStart != edgeY ? 1 : 0));
 									voxelY = edgeY;
 								}
 							}
@@ -531,8 +521,6 @@ namespace Voxel2Pixel.Model
 		}
 		public void Above(IRectangleRenderer renderer)
 		{
-			static ushort getY(ushort startY, int startZ, int newZ, bool zFirst = false) => (ushort)(startY + startZ - newZ - (!zFirst && startZ != newZ ? 1 : 0));
-			static int getZ(ushort startY, int startZ, ushort newY, bool zFirst = false) => startZ - (newY - startY) + (zFirst && startY != newY ? 1 : 0);
 			ushort pixelHeight = (ushort)(SizeY + SizeZ);
 			for (ushort x = 0; x < SizeX; x++)
 				for (ushort pixelY = 0; pixelY < pixelHeight; pixelY++)
@@ -582,20 +570,12 @@ namespace Voxel2Pixel.Model
 								if (zFirst && edgeY - voxelYStart <= voxelZStart - edgeZ
 									|| !zFirst && edgeY - voxelYStart < voxelZStart - edgeZ)
 								{
-									voxelZ = getZ(
-										startY: voxelYStart,
-										startZ: voxelZStart,
-										newY: edgeY,
-										zFirst: zFirst);
+									voxelZ = voxelZStart - (edgeY - voxelYStart) + (zFirst && voxelYStart != edgeY ? 1 : 0);
 									voxelY = edgeY;
 								}
 								else
 								{
-									voxelY = getY(
-										startY: voxelYStart,
-										startZ: voxelZStart,
-										newZ: edgeZ,
-										zFirst: zFirst);
+									voxelY = (ushort)(voxelYStart + voxelZStart - edgeZ - (!zFirst && voxelZStart != edgeZ ? 1 : 0));
 									voxelZ = edgeZ;
 								}
 							}
