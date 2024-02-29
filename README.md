@@ -1,0 +1,2 @@
+# Voxel2Pixel
+Voxel2Pixel is a [C#](https://dotnet.microsoft.com/en-us/languages/csharp) [.NET Standard 2.0](https://learn.microsoft.com/en-us/dotnet/standard/net-standard) library for rendering [voxel models](https://www.megavoxels.com/learn/what-is-a-voxel/) as [pixel art assets](https://2dwillneverdie.com/intro/) from a variety of fixed [camera perspectives](https://opengameart.org/content/chapter-3-perspectives) and [palette limitations](https://lospec.com/palette-list) intended for use in retro-styled video games.
