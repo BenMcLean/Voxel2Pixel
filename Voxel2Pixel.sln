@@ -9,7 +9,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Voxel2PixelTest", "Voxel2Pi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VoxModel", "VoxModel\VoxModel.csproj", "{81D3261F-6CDE-463C-82F7-9C871D105156}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoxModelTest", "VoxModelTest\VoxModelTest.csproj", "{33304493-9D40-48BB-B648-5BAD74CAFA47}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VoxModelTest", "VoxModelTest\VoxModelTest.csproj", "{33304493-9D40-48BB-B648-5BAD74CAFA47}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6D083844-ED6D-4EB5-822F-E01AA866DD6E}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
