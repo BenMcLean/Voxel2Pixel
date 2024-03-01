@@ -81,17 +81,24 @@ namespace Voxel2Pixel
 				.OrderBy(point => point.Y)
 				.ThenBy(point => point.X)];
 			static double calculateSlope(Point a, Point b) => (double)(b.Y - a.Y) / (b.X - a.X);
+			bool[] hasInfiniteSlope = [
+				points[0].X == points[1].X || points[0].Y == points[1].Y,
+				points[0].X == points[2].X || points[0].Y == points[2].Y,
+				points[1].X == points[2].X || points[1].Y == points[2].Y,
+			];
 			double[] slopes = [
-				calculateSlope(points[0], points[1]),
-				calculateSlope(points[0], points[2]),
-				calculateSlope(points[1], points[2]),
+				hasInfiniteSlope[0] ? 0 : calculateSlope(points[0], points[1]),
+				hasInfiniteSlope[1] ? 0 : calculateSlope(points[0], points[2]),
+				hasInfiniteSlope[2] ? 0 : calculateSlope(points[1], points[2]),
 			];
 			double[] yIntercepts = [
 				-slopes[0] * points[0].X,
 				-slopes[1] * points[0].X,
 				-slopes[2] * points[1].X,
 			];
-			int solveForX(int y, byte edge) => Convert.ToInt32((y - yIntercepts[edge]) / slopes[edge]);
+			int solveForX(int y, byte edge) => hasInfiniteSlope[edge] ?
+				points[edge == 2 ? 1 : 0].X
+				: Convert.ToInt32((y - yIntercepts[edge]) / slopes[edge]);
 			for (int y = points[0].Y; y <= points[2].Y; y++)
 			{
 				bool isUp = y < points[1].Y;
