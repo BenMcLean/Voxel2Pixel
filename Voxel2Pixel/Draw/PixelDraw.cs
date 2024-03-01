@@ -20,7 +20,6 @@ namespace Voxel2Pixel.Draw
 	/// </summary>
 	public static class PixelDraw
 	{
-		//TODO: DrawTriangle
 		//TODO: DrawLine
 		//TODO: DrawCircle
 		//TODO: DrawEllipse
@@ -250,53 +249,6 @@ namespace Voxel2Pixel.Draw
 			}
 			return texture;
 		}
-		/*
-		public static byte[] DrawTriangle(this byte[] texture, int color, int x, int y, int triangleWidth, int triangleHeight, ushort width = 0) => DrawTriangle(texture, (byte)(color >> 24), (byte)(color >> 16), (byte)(color >> 8), (byte)color, x, y, triangleWidth, triangleHeight, width);
-		public static byte[] DrawTriangle(this byte[] texture, byte red, byte green, byte blue, byte alpha, int x, int y, int triangleWidth, int triangleHeight, ushort width = 0)
-		{
-			int textureWidth = width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width,
-				xSide = textureWidth << 2,
-				ySide = (width < 1 ? xSide : texture.Length / width) >> 2;
-			if ((x < 0 && x + triangleWidth < 0)
-				|| (x > textureWidth && x + triangleWidth > textureWidth)
-				|| (y < 0 && y + triangleHeight < 0)
-				|| (y > ySide && y + triangleHeight > ySide))
-				return texture; // Triangle is completely outside the texture bounds.
-			int realX = x < 1 ? 0 : Math.Min(xSide, x << 2),
-				realY = y < 1 ? 0 : (Math.Min(y, ySide) * xSide);
-			bool isWide = triangleWidth > 0,
-				isTall = triangleHeight > 0;
-			triangleWidth = Math.Abs(triangleWidth);
-			triangleHeight = Math.Abs(triangleHeight);
-			int triangleWidth4 = triangleWidth << 2;
-			//if ((x + triangleWidth) >> 2 > xSide || y > ySide) throw new NotImplementedException();
-			int offset = realY * xSide + (realX << 2);
-			texture[offset] = red;
-			texture[offset + 1] = green;
-			texture[offset + 2] = blue;
-			texture[offset + 3] = alpha;
-			int xStop, yStop, longest;
-			if (isWide)
-			{
-				xStop = Math.Min(Math.Min((realY + 1) * xSide, offset + triangleWidth4), texture.Length - 4);
-				longest = xStop - offset;
-				for (int x1 = offset + 4; x1 < xStop; x1 += 4)
-					Array.Copy(texture, offset, texture, x1, 4);
-			}
-			else
-			{
-				xStop = Math.Max(Math.Max(realY * xSide, offset - triangleWidth4), 0);
-				longest = offset - xStop;
-				for (int x1 = offset - 4; x1 > xStop; x1 -= 4)
-					Array.Copy(texture, offset, texture, x1, 4);
-			}
-			//int yStop = offset - triangleHeight * xSide;
-			//float @float = (float)(triangleWidth - 1) / triangleHeight;
-			//for (int y1 = offset - xSide, y2 = triangleHeight - 1; y1 > 0 && y1 > yStop; y1 -= xSide, y2--)
-			//	Array.Copy(texture, offset, texture, y1, Math.Min(longest, ((int)(@float * y2) + 1) << 2));
-			return texture;
-		}
-		*/
 		#endregion Drawing
 		#region Rotation
 		/// <summary>

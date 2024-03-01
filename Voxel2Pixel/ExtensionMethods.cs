@@ -28,8 +28,8 @@ namespace Voxel2Pixel
 		}
 		public static VisibleFace VisibleFace(this byte @byte) => (VisibleFace)(@byte & 192);
 		public static byte Set(this IEditableModel model, Voxel voxel) => model[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
-		public static ushort[] Center(this IModel model) => new ushort[3] { (ushort)(model.SizeX >> 1), (ushort)(model.SizeY >> 1), (ushort)(model.SizeZ >> 1) };
-		public static ushort[] BottomCenter(this IModel model) => new ushort[3] { (ushort)(model.SizeX >> 1), (ushort)(model.SizeY >> 1), 0 };
+		public static ushort[] Center(this IModel model) => [(ushort)(model.SizeX >> 1), (ushort)(model.SizeY >> 1), (ushort)(model.SizeZ >> 1)];
+		public static ushort[] BottomCenter(this IModel model) => [(ushort)(model.SizeX >> 1), (ushort)(model.SizeY >> 1), 0];
 		#region Sprite
 		public static IEnumerable<Sprite> AddFrameNumbers(this IEnumerable<Sprite> frames, uint color = 0xFFFFFFFF)
 		{
@@ -68,5 +68,54 @@ namespace Voxel2Pixel
 				}.AddRange(new KeyValuePair<string, Point>(Sprite.Origin, new Point(X: originX, Y: originY)));
 		}
 		#endregion Sprite
+		#region Geometry
+		public readonly record struct HorizontalLine(int X, int Y, int Width);
+		public static IEnumerable<HorizontalLine> TriangleRows(params Point[] points)
+		{
+			if (points is null)
+				throw new ArgumentNullException("points");
+			if (points.Length < 3)
+				throw new ArgumentException("points must contain at least 3 elements.");
+			points = [.. points
+				.Take(3)
+				.OrderBy(point => point.Y)
+				.ThenBy(point => point.X)];
+			static double calculateSlope(Point a, Point b) => (double)(b.Y - a.Y) / (b.X - a.X);
+			double[] slopes = [
+				calculateSlope(points[0], points[1]),
+				calculateSlope(points[0], points[2]),
+				calculateSlope(points[1], points[2]),
+			];
+			double[] yIntercepts = [
+				-slopes[0] * points[0].X,
+				-slopes[1] * points[0].X,
+				-slopes[2] * points[1].X,
+			];
+			int solveForX(int y, byte edge) => Convert.ToInt32((y - yIntercepts[edge]) / slopes[edge]);
+			for (int y = points[0].Y; y <= points[2].Y; y++)
+			{
+				bool isUp = y < points[1].Y;
+				int a = solveForX(y: y, edge: (byte)(0 + (isUp ? 1 : 0))),
+					b = solveForX(y: y, edge: (byte)(1 + (isUp ? 1 : 0))),
+					x = Math.Min(a, b);
+				yield return new HorizontalLine(
+					X: x,
+					Y: y,
+					Width: Math.Max(a, b) - x);
+			}
+		}
+		public static void DrawTriangle(this IRectangleRenderer renderer, uint color, params Point[] points)
+		{
+			foreach (HorizontalLine line in TriangleRows(points)
+				.Where(point => point.Y >= 0
+					&& point.X + point.Width >= 0
+					&& point.X + point.Width < ushort.MaxValue))
+				renderer.Rect(
+					x: (ushort)Math.Max(0, line.X),
+					y: (ushort)line.Y,
+					color: color,
+					sizeX: (ushort)(line.Width + (line.X < 0 ? line.X : 0)));
+		}
+		#endregion Geometry
 	}
 }
