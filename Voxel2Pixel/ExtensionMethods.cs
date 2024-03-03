@@ -80,17 +80,18 @@ namespace Voxel2Pixel
 				.Take(3)
 				.OrderBy(point => point.Y)
 				.ThenBy(point => point.X)];
+			Point[][] edges = [
+				[.. new Point[] { points[0], points[1] }.OrderBy(point => point.X)],
+				[.. new Point[] { points[0], points[2] }.OrderBy(point => point.X)],
+				[.. new Point[] { points[1], points[2] }.OrderBy(point => point.X)],
+			];
 			static double calculateSlope(Point a, Point b) => (double)(b.Y - a.Y) / (b.X - a.X);
-			bool[] hasInfiniteSlope = [
-				points[0].X == points[1].X || points[0].Y == points[1].Y,
-				points[0].X == points[2].X || points[0].Y == points[2].Y,
-				points[1].X == points[2].X || points[1].Y == points[2].Y,
-			];
-			double[] slopes = [
-				hasInfiniteSlope[0] ? 0 : calculateSlope(points[0], points[1]),
-				hasInfiniteSlope[1] ? 0 : calculateSlope(points[0], points[2]),
-				hasInfiniteSlope[2] ? 0 : calculateSlope(points[1], points[2]),
-			];
+			bool[] hasInfiniteSlope = edges
+				.Select(edge => edge[0].X == edge[1].X || edge[0].Y == edge[0].Y)
+				.ToArray();
+			double[] slopes = Enumerable.Range(0, 3)
+				.Select(edge => hasInfiniteSlope[edge] ? 0 : calculateSlope(edges[edge][0], edges[edge][1]))
+				.ToArray();
 			double[] yIntercepts = [
 				-slopes[0] * points[0].X,
 				-slopes[1] * points[0].X,
