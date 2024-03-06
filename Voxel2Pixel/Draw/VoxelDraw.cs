@@ -49,7 +49,7 @@ namespace Voxel2Pixel.Draw
 							index: voxelY.Index,
 							visibleFace: visibleFace);
 		}
-		public static void FrontPeek(IModel model, IRectangleRenderer renderer, byte scaleX = 6, byte scaleY = 6)
+		public static void FrontPeak(IModel model, IRectangleRenderer renderer, byte scaleX = 6, byte scaleY = 6)
 		{
 			ushort voxelWidth = model.SizeX,
 				voxelHeight = model.SizeZ;
@@ -162,9 +162,9 @@ namespace Voxel2Pixel.Draw
 							index: rect.Index,
 							visibleFace: rect.VisibleFace);
 		}
-		public static ushort DiagonalPeekWidth(IModel model, byte scaleX = 6) => (ushort)((model.SizeX + model.SizeY) * scaleX);
-		public static ushort DiagonalPeekHeight(IModel model, byte scaleY = 6) => (ushort)(model.SizeZ * scaleY);
-		public static void DiagonalPeek(IModel model, IRectangleRenderer renderer, byte scaleX = 6, byte scaleY = 6)
+		public static ushort DiagonalPeakWidth(IModel model, byte scaleX = 6) => (ushort)((model.SizeX + model.SizeY) * scaleX);
+		public static ushort DiagonalPeakHeight(IModel model, byte scaleY = 6) => (ushort)(model.SizeZ * scaleY);
+		public static void DiagonalPeak(IModel model, IRectangleRenderer renderer, byte scaleX = 6, byte scaleY = 6)
 		{
 			ushort voxelWidth = model.SizeX,
 				voxelDepth = model.SizeY,
