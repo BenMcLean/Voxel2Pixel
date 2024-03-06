@@ -25,6 +25,12 @@ namespace Voxel2Pixel.Render
 			y: y,
 			right: right,
 			color: VoxelColor[voxel, visibleFace]);
+		public virtual void Diamond(ushort x, ushort y, uint color)
+		{
+			Tri(x: x, y: y, right: false, color: color);
+			Tri(x: (ushort)(x + 2), y: y, right: true, color: color);
+		}
+		public virtual void Diamond(ushort x, ushort y, byte index, VisibleFace visibleFace = VisibleFace.Front) => Diamond(x: x, y: y, color: VoxelColor[index, visibleFace]);
 		#endregion ITriangleRenderer
 	}
 }

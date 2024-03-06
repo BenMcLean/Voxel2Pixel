@@ -98,6 +98,25 @@ namespace Voxel2Pixel.Pack
 			y: y,
 			right: right,
 			color: this[index, visibleFace]);
+		public virtual void Diamond(ushort x, ushort y, uint color)
+		{
+			Rect(
+				x: (ushort)(x + 1),
+				y: y,
+				color: color,
+				sizeX: 2);
+			Rect(
+				x: x,
+				y: (ushort)(y + 1),
+				color: color,
+				sizeX: 4);
+			Rect(
+				x: (ushort)(x + 1),
+				y: (ushort)(y + 2),
+				color: color,
+				sizeX: 2);
+		}
+		public virtual void Diamond(ushort x, ushort y, byte index, VisibleFace visibleFace = VisibleFace.Front) => Diamond(x: x, y: y, color: VoxelColor[index, visibleFace]);
 		#endregion ITriangleRenderer
 		#region Image manipulation
 		public Sprite(out RectpackSharp.PackingRectangle[] packingRectangles, IEnumerable<ISprite> sprites) : this(out packingRectangles, sprites.ToArray()) { }

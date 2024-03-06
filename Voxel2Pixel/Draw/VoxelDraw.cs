@@ -94,6 +94,8 @@ namespace Voxel2Pixel.Draw
 								sizeX: scaleX,
 								sizeY: scaleY);
 		}
+		public static ushort OverheadWidth(IModel model) => model.SizeX;
+		public static ushort OverheadHeight(IModel model) => model.SizeY;
 		public static void Overhead(IModel model, IRectangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Front)
 		{
 			ushort width = model.SizeX,

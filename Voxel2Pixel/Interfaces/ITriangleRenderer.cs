@@ -17,5 +17,7 @@ namespace Voxel2Pixel.Interfaces
 		/// </summary>
 		/// <param name="right">Points right if true, else points left</param>
 		void Tri(ushort x, ushort y, bool right, byte index, VisibleFace visibleFace = VisibleFace.Front);
+		void Diamond(ushort x, ushort y, uint color);
+		void Diamond(ushort x, ushort y, byte index, VisibleFace visibleFace = VisibleFace.Front);
 	}
 }
