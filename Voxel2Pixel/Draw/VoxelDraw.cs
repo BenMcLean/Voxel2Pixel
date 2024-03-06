@@ -94,6 +94,28 @@ namespace Voxel2Pixel.Draw
 								sizeX: scaleX,
 								sizeY: scaleY);
 		}
+		public static void Overhead(IModel model, IRectangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Front)
+		{
+			ushort width = model.SizeX,
+				height = model.SizeY;
+			VoxelY[] grid = new VoxelY[width * height];
+			foreach (Voxel voxel in model
+				.Where(voxel => voxel.Index != 0))
+				if (width * (height - voxel.Y - 1) + voxel.X is int i
+					&& (!(grid[i] is VoxelY old)
+						|| old.Index == 0
+						|| old.Y > voxel.Y))
+					grid[i] = new VoxelY(voxel);
+			uint index = 0;
+			for (ushort y = 0; y < height; y++)
+				for (ushort x = 0; x < width; x++)
+					if (grid[index++] is VoxelY voxelY && voxelY.Index != 0)
+						renderer.Rect(
+							x: x,
+							y: y,
+							index: voxelY.Index,
+							visibleFace: visibleFace);
+		}
 		#endregion Straight
 		#region Diagonal
 		public static ushort DiagonalWidth(IModel model) => (ushort)(model.SizeX + model.SizeY);
@@ -212,6 +234,9 @@ namespace Voxel2Pixel.Draw
 			pixelX = voxelX;
 			pixelY = AboveHeight(model) - 1 - voxelY - voxelZ;
 		}
+		/// <summary>
+		/// Renders from a 3/4 perspective
+		/// </summary>
 		public static void Above(IModel model, IRectangleRenderer renderer)
 		{
 			ushort width = model.SizeX,
