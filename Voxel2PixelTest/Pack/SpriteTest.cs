@@ -40,7 +40,7 @@ namespace Voxel2PixelTest.Pack
 		[Fact]
 		public void ShadowTest()
 		{
-			VoxFileModel model = new(@"..\..\..\Sora.vox");
+			VoxFileModel model = new(@"..\..\..\NumberCube.vox");
 			Sprite sprite = new(VoxelDraw.IsoShadowWidth(model), VoxelDraw.IsoShadowHeight(model))
 			{
 				VoxelColor = new NaiveDimmer(model.Palette),

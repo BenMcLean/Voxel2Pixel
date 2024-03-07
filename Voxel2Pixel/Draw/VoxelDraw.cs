@@ -100,7 +100,7 @@ namespace Voxel2Pixel.Draw
 		}
 		public static ushort OverheadWidth(IModel model) => model.SizeX;
 		public static ushort OverheadHeight(IModel model) => model.SizeY;
-		public static void Overhead(IModel model, IRectangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Front)
+		public static void Overhead(IModel model, IRectangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Top)
 		{
 			ushort width = model.SizeX,
 				height = model.SizeY;
@@ -380,8 +380,8 @@ namespace Voxel2Pixel.Draw
 					visibleFace: triangle.Value.VisibleFace);
 		}
 		public static ushort IsoShadowWidth(IModel model) => IsoWidth(model);
-		public static ushort IsoShadowHeight(IModel model) => (ushort)(2 * (model.SizeX + model.SizeY));
-		public static void IsoShadow(IModel model, ITriangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Front)
+		public static ushort IsoShadowHeight(IModel model) => (ushort)(2 * (model.SizeX + model.SizeY) - 1);
+		public static void IsoShadow(IModel model, ITriangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Top)
 		{
 			ushort width = model.SizeX,
 				height = model.SizeY;
@@ -398,8 +398,8 @@ namespace Voxel2Pixel.Draw
 				for (ushort x = 0; x < width; x++)
 					if (grid[index++] is VoxelZ voxelZ && voxelZ.Index != 0)
 						renderer.Diamond(
-							x: (ushort)(width + 2 * (x - y)),
-							y: (ushort)(2 * (x + y)),
+							x: (ushort)(2 * (x + y)),
+							y: (ushort)(2 * (width - x + y - 1)),
 							index: voxelZ.Index,
 							visibleFace: visibleFace);
 		}
@@ -480,19 +480,10 @@ namespace Voxel2Pixel.Draw
 					x < xStart + width2;
 					x += 2, y -= 2, index += 4)
 					if (texture[index + 3] is byte alpha && alpha >= threshold)
-					{
-						uint color = (uint)texture[index] << 24 | (uint)texture[index + 1] << 16 | (uint)texture[index + 2] << 8 | alpha;
-						renderer.Tri(
+						renderer.Diamond(
 							x: x,
 							y: y,
-							right: false,
-							color: color);
-						renderer.Tri(
-							x: (ushort)(x + 2),
-							y: y,
-							right: true,
-							color: color);
-					}
+							color: (uint)texture[index] << 24 | (uint)texture[index + 1] << 16 | (uint)texture[index + 2] << 8 | alpha);
 		}
 		#endregion Isometric
 	}

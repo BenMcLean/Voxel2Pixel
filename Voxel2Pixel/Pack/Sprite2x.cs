@@ -48,7 +48,25 @@
 					color: color,
 					sizeX: 2);
 			}
-			#endregion Sprite
 		}
+		public override void Diamond(ushort x, ushort y, uint color)
+		{
+			Rect(
+				x: (ushort)((x + 1) << 1),
+				y: y,
+				color: color,
+				sizeX: 4);
+			Rect(
+				x: (ushort)(x << 1),
+				y: (ushort)(y + 1),
+				color: color,
+				sizeX: 8);
+			Rect(
+				x: (ushort)((x + 1) << 1),
+				y: (ushort)(y + 2),
+				color: color,
+				sizeX: 4);
+		}
+		#endregion Sprite
 	}
 }
