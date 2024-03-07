@@ -18,6 +18,10 @@ namespace Voxel2Pixel.Draw
 		{
 			public VoxelY(Voxel voxel) : this(Y: voxel.Y, Index: voxel.Index) { }
 		}
+		private readonly record struct VoxelZ(ushort Z, byte Index)
+		{
+			public VoxelZ(Voxel voxel) : this(Z: voxel.Z, Index: voxel.Index) { }
+		}
 		private readonly record struct DistantShape(uint Distance, byte Index, VisibleFace VisibleFace);
 		private readonly record struct VoxelFace(Voxel Voxel, VisibleFace VisibleFace)
 		{
@@ -100,22 +104,22 @@ namespace Voxel2Pixel.Draw
 		{
 			ushort width = model.SizeX,
 				height = model.SizeY;
-			VoxelY[] grid = new VoxelY[width * height];
+			VoxelZ[] grid = new VoxelZ[width * height];
 			foreach (Voxel voxel in model
 				.Where(voxel => voxel.Index != 0))
 				if (width * (height - voxel.Y - 1) + voxel.X is int i
-					&& (!(grid[i] is VoxelY old)
+					&& (!(grid[i] is VoxelZ old)
 						|| old.Index == 0
-						|| old.Y > voxel.Y))
-					grid[i] = new VoxelY(voxel);
+						|| old.Z < voxel.Z))
+					grid[i] = new VoxelZ(voxel);
 			uint index = 0;
 			for (ushort y = 0; y < height; y++)
 				for (ushort x = 0; x < width; x++)
-					if (grid[index++] is VoxelY voxelY && voxelY.Index != 0)
+					if (grid[index++] is VoxelZ voxelZ && voxelZ.Index != 0)
 						renderer.Rect(
 							x: x,
 							y: y,
-							index: voxelY.Index,
+							index: voxelZ.Index,
 							visibleFace: visibleFace);
 		}
 		#endregion Straight

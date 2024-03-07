@@ -15,7 +15,7 @@ namespace Voxel2PixelTest.Pack
 		[Fact]
 		public void SoraGif()
 		{
-			VoxFileModel model = new VoxFileModel(@"..\..\..\Sora.vox");
+			VoxFileModel model = new(@"..\..\..\Sora.vox");
 			Sprite.Iso8(
 					model: model,
 					voxelColor: new NaiveDimmer(model.Palette))
@@ -25,6 +25,17 @@ namespace Voxel2PixelTest.Pack
 				.Select(sprite => sprite.Upscale(8, 8))
 				.AnimatedGif(frameDelay: 100)
 				.SaveAsGif("Sora.gif");
+		}
+		[Fact]
+		public void OverheadTest()
+		{
+			VoxFileModel model = new(@"..\..\..\Sora.vox");
+			Sprite sprite = new(VoxelDraw.OverheadWidth(model), VoxelDraw.OverheadHeight(model))
+			{
+				VoxelColor = new NaiveDimmer(model.Palette),
+			};
+			VoxelDraw.Overhead(model, sprite);
+			sprite.Png().SaveAsPng("OverheadTest.png");
 		}
 	}
 }
