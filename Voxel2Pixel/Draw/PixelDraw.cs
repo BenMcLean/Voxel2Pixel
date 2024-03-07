@@ -913,13 +913,11 @@ namespace Voxel2Pixel.Draw
 					indexLeft = left;
 				int right;
 				for (right = xSide - 1; right > indexRight && texture[indexRow + right] < threshold; right -= 4) { }
-				if (right < indexRight)
+				if (right > indexRight)
 					indexRight = right;
 			}
-			if (indexLeft >> 2 < 0)
-				throw new Exception(indexLeft.ToString());
 			cutLeft = (ushort)(indexLeft >> 2);
-			croppedWidth = (ushort)(width - (indexRight >> 2) - cutLeft);
+			croppedWidth = (ushort)((indexRight >> 2) - cutLeft + 1);
 			croppedHeight = (ushort)(cutBottom - cutTop);
 		}
 		public static void TransparentCropInfo(this byte[,] bytes, out ushort cutLeft, out ushort cutTop, out ushort croppedWidth, out ushort croppedHeight, byte transparent = 0)

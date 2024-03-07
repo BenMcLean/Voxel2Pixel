@@ -40,13 +40,18 @@ namespace Voxel2PixelTest.Pack
 		[Fact]
 		public void ShadowTest()
 		{
-			VoxFileModel model = new(@"..\..\..\NumberCube.vox");
+			VoxFileModel model = new(@"..\..\..\Sora.vox");
+			//Sprite2x sprite = new((ushort)(VoxelDraw.IsoShadowWidth(model) * 2), VoxelDraw.IsoShadowHeight(model))
 			Sprite sprite = new(VoxelDraw.IsoShadowWidth(model), VoxelDraw.IsoShadowHeight(model))
 			{
 				VoxelColor = new NaiveDimmer(model.Palette),
 			};
 			VoxelDraw.IsoShadow(model, sprite);
-			sprite.Png().SaveAsPng("IsoShadowTest.png");
+			sprite
+				.TransparentCrop()
+				.Upscale(16, 8)
+				.Png()
+				.SaveAsPng("IsoShadowTest.png");
 		}
 		[Fact]
 		public void IsoTest()
@@ -57,7 +62,20 @@ namespace Voxel2PixelTest.Pack
 				VoxelColor = new NaiveDimmer(model.Palette),
 			};
 			VoxelDraw.Iso(model, sprite);
-			sprite.Png().SaveAsPng("IsoTest.png");
+			sprite = sprite.TransparentCrop();
+			sprite
+				.Png()
+				.SaveAsPng("IsoTest.png");
+			//SixLabors.ImageSharp.Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(
+			//		data: sprite.Texture.TransparentCrop(
+			//		cutLeft: out _,
+			//		cutTop: out _,
+			//		croppedWidth: out ushort croppedWidth,
+			//		croppedHeight: out ushort croppedHeight,
+			//		width: sprite.Width),
+			//	width: croppedWidth,
+			//	height: croppedHeight)
+			//	.SaveAsPng("IsoTest.png");
 		}
 	}
 }
