@@ -37,5 +37,27 @@ namespace Voxel2PixelTest.Pack
 			VoxelDraw.Overhead(model, sprite);
 			sprite.Png().SaveAsPng("OverheadTest.png");
 		}
+		[Fact]
+		public void ShadowTest()
+		{
+			VoxFileModel model = new(@"..\..\..\Sora.vox");
+			Sprite sprite = new(VoxelDraw.IsoShadowWidth(model), VoxelDraw.IsoShadowHeight(model))
+			{
+				VoxelColor = new NaiveDimmer(model.Palette),
+			};
+			VoxelDraw.IsoShadow(model, sprite);
+			sprite.Png().SaveAsPng("IsoShadowTest.png");
+		}
+		[Fact]
+		public void IsoTest()
+		{
+			VoxFileModel model = new(@"..\..\..\Sora.vox");
+			Sprite sprite = new(VoxelDraw.IsoWidth(model), VoxelDraw.IsoHeight(model))
+			{
+				VoxelColor = new NaiveDimmer(model.Palette),
+			};
+			VoxelDraw.Iso(model, sprite);
+			sprite.Png().SaveAsPng("IsoTest.png");
+		}
 	}
 }

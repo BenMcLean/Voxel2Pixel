@@ -379,6 +379,30 @@ namespace Voxel2Pixel.Draw
 					index: triangle.Value.Index,
 					visibleFace: triangle.Value.VisibleFace);
 		}
+		public static ushort IsoShadowWidth(IModel model) => IsoWidth(model);
+		public static ushort IsoShadowHeight(IModel model) => (ushort)(2 * (model.SizeX + model.SizeY));
+		public static void IsoShadow(IModel model, ITriangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Front)
+		{
+			ushort width = model.SizeX,
+				height = model.SizeY;
+			VoxelZ[] grid = new VoxelZ[width * height];
+			foreach (Voxel voxel in model
+				.Where(voxel => voxel.Index != 0))
+				if (width * (height - voxel.Y - 1) + voxel.X is int i
+					&& (!(grid[i] is VoxelZ old)
+						|| old.Index == 0
+						|| old.Z < voxel.Z))
+					grid[i] = new VoxelZ(voxel);
+			uint index = 0;
+			for (ushort y = 0; y < height; y++)
+				for (ushort x = 0; x < width; x++)
+					if (grid[index++] is VoxelZ voxelZ && voxelZ.Index != 0)
+						renderer.Diamond(
+							x: (ushort)(width + 2 * (x - y)),
+							y: (ushort)(2 * (x + y)),
+							index: voxelZ.Index,
+							visibleFace: visibleFace);
+		}
 		public static ushort IsoSlantWidth(int textureLength, ushort width = 0) => (ushort)((width < 1 ? (ushort)Math.Sqrt(textureLength >> 2) : width) << 1);
 		public static ushort IsoSlantHeight(int textureLength, ushort width = 0)
 		{
