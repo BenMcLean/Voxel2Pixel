@@ -157,8 +157,8 @@ namespace Voxel2Pixel.Pack
 		}.AddRange(this.Select(point => new KeyValuePair<string, Point>(
 			key: point.Key,
 			value: new Point(
-				X: (ushort)(point.Value.X - x),
-				Y: (ushort)(point.Value.Y - y)))));
+				X: point.Value.X - x,
+				Y: point.Value.Y - y))));
 		/// <returns>cropped copy</returns>
 		public Sprite TransparentCrop(byte threshold = 128) => new Sprite
 		{
@@ -173,8 +173,8 @@ namespace Voxel2Pixel.Pack
 		}.AddRange(this.Select(point => new KeyValuePair<string, Point>(
 			key: point.Key,
 			value: new Point(
-				X: (ushort)(point.Value.X - cutLeft),
-				Y: (ushort)(point.Value.Y - cutTop)))));
+				X: point.Value.X - cutLeft,
+				Y: point.Value.Y - cutTop))));
 		/// <returns>cropped copy</returns>
 		public Sprite TransparentCropPlusOne(byte threshold = 128) => new Sprite
 		{
@@ -189,8 +189,8 @@ namespace Voxel2Pixel.Pack
 		}.AddRange(this.Select(point => new KeyValuePair<string, Point>(
 			key: point.Key,
 			value: new Point(
-				X: (ushort)(point.Value.X - cutLeft),
-				Y: (ushort)(point.Value.Y - cutTop)))));
+				X: point.Value.X - cutLeft,
+				Y: point.Value.Y - cutTop))));
 		/// <returns>cropped and outlined copy</returns>
 		public Sprite CropOutline(uint color = 0xFFu) => new Sprite
 		{
@@ -208,8 +208,8 @@ namespace Voxel2Pixel.Pack
 		}.AddRange(this.Select(point => new KeyValuePair<string, Point>(
 			key: point.Key,
 			value: new Point(
-				X: (ushort)(point.Value.X - cutLeft),
-				Y: (ushort)(point.Value.Y - cutTop)))));
+				X: point.Value.X - cutLeft,
+				Y: point.Value.Y - cutTop))));
 		/// <returns>upscaled copy</returns>
 		public Sprite Upscale(ushort factorX, ushort factorY = 1) => new Sprite
 		{
@@ -272,8 +272,8 @@ namespace Voxel2Pixel.Pack
 					VoxelColor = voxelColor,
 				};
 				sprite[Origin] = new Point(
-					X: (ushort)locateX,
-					Y: (ushort)locateY);
+					X: locateX,
+					Y: locateY);
 				VoxelDraw.Above(
 					model: turnModel,
 					renderer: sprite);
@@ -311,8 +311,8 @@ namespace Voxel2Pixel.Pack
 					VoxelColor = voxelColor,
 				};
 				sprite[Origin] = new Point(
-					X: (ushort)locateX,
-					Y: (ushort)locateY);
+					X: locateX,
+					Y: locateY);
 				VoxelDraw.Iso(
 					model: turnModel,
 					renderer: sprite);
@@ -350,8 +350,8 @@ namespace Voxel2Pixel.Pack
 					VoxelColor = voxelColor,
 				};
 				sprite[Origin] = new Point(
-					X: (ushort)locateX,
-					Y: (ushort)locateY);
+					X: locateX,
+					Y: locateY);
 				VoxelDraw.Above(
 					model: turnModel,
 					renderer: sprite);
@@ -379,8 +379,8 @@ namespace Voxel2Pixel.Pack
 					VoxelColor = voxelColor,
 				};
 				sprite[Origin] = new Point(
-					X: (ushort)(locateX << 1),
-					Y: (ushort)locateY);
+					X: locateX << 1,
+					Y: locateY);
 				VoxelDraw.Iso(
 					model: turnModel,
 					renderer: sprite);
