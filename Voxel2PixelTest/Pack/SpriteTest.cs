@@ -41,15 +41,15 @@ namespace Voxel2PixelTest.Pack
 		public void ShadowTest()
 		{
 			VoxFileModel model = new(@"..\..\..\Sora.vox");
-			//Sprite2x sprite = new((ushort)(VoxelDraw.IsoShadowWidth(model) * 2), VoxelDraw.IsoShadowHeight(model))
-			Sprite sprite = new(VoxelDraw.IsoShadowWidth(model), VoxelDraw.IsoShadowHeight(model))
+			Sprite2x sprite = new((ushort)(VoxelDraw.IsoShadowWidth(model) * 2), VoxelDraw.IsoShadowHeight(model))
+			//Sprite sprite = new(VoxelDraw.IsoShadowWidth(model), VoxelDraw.IsoShadowHeight(model))
 			{
 				VoxelColor = new NaiveDimmer(model.Palette),
 			};
 			VoxelDraw.IsoShadow(model, sprite);
 			sprite
 				.TransparentCrop()
-				.Upscale(16, 8)
+				.Upscale(8, 8)
 				.Png()
 				.SaveAsPng("IsoShadowTest.png");
 		}
@@ -66,16 +66,6 @@ namespace Voxel2PixelTest.Pack
 			sprite
 				.Png()
 				.SaveAsPng("IsoTest.png");
-			//SixLabors.ImageSharp.Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(
-			//		data: sprite.Texture.TransparentCrop(
-			//		cutLeft: out _,
-			//		cutTop: out _,
-			//		croppedWidth: out ushort croppedWidth,
-			//		croppedHeight: out ushort croppedHeight,
-			//		width: sprite.Width),
-			//	width: croppedWidth,
-			//	height: croppedHeight)
-			//	.SaveAsPng("IsoTest.png");
 		}
 	}
 }

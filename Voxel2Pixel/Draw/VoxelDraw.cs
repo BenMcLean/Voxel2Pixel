@@ -122,6 +122,30 @@ namespace Voxel2Pixel.Draw
 							index: voxelZ.Index,
 							visibleFace: visibleFace);
 		}
+		public static ushort UnderneathWidth(IModel model) => model.SizeX;
+		public static ushort UnderneathHeight(IModel model) => model.SizeY;
+		public static void Underneath(IModel model, IRectangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Top)
+		{
+			ushort width = model.SizeX,
+				height = model.SizeY;
+			VoxelZ[] grid = new VoxelZ[width * height];
+			foreach (Voxel voxel in model
+				.Where(voxel => voxel.Index != 0))
+				if (width * (height - voxel.Y - 1) + voxel.X is int i
+					&& (!(grid[i] is VoxelZ old)
+						|| old.Index == 0
+						|| old.Z > voxel.Z))
+					grid[i] = new VoxelZ(voxel);
+			uint index = 0;
+			for (ushort y = 0; y < height; y++)
+				for (ushort x = 0; x < width; x++)
+					if (grid[index++] is VoxelZ voxelZ && voxelZ.Index != 0)
+						renderer.Rect(
+							x: x,
+							y: y,
+							index: voxelZ.Index,
+							visibleFace: visibleFace);
+		}
 		#endregion Straight
 		#region Diagonal
 		public static ushort DiagonalWidth(IModel model) => (ushort)(model.SizeX + model.SizeY);
@@ -381,6 +405,16 @@ namespace Voxel2Pixel.Draw
 		}
 		public static ushort IsoShadowWidth(IModel model) => IsoWidth(model);
 		public static ushort IsoShadowHeight(IModel model) => (ushort)(2 * (model.SizeX + model.SizeY) - 1);
+		public static void IsoShadowLocate(out int pixelX, out int pixelY, IModel model, ushort[] voxelCoordinates) => IsoLocate(out pixelX, out pixelY, model, voxelCoordinates[0], voxelCoordinates[1]);
+		public static void IsoShadowLocate(out int pixelX, out int pixelY, IModel model, int voxelX = 0, int voxelY = 0)
+		{
+			// To move one x+ in voxels is x + 2, y - 2 in pixels.
+			// To move one x- in voxels is x - 2, y + 2 in pixels.
+			// To move one y+ in voxels is x - 2, y - 2 in pixels.
+			// To move one y- in voxels is x + 2, y + 2 in pixels.
+			pixelX = 2 * (model.SizeY + voxelX - voxelY);
+			pixelY = 2 * (voxelX + voxelY) - 1;
+		}
 		public static void IsoShadow(IModel model, ITriangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Top)
 		{
 			ushort width = model.SizeX,
@@ -391,7 +425,7 @@ namespace Voxel2Pixel.Draw
 				if (width * (height - voxel.Y - 1) + voxel.X is int i
 					&& (!(grid[i] is VoxelZ old)
 						|| old.Index == 0
-						|| old.Z < voxel.Z))
+						|| old.Z > voxel.Z))
 					grid[i] = new VoxelZ(voxel);
 			uint index = 0;
 			for (ushort y = 0; y < height; y++)
