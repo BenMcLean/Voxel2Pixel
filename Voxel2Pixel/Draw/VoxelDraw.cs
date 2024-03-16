@@ -405,7 +405,7 @@ namespace Voxel2Pixel.Draw
 		}
 		public static ushort IsoShadowWidth(IModel model) => IsoWidth(model);
 		public static ushort IsoShadowHeight(IModel model) => (ushort)(2 * (model.SizeX + model.SizeY) - 1);
-		public static void IsoShadowLocate(out int pixelX, out int pixelY, IModel model, ushort[] voxelCoordinates) => IsoLocate(out pixelX, out pixelY, model, voxelCoordinates[0], voxelCoordinates[1]);
+		public static void IsoShadowLocate(out int pixelX, out int pixelY, IModel model, params ushort[] voxelCoordinates) => IsoLocate(out pixelX, out pixelY, model, voxelCoordinates[0], voxelCoordinates[1]);
 		public static void IsoShadowLocate(out int pixelX, out int pixelY, IModel model, int voxelX = 0, int voxelY = 0)
 		{
 			// To move one x+ in voxels is x + 2, y - 2 in pixels.

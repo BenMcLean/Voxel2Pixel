@@ -27,6 +27,19 @@ namespace Voxel2PixelTest.Pack
 				.SaveAsGif("Sora.gif");
 		}
 		[Fact]
+		public void ShadowGif()
+		{
+			VoxFileModel model = new(@"..\..\..\Sora.vox");
+			Sprite.Iso8Shadows(
+					model: model,
+					voxelColor: new NaiveDimmer(model.Palette))
+				.SameSize()
+				.AddFrameNumbers()
+				.Select(sprite => sprite.Upscale(8, 8))
+				.AnimatedGif(frameDelay: 100)
+				.SaveAsGif("Shadows.gif");
+		}
+		[Fact]
 		public void OverheadTest()
 		{
 			VoxFileModel model = new(@"..\..\..\Sora.vox");
