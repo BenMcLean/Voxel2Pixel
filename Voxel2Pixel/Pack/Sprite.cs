@@ -479,7 +479,7 @@ namespace Voxel2Pixel.Pack
 			{
 				VoxelColor = new OneVoxelColor(shadow),
 			};
-			VoxelDraw.Overhead(model, new OffsetRenderer()
+			VoxelDraw.Underneath(model, new OffsetRenderer()
 			{
 				RectangleRenderer = shadowSprite,
 				OffsetX = 1,
