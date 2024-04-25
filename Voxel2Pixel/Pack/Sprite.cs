@@ -523,6 +523,54 @@ namespace Voxel2Pixel.Pack
 			});
 			return shadowSprite.DrawTransparentInsert(0, 0, sprite.Outline(outline));
 		}
+		public static IEnumerable<Sprite> Iso8OutlinedWithShadows(IModel model, IVoxelColor voxelColor, params ushort[] voxelOrigin) => Iso8OutlinedWithShadows(model, voxelColor, 0x88u, 0xFFu, voxelOrigin);
+		public static IEnumerable<Sprite> Iso8OutlinedWithShadows(IModel model, IVoxelColor voxelColor, uint shadow, uint outline, params ushort[] voxelOrigin)
+		{
+			if (voxelOrigin is null || voxelOrigin.Length < 3)
+				voxelOrigin = model.BottomCenter();
+			TurnModel turnModel = new()
+			{
+				Model = model,
+			};
+			for (byte angle = 0; angle < 4; angle++)
+			{
+				turnModel.ReverseRotate(
+					x: out ushort turnedX,
+					y: out ushort turnedY,
+					z: out ushort turnedZ,
+					coordinates: voxelOrigin);
+				VoxelDraw.AboveLocate(
+					pixelX: out int locateX,
+					pixelY: out int locateY,
+					model: turnModel,
+					voxelX: turnedX,
+					voxelY: turnedY,
+					voxelZ: turnedZ);
+				Sprite sprite = AboveOutlinedWithShadow(turnModel, voxelColor, shadow, outline);
+				sprite[Origin] = new Point(
+					X: locateX * 5 + 1,
+					Y: (locateY << 2) + 1);
+				yield return sprite.TransparentCrop();
+				turnModel.CounterZ();
+				turnModel.ReverseRotate(
+					x: out turnedX,
+					y: out turnedY,
+					z: out turnedZ,
+					coordinates: voxelOrigin);
+				VoxelDraw.IsoLocate(
+					pixelX: out locateX,
+					pixelY: out locateY,
+					model: turnModel,
+					voxelX: turnedX,
+					voxelY: turnedY,
+					voxelZ: turnedZ);
+				sprite = IsoOutlinedWithShadow(turnModel, voxelColor, shadow, outline);
+				sprite[Origin] = new Point(
+					X: (locateX << 1) + 1,
+					Y: locateY + 1);
+				yield return sprite.TransparentCrop();
+			}
+		}
 		#endregion Voxel drawing
 	}
 }

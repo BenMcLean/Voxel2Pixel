@@ -30,7 +30,7 @@ namespace Voxel2PixelTest.Pack
 		public void ShadowGif()
 		{
 			VoxFileModel model = new(@"..\..\..\Sora.vox");
-			Sprite.Iso8Shadows(
+			Sprite.Iso8OutlinedWithShadows(
 					model: model,
 					voxelColor: new NaiveDimmer(model.Palette))
 				.SameSize()
