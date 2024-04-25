@@ -471,19 +471,17 @@ namespace Voxel2Pixel.Pack
 		}
 		public static Sprite AboveOutlinedWithShadow(IModel model, IVoxelColor voxelColor, uint shadow = 0x88u, uint outline = 0xFFu)
 		{
-			OneVoxelColor voxelShadow = new(shadow);
 			Sprite sprite = new((ushort)(VoxelDraw.AboveWidth(model) * 5 + 2), (ushort)(VoxelDraw.AboveHeight(model) * 4 + 2))
 			{
 				VoxelColor = voxelColor,
 			},
 			shadowSprite = new((ushort)(VoxelDraw.AboveWidth(model) * 5 + 2), (ushort)(VoxelDraw.AboveHeight(model) * 4 + 2))
 			{
-				VoxelColor = voxelColor,
+				VoxelColor = new OneVoxelColor(shadow),
 			};
 			VoxelDraw.Overhead(model, new OffsetRenderer()
 			{
 				RectangleRenderer = shadowSprite,
-				VoxelColor = voxelShadow,
 				OffsetX = 1,
 				OffsetY = (model.SizeZ << 2) + 1,
 				ScaleX = 5,
@@ -492,7 +490,6 @@ namespace Voxel2Pixel.Pack
 			VoxelDraw.Above(model, new OffsetRenderer()
 			{
 				RectangleRenderer = sprite,
-				VoxelColor = voxelColor,
 				OffsetX = 1,
 				OffsetY = 1,
 				ScaleX = 5,
@@ -502,19 +499,17 @@ namespace Voxel2Pixel.Pack
 		}
 		public static Sprite IsoOutlinedWithShadow(IModel model, IVoxelColor voxelColor, uint shadow = 0x88u, uint outline = 0xFFu)
 		{
-			OneVoxelColor voxelShadow = new(shadow);
 			Sprite sprite = new((ushort)((VoxelDraw.IsoWidth(model) << 1) + 2), (ushort)(VoxelDraw.IsoHeight(model) + 2))
 			{
 				VoxelColor = voxelColor,
 			},
 			shadowSprite = new((ushort)((VoxelDraw.IsoWidth(model) << 1) + 2), (ushort)(VoxelDraw.IsoHeight(model) + 2))
 			{
-				VoxelColor = voxelColor,
+				VoxelColor = new OneVoxelColor(shadow),
 			};
 			VoxelDraw.IsoShadow(model, new OffsetRenderer()
 			{
 				RectangleRenderer = shadowSprite,
-				VoxelColor = voxelShadow,
 				OffsetX = 1,
 				OffsetY = (model.SizeZ << 2) + 1,
 				ScaleX = 2,
@@ -522,7 +517,6 @@ namespace Voxel2Pixel.Pack
 			VoxelDraw.Iso(model, new OffsetRenderer()
 			{
 				RectangleRenderer = sprite,
-				VoxelColor = voxelColor,
 				OffsetX = 1,
 				OffsetY = 1,
 				ScaleX = 2,

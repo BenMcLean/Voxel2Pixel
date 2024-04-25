@@ -6,9 +6,12 @@ namespace Voxel2Pixel.Render
 	/// <summary>
 	/// Provides a default implementation of ITriangleRenderer by calling IRectangleRenderer, while leaving the Rect method abstract.
 	/// </summary>
-	public abstract class TriangleRenderer : IRectangleRenderer, ITriangleRenderer
+	public abstract class TriangleRenderer : IRectangleRenderer, ITriangleRenderer, IVoxelColor
 	{
+		#region IVoxelColor
 		public virtual IVoxelColor VoxelColor { get; set; }
+		public virtual uint this[byte index, VisibleFace visibleFace = VisibleFace.Front] => VoxelColor[index, visibleFace];
+		#endregion IVoxelColor
 		#region ITriangleRenderer
 		public virtual void Tri(ushort x, ushort y, bool right, uint color)
 		{

@@ -4,7 +4,17 @@ namespace Voxel2Pixel.Render
 {
 	public class OffsetRenderer : TriangleRenderer
 	{
-		public IRectangleRenderer RectangleRenderer { get; set; }
+		public IRectangleRenderer RectangleRenderer
+		{
+			get => rectangleRenderer;
+			set
+			{
+				rectangleRenderer = value;
+				if (rectangleRenderer is IVoxelColor voxelColor)
+					VoxelColor = voxelColor;
+			}
+		}
+		private IRectangleRenderer rectangleRenderer;
 		public int OffsetX { get; set; } = 0;
 		public int OffsetY { get; set; } = 0;
 		public int ScaleX { get; set; } = 1;
