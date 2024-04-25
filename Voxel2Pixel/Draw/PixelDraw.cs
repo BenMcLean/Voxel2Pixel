@@ -163,7 +163,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <param name="threshold">only draws pixel if alpha is higher than or equal to threshold</param>
 		/// <returns>same texture with insert drawn</returns>
-		public static byte[] DrawTransparentInsert(this byte[] texture, int x, int y, byte[] insert, int insertWidth = 0, ushort width = 0, byte threshold = 128)
+		public static byte[] DrawTransparentInsert(this byte[] texture, int x, int y, byte[] insert, ushort insertWidth = 0, ushort width = 0, byte threshold = 128)
 		{
 			int insertX = 0, insertY = 0;
 			if (x < 0)

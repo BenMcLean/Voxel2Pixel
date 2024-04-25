@@ -1,9 +1,11 @@
 ﻿using RectpackSharp;
 using System.Collections.Generic;
 using System.Linq;
+using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
+using Voxel2Pixel.Render;
 
 namespace Voxel2Pixel.Pack
 {
@@ -191,6 +193,13 @@ namespace Voxel2Pixel.Pack
 			value: new Point(
 				X: point.Value.X - cutLeft,
 				Y: point.Value.Y - cutTop))));
+		public Sprite Outline(uint color = 0xFFu) => new Sprite
+		{
+			Texture = Texture.Outline(
+				width: Width,
+				color: color),
+			Width = Width,
+		}.AddRange(this);
 		/// <returns>cropped and outlined copy</returns>
 		public Sprite CropOutline(uint color = 0xFFu) => new Sprite
 		{
@@ -224,6 +233,18 @@ namespace Voxel2Pixel.Pack
 			value: new Point(
 				X: point.Value.X * factorX,
 				Y: point.Value.Y * factorY))));
+		public Sprite DrawInsert(int x, int y, Sprite insert) => DrawInsert(x, y, insert.Texture, insert.Width);
+		public Sprite DrawInsert(int x, int y, byte[] insert, ushort insertWidth = 0)
+		{
+			Texture = Texture.DrawInsert(x, y, insert, insertWidth, Width);
+			return this;
+		}
+		public Sprite DrawTransparentInsert(int x, int y, Sprite insert, byte threshold = 128) => DrawTransparentInsert(x, y, insert.Texture, insert.Width, threshold);
+		public Sprite DrawTransparentInsert(int x, int y, byte[] insert, ushort insertWidth = 0, byte threshold = 128)
+		{
+			Texture = Texture.DrawTransparentInsert(x, y, insert, insertWidth, Width, threshold);
+			return this;
+		}
 		public static IEnumerable<Sprite> AddFrameNumbers(uint color = 0xFFFFFFFF, params Sprite[] sprites) => sprites.AsEnumerable().AddFrameNumbers(color);
 		public Sprite Draw3x4(string @string, int x = 0, int y = 0, uint color = 0xFFFFFFFF)
 		{
@@ -447,6 +468,35 @@ namespace Voxel2Pixel.Pack
 					renderer: sprite);
 				yield return sprite.TransparentCrop();
 			}
+		}
+		public static Sprite IsoOutlinedWithShadow(IModel model, IVoxelColor voxelColor, uint shadow = 0x88u, uint outline = 0xFFu)
+		{
+			OneVoxelColor voxelShadow = new(shadow);
+			Sprite sprite = new((ushort)((VoxelDraw.IsoWidth(model) << 1) + 2), (ushort)(VoxelDraw.IsoHeight(model) + 2))
+			{
+				VoxelColor = voxelColor,
+			},
+			shadowSprite = new((ushort)((VoxelDraw.IsoWidth(model) << 1) + 2), (ushort)(VoxelDraw.IsoHeight(model) + 2))
+			{
+				VoxelColor = voxelColor,
+			};
+			VoxelDraw.IsoShadow(model, new OffsetRenderer()
+			{
+				RectangleRenderer = shadowSprite,
+				VoxelColor = voxelShadow,
+				OffsetX = 1,
+				OffsetY = (model.SizeZ << 2) + 1,
+				ScaleX = 2,
+			});
+			VoxelDraw.Iso(model, new OffsetRenderer()
+			{
+				RectangleRenderer = sprite,
+				VoxelColor = voxelColor,
+				OffsetX = 1,
+				OffsetY = 1,
+				ScaleX = 2,
+			});
+			return shadowSprite.DrawTransparentInsert(0, 0, sprite.Outline(outline));
 		}
 		#endregion Voxel drawing
 	}

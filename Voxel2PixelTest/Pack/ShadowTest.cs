@@ -32,5 +32,14 @@ namespace Voxel2PixelTest.Pack
 			VoxelDraw.Iso(model, sprite);
 			sprite.TransparentCrop().Png().SaveAsPng("ShadowTest.png");
 		}
+		[Fact]
+		public void Outlined()
+		{
+			VoxFileModel model = new(@"..\..\..\Sora.vox");
+			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
+			Sprite.IsoOutlinedWithShadow(model, voxelColor)
+				.TransparentCrop()
+				.Png().SaveAsPng("ShadowOutlinedTest.png");
+		}
 	}
 }
