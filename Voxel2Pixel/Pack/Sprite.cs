@@ -469,6 +469,37 @@ namespace Voxel2Pixel.Pack
 				yield return sprite.TransparentCrop();
 			}
 		}
+		public static Sprite AboveOutlinedWithShadow(IModel model, IVoxelColor voxelColor, uint shadow = 0x88u, uint outline = 0xFFu)
+		{
+			OneVoxelColor voxelShadow = new(shadow);
+			Sprite sprite = new((ushort)(VoxelDraw.AboveWidth(model) * 5 + 2), (ushort)(VoxelDraw.AboveHeight(model) * 4 + 2))
+			{
+				VoxelColor = voxelColor,
+			},
+			shadowSprite = new((ushort)(VoxelDraw.AboveWidth(model) * 5 + 2), (ushort)(VoxelDraw.AboveHeight(model) * 4 + 2))
+			{
+				VoxelColor = voxelColor,
+			};
+			VoxelDraw.Overhead(model, new OffsetRenderer()
+			{
+				RectangleRenderer = shadowSprite,
+				VoxelColor = voxelShadow,
+				OffsetX = 1,
+				OffsetY = (model.SizeZ << 2) + 1,
+				ScaleX = 5,
+				ScaleY = 4,
+			});
+			VoxelDraw.Above(model, new OffsetRenderer()
+			{
+				RectangleRenderer = sprite,
+				VoxelColor = voxelColor,
+				OffsetX = 1,
+				OffsetY = 1,
+				ScaleX = 5,
+				ScaleY = 4,
+			});
+			return shadowSprite.DrawTransparentInsert(0, 0, sprite.Outline(outline));
+		}
 		public static Sprite IsoOutlinedWithShadow(IModel model, IVoxelColor voxelColor, uint shadow = 0x88u, uint outline = 0xFFu)
 		{
 			OneVoxelColor voxelShadow = new(shadow);
