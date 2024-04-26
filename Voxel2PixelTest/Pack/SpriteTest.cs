@@ -75,10 +75,8 @@ namespace Voxel2PixelTest.Pack
 				VoxelColor = new NaiveDimmer(model.Palette),
 			};
 			VoxelDraw.Iso(model, sprite);
-			sprite = sprite.TransparentCrop();
-			sprite
-				.Png()
-				.SaveAsPng("IsoTest.png");
+			sprite = sprite.TransparentCrop().Upscale(2);
+			sprite.Png().SaveAsPng("IsoTest.png");
 		}
 	}
 }
