@@ -122,7 +122,7 @@ namespace Voxel2Pixel.Pack
 		public virtual void Diamond(ushort x, ushort y, byte index, VisibleFace visibleFace = VisibleFace.Front) => Diamond(x: x, y: y, color: VoxelColor[index, visibleFace]);
 		#endregion ITriangleRenderer
 		#region Image manipulation
-		public Sprite(out RectpackSharp.PackingRectangle[] packingRectangles, IEnumerable<ISprite> sprites) : this(out packingRectangles, sprites.ToArray()) { }
+		public Sprite(out RectpackSharp.PackingRectangle[] packingRectangles, IEnumerable<ISprite> sprites) : this(packingRectangles: out packingRectangles, sprites: sprites.ToArray()) { }
 		public Sprite(out RectpackSharp.PackingRectangle[] packingRectangles, params ISprite[] sprites)
 		{
 			packingRectangles = Enumerable.Range(0, sprites.Length)
@@ -147,8 +147,8 @@ namespace Voxel2Pixel.Pack
 					insertWidth: sprites[packingRectangle.Id].Width,
 					width: Width);
 		}
-		public Sprite(Dictionary<string, ISprite> dictionary, out TextureAtlas textureAtlas) : this(dictionary.ToArray(), out textureAtlas) { }
-		public Sprite(KeyValuePair<string, ISprite>[] pairs, out TextureAtlas textureAtlas) : this(out RectpackSharp.PackingRectangle[] packingRectangles, pairs.Select(pair => pair.Value)) =>
+		public Sprite(Dictionary<string, ISprite> dictionary, out TextureAtlas textureAtlas) : this(pairs: [.. dictionary], textureAtlas: out textureAtlas) { }
+		public Sprite(KeyValuePair<string, ISprite>[] pairs, out TextureAtlas textureAtlas) : this(packingRectangles: out RectpackSharp.PackingRectangle[] packingRectangles, sprites: pairs.Select(pair => pair.Value)) =>
 			textureAtlas = new TextureAtlas
 			{
 				SubTextures = Enumerable.Range(0, packingRectangles.Length)

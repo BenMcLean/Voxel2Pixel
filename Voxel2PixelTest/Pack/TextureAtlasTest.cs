@@ -1,7 +1,13 @@
-﻿using System.IO;
+﻿using SixLabors.ImageSharp;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
+using Voxel2Pixel.Color;
+using Voxel2Pixel.Interfaces;
+using Voxel2Pixel.Model;
 using Voxel2Pixel.Pack;
 using Xunit;
 using static Voxel2Pixel.Pack.TextureAtlas;
@@ -98,6 +104,39 @@ namespace Voxel2PixelTest.Pack
 			Assert.Equal(
 				expected: subTexture.Height,
 				actual: subTexture2.Height);
+		}
+		[Fact]
+		public void SoraTest()
+		{
+			VoxFileModel model = new(@"..\..\..\Sora.vox");
+			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
+			Dictionary<string, ISprite> dictionary = new();
+			Sprite[] sprites = Sprite.Iso8(model, voxelColor)
+				.Select(sprite => sprite.CropOutline())
+				.ToArray();
+			for (int direction = 0; direction < sprites.Length; direction++)
+				dictionary.Add("Sora" + direction, sprites[direction]);
+			sprites = Sprite.Iso8Shadows(model, voxelColor)
+				.Select(sprite => sprite.TransparentCrop())
+				.ToArray();
+			for (int direction = 0; direction < sprites.Length; direction++)
+				dictionary.Add("SoraShadow" + direction, sprites[direction]);
+			Sprite atlas = new(dictionary, out TextureAtlas textureAtlas);
+			textureAtlas.ImagePath = "TextureAtlas.png";
+			atlas.Png().SaveAsPng(textureAtlas.ImagePath);
+			XmlWriterSettings settings = new()
+			{
+				Indent = true,
+				OmitXmlDeclaration = true,
+				IndentChars = "\t",
+			};
+			StringBuilder stringBuilder = new();
+			XmlWriter xmlWriter = XmlWriter.Create(stringBuilder, settings);
+			XmlSerializer xmlSerializer = new(typeof(TextureAtlas));
+			xmlSerializer.Serialize(xmlWriter, textureAtlas);
+			File.WriteAllText(
+				path: Path.GetFileNameWithoutExtension(textureAtlas.ImagePath),
+				contents: stringBuilder.ToString());
 		}
 	}
 }
