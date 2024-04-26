@@ -116,7 +116,7 @@ namespace Voxel2PixelTest.Pack
 				.ToArray();
 			for (int direction = 0; direction < sprites.Length; direction++)
 				dictionary.Add("Sora" + direction, sprites[direction]);
-			sprites = Sprite.Iso8Shadows(model, voxelColor)
+			sprites = Sprite.Iso8Shadows(model, new OneVoxelColor(0x88u))
 				.Select(sprite => sprite.TransparentCrop())
 				.ToArray();
 			for (int direction = 0; direction < sprites.Length; direction++)
