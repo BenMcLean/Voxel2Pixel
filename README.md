@@ -47,3 +47,5 @@ Finally, all the sprites are combined into one texture atlas, where `output` is 
 |[FileToVoxCore](https://github.com/Zarbuz/FileToVoxCore)|Unspecified|Parses [MagicaVoxel](https://ephtracy.github.io/) files|
 |[PolySharp](https://github.com/Sergio0694/PolySharp)|[MIT](https://github.com/Sergio0694/PolySharp/blob/main/LICENSE)|Polyfills newer C# language features|
 |[RectPackSharp](https://github.com/ThomasMiz/RectpackSharp)|[MIT](https://github.com/ThomasMiz/RectpackSharp/blob/main/LICENSE)|Packs rectangles for texture atlases|
+
+The test project also depends on [SixLabors.ImageSharp](https://github.com/SixLabors/ImageSharp) for output, but the actual library does not include this.
