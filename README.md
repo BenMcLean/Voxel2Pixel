@@ -20,9 +20,9 @@ sprite = sprite.TransparentCrop().Upscale(2);
 ```
 The `Sprite` class provides a `byte[] Texture` array containing [RGBA8888 format](https://en.wikipedia.org/wiki/RGBA_color_model#RGBA8888) pixels and a `ushort Width` property for the texture's size. These would be referenced to export images.
 
-This snippet constructs a `Sprite` instance by calling methods that use the model's size to determine the texture's size and references the `voxelColor` variable from the previous section.
+This snippet constructs a `Sprite` instance by calling methods that use the model's size to determine the texture's size and references the `model` and `voxelColor` variables from the previous section.
 
-The `VoxelDraw.Iso` method draws the provided `model` onto the provided renderer `sprite` from an isometric camera perspective. The `VoxelDraw` class also contains similar methods for other camera perspectives.
+The `VoxelDraw.Iso` method draws the provided `model` onto the provided renderer `sprite` from an isometric camera perspective. The `VoxelDraw` class also contains similar methods for other camera perspectives such as `Above`, `Diagonal`, `Front`, `Overhead` and `Underneath`.
 
 The `TransparentCrop` method crops out transparent pixels from the edges and the `Upscale` method stretches out the sprite to double the width, which tends to look better for isometric sprites.
 ### Creating a texture atlas
