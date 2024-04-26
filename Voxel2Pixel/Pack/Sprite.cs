@@ -6,6 +6,7 @@ using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Render;
+using static Voxel2Pixel.Pack.TextureAtlas;
 
 namespace Voxel2Pixel.Pack
 {
@@ -146,6 +147,27 @@ namespace Voxel2Pixel.Pack
 					insertWidth: sprites[packingRectangle.Id].Width,
 					width: Width);
 		}
+		public Sprite(Dictionary<string, ISprite> dictionary, out TextureAtlas textureAtlas) : this(dictionary.ToArray(), out textureAtlas) { }
+		public Sprite(KeyValuePair<string, ISprite>[] pairs, out TextureAtlas textureAtlas) : this(out RectpackSharp.PackingRectangle[] packingRectangles, pairs.Select(pair => pair.Value)) =>
+			textureAtlas = new TextureAtlas
+			{
+				SubTextures = Enumerable.Range(0, packingRectangles.Length)
+					.Select(i => new SubTexture
+					{
+						Name = pairs[i].Key,
+						X = (int)packingRectangles[i].X + 1,
+						Y = (int)packingRectangles[i].Y + 1,
+						Width = (int)packingRectangles[i].Width - 2,
+						Height = (int)packingRectangles[i].Height - 2,
+						Points = pairs[i].Value
+							.Select(point => new SubTexture.Point
+							{
+								Name = point.Key,
+								X = point.Value.X,
+								Y = point.Value.Y,
+							}).ToArray(),
+					}).ToArray(),
+			};
 		public static IEnumerable<Sprite> SameSize(ushort addWidth = 0, ushort addHeight = 0, params ISprite[] sprites) => sprites.AsEnumerable().SameSize(addWidth, addHeight);
 		/// <returns>resized copy</returns>
 		public Sprite Resize(ushort croppedWidth, ushort croppedHeight) => Crop(0, 0, croppedWidth, croppedHeight);
