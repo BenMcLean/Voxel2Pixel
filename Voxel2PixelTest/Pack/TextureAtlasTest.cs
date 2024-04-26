@@ -21,28 +21,26 @@ namespace Voxel2PixelTest.Pack
 		[Fact]
 		public void Test()
 		{
-			XmlSerializerNamespaces emptyNamespaces = new XmlSerializerNamespaces(new[] { XmlQualifiedName.Empty });
-			XmlWriterSettings settings = new XmlWriterSettings
+			XmlSerializerNamespaces emptyNamespaces = new(namespaces: new[] { XmlQualifiedName.Empty });
+			XmlWriterSettings settings = new()
 			{
 				Indent = true,
 				OmitXmlDeclaration = true,
 				IndentChars = "\t",
 			};
-			TextureAtlas textureAtlas = new TextureAtlas
+			TextureAtlas textureAtlas = new()
 			{
 				ImagePath = "thin_double.png",
 				SubTextures = new SubTexture[]
 				{
-					new SubTexture
-					{
+					new() {
 						Name = "pattern_0000.png",
 						X = 1024,
 						Y = 1024,
 						Width = 512,
 						Height = 512,
 					},
-					new SubTexture
-					{
+					new() {
 						Name = "pattern_0001.png",
 						X = 2048,
 						Y = 2048,
@@ -51,9 +49,9 @@ namespace Voxel2PixelTest.Pack
 					},
 				},
 			};
-			StringBuilder stringBuilder = new StringBuilder();
+			StringBuilder stringBuilder = new();
 			XmlWriter xmlWriter = XmlWriter.Create(stringBuilder, settings);
-			XmlSerializer xmlSerializer = new XmlSerializer(typeof(TextureAtlas));
+			XmlSerializer xmlSerializer = new(typeof(TextureAtlas));
 			xmlSerializer.Serialize(xmlWriter, textureAtlas, emptyNamespaces);
 			Assert.Equal(
 				expected: @"<TextureAtlas imagePath=""thin_double.png"">
@@ -65,14 +63,14 @@ namespace Voxel2PixelTest.Pack
 		[Fact]
 		public void SubTextureTest()
 		{
-			XmlSerializerNamespaces emptyNamespaces = new XmlSerializerNamespaces(new[] { XmlQualifiedName.Empty });
-			XmlWriterSettings settings = new XmlWriterSettings
+			XmlSerializerNamespaces emptyNamespaces = new(new[] { XmlQualifiedName.Empty });
+			XmlWriterSettings settings = new()
 			{
 				Indent = true,
 				OmitXmlDeclaration = true,
 				IndentChars = "\t",
 			};
-			SubTexture subTexture = new SubTexture
+			SubTexture subTexture = new()
 			{
 				Name = "pattern_0000.png",
 				X = 1024,
@@ -80,9 +78,9 @@ namespace Voxel2PixelTest.Pack
 				Width = 512,
 				Height = 512,
 			};
-			StringBuilder stringBuilder = new StringBuilder();
+			StringBuilder stringBuilder = new();
 			XmlWriter xmlWriter = XmlWriter.Create(stringBuilder, settings);
-			XmlSerializer xmlSerializer = new XmlSerializer(typeof(SubTexture));
+			XmlSerializer xmlSerializer = new(typeof(SubTexture));
 			xmlSerializer.Serialize(xmlWriter, subTexture, emptyNamespaces);
 			string xml = stringBuilder.ToString();
 			Assert.Equal(
