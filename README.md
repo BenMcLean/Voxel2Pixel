@@ -6,7 +6,7 @@ Voxel2Pixel is a [C#](https://dotnet.microsoft.com/en-us/languages/csharp) [.NET
 VoxFileModel model = new(@"..\..\..\Sora.vox");
 IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
 ```
-The `VoxFileModel` class is used for importing [MagicaVoxel](https://ephtracy.github.io/) files via [FiletoVoxCore](https://github.com/Zarbuz/FileToVoxCore). The `Sora.vox` file contains a test model based on the character Sora from Kingdom Hearts.
+The `VoxFileModel` class is used for importing [MagicaVoxel](https://ephtracy.github.io/) files. The `Sora.vox` file contains a test model based on the character Sora from Kingdom Hearts.
 
 Colors are specified in [RGBA8888 format](https://en.wikipedia.org/wiki/RGBA_color_model#RGBA8888). The `IVoxelColor` interface is used to determine which colors to draw sprites with. The `NaiveDimmer` class implements `IVoxelColor` by interpolating lighter and darker versions from the provided palette, which in this snippet comes from the imported MagicaVoxel file.
 ### Drawing a sprite
@@ -40,3 +40,10 @@ The `VoxelDraw.Iso8` method draws a series of 8 sprites using alternating isomet
 The sprites are then placed into a `Dictionary<string, ISprite>` data structure to associate each sprite with a unique name.
 
 Finally, all the sprites are combined into one texture atlas, where `output` is a `Sprite` instance containing the texture and `textureAtlas` is an object containing the metadata which is serializable to XML.
+## Dependencies
+|Package|License|Purpose|
+|---|---|---|
+|[Cromulent.Encoding.Z85](https://github.com/Trigger2991/Cromulent.Encoding.Z85)|[MIT](https://github.com/Trigger2991/Cromulent.Encoding.Z85/blob/master/LICENSE)|Experimental voxel model file format encoding|
+|[FileToVoxCore](https://github.com/Zarbuz/FileToVoxCore)|Unspecified|Parses [MagicaVoxel](https://ephtracy.github.io/) files|
+|[PolySharp](https://github.com/Sergio0694/PolySharp)|[MIT](https://github.com/Sergio0694/PolySharp/blob/main/LICENSE)|Polyfills newer C# language features|
+|[RectPackSharp](https://github.com/ThomasMiz/RectpackSharp)|[MIT](https://github.com/ThomasMiz/RectpackSharp/blob/main/LICENSE)|Packs rectangles for texture atlases|
