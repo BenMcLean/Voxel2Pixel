@@ -135,7 +135,7 @@ namespace Voxel2PixelTest.Pack
 			XmlSerializer xmlSerializer = new(typeof(TextureAtlas));
 			xmlSerializer.Serialize(xmlWriter, textureAtlas);
 			File.WriteAllText(
-				path: Path.GetFileNameWithoutExtension(textureAtlas.ImagePath),
+				path: Path.GetFileNameWithoutExtension(textureAtlas.ImagePath) + ".xml",
 				contents: stringBuilder.ToString());
 		}
 	}
