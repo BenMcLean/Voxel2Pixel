@@ -6,7 +6,7 @@ Voxel2Pixel is a [C#](https://dotnet.microsoft.com/en-us/languages/csharp) [.NET
 VoxFileModel model = new(@"..\..\..\Sora.vox");
 IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
 ```
-The `VoxeFileModel` class is used for importing [MagicaVoxel](https://ephtracy.github.io/) files via [FiletoVoxCore](https://github.com/Zarbuz/FileToVoxCore). The `Sora.vox` file contains a test model based on the character Sora from Kingdom Hearts.
+The `VoxFileModel` class is used for importing [MagicaVoxel](https://ephtracy.github.io/) files via [FiletoVoxCore](https://github.com/Zarbuz/FileToVoxCore). The `Sora.vox` file contains a test model based on the character Sora from Kingdom Hearts.
 
 Colors are specified in [RGBA8888 format](https://en.wikipedia.org/wiki/RGBA_color_model#RGBA8888). The `IVoxelColor` interface is used to determine which colors to draw sprites with. The `NaiveDimmer` class implements `IVoxelColor` by interpolating lighter and darker versions from the provided palette, which in this snippet comes from the imported MagicaVoxel file.
 ### Drawing a sprite
