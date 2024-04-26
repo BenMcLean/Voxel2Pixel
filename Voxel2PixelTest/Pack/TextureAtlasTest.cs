@@ -124,16 +124,13 @@ namespace Voxel2PixelTest.Pack
 			Sprite atlas = new(dictionary, out TextureAtlas textureAtlas);
 			textureAtlas.ImagePath = "TextureAtlas.png";
 			atlas.Png().SaveAsPng(textureAtlas.ImagePath);
-			XmlWriterSettings settings = new()
-			{
-				Indent = true,
-				OmitXmlDeclaration = true,
-				IndentChars = "\t",
-			};
 			StringBuilder stringBuilder = new();
-			XmlWriter xmlWriter = XmlWriter.Create(stringBuilder, settings);
-			XmlSerializer xmlSerializer = new(typeof(TextureAtlas));
-			xmlSerializer.Serialize(xmlWriter, textureAtlas);
+			new XmlSerializer(typeof(TextureAtlas))
+				.Serialize(XmlWriter.Create(stringBuilder, new XmlWriterSettings()
+				{
+					Indent = true,
+					IndentChars = "\t",
+				}), textureAtlas);
 			File.WriteAllText(
 				path: Path.GetFileNameWithoutExtension(textureAtlas.ImagePath) + ".xml",
 				contents: stringBuilder.ToString());
