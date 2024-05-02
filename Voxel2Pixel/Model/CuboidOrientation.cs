@@ -89,7 +89,11 @@ namespace Voxel2Pixel.Model
 				Array.AsReadOnly(new byte[] { 16, 5, 22, 15, 19, 9, 23, 3, 18, 13, 20, 7, 17, 1, 21, 11, 10, 6, 2, 14, 0, 4, 8, 12 }),//x axis
 				Array.AsReadOnly(new byte[] { 1, 2, 3, 0, 5, 6, 7, 4, 9, 10, 11, 8, 13, 14, 15, 12, 17, 18, 19, 16, 21, 22, 23, 20 }),//y axis
 				Array.AsReadOnly(new byte[] { 4, 21, 14, 19, 8, 22, 2, 18, 12, 23, 6, 17, 0, 20, 10, 16, 5, 1, 13, 9, 7, 11, 15, 3 })}),//z axis
-			Counter = Array.AsReadOnly(Clock.Select(a => Array.AsReadOnly(Enumerable.Range(0, a.Count).Select(e => (byte)a.IndexOf((byte)e)).ToArray())).ToArray());
+			Counter = Array.AsReadOnly(new ReadOnlyCollection<byte>[] {
+				Array.AsReadOnly(new byte[] { 20, 13, 18, 7, 21, 1, 17, 11, 22, 5, 16, 15, 23, 9, 19, 3, 0, 12, 8, 4, 10, 14, 2, 6 }),//x axis
+				Array.AsReadOnly(new byte[] { 3, 0, 1, 2, 7, 4, 5, 6, 11, 8, 9, 10, 15, 12, 13, 14, 19, 16, 17, 18, 23, 20, 21, 22 }),//y axis
+				Array.AsReadOnly(new byte[] { 12, 17, 6, 23, 0, 16, 10, 20, 4, 19, 14, 21, 8, 18, 2, 22, 15, 11, 7, 3, 13, 1, 5, 9 })});//z axis
+																																		//Counter = Array.AsReadOnly(Clock.Select(a => Array.AsReadOnly(Enumerable.Range(0, a.Count).Select(e => (byte)a.IndexOf((byte)e)).ToArray())).ToArray());
 		public ITurnable CounterX() => Values[Counter[0][Value]];
 		public ITurnable CounterY() => Values[Counter[1][Value]];
 		public ITurnable CounterZ() => Values[Counter[2][Value]];

@@ -5,3 +5,9 @@
 <h1>Hello, world!</h1>
 
 Welcome to your new app.
+<br/>
+@foreach (System.Collections.ObjectModel.ReadOnlyCollection<byte> bytes in Voxel2Pixel.Model.CuboidOrientation.Counter)
+{
+    @string.Join(",", bytes)
+    <br/>
+}
