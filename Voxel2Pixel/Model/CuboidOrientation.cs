@@ -17,11 +17,11 @@ namespace Voxel2Pixel.Model
 		#region Data members
 		public readonly byte Value;
 		public readonly string Name;
-		public readonly ReadOnlyCollection<int> Rotation;
+		public readonly ReadOnlyCollection<short> Rotation;
 		public readonly ReadOnlyCollection<byte> Reverse;
 		#endregion Data members
 		#region Instances
-		public const int
+		public const short
 			xPlus = 0,
 			yPlus = 1,
 			zPlus = 2,
@@ -29,34 +29,34 @@ namespace Voxel2Pixel.Model
 			yMinus = -2,
 			zMinus = -3;
 		public static readonly CuboidOrientation
-			SOUTH0 = new CuboidOrientation(0, "SOUTH0", xPlus, yPlus, zPlus),
-			SOUTH1 = new CuboidOrientation(1, "SOUTH1", zMinus, yPlus, xPlus),
-			SOUTH2 = new CuboidOrientation(2, "SOUTH2", xMinus, yPlus, zMinus),
-			SOUTH3 = new CuboidOrientation(3, "SOUTH3", zPlus, yPlus, xMinus),
-			WEST0 = new CuboidOrientation(4, "WEST0", yPlus, xMinus, zPlus),
-			WEST1 = new CuboidOrientation(5, "WEST1", yPlus, zPlus, xPlus),
-			WEST2 = new CuboidOrientation(6, "WEST2", yPlus, xPlus, zMinus),
-			WEST3 = new CuboidOrientation(7, "WEST3", yPlus, zMinus, xMinus),
-			NORTH0 = new CuboidOrientation(8, "NORTH0", xMinus, yMinus, zPlus),
-			NORTH1 = new CuboidOrientation(9, "NORTH1", zPlus, yMinus, xPlus),
-			NORTH2 = new CuboidOrientation(10, "NORTH2", xPlus, yMinus, zMinus),
-			NORTH3 = new CuboidOrientation(11, "NORTH3", zMinus, yMinus, xMinus),
-			EAST0 = new CuboidOrientation(12, "EAST0", yMinus, xPlus, zPlus),
-			EAST1 = new CuboidOrientation(13, "EAST1", yMinus, zMinus, xPlus),
-			EAST2 = new CuboidOrientation(14, "EAST2", yMinus, xMinus, zMinus),
-			EAST3 = new CuboidOrientation(15, "EAST3", yMinus, zPlus, xMinus),
-			TOP0 = new CuboidOrientation(16, "TOP0", xPlus, zPlus, yMinus),
-			TOP1 = new CuboidOrientation(17, "TOP1", zMinus, xPlus, yMinus),
-			TOP2 = new CuboidOrientation(18, "TOP2", xMinus, zMinus, yMinus),
-			TOP3 = new CuboidOrientation(19, "TOP3", zPlus, xMinus, yMinus),
-			BOTTOM0 = new CuboidOrientation(20, "BOTTOM0", xPlus, zMinus, yPlus),
-			BOTTOM1 = new CuboidOrientation(21, "BOTTOM1", zMinus, xMinus, yPlus),
-			BOTTOM2 = new CuboidOrientation(22, "BOTTOM2", xMinus, zPlus, yPlus),
-			BOTTOM3 = new CuboidOrientation(23, "BOTTOM3", zPlus, xPlus, yPlus);
+			SOUTH0 = new(0, "SOUTH0", xPlus, yPlus, zPlus),
+			SOUTH1 = new(1, "SOUTH1", zMinus, yPlus, xPlus),
+			SOUTH2 = new(2, "SOUTH2", xMinus, yPlus, zMinus),
+			SOUTH3 = new(3, "SOUTH3", zPlus, yPlus, xMinus),
+			WEST0 = new(4, "WEST0", yPlus, xMinus, zPlus),
+			WEST1 = new(5, "WEST1", yPlus, zPlus, xPlus),
+			WEST2 = new(6, "WEST2", yPlus, xPlus, zMinus),
+			WEST3 = new(7, "WEST3", yPlus, zMinus, xMinus),
+			NORTH0 = new(8, "NORTH0", xMinus, yMinus, zPlus),
+			NORTH1 = new(9, "NORTH1", zPlus, yMinus, xPlus),
+			NORTH2 = new(10, "NORTH2", xPlus, yMinus, zMinus),
+			NORTH3 = new(11, "NORTH3", zMinus, yMinus, xMinus),
+			EAST0 = new(12, "EAST0", yMinus, xPlus, zPlus),
+			EAST1 = new(13, "EAST1", yMinus, zMinus, xPlus),
+			EAST2 = new(14, "EAST2", yMinus, xMinus, zMinus),
+			EAST3 = new(15, "EAST3", yMinus, zPlus, xMinus),
+			TOP0 = new(16, "TOP0", xPlus, zPlus, yMinus),
+			TOP1 = new(17, "TOP1", zMinus, xPlus, yMinus),
+			TOP2 = new(18, "TOP2", xMinus, zMinus, yMinus),
+			TOP3 = new(19, "TOP3", zPlus, xMinus, yMinus),
+			BOTTOM0 = new(20, "BOTTOM0", xPlus, zMinus, yPlus),
+			BOTTOM1 = new(21, "BOTTOM1", zMinus, xMinus, yPlus),
+			BOTTOM2 = new(22, "BOTTOM2", xMinus, zPlus, yPlus),
+			BOTTOM3 = new(23, "BOTTOM3", zPlus, xPlus, yPlus);
 		public static readonly ReadOnlyCollection<CuboidOrientation> Values = Array.AsReadOnly(new CuboidOrientation[] { SOUTH0, SOUTH1, SOUTH2, SOUTH3, WEST0, WEST1, WEST2, WEST3, NORTH0, NORTH1, NORTH2, NORTH3, EAST0, EAST1, EAST2, EAST3, TOP0, TOP1, TOP2, TOP3, BOTTOM0, BOTTOM1, BOTTOM2, BOTTOM3 });
 		#endregion Instances
 		#region CuboidOrientation
-		private CuboidOrientation(byte value, string name, params int[] rotation)
+		private CuboidOrientation(byte value, string name, params short[] rotation)
 		{
 			Value = value;
 			Name = name;
