@@ -44,7 +44,7 @@ Finally, all the sprites are combined into one texture atlas, where `output` is 
 |Package|License|Purpose|
 |---|---|---|
 |[Cromulent.Encoding.Z85](https://github.com/Trigger2991/Cromulent.Encoding.Z85)|[MIT](https://github.com/Trigger2991/Cromulent.Encoding.Z85/blob/master/LICENSE)|Experimental voxel model file format encoding|
-|[FileToVoxCore](https://github.com/Zarbuz/FileToVoxCore)|Unspecified|Parses [MagicaVoxel](https://ephtracy.github.io/) files|
+|[FileToVoxCore](https://github.com/Zarbuz/FileToVoxCore)|[MIT](https://github.com/Zarbuz/FileToVoxCore/blob/master/LICENSE)|Parses [MagicaVoxel](https://ephtracy.github.io/) files|
 |[PolySharp](https://github.com/Sergio0694/PolySharp)|[MIT](https://github.com/Sergio0694/PolySharp/blob/main/LICENSE)|Polyfills newer C# language features|
 |[RectPackSharp](https://github.com/ThomasMiz/RectpackSharp)|[MIT](https://github.com/ThomasMiz/RectpackSharp/blob/main/LICENSE)|Packs rectangles for texture atlases|
 
