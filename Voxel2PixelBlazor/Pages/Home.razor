@@ -5,9 +5,45 @@
 <h1>Hello, world!</h1>
 
 Welcome to your new app.
-<br/>
-@foreach (System.Collections.ObjectModel.ReadOnlyCollection<byte> bytes in Voxel2Pixel.Model.CuboidOrientation.Counter)
+<br />
+<InputFile OnChange="LoadFile" />
+@code {
+	public bool IsLoading = false;
+	public uint[]? Palette = null;
+	public MarkupString ExceptionMessage;
+	private async void LoadFile(InputFileChangeEventArgs e)
+	{
+		IsLoading = true;
+		MemoryStream ms = new();
+		try
+		{
+			await e.File.OpenReadStream().CopyToAsync(ms);
+			ms.Position = 0;
+			Voxel2Pixel.Model.VoxFileModel model = new(new FileToVoxCore.Vox.VoxReader().LoadModel(ms));
+			Palette = model.Palette;
+		}
+		catch (Exception ex)
+		{
+			ExceptionMessage = new MarkupString(ex.GetType().Name + ": " + ex.Message + "<br />" + ex.StackTrace);
+		}
+		IsLoading = false;
+		StateHasChanged();
+	}
+}
+<br />
+@if (!string.IsNullOrWhiteSpace(ExceptionMessage.ToString()))
 {
-    @string.Join(",", bytes)
-    <br/>
+	<div>@ExceptionMessage</div>
+	<br />
+}
+@if (IsLoading)
+{
+	<div>Loading...</div>
+	<br />
+}
+else if (Palette is not null)
+{
+	<div>
+		Palette: @string.Join(", ", Palette)
+	</div>
 }
