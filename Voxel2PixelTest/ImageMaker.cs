@@ -14,10 +14,10 @@ namespace Voxel2PixelTest
 	public static class ImageMaker
 	{
 		#region SixLabors.ImageSharp
-		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> Png(int width = 0, params byte[] bytes)
+		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> Png(ushort width = 0, params byte[] bytes)
 		{
 			if (width < 1)
-				width = (int)Math.Sqrt(bytes.Length >> 2);
+				width = (ushort)Math.Sqrt(bytes.Length >> 2);
 			return SixLabors.ImageSharp.Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(
 				data: bytes,
 				width: width,

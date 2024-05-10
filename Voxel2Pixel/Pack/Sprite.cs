@@ -169,6 +169,7 @@ namespace Voxel2Pixel.Pack
 					}).ToArray(),
 			};
 		public static IEnumerable<Sprite> SameSize(ushort addWidth = 0, ushort addHeight = 0, params ISprite[] sprites) => sprites.AsEnumerable().SameSize(addWidth, addHeight);
+		public static IEnumerable<Sprite> SameSize(params ISprite[] sprites) => sprites.AsEnumerable().SameSize();
 		/// <returns>resized copy</returns>
 		public Sprite Resize(ushort croppedWidth, ushort croppedHeight) => Crop(0, 0, croppedWidth, croppedHeight);
 		/// <returns>lower right cropped copy</returns>

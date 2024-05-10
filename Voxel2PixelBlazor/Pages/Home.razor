@@ -43,7 +43,9 @@ Welcome to your new app.
 }
 else if (Palette is not null)
 {
-	<div>
-		Palette: @string.Join(", ", Palette)
-	</div>
+	foreach (uint color in Palette.Skip(1))
+	{
+		string hex = "#" + (color >> 8).ToString("X");
+		<input type="color" value="@hex" disabled />
+	}
 }
