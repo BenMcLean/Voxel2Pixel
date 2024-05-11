@@ -389,27 +389,11 @@ namespace Voxel2Pixel.Pack
 					y: out ushort turnedY,
 					z: out ushort turnedZ,
 					coordinates: voxelOrigin);
-				VoxelDraw.AboveLocate(
-					pixelX: out int locateX,
-					pixelY: out int locateY,
+				yield return new Sprite(
+					perspective: Perspective.Above,
 					model: turnModel,
-					voxelX: turnedX,
-					voxelY: turnedY,
-					voxelZ: turnedZ);
-				ushort width = VoxelDraw.AboveWidth(turnModel);
-				Sprite sprite = new()
-				{
-					Texture = new byte[width * VoxelDraw.AboveHeight(turnModel) << 2],
-					Width = width,
-					VoxelColor = voxelColor,
-				};
-				sprite[Origin] = new Point(
-					X: locateX,
-					Y: locateY);
-				VoxelDraw.Above(
-					model: turnModel,
-					renderer: sprite);
-				yield return sprite
+					voxelColor: voxelColor,
+					voxelOrigin: [turnedX, turnedY, turnedZ])
 					.TransparentCrop()
 					.Upscale(5, 4);
 				turnModel.CounterZ();
@@ -418,27 +402,13 @@ namespace Voxel2Pixel.Pack
 					y: out turnedY,
 					z: out turnedZ,
 					coordinates: voxelOrigin);
-				VoxelDraw.IsoLocate(
-					pixelX: out locateX,
-					pixelY: out locateY,
+				yield return new Sprite(
+					perspective: Perspective.Iso,
 					model: turnModel,
-					voxelX: turnedX,
-					voxelY: turnedY,
-					voxelZ: turnedZ);
-				width = (ushort)(VoxelDraw.IsoWidth(turnModel) << 1);
-				sprite = new Sprite2x
-				{
-					Texture = new byte[width * VoxelDraw.IsoHeight(turnModel) << 2],
-					Width = width,
-					VoxelColor = voxelColor,
-				};
-				sprite[Origin] = new Point(
-					X: locateX << 1,
-					Y: locateY);
-				VoxelDraw.Iso(
-					model: turnModel,
-					renderer: sprite);
-				yield return sprite.TransparentCrop();
+					voxelColor: voxelColor,
+					voxelOrigin: [turnedX, turnedY, turnedZ])
+					.TransparentCrop()
+					.Upscale(2);
 			}
 		}
 		public static IEnumerable<Sprite> Iso8Shadows(IModel model, IVoxelColor voxelColor, params int[] voxelOrigin)
