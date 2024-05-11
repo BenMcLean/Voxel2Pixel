@@ -19,7 +19,7 @@ Welcome to your new app.
 		{
 			await e.File.OpenReadStream().CopyToAsync(ms);
 			ms.Position = 0;
-			Voxel2Pixel.Model.VoxFileModel model = new(new FileToVoxCore.Vox.VoxReader().LoadModel(ms));
+			Voxel2Pixel.Model.VoxFileModel model = new(ms);
 			Palette = model.Palette;
 		}
 		catch (Exception ex)

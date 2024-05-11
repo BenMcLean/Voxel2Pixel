@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
@@ -12,7 +13,7 @@ namespace Voxel2Pixel.Model
 		public VoxFileModel(FileToVoxCore.Vox.VoxModel model, int frame = 0)
 		{
 			Palette = new uint[256];
-			uint[] palette = model.Palette.Take(Palette.Length).Select(color => Color(color)).ToArray();
+			uint[] palette = model.Palette.Take(Palette.Length).Select(Color).ToArray();
 			System.Array.Copy(
 				sourceArray: palette,
 				sourceIndex: 0,
@@ -30,6 +31,7 @@ namespace Voxel2Pixel.Model
 							this[x, y, z] = voxel;
 		}
 		public VoxFileModel(string filePath, int frame = 0) : this(new FileToVoxCore.Vox.VoxReader().LoadModel(filePath), frame) { }
+		public VoxFileModel(Stream stream, int frame = 0) : this(new FileToVoxCore.Vox.VoxReader().LoadModel(stream), frame) { }
 		public uint[] Palette { get; set; }
 		public static uint Color(FileToVoxCore.Drawing.Color color) => ((uint)color.ToArgb()).Argb2rgba();
 		#endregion Read
