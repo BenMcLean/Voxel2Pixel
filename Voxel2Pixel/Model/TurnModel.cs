@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model
@@ -79,6 +80,7 @@ namespace Voxel2Pixel.Model
 			y = Rotate(1, coordinates);
 			z = Rotate(2, coordinates);
 		}
+		public ushort[] Rotate(params int[] coordinates) => Enumerable.Range(0, 3).Select(axis => Rotate(axis, coordinates)).ToArray();
 		#endregion Rotate
 		#region ReverseRotate
 		public ushort ReverseRotate(int axis, params ushort[] coordinates) => ReverseRotate(axis, Array.ConvertAll(coordinates, @ushort => (int)@ushort));
@@ -90,6 +92,7 @@ namespace Voxel2Pixel.Model
 			y = ReverseRotate(1, coordinates);
 			z = ReverseRotate(2, coordinates);
 		}
+		public ushort[] ReverseRotate(params int[] coordinates) => Enumerable.Range(0, 3).Select(axis => ReverseRotate(axis, coordinates)).ToArray();
 		public byte Reverse(ushort x, ushort y, ushort z)
 		{
 			ReverseRotate(out ushort x1, out ushort y1, out ushort z1, x, y, z);

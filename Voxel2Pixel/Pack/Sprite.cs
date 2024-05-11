@@ -1,4 +1,5 @@
 ﻿using RectpackSharp;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Voxel2Pixel.Color;
@@ -39,13 +40,13 @@ namespace Voxel2Pixel.Pack
 			foreach (KeyValuePair<string, Point> point in sprite)
 				this[point.Key] = point.Value;
 		}
-		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, byte peakScaleX = 6, byte peakScaleY = 6, params int[] voxelOrigin) : this(perspective, model, voxelColor, new Dictionary<string, int[]> { { Origin, voxelOrigin }, }, peakScaleX, peakScaleY) { }
-		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, params int[] voxelOrigin) : this(perspective, model, voxelColor, new Dictionary<string, int[]> { { Origin, voxelOrigin }, }) { }
-		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, Dictionary<string, int[]> points = null, byte peakScaleX = 6, byte peakScaleY = 6) : this(
+		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, byte peakScaleX = 6, byte peakScaleY = 6, params int[] voxelOrigin) : this(perspective, model, voxelColor, new Dictionary<string, int[]> { { Origin, voxelOrigin ?? model.BottomCenter() }, }, peakScaleX, peakScaleY) { }
+		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, params int[] voxelOrigin) : this(perspective, model, voxelColor, new Dictionary<string, int[]> { { Origin, voxelOrigin ?? model.BottomCenter() }, }) { }
+		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, int[]>> voxelPoints = null, byte peakScaleX = 6, byte peakScaleY = 6) : this(
 			width: VoxelDraw.Width(perspective, model, peakScaleX),
 			height: VoxelDraw.Height(perspective, model, peakScaleY))
 		{
-			points ??= new Dictionary<string, int[]> { { Origin, model.BottomCenter() }, };
+			voxelPoints ??= new Dictionary<string, int[]> { { Origin, model.BottomCenter() }, };
 			VoxelColor = voxelColor;
 			VoxelDraw.Draw(
 				perspective: perspective,
@@ -53,18 +54,12 @@ namespace Voxel2Pixel.Pack
 				renderer: this,
 				peakScaleX: peakScaleX,
 				peakScaleY: peakScaleY);
-			foreach (KeyValuePair<string, int[]> point in points)
-			{
-				VoxelDraw.Locate(
-					perspective: perspective,
-					pixelX: out int pixelX,
-					pixelY: out int pixelY,
-					model: model,
-					point: point.Value,
-					peakScaleX: peakScaleX,
-					peakScaleY: peakScaleY);
-				Add(point.Key, new Point(pixelX, pixelY));
-			}
+			AddRange(voxelPoints.Select(point => new KeyValuePair<string, Point>(point.Key, VoxelDraw.Locate(
+				perspective: perspective,
+				model: model,
+				point: point.Value,
+				peakScaleX: peakScaleX,
+				peakScaleY: peakScaleY))));
 		}
 		#endregion Sprite
 		#region IVoxelColor
@@ -313,180 +308,76 @@ namespace Voxel2Pixel.Pack
 			color: color);
 		#endregion Image manipulation
 		#region Voxel drawing
-		public static IEnumerable<Sprite> Above4(IModel model, IVoxelColor voxelColor, params int[] voxelOrigin)
+		public static IEnumerable<Sprite> Z4(Perspective perspective, IModel model, IVoxelColor voxelColor, params int[] voxelOrigin) => Z4(perspective, model, voxelColor, new Dictionary<string, int[]> { { Origin, voxelOrigin ?? model.BottomCenter() }, });
+		public static IEnumerable<Sprite> Z4(Perspective perspective, IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, int[]>> points = null)
 		{
-			if (voxelOrigin is null || voxelOrigin.Length < 3)
-				voxelOrigin = model.BottomCenter();
+			points ??= new Dictionary<string, int[]> { { Origin, model.BottomCenter() }, };
 			TurnModel turnModel = new()
 			{
 				Model = model,
 			};
 			for (byte angle = 0; angle < 4; angle++)
 			{
-				turnModel.ReverseRotate(
-					x: out ushort turnedX,
-					y: out ushort turnedY,
-					z: out ushort turnedZ,
-					coordinates: voxelOrigin);
-				VoxelDraw.AboveLocate(
-					pixelX: out int locateX,
-					pixelY: out int locateY,
+				yield return new(
+					perspective: perspective,
 					model: turnModel,
-					voxelX: turnedX,
-					voxelY: turnedY,
-					voxelZ: turnedZ);
-				ushort width = VoxelDraw.AboveWidth(turnModel);
-				Sprite sprite = new()
-				{
-					Texture = new byte[width * VoxelDraw.AboveHeight(turnModel) << 2],
-					Width = width,
-					VoxelColor = voxelColor,
-				};
-				sprite[Origin] = new Point(
-					X: locateX,
-					Y: locateY);
-				VoxelDraw.Above(
-					model: turnModel,
-					renderer: sprite);
-				yield return sprite;
+					voxelColor: voxelColor,
+					voxelPoints: points.Select(point => new KeyValuePair<string, int[]>(point.Key, Array.ConvertAll(turnModel.ReverseRotate(point.Value), i => (int)i))));
 				turnModel.CounterZ();
 			}
 		}
-		public static IEnumerable<Sprite> Iso4(IModel model, IVoxelColor voxelColor, params int[] voxelOrigin)
+		public static IEnumerable<Sprite> Iso8(IModel model, IVoxelColor voxelColor, params int[] voxelOrigin) => Iso8(model, voxelColor, new Dictionary<string, int[]> { { Origin, voxelOrigin ?? model.BottomCenter() }, });
+		public static IEnumerable<Sprite> Iso8(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, int[]>> points = null)
 		{
-			if (voxelOrigin is null || voxelOrigin.Length < 3)
-				voxelOrigin = model.BottomCenter();
+			points ??= new Dictionary<string, int[]> { { Origin, model.BottomCenter() }, };
 			TurnModel turnModel = new()
 			{
 				Model = model,
 			};
 			for (byte angle = 0; angle < 4; angle++)
 			{
-				turnModel.ReverseRotate(
-					x: out ushort turnedX,
-					y: out ushort turnedY,
-					z: out ushort turnedZ,
-					coordinates: voxelOrigin);
-				VoxelDraw.IsoLocate(
-					pixelX: out int locateX,
-					pixelY: out int locateY,
-					model: turnModel,
-					voxelX: turnedX,
-					voxelY: turnedY,
-					voxelZ: turnedZ);
-				ushort width = VoxelDraw.IsoWidth(turnModel);
-				Sprite sprite = new()
-				{
-					Texture = new byte[width * VoxelDraw.IsoHeight(turnModel) << 2],
-					Width = width,
-					VoxelColor = voxelColor,
-				};
-				sprite[Origin] = new Point(
-					X: locateX,
-					Y: locateY);
-				VoxelDraw.Iso(
-					model: turnModel,
-					renderer: sprite);
-				yield return sprite;
-				turnModel.CounterZ();
-			}
-		}
-		public static IEnumerable<Sprite> Iso8(IModel model, IVoxelColor voxelColor, params int[] voxelOrigin)
-		{
-			if (voxelOrigin is null || voxelOrigin.Length < 3)
-				voxelOrigin = model.BottomCenter();
-			TurnModel turnModel = new()
-			{
-				Model = model,
-			};
-			for (byte angle = 0; angle < 4; angle++)
-			{
-				turnModel.ReverseRotate(
-					x: out ushort turnedX,
-					y: out ushort turnedY,
-					z: out ushort turnedZ,
-					coordinates: voxelOrigin);
 				yield return new Sprite(
 					perspective: Perspective.Above,
 					model: turnModel,
 					voxelColor: voxelColor,
-					voxelOrigin: [turnedX, turnedY, turnedZ])
+					voxelPoints: points.Select(point => new KeyValuePair<string, int[]>(point.Key, Array.ConvertAll(turnModel.ReverseRotate(point.Value), i => (int)i))))
 					.TransparentCrop()
 					.Upscale(5, 4);
 				turnModel.CounterZ();
-				turnModel.ReverseRotate(
-					x: out turnedX,
-					y: out turnedY,
-					z: out turnedZ,
-					coordinates: voxelOrigin);
 				yield return new Sprite(
 					perspective: Perspective.Iso,
 					model: turnModel,
 					voxelColor: voxelColor,
-					voxelOrigin: [turnedX, turnedY, turnedZ])
+					voxelPoints: points.Select(point => new KeyValuePair<string, int[]>(point.Key, Array.ConvertAll(turnModel.ReverseRotate(point.Value), i => (int)i))))
 					.TransparentCrop()
 					.Upscale(2);
 			}
 		}
-		public static IEnumerable<Sprite> Iso8Shadows(IModel model, IVoxelColor voxelColor, params int[] voxelOrigin)
+		public static IEnumerable<Sprite> Iso8Shadows(IModel model, IVoxelColor voxelColor, params int[] voxelOrigin) => Iso8Shadows(model, voxelColor, new Dictionary<string, int[]> { { Origin, voxelOrigin ?? model.BottomCenter() }, });
+		public static IEnumerable<Sprite> Iso8Shadows(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, int[]>> voxelPoints = null)
 		{
-			if (voxelOrigin is null || voxelOrigin.Length < 3)
-				voxelOrigin = model.BottomCenter();
+			voxelPoints ??= new Dictionary<string, int[]> { { Origin, model.BottomCenter() }, };
 			TurnModel turnModel = new()
 			{
 				Model = model,
 			};
 			for (byte angle = 0; angle < 4; angle++)
 			{
-				turnModel.ReverseRotate(
-					x: out ushort turnedX,
-					y: out ushort turnedY,
-					z: out _,
-					coordinates: voxelOrigin);
-				int locateX = turnedX,
-					locateY = turnedY;
-				ushort width = VoxelDraw.UnderneathWidth(turnModel);
-				Sprite sprite = new()
-				{
-					Texture = new byte[width * VoxelDraw.UnderneathHeight(turnModel) << 2],
-					Width = width,
-					VoxelColor = voxelColor,
-				};
-				sprite[Origin] = new Point(
-					X: locateX,
-					Y: locateY);
-				VoxelDraw.Underneath(
+				yield return new Sprite(
+					perspective: Perspective.Underneath,
 					model: turnModel,
-					renderer: sprite);
-				yield return sprite
+					voxelColor: voxelColor,
+					voxelPoints: voxelPoints.Select(point => new KeyValuePair<string, int[]>(point.Key, Array.ConvertAll(turnModel.ReverseRotate(point.Value), i => (int)i))))
 					.TransparentCrop()
 					.Upscale(5, 4);
 				turnModel.CounterZ();
-				turnModel.ReverseRotate(
-					x: out turnedX,
-					y: out turnedY,
-					z: out _,
-					coordinates: voxelOrigin);
-				VoxelDraw.IsoShadowLocate(
-					pixelX: out locateX,
-					pixelY: out locateY,
+				yield return new Sprite(
+					perspective: Perspective.IsoShadow,
 					model: turnModel,
-					voxelX: turnedX,
-					voxelY: turnedY);
-				width = (ushort)(VoxelDraw.IsoShadowWidth(turnModel) << 1);
-				sprite = new Sprite2x
-				{
-					Texture = new byte[width * VoxelDraw.IsoShadowHeight(turnModel) << 2],
-					Width = width,
-					VoxelColor = voxelColor,
-				};
-				sprite[Origin] = new Point(
-					X: locateX << 1,
-					Y: locateY);
-				VoxelDraw.IsoShadow(
-					model: turnModel,
-					renderer: sprite);
-				yield return sprite.TransparentCrop();
+					voxelColor: voxelColor,
+					voxelPoints: voxelPoints.Select(point => new KeyValuePair<string, int[]>(point.Key, Array.ConvertAll(turnModel.ReverseRotate(point.Value), i => (int)i))))
+					.TransparentCrop()
+					.Upscale(2);
 			}
 		}
 		public static Sprite AboveOutlinedWithShadow(IModel model, IVoxelColor voxelColor, uint shadow = 0x88u, uint outline = 0xFFu)
@@ -542,54 +433,6 @@ namespace Voxel2Pixel.Pack
 				ScaleX = 2,
 			});
 			return shadowSprite.DrawTransparentInsert(0, 0, sprite.Outline(outline));
-		}
-		public static IEnumerable<Sprite> Iso8OutlinedWithShadows(IModel model, IVoxelColor voxelColor, params int[] voxelOrigin) => Iso8OutlinedWithShadows(model, voxelColor, 0x88u, 0xFFu, voxelOrigin);
-		public static IEnumerable<Sprite> Iso8OutlinedWithShadows(IModel model, IVoxelColor voxelColor, uint shadow, uint outline, params int[] voxelOrigin)
-		{
-			if (voxelOrigin is null || voxelOrigin.Length < 3)
-				voxelOrigin = model.BottomCenter();
-			TurnModel turnModel = new()
-			{
-				Model = model,
-			};
-			for (byte angle = 0; angle < 4; angle++)
-			{
-				turnModel.ReverseRotate(
-					x: out ushort turnedX,
-					y: out ushort turnedY,
-					z: out ushort turnedZ,
-					coordinates: voxelOrigin);
-				VoxelDraw.AboveLocate(
-					pixelX: out int locateX,
-					pixelY: out int locateY,
-					model: turnModel,
-					voxelX: turnedX,
-					voxelY: turnedY,
-					voxelZ: turnedZ);
-				Sprite sprite = AboveOutlinedWithShadow(turnModel, voxelColor, shadow, outline);
-				sprite[Origin] = new Point(
-					X: locateX * 5 + 1,
-					Y: (locateY << 2) + 1);
-				yield return sprite.TransparentCrop();
-				turnModel.CounterZ();
-				turnModel.ReverseRotate(
-					x: out turnedX,
-					y: out turnedY,
-					z: out turnedZ,
-					coordinates: voxelOrigin);
-				VoxelDraw.IsoLocate(
-					pixelX: out locateX,
-					pixelY: out locateY,
-					model: turnModel,
-					voxelX: turnedX,
-					voxelY: turnedY,
-					voxelZ: turnedZ);
-				sprite = IsoOutlinedWithShadow(turnModel, voxelColor, shadow, outline);
-				sprite[Origin] = new Point(
-					X: (locateX << 1) + 1,
-					Y: locateY + 1);
-				yield return sprite.TransparentCrop();
-			}
 		}
 		#endregion Voxel drawing
 	}
