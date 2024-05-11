@@ -32,5 +32,9 @@ namespace Voxel2Pixel.Render
 		}
 		public virtual void Diamond(ushort x, ushort y, byte index, VisibleFace visibleFace = VisibleFace.Front) => Diamond(x: x, y: y, color: VoxelColor[index, visibleFace]);
 		#endregion ITriangleRenderer
+		#region IRectangleRenderer
+		public void Rect(ushort x, ushort y, uint color, ushort sizeX = 1, ushort sizeY = 1) => RectangleRenderer.Rect(x, y, color, sizeX, sizeY);
+		public void Rect(ushort x, ushort y, byte index, VisibleFace visibleFace = VisibleFace.Front, ushort sizeX = 1, ushort sizeY = 1) => RectangleRenderer.Rect(x, y, index, visibleFace, sizeX, sizeY);
+		#endregion IRectangleRenderer
 	}
 }

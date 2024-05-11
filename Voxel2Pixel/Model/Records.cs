@@ -9,4 +9,8 @@
 		Left = 128,
 		Right = 192,
 	}
+	public enum Perspective
+	{
+		Front, FrontPeak, Overhead, Underneath, Diagonal, DiagonalPeak, Above, Iso, IsoShadow,
+	}
 }

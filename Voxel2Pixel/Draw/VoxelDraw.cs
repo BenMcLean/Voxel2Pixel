@@ -13,6 +13,41 @@ namespace Voxel2Pixel.Draw
 	/// </summary>
 	public static class VoxelDraw
 	{
+		#region Draw
+		public static void Draw(Perspective perspective, IModel model, ITriangleRenderer renderer, byte peakScaleX = 6, byte peakScaleY = 6)
+		{
+			switch (perspective)
+			{
+				case Perspective.Front:
+					Front(model, renderer);
+					break;
+				case Perspective.FrontPeak:
+					FrontPeak(model, renderer, peakScaleX, peakScaleY);
+					break;
+				case Perspective.Overhead:
+					Overhead(model, renderer);
+					break;
+				case Perspective.Underneath:
+					Underneath(model, renderer);
+					break;
+				case Perspective.Diagonal:
+					Diagonal(model, renderer);
+					break;
+				case Perspective.DiagonalPeak:
+					DiagonalPeak(model, renderer, peakScaleX, peakScaleY);
+					break;
+				case Perspective.Above:
+					Above(model, renderer);
+					break;
+				case Perspective.Iso:
+					Iso(model, renderer);
+					break;
+				case Perspective.IsoShadow:
+					IsoShadow(model, renderer);
+					break;
+			}
+		}
+		#endregion Draw
 		#region Records
 		private readonly record struct VoxelY(ushort Y, byte Index)
 		{

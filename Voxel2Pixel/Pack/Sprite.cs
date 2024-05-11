@@ -10,7 +10,7 @@ using static Voxel2Pixel.Pack.TextureAtlas;
 
 namespace Voxel2Pixel.Pack
 {
-	public class Sprite : Dictionary<string, Point>, ISprite, IRectangleRenderer, ITriangleRenderer, IVoxelColor
+	public class Sprite : Dictionary<string, Point>, ISprite, ITriangleRenderer, IVoxelColor
 	{
 		#region ISprite
 		public byte[] Texture { get; set; }
