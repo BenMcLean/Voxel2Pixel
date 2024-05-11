@@ -39,6 +39,16 @@ namespace Voxel2Pixel.Pack
 			foreach (KeyValuePair<string, Point> point in sprite)
 				this[point.Key] = point.Value;
 		}
+		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, byte peakScaleX = 6, byte peakScaleY = 6, params int[] voxelOrigin) : this(width: VoxelDraw.Width(perspective, model, peakScaleX), height: VoxelDraw.Height(perspective, model, peakScaleY))
+		{
+			if (voxelOrigin is null || voxelOrigin.Length < 3)
+				voxelOrigin = model.BottomCenter();
+			VoxelColor = voxelColor;
+			VoxelDraw.Draw(perspective, model, this, peakScaleX, peakScaleY);
+			VoxelDraw.Locate(perspective, out int pixelX, out int pixelY, model, voxelOrigin[0], voxelOrigin[1], voxelOrigin[2], peakScaleX, peakScaleY);
+			Add(Origin, new Point(pixelX, pixelY));
+		}
+		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, params int[] voxelOrigin) : this(perspective, model, voxelColor, 6, 6, voxelOrigin) { }
 		#endregion Sprite
 		#region IVoxelColor
 		public IVoxelColor VoxelColor { get; set; }
@@ -286,7 +296,7 @@ namespace Voxel2Pixel.Pack
 			color: color);
 		#endregion Image manipulation
 		#region Voxel drawing
-		public static IEnumerable<Sprite> Above4(IModel model, IVoxelColor voxelColor, params ushort[] voxelOrigin)
+		public static IEnumerable<Sprite> Above4(IModel model, IVoxelColor voxelColor, params int[] voxelOrigin)
 		{
 			if (voxelOrigin is null || voxelOrigin.Length < 3)
 				voxelOrigin = model.BottomCenter();
@@ -325,7 +335,7 @@ namespace Voxel2Pixel.Pack
 				turnModel.CounterZ();
 			}
 		}
-		public static IEnumerable<Sprite> Iso4(IModel model, IVoxelColor voxelColor, params ushort[] voxelOrigin)
+		public static IEnumerable<Sprite> Iso4(IModel model, IVoxelColor voxelColor, params int[] voxelOrigin)
 		{
 			if (voxelOrigin is null || voxelOrigin.Length < 3)
 				voxelOrigin = model.BottomCenter();
@@ -364,7 +374,7 @@ namespace Voxel2Pixel.Pack
 				turnModel.CounterZ();
 			}
 		}
-		public static IEnumerable<Sprite> Iso8(IModel model, IVoxelColor voxelColor, params ushort[] voxelOrigin)
+		public static IEnumerable<Sprite> Iso8(IModel model, IVoxelColor voxelColor, params int[] voxelOrigin)
 		{
 			if (voxelOrigin is null || voxelOrigin.Length < 3)
 				voxelOrigin = model.BottomCenter();
@@ -431,7 +441,7 @@ namespace Voxel2Pixel.Pack
 				yield return sprite.TransparentCrop();
 			}
 		}
-		public static IEnumerable<Sprite> Iso8Shadows(IModel model, IVoxelColor voxelColor, params ushort[] voxelOrigin)
+		public static IEnumerable<Sprite> Iso8Shadows(IModel model, IVoxelColor voxelColor, params int[] voxelOrigin)
 		{
 			if (voxelOrigin is null || voxelOrigin.Length < 3)
 				voxelOrigin = model.BottomCenter();
@@ -546,8 +556,8 @@ namespace Voxel2Pixel.Pack
 			});
 			return shadowSprite.DrawTransparentInsert(0, 0, sprite.Outline(outline));
 		}
-		public static IEnumerable<Sprite> Iso8OutlinedWithShadows(IModel model, IVoxelColor voxelColor, params ushort[] voxelOrigin) => Iso8OutlinedWithShadows(model, voxelColor, 0x88u, 0xFFu, voxelOrigin);
-		public static IEnumerable<Sprite> Iso8OutlinedWithShadows(IModel model, IVoxelColor voxelColor, uint shadow, uint outline, params ushort[] voxelOrigin)
+		public static IEnumerable<Sprite> Iso8OutlinedWithShadows(IModel model, IVoxelColor voxelColor, params int[] voxelOrigin) => Iso8OutlinedWithShadows(model, voxelColor, 0x88u, 0xFFu, voxelOrigin);
+		public static IEnumerable<Sprite> Iso8OutlinedWithShadows(IModel model, IVoxelColor voxelColor, uint shadow, uint outline, params int[] voxelOrigin)
 		{
 			if (voxelOrigin is null || voxelOrigin.Length < 3)
 				voxelOrigin = model.BottomCenter();
