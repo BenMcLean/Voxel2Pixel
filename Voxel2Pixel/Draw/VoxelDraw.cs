@@ -72,6 +72,7 @@ namespace Voxel2Pixel.Draw
 			Perspective.IsoShadow => IsoShadowHeight(model),
 			_ => FrontHeight(model),
 		};
+		public static void Locate(Perspective perspective, out int pixelX, out int pixelY, IModel model, int[] point, byte peakScaleX = 6, byte peakScaleY = 6) => Locate(perspective, out pixelX, out pixelY, model, point[0], point[1], point[2], peakScaleX, peakScaleY);
 		public static void Locate(Perspective perspective, out int pixelX, out int pixelY, IModel model, int voxelX = 0, int voxelY = 0, int voxelZ = 0, byte peakScaleX = 6, byte peakScaleY = 6)
 		{
 			switch (perspective)

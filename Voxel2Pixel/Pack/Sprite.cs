@@ -39,16 +39,33 @@ namespace Voxel2Pixel.Pack
 			foreach (KeyValuePair<string, Point> point in sprite)
 				this[point.Key] = point.Value;
 		}
-		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, byte peakScaleX = 6, byte peakScaleY = 6, params int[] voxelOrigin) : this(width: VoxelDraw.Width(perspective, model, peakScaleX), height: VoxelDraw.Height(perspective, model, peakScaleY))
+		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, byte peakScaleX = 6, byte peakScaleY = 6, params int[] voxelOrigin) : this(perspective, model, voxelColor, new Dictionary<string, int[]> { { Origin, voxelOrigin }, }, peakScaleX, peakScaleY) { }
+		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, params int[] voxelOrigin) : this(perspective, model, voxelColor, new Dictionary<string, int[]> { { Origin, voxelOrigin }, }) { }
+		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, Dictionary<string, int[]> points = null, byte peakScaleX = 6, byte peakScaleY = 6) : this(
+			width: VoxelDraw.Width(perspective, model, peakScaleX),
+			height: VoxelDraw.Height(perspective, model, peakScaleY))
 		{
-			if (voxelOrigin is null || voxelOrigin.Length < 3)
-				voxelOrigin = model.BottomCenter();
+			points ??= new Dictionary<string, int[]> { { Origin, model.BottomCenter() }, };
 			VoxelColor = voxelColor;
-			VoxelDraw.Draw(perspective, model, this, peakScaleX, peakScaleY);
-			VoxelDraw.Locate(perspective, out int pixelX, out int pixelY, model, voxelOrigin[0], voxelOrigin[1], voxelOrigin[2], peakScaleX, peakScaleY);
-			Add(Origin, new Point(pixelX, pixelY));
+			VoxelDraw.Draw(
+				perspective: perspective,
+				model: model,
+				renderer: this,
+				peakScaleX: peakScaleX,
+				peakScaleY: peakScaleY);
+			foreach (KeyValuePair<string, int[]> point in points)
+			{
+				VoxelDraw.Locate(
+					perspective: perspective,
+					pixelX: out int pixelX,
+					pixelY: out int pixelY,
+					model: model,
+					point: point.Value,
+					peakScaleX: peakScaleX,
+					peakScaleY: peakScaleY);
+				Add(point.Key, new Point(pixelX, pixelY));
+			}
 		}
-		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, params int[] voxelOrigin) : this(perspective, model, voxelColor, 6, 6, voxelOrigin) { }
 		#endregion Sprite
 		#region IVoxelColor
 		public IVoxelColor VoxelColor { get; set; }
