@@ -10,7 +10,7 @@
 		Right = 192,
 	}
 	public enum Perspective
-	{
+	{//May need revision to follow the correct terms shown in this graphic: https://en.wikipedia.org/wiki/File:Comparison_of_graphical_projections.svg
 		Front, FrontPeak, Overhead, Underneath, Diagonal, DiagonalPeak, Above, Iso, IsoShadow,
 	}
 }
