@@ -18,6 +18,7 @@ namespace Voxel2Pixel.Draw
 		{
 			switch (perspective)
 			{
+				default:
 				case Perspective.Front:
 					Front(model, renderer);
 					break;
@@ -47,6 +48,30 @@ namespace Voxel2Pixel.Draw
 					break;
 			}
 		}
+		public static ushort Width(Perspective perspective, IModel model, byte peakScaleX = 6) => perspective switch
+		{
+			Perspective.FrontPeak => (ushort)(FrontWidth(model) * peakScaleX),
+			Perspective.Overhead => OverheadWidth(model),
+			Perspective.Underneath => UnderneathWidth(model),
+			Perspective.Diagonal => DiagonalWidth(model),
+			Perspective.DiagonalPeak => (ushort)(DiagonalWidth(model) * peakScaleX),
+			Perspective.Above => AboveWidth(model),
+			Perspective.Iso => IsoWidth(model),
+			Perspective.IsoShadow => IsoShadowWidth(model),
+			_ => FrontWidth(model),
+		};
+		public static ushort Height(Perspective perspective, IModel model, byte peakScaleY = 6) => perspective switch
+		{
+			Perspective.FrontPeak => (ushort)(FrontHeight(model) * peakScaleY),
+			Perspective.Overhead => OverheadHeight(model),
+			Perspective.Underneath => UnderneathHeight(model),
+			Perspective.Diagonal => DiagonalHeight(model),
+			Perspective.DiagonalPeak => (ushort)(DiagonalHeight(model) * peakScaleY),
+			Perspective.Above => AboveHeight(model),
+			Perspective.Iso => IsoHeight(model),
+			Perspective.IsoShadow => IsoShadowHeight(model),
+			_ => FrontHeight(model),
+		};
 		#endregion Draw
 		#region Records
 		private readonly record struct VoxelY(ushort Y, byte Index)
