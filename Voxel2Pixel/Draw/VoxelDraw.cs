@@ -13,7 +13,7 @@ namespace Voxel2Pixel.Draw
 	/// </summary>
 	public static class VoxelDraw
 	{
-		#region Draw
+		#region Perspectives
 		public static void Draw(Perspective perspective, IModel model, ITriangleRenderer renderer, byte peakScaleX = 6, byte peakScaleY = 6)
 		{
 			switch (perspective)
@@ -72,7 +72,44 @@ namespace Voxel2Pixel.Draw
 			Perspective.IsoShadow => IsoShadowHeight(model),
 			_ => FrontHeight(model),
 		};
-		#endregion Draw
+		public static void Locate(Perspective perspective, out int pixelX, out int pixelY, IModel model, int voxelX = 0, int voxelY = 0, int voxelZ = 0, byte peakScaleX = 6, byte peakScaleY = 6)
+		{
+			switch (perspective)
+			{
+				default:
+				case Perspective.Front:
+				case Perspective.FrontPeak:
+					FrontLocate(out pixelX, out pixelY, model, voxelX, voxelZ);
+					break;
+				case Perspective.Overhead:
+					pixelX = voxelX;
+					pixelY = voxelY;
+					break;
+				case Perspective.Underneath:
+					pixelX = voxelX;
+					pixelY = voxelY;
+					break;
+				case Perspective.Diagonal:
+				case Perspective.DiagonalPeak:
+					DiagonalLocate(out pixelX, out pixelY, model, voxelX, voxelY, voxelZ);
+					break;
+				case Perspective.Above:
+					AboveLocate(out pixelX, out pixelY, model, voxelX, voxelY, voxelZ);
+					break;
+				case Perspective.Iso:
+					IsoLocate(out pixelX, out pixelY, model, voxelX, voxelY, voxelZ);
+					break;
+				case Perspective.IsoShadow:
+					IsoShadowLocate(out pixelX, out pixelY, model, voxelX, voxelY, voxelZ);
+					break;
+			}
+			if (perspective.IsPeak())
+			{
+				pixelX *= peakScaleX;
+				pixelY *= peakScaleY;
+			}
+		}
+		#endregion Perspectives
 		#region Records
 		private readonly record struct VoxelY(ushort Y, byte Index)
 		{
@@ -91,6 +128,12 @@ namespace Voxel2Pixel.Draw
 		#region Straight
 		public static ushort FrontWidth(IModel model) => model.SizeX;
 		public static ushort FrontHeight(IModel model) => model.SizeZ;
+		public static void FrontLocate(out int pixelX, out int pixelY, IModel model, int voxelX = 0, int voxelZ = 0) => FrontLocate(out pixelX, out pixelY, model.SizeZ, voxelX, voxelZ);
+		public static void FrontLocate(out int pixelX, out int pixelY, ushort sizeZ, int voxelX = 0, int voxelZ = 0)
+		{
+			pixelX = voxelX;
+			pixelY = sizeZ - 1 - voxelZ;
+		}
 		public static void Front(IModel model, IRectangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Front)
 		{
 			ushort width = model.SizeX,
@@ -210,6 +253,12 @@ namespace Voxel2Pixel.Draw
 		#region Diagonal
 		public static ushort DiagonalWidth(IModel model) => (ushort)(model.SizeX + model.SizeY);
 		public static ushort DiagonalHeight(IModel model) => model.SizeZ;
+		public static void DiagonalLocate(out int pixelX, out int pixelY, IModel model, int voxelX = 0, int voxelY = 0, int voxelZ = 0) => DiagonalLocate(out pixelX, out pixelY, model.SizeZ, voxelX, voxelY, voxelZ);
+		public static void DiagonalLocate(out int pixelX, out int pixelY, ushort sizeZ, int voxelX = 0, int voxelY = 0, int voxelZ = 0)
+		{
+			pixelX = voxelX + voxelY;
+			pixelY = sizeZ - 1 - voxelZ;
+		}
 		public static void Diagonal(IModel model, IRectangleRenderer renderer)
 		{
 			ushort voxelWidth = model.SizeX,
@@ -465,7 +514,7 @@ namespace Voxel2Pixel.Draw
 		}
 		public static ushort IsoShadowWidth(IModel model) => IsoWidth(model);
 		public static ushort IsoShadowHeight(IModel model) => (ushort)(2 * (model.SizeX + model.SizeY) - 1);
-		public static void IsoShadowLocate(out int pixelX, out int pixelY, IModel model, params ushort[] voxelCoordinates) => IsoLocate(out pixelX, out pixelY, model, voxelCoordinates[0], voxelCoordinates[1]);
+		public static void IsoShadowLocate(out int pixelX, out int pixelY, IModel model, params int[] voxelCoordinates) => IsoLocate(out pixelX, out pixelY, model, voxelCoordinates[0], voxelCoordinates[1]);
 		public static void IsoShadowLocate(out int pixelX, out int pixelY, IModel model, int voxelX = 0, int voxelY = 0)
 		{
 			// To move one x+ in voxels is x + 2, y - 2 in pixels.

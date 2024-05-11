@@ -27,6 +27,7 @@ namespace Voxel2Pixel
 			return palette;
 		}
 		public static VisibleFace VisibleFace(this byte @byte) => (VisibleFace)(@byte & 192);
+		public static bool IsPeak(this Perspective perspective) => perspective == Perspective.FrontPeak || perspective == Perspective.DiagonalPeak;
 		public static byte Set(this IEditableModel model, Voxel voxel) => model[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
 		public static ushort[] Center(this IModel model) => [(ushort)(model.SizeX >> 1), (ushort)(model.SizeY >> 1), (ushort)(model.SizeZ >> 1)];
 		public static ushort[] BottomCenter(this IModel model) => [(ushort)(model.SizeX >> 1), (ushort)(model.SizeY >> 1), 0];
