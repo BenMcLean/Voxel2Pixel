@@ -15,21 +15,21 @@ namespace Voxel2Pixel.Model
 		public override ushort SizeX => RotatedSize(0);
 		public override ushort SizeY => RotatedSize(1);
 		public override ushort SizeZ => RotatedSize(2);
-		public ushort[] Sizes => new ushort[] { SizeX, SizeY, SizeZ };
+		public ushort[] Sizes => [SizeX, SizeY, SizeZ];
 		public override byte this[ushort x, ushort y, ushort z]
 		{
 			get
 			{
-				Rotate(out ushort x1, out ushort y1, out ushort z1, x, y, z);
-				return Model[x1, y1, z1];
+				Point3D point = Rotate(new Point3D(x, y, z));
+				return Model[(ushort)point.X, (ushort)point.Y, (ushort)point.Z];
 			}
 		}
 		public override IEnumerator<Voxel> GetEnumerator()
 		{
 			foreach (Voxel voxel in Model)
 			{
-				ReverseRotate(out ushort x, out ushort y, out ushort z, voxel.X, voxel.Y, voxel.Z);
-				yield return new Voxel(x, y, z, voxel.Index);
+				Point3D point = ReverseRotate(new Point3D(voxel.X, voxel.Y, voxel.Z));
+				yield return new Voxel((ushort)point.X, (ushort)point.Y, (ushort)point.Z, voxel.Index);
 			}
 		}
 		#endregion ContainerModel
@@ -71,32 +71,16 @@ namespace Voxel2Pixel.Model
 		}
 		#endregion ITurnable
 		#region Rotate
-		public ushort Rotate(int axis, params ushort[] coordinates) => Rotate(axis, Array.ConvertAll(coordinates, @ushort => (int)@ushort));
-		public ushort Rotate(int axis, params int[] coordinates) => checked((ushort)(CuboidOrientation.Rotate(axis, coordinates) + CuboidOrientation.Offset(axis, SizeX, SizeY, SizeZ)));
-		public void Rotate(out ushort x, out ushort y, out ushort z, params ushort[] coordinates) => Rotate(out x, out y, out z, Array.ConvertAll(coordinates, @ushort => (int)@ushort));
-		public void Rotate(out ushort x, out ushort y, out ushort z, params int[] coordinates)
-		{
-			x = Rotate(0, coordinates);
-			y = Rotate(1, coordinates);
-			z = Rotate(2, coordinates);
-		}
-		public ushort[] Rotate(params int[] coordinates) => Enumerable.Range(0, 3).Select(axis => Rotate(axis, coordinates)).ToArray();
+		public int Rotate(int axis, Point3D point) => CuboidOrientation.Rotate(axis, point) + CuboidOrientation.Offset(axis, SizeX, SizeY, SizeZ);
+		public Point3D Rotate(Point3D point) => new(Enumerable.Range(0, 3).Select(axis => Rotate(axis, point)).ToArray());
 		#endregion Rotate
 		#region ReverseRotate
-		public ushort ReverseRotate(int axis, params ushort[] coordinates) => ReverseRotate(axis, Array.ConvertAll(coordinates, @ushort => (int)@ushort));
-		public ushort ReverseRotate(int axis, params int[] coordinates) => checked((ushort)(CuboidOrientation.ReverseRotate(axis, coordinates) + CuboidOrientation.Offset(CuboidOrientation.ReverseAffected(axis), SizeX, SizeY, SizeZ)));
-		public void ReverseRotate(out ushort x, out ushort y, out ushort z, params ushort[] coordinates) => ReverseRotate(out x, out y, out z, Array.ConvertAll(coordinates, @ushort => (int)@ushort));
-		public void ReverseRotate(out ushort x, out ushort y, out ushort z, params int[] coordinates)
-		{
-			x = ReverseRotate(0, coordinates);
-			y = ReverseRotate(1, coordinates);
-			z = ReverseRotate(2, coordinates);
-		}
-		public ushort[] ReverseRotate(params int[] coordinates) => Enumerable.Range(0, 3).Select(axis => ReverseRotate(axis, coordinates)).ToArray();
+		public int ReverseRotate(int axis, Point3D point) => CuboidOrientation.ReverseRotate(axis, point) + CuboidOrientation.Offset(CuboidOrientation.ReverseAffected(axis), SizeX, SizeY, SizeZ);
+		public Point3D ReverseRotate(Point3D point) => new(Enumerable.Range(0, 3).Select(axis => ReverseRotate(axis, point)).ToArray());
 		public byte Reverse(ushort x, ushort y, ushort z)
 		{
-			ReverseRotate(out ushort x1, out ushort y1, out ushort z1, x, y, z);
-			return Model[x1, y1, z1];
+			Point3D point = ReverseRotate(new Point3D(x, y, z));
+			return Model[(ushort)point.X, (ushort)point.Y, (ushort)point.Z];
 		}
 		#endregion ReverseRotate
 		#region Size

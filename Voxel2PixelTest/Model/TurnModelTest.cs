@@ -31,19 +31,14 @@ namespace Voxel2PixelTest.Model
 					for (ushort y = 0; y < turnModel.Model.SizeY; y++)
 						for (ushort z = 0; z < turnModel.Model.SizeZ; z++)
 						{
-							turnModel.Rotate(out ushort x1, out ushort y1, out ushort z1, x, y, z);
-							Assert.True(x1 < turnModel.SizeX);
-							Assert.True(y1 < turnModel.SizeY);
-							Assert.True(z1 < turnModel.SizeZ);
-							turnModel.ReverseRotate(out ushort x2, out ushort y2, out ushort z2, x, y, z);
-							turnModel.ReverseRotate(out ushort x3, out ushort y3, out ushort z3, x1, y1, z1);
-							Assert.Equal(x, x3);
-							Assert.Equal(y, y3);
-							Assert.Equal(z, z3);
-							turnModel.Rotate(out ushort x4, out ushort y4, out ushort z4, x2, y2, z2);
-							Assert.Equal(x, x4);
-							Assert.Equal(y, y4);
-							Assert.Equal(z, z4);
+							Point3D p1 = turnModel.Rotate(new(x, y, z));
+							Assert.True(p1.X < turnModel.SizeX);
+							Assert.True(p1.Y < turnModel.SizeY);
+							Assert.True(p1.Z < turnModel.SizeZ);
+							Point3D p2 = turnModel.ReverseRotate(p1);
+							Assert.Equal(x, p2.X);
+							Assert.Equal(y, p2.Y);
+							Assert.Equal(z, p2.Z);
 						}
 			}
 		}

@@ -72,36 +72,35 @@ namespace Voxel2Pixel.Draw
 			Perspective.IsoShadow => IsoShadowHeight(model),
 			_ => FrontHeight(model),
 		};
-		public static Point Locate(Perspective perspective, IModel model, int[] point, byte peakScaleX = 6, byte peakScaleY = 6) => Locate(perspective, model, point[0], point[1], point[2], peakScaleX, peakScaleY);
-		public static Point Locate(Perspective perspective, IModel model, int voxelX = 0, int voxelY = 0, int voxelZ = 0, byte peakScaleX = 6, byte peakScaleY = 6)
+		public static Point Locate(Perspective perspective, IModel model, Point3D point, byte peakScaleX = 6, byte peakScaleY = 6)
 		{
-			Point point;
+			Point result;
 			switch (perspective)
 			{
 				default:
 				case Perspective.Front:
 				case Perspective.FrontPeak:
-					point = FrontLocate(model, voxelX, voxelZ);
+					result = FrontLocate(model, point);
 					break;
 				case Perspective.Overhead:
 				case Perspective.Underneath:
-					return new Point(voxelX, voxelY);
+					return new Point(point.X, point.Y);
 				case Perspective.Diagonal:
 				case Perspective.DiagonalPeak:
-					point = DiagonalLocate(model, voxelX, voxelY, voxelZ);
+					result = DiagonalLocate(model, point);
 					break;
 				case Perspective.Above:
-					return AboveLocate(model, voxelX, voxelY, voxelZ);
+					return AboveLocate(model, point);
 				case Perspective.Iso:
-					return IsoLocate(model, voxelX, voxelY, voxelZ);
+					return IsoLocate(model, point);
 				case Perspective.IsoShadow:
-					return IsoShadowLocate(model, voxelX, voxelY, voxelZ);
+					return IsoShadowLocate(model, point);
 			}
 			return perspective.IsPeak() ? new()
 			{
-				X = point.X * peakScaleX,
-				Y = point.Y * peakScaleY,
-			} : point;
+				X = result.X * peakScaleX,
+				Y = result.Y * peakScaleY,
+			} : result;
 		}
 		#endregion Perspectives
 		#region Records
@@ -122,7 +121,7 @@ namespace Voxel2Pixel.Draw
 		#region Straight
 		public static ushort FrontWidth(IModel model) => model.SizeX;
 		public static ushort FrontHeight(IModel model) => model.SizeZ;
-		public static Point FrontLocate(IModel model, int voxelX = 0, int voxelZ = 0) => FrontLocate(model.SizeZ, voxelX, voxelZ);
+		public static Point FrontLocate(IModel model, Point3D point) => FrontLocate(model.SizeZ, point.X, point.Z);
 		public static Point FrontLocate(ushort sizeZ, int voxelX = 0, int voxelZ = 0) => new()
 		{
 			X = voxelX,
@@ -247,11 +246,11 @@ namespace Voxel2Pixel.Draw
 		#region Diagonal
 		public static ushort DiagonalWidth(IModel model) => (ushort)(model.SizeX + model.SizeY);
 		public static ushort DiagonalHeight(IModel model) => model.SizeZ;
-		public static Point DiagonalLocate(IModel model, int voxelX = 0, int voxelY = 0, int voxelZ = 0) => DiagonalLocate(model.SizeZ, voxelX, voxelY, voxelZ);
-		public static Point DiagonalLocate(ushort sizeZ, int voxelX = 0, int voxelY = 0, int voxelZ = 0) => new()
+		public static Point DiagonalLocate(IModel model, Point3D point) => DiagonalLocate(model.SizeZ, point);
+		public static Point DiagonalLocate(ushort sizeZ, Point3D point) => new()
 		{
-			X = voxelX + voxelY,
-			Y = sizeZ - 1 - voxelZ,
+			X = point.X + point.Y,
+			Y = sizeZ - 1 - point.Z,
 		};
 		public static void Diagonal(IModel model, IRectangleRenderer renderer)
 		{
@@ -362,10 +361,10 @@ namespace Voxel2Pixel.Draw
 		}
 		public static ushort AboveWidth(IModel model) => model.SizeX;
 		public static ushort AboveHeight(IModel model) => (ushort)(model.SizeY + model.SizeZ);
-		public static Point AboveLocate(IModel model, int voxelX = 0, int voxelY = 0, int voxelZ = 0) => new()
+		public static Point AboveLocate(IModel model, Point3D point) => new()
 		{
-			X = voxelX,
-			Y = AboveHeight(model) - 1 - voxelY - voxelZ,
+			X = point.X,
+			Y = AboveHeight(model) - 1 - point.Y - point.Z,
 		};
 		/// <summary>
 		/// Renders from a 3/4 perspective
@@ -416,8 +415,7 @@ namespace Voxel2Pixel.Draw
 		#region Isometric
 		public static ushort IsoWidth(IModel model) => (ushort)(2 * (model.SizeX + model.SizeY));
 		public static ushort IsoHeight(IModel model) => (ushort)(2 * (model.SizeX + model.SizeY) + 4 * model.SizeZ - 1);
-		public static Point IsoLocate(IModel model, ushort[] voxelCoordinates) => IsoLocate(model, voxelCoordinates[0], voxelCoordinates[1], voxelCoordinates[2]);
-		public static Point IsoLocate(IModel model, int voxelX = 0, int voxelY = 0, int voxelZ = 0) => new()
+		public static Point IsoLocate(IModel model, Point3D point) => new()
 		{
 			// To move one x+ in voxels is x + 2, y - 2 in pixels.
 			// To move one x- in voxels is x - 2, y + 2 in pixels.
@@ -425,8 +423,8 @@ namespace Voxel2Pixel.Draw
 			// To move one y- in voxels is x + 2, y + 2 in pixels.
 			// To move one z+ in voxels is y - 4 in pixels.
 			// To move one z- in voxels is y + 4 in pixels.
-			X = 2 * (model.SizeY + voxelX - voxelY),
-			Y = IsoHeight(model) - 2 * (voxelX + voxelY) - 4 * voxelZ - 1,
+			X = 2 * (model.SizeY + point.X - point.Y),
+			Y = IsoHeight(model) - 2 * (point.X + point.Y) - 4 * point.Z - 1,
 		};
 		public static void Iso(IModel model, ITriangleRenderer renderer)
 		{
@@ -508,15 +506,14 @@ namespace Voxel2Pixel.Draw
 		}
 		public static ushort IsoShadowWidth(IModel model) => IsoWidth(model);
 		public static ushort IsoShadowHeight(IModel model) => (ushort)(2 * (model.SizeX + model.SizeY) - 1);
-		public static Point IsoShadowLocate(IModel model, params int[] voxelCoordinates) => IsoLocate(model, voxelCoordinates[0], voxelCoordinates[1]);
-		public static Point IsoShadowLocate(IModel model, int voxelX = 0, int voxelY = 0) => new()
+		public static Point IsoShadowLocate(IModel model, Point3D point) => new()
 		{
 			// To move one x+ in voxels is x + 2, y - 2 in pixels.
 			// To move one x- in voxels is x - 2, y + 2 in pixels.
 			// To move one y+ in voxels is x - 2, y - 2 in pixels.
 			// To move one y- in voxels is x + 2, y + 2 in pixels.
-			X = 2 * (model.SizeY + voxelX - voxelY),
-			Y = 2 * (voxelX + voxelY) - 1,
+			X = 2 * (model.SizeY + point.X - point.Y),
+			Y = 2 * (point.X + point.Y) - 1,
 		};
 		public static void IsoShadow(IModel model, ITriangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Top)
 		{

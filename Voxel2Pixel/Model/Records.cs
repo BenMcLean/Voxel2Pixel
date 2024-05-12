@@ -1,7 +1,35 @@
-﻿namespace Voxel2Pixel.Model
+﻿using System;
+
+namespace Voxel2Pixel.Model
 {
 	public readonly record struct Point(int X, int Y);
-	public readonly record struct Voxel(ushort X, ushort Y, ushort Z, byte Index);
+	public readonly record struct Point3D(int X, int Y, int Z)
+	{
+		public Point3D(params int[] coordinates) : this(coordinates[0], coordinates[1], coordinates[2]) { }
+		public int[] ToArray() => [X, Y, Z];
+		public int this[int axis] => axis switch
+		{
+			0 => X,
+			1 => Y,
+			2 => Z,
+			_ => throw new IndexOutOfRangeException(),
+		};
+		public static explicit operator Point3D(Voxel voxel) => new()
+		{
+			X = voxel.X,
+			Y = voxel.Y,
+			Z = voxel.Z,
+		};
+	}
+	public readonly record struct Voxel(ushort X, ushort Y, ushort Z, byte Index)
+	{
+		public static implicit operator Point3D(Voxel voxel) => new()
+		{
+			X = voxel.X,
+			Y = voxel.Y,
+			Z = voxel.Z,
+		};
+	}
 	public enum VisibleFace : byte
 	{
 		Front = 0,

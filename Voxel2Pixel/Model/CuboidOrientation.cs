@@ -122,30 +122,20 @@ namespace Voxel2Pixel.Model
 				value.Rotation[0] == rotation[0]
 				&& value.Rotation[1] == rotation[1]
 				&& value.Rotation[2] == rotation[2]);
-		public int Rotate(int axis, params int[] coordinates) => coordinates[Affected(axis)] * Step(axis);
-		public void Rotate(out int x, out int y, out int z, params int[] coordinates)
-		{
-			x = Rotate(0, coordinates);
-			y = Rotate(1, coordinates);
-			z = Rotate(2, coordinates);
-		}
+		public int Rotate(int axis, Point3D point) => point[Affected(axis)] * Step(axis);
+		public Point3D Rotate(Point3D point) => new(Enumerable.Range(0, 3).Select(axis => Rotate(axis, point)).ToArray());
 		#endregion Rotate
 		#region ReverseRotate
 		public int ReverseAffected(int axis) => Reverse[FlipBits(axis)];
 		public int ReverseAffectedX => Reverse[0];
 		public int ReverseAffectedY => Reverse[1];
 		public int ReverseAffectedZ => Reverse[2];
-		public int ReverseRotate(int axis, params int[] coordinates)
+		public int ReverseRotate(int axis, Point3D point)
 		{
 			axis = ReverseAffected(axis);
-			return coordinates[axis] * Step(axis);
+			return point[axis] * Step(axis);
 		}
-		public void ReverseRotate(out int x, out int y, out int z, params int[] coordinates)
-		{
-			x = ReverseRotate(0, coordinates);
-			y = ReverseRotate(1, coordinates);
-			z = ReverseRotate(2, coordinates);
-		}
+		public Point3D ReverseRotate(Point3D point) => new(Enumerable.Range(0, 3).Select(axis => ReverseRotate(axis, point)).ToArray());
 		#endregion ReverseRotate
 		#region Offset
 		public int Offset(int axis, params ushort[] size) =>

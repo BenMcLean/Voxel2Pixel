@@ -28,21 +28,22 @@ namespace Voxel2PixelTest.Model
 				Assert.Equal(cuboidOrientation, (CuboidOrientation)cuboidOrientation.ClockY().CounterY());
 				Assert.Equal(cuboidOrientation, (CuboidOrientation)cuboidOrientation.ClockZ().CounterZ());
 				int x = 0, y = 1, z = 2;
-				cuboidOrientation.Rotate(out int x1, out int y1, out int z1, x, y, z);
+				Point3D p = new(x, y, z),
+					p1 = cuboidOrientation.Rotate(p);
 				if (cuboidOrientation == CuboidOrientation.SOUTH0)
 				{
-					Assert.Equal(x, x1);
-					Assert.Equal(y, y1);
-					Assert.Equal(z, z1);
+					Assert.Equal(x, p1.X);
+					Assert.Equal(y, p1.Y);
+					Assert.Equal(z, p1.Z);
 				}
 				else
-					Assert.True(x != x1
-						|| y != y1
-						|| z != z1);
-				cuboidOrientation.ReverseRotate(out int x2, out int y2, out int z2, x1, y1, z1);
-				Assert.Equal(x, x2);
-				Assert.Equal(y, y2);
-				Assert.Equal(z, z2);
+					Assert.True(x != p1.X
+						|| y != p1.Y
+						|| z != p1.Z);
+				Point3D p2 = cuboidOrientation.ReverseRotate(p1);
+				Assert.Equal(x, p2.X);
+				Assert.Equal(y, p2.Y);
+				Assert.Equal(z, p2.Z);
 			}
 		}
 		[Fact]

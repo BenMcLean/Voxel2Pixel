@@ -40,13 +40,12 @@ namespace Voxel2Pixel.Pack
 			foreach (KeyValuePair<string, Point> point in sprite)
 				this[point.Key] = point.Value;
 		}
-		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, byte peakScaleX = 6, byte peakScaleY = 6, params int[] voxelOrigin) : this(perspective, model, voxelColor, new Dictionary<string, int[]> { { Origin, voxelOrigin ?? model.BottomCenter() }, }, peakScaleX, peakScaleY) { }
-		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, params int[] voxelOrigin) : this(perspective, model, voxelColor, new Dictionary<string, int[]> { { Origin, voxelOrigin ?? model.BottomCenter() }, }) { }
-		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, int[]>> voxelPoints = null, byte peakScaleX = 6, byte peakScaleY = 6) : this(
+		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, Point3D voxelOrigin, byte peakScaleX = 6, byte peakScaleY = 6) : this(perspective, model, voxelColor, new Dictionary<string, Point3D> { { Origin, voxelOrigin }, }, peakScaleX, peakScaleY) { }
+		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> voxelPoints = null, byte peakScaleX = 6, byte peakScaleY = 6) : this(
 			width: VoxelDraw.Width(perspective, model, peakScaleX),
 			height: VoxelDraw.Height(perspective, model, peakScaleY))
 		{
-			voxelPoints ??= new Dictionary<string, int[]> { { Origin, model.BottomCenter() }, };
+			voxelPoints ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
 			VoxelColor = voxelColor;
 			VoxelDraw.Draw(
 				perspective: perspective,
@@ -308,10 +307,10 @@ namespace Voxel2Pixel.Pack
 			color: color);
 		#endregion Image manipulation
 		#region Voxel drawing
-		public static IEnumerable<Sprite> Z4(Perspective perspective, IModel model, IVoxelColor voxelColor, params int[] voxelOrigin) => Z4(perspective, model, voxelColor, new Dictionary<string, int[]> { { Origin, voxelOrigin ?? model.BottomCenter() }, });
-		public static IEnumerable<Sprite> Z4(Perspective perspective, IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, int[]>> points = null)
+		public static IEnumerable<Sprite> Z4(Perspective perspective, IModel model, IVoxelColor voxelColor, Point3D origin) => Z4(perspective, model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, });
+		public static IEnumerable<Sprite> Z4(Perspective perspective, IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null)
 		{
-			points ??= new Dictionary<string, int[]> { { Origin, model.BottomCenter() }, };
+			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
 			TurnModel turnModel = new()
 			{
 				Model = model,
@@ -322,14 +321,14 @@ namespace Voxel2Pixel.Pack
 					perspective: perspective,
 					model: turnModel,
 					voxelColor: voxelColor,
-					voxelPoints: points.Select(point => new KeyValuePair<string, int[]>(point.Key, Array.ConvertAll(turnModel.ReverseRotate(point.Value), i => (int)i))));
+					voxelPoints: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))));
 				turnModel.CounterZ();
 			}
 		}
-		public static IEnumerable<Sprite> Iso8(IModel model, IVoxelColor voxelColor, params int[] voxelOrigin) => Iso8(model, voxelColor, new Dictionary<string, int[]> { { Origin, voxelOrigin ?? model.BottomCenter() }, });
-		public static IEnumerable<Sprite> Iso8(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, int[]>> points = null)
+		public static IEnumerable<Sprite> Iso8(IModel model, IVoxelColor voxelColor, Point3D origin) => Iso8(model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, });
+		public static IEnumerable<Sprite> Iso8(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null)
 		{
-			points ??= new Dictionary<string, int[]> { { Origin, model.BottomCenter() }, };
+			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
 			TurnModel turnModel = new()
 			{
 				Model = model,
@@ -340,7 +339,7 @@ namespace Voxel2Pixel.Pack
 					perspective: Perspective.Above,
 					model: turnModel,
 					voxelColor: voxelColor,
-					voxelPoints: points.Select(point => new KeyValuePair<string, int[]>(point.Key, Array.ConvertAll(turnModel.ReverseRotate(point.Value), i => (int)i))))
+					voxelPoints: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))))
 					.TransparentCrop()
 					.Upscale(5, 4);
 				turnModel.CounterZ();
@@ -348,15 +347,15 @@ namespace Voxel2Pixel.Pack
 					perspective: Perspective.Iso,
 					model: turnModel,
 					voxelColor: voxelColor,
-					voxelPoints: points.Select(point => new KeyValuePair<string, int[]>(point.Key, Array.ConvertAll(turnModel.ReverseRotate(point.Value), i => (int)i))))
+					voxelPoints: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))))
 					.TransparentCrop()
 					.Upscale(2);
 			}
 		}
-		public static IEnumerable<Sprite> Iso8Shadows(IModel model, IVoxelColor voxelColor, params int[] voxelOrigin) => Iso8Shadows(model, voxelColor, new Dictionary<string, int[]> { { Origin, voxelOrigin ?? model.BottomCenter() }, });
-		public static IEnumerable<Sprite> Iso8Shadows(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, int[]>> voxelPoints = null)
+		public static IEnumerable<Sprite> Iso8Shadows(IModel model, IVoxelColor voxelColor, Point3D origin) => Iso8Shadows(model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, });
+		public static IEnumerable<Sprite> Iso8Shadows(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null)
 		{
-			voxelPoints ??= new Dictionary<string, int[]> { { Origin, model.BottomCenter() }, };
+			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
 			TurnModel turnModel = new()
 			{
 				Model = model,
@@ -367,7 +366,7 @@ namespace Voxel2Pixel.Pack
 					perspective: Perspective.Underneath,
 					model: turnModel,
 					voxelColor: voxelColor,
-					voxelPoints: voxelPoints.Select(point => new KeyValuePair<string, int[]>(point.Key, Array.ConvertAll(turnModel.ReverseRotate(point.Value), i => (int)i))))
+					voxelPoints: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))))
 					.TransparentCrop()
 					.Upscale(5, 4);
 				turnModel.CounterZ();
@@ -375,7 +374,7 @@ namespace Voxel2Pixel.Pack
 					perspective: Perspective.IsoShadow,
 					model: turnModel,
 					voxelColor: voxelColor,
-					voxelPoints: voxelPoints.Select(point => new KeyValuePair<string, int[]>(point.Key, Array.ConvertAll(turnModel.ReverseRotate(point.Value), i => (int)i))))
+					voxelPoints: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))))
 					.TransparentCrop()
 					.Upscale(2);
 			}
