@@ -19,6 +19,8 @@ namespace Voxel2Pixel.Pack
 		#endregion ISprite
 		#region Sprite
 		public const string Origin = "Origin";
+		public const uint DefaultShadowColor = 0x88u,
+			DefaultOutlineColor = 0xFFu;
 		public Sprite() { }
 		public Sprite(ushort width, ushort height) : this()
 		{
@@ -383,8 +385,8 @@ namespace Voxel2Pixel.Pack
 					.Upscale(2);
 			}
 		}
-		public static Sprite AboveOutlinedWithShadow(IModel model, IVoxelColor voxelColor, Point3D origin, uint shadow = 0x88u, uint outline = 0xFFu) => AboveOutlinedWithShadow(model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, }, shadow, outline);
-		public static Sprite AboveOutlinedWithShadow(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null, uint shadow = 0x88u, uint outline = 0xFFu)
+		public static Sprite AboveOutlinedWithShadow(IModel model, IVoxelColor voxelColor, Point3D origin, uint shadow = DefaultShadowColor, uint outline = DefaultOutlineColor) => AboveOutlinedWithShadow(model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, }, shadow, outline);
+		public static Sprite AboveOutlinedWithShadow(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null, uint shadow = DefaultShadowColor, uint outline = DefaultOutlineColor)
 		{
 			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
 			Sprite sprite = new((ushort)(VoxelDraw.AboveWidth(model) * 5 + 2), (ushort)(VoxelDraw.AboveHeight(model) * 4 + 2))
@@ -420,8 +422,8 @@ namespace Voxel2Pixel.Pack
 				.DrawTransparentInsert(0, 0, sprite.Outline(outline))
 				.AddRange(points.Select(point => new KeyValuePair<string, Point>(point.Key, Point(point.Value))));
 		}
-		public static Sprite IsoOutlinedWithShadow(IModel model, IVoxelColor voxelColor, Point3D origin, uint shadow = 0x88u, uint outline = 0xFFu) => IsoOutlinedWithShadow(model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, }, shadow, outline);
-		public static Sprite IsoOutlinedWithShadow(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null, uint shadow = 0x88u, uint outline = 0xFFu)
+		public static Sprite IsoOutlinedWithShadow(IModel model, IVoxelColor voxelColor, Point3D origin, uint shadow = DefaultShadowColor, uint outline = DefaultOutlineColor) => IsoOutlinedWithShadow(model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, }, shadow, outline);
+		public static Sprite IsoOutlinedWithShadow(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null, uint shadow = DefaultShadowColor, uint outline = DefaultOutlineColor)
 		{
 			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
 			Sprite sprite = new((ushort)((VoxelDraw.IsoWidth(model) << 1) + 2), (ushort)(VoxelDraw.IsoHeight(model) + 2))
@@ -455,8 +457,8 @@ namespace Voxel2Pixel.Pack
 				.DrawTransparentInsert(0, 0, sprite.Outline(outline))
 				.AddRange(points.Select(point => new KeyValuePair<string, Point>(point.Key, Point(point.Value))));
 		}
-		public static IEnumerable<Sprite> Iso8OutlinedWithShadows(IModel model, IVoxelColor voxelColor, Point3D origin, uint shadow = 0x88u, uint outline = 0xFFu) => Iso8OutlinedWithShadows(model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, }, shadow, outline);
-		public static IEnumerable<Sprite> Iso8OutlinedWithShadows(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null, uint shadow = 0x88u, uint outline = 0xFFu)
+		public static IEnumerable<Sprite> Iso8OutlinedWithShadows(IModel model, IVoxelColor voxelColor, Point3D origin, uint shadow = DefaultShadowColor, uint outline = DefaultOutlineColor) => Iso8OutlinedWithShadows(model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, }, shadow, outline);
+		public static IEnumerable<Sprite> Iso8OutlinedWithShadows(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null, uint shadow = DefaultShadowColor, uint outline = DefaultOutlineColor)
 		{
 			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
 			TurnModel turnModel = new()
