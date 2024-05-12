@@ -1,5 +1,4 @@
 ﻿using RectpackSharp;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Voxel2Pixel.Color;
@@ -17,16 +16,9 @@ namespace Voxel2Pixel.Pack
 		public byte[] Texture { get; set; }
 		public ushort Width { get; set; }
 		public ushort Height => (ushort)((Texture.Length >> 2) / Width);
-		public const string Origin = "Origin";
-		public Sprite AddRange(params KeyValuePair<string, Point>[] points) => AddRange(points.AsEnumerable());
-		public Sprite AddRange(IEnumerable<KeyValuePair<string, Point>> points)
-		{
-			foreach (KeyValuePair<string, Point> point in points)
-				this[point.Key] = point.Value;
-			return this;
-		}
 		#endregion ISprite
 		#region Sprite
+		public const string Origin = "Origin";
 		public Sprite() { }
 		public Sprite(ushort width, ushort height) : this()
 		{
@@ -37,28 +29,14 @@ namespace Voxel2Pixel.Pack
 		{
 			Texture = sprite.Texture;
 			Width = sprite.Width;
-			foreach (KeyValuePair<string, Point> point in sprite)
-				this[point.Key] = point.Value;
+			AddRange(sprite);
 		}
-		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, Point3D voxelOrigin, byte peakScaleX = 6, byte peakScaleY = 6) : this(perspective, model, voxelColor, new Dictionary<string, Point3D> { { Origin, voxelOrigin }, }, peakScaleX, peakScaleY) { }
-		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> voxelPoints = null, byte peakScaleX = 6, byte peakScaleY = 6) : this(
-			width: VoxelDraw.Width(perspective, model, peakScaleX),
-			height: VoxelDraw.Height(perspective, model, peakScaleY))
+		public Sprite AddRange(params KeyValuePair<string, Point>[] points) => AddRange(points.AsEnumerable());
+		public Sprite AddRange(IEnumerable<KeyValuePair<string, Point>> points)
 		{
-			voxelPoints ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
-			VoxelColor = voxelColor;
-			VoxelDraw.Draw(
-				perspective: perspective,
-				model: model,
-				renderer: this,
-				peakScaleX: peakScaleX,
-				peakScaleY: peakScaleY);
-			AddRange(voxelPoints.Select(point => new KeyValuePair<string, Point>(point.Key, VoxelDraw.Locate(
-				perspective: perspective,
-				model: model,
-				point: point.Value,
-				peakScaleX: peakScaleX,
-				peakScaleY: peakScaleY))));
+			foreach (KeyValuePair<string, Point> point in points)
+				this[point.Key] = point.Value;
+			return this;
 		}
 		#endregion Sprite
 		#region IVoxelColor
@@ -307,6 +285,26 @@ namespace Voxel2Pixel.Pack
 			color: color);
 		#endregion Image manipulation
 		#region Voxel drawing
+		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, Point3D voxelOrigin, byte peakScaleX = 6, byte peakScaleY = 6) : this(perspective, model, voxelColor, new Dictionary<string, Point3D> { { Origin, voxelOrigin }, }, peakScaleX, peakScaleY) { }
+		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null, byte peakScaleX = 6, byte peakScaleY = 6) : this(
+			width: VoxelDraw.Width(perspective, model, peakScaleX),
+			height: VoxelDraw.Height(perspective, model, peakScaleY))
+		{
+			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
+			VoxelColor = voxelColor;
+			VoxelDraw.Draw(
+				perspective: perspective,
+				model: model,
+				renderer: this,
+				peakScaleX: peakScaleX,
+				peakScaleY: peakScaleY);
+			AddRange(points.Select(point => new KeyValuePair<string, Point>(point.Key, VoxelDraw.Locate(
+				perspective: perspective,
+				model: model,
+				point: point.Value,
+				peakScaleX: peakScaleX,
+				peakScaleY: peakScaleY))));
+		}
 		public static IEnumerable<Sprite> Z4(Perspective perspective, IModel model, IVoxelColor voxelColor, Point3D origin) => Z4(perspective, model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, });
 		public static IEnumerable<Sprite> Z4(Perspective perspective, IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null)
 		{
@@ -321,7 +319,7 @@ namespace Voxel2Pixel.Pack
 					perspective: perspective,
 					model: turnModel,
 					voxelColor: voxelColor,
-					voxelPoints: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))));
+					points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))));
 				turnModel.CounterZ();
 			}
 		}
@@ -339,7 +337,7 @@ namespace Voxel2Pixel.Pack
 					perspective: Perspective.Above,
 					model: turnModel,
 					voxelColor: voxelColor,
-					voxelPoints: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))))
+					points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))))
 					.TransparentCrop()
 					.Upscale(5, 4);
 				turnModel.CounterZ();
@@ -347,7 +345,7 @@ namespace Voxel2Pixel.Pack
 					perspective: Perspective.Iso,
 					model: turnModel,
 					voxelColor: voxelColor,
-					voxelPoints: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))))
+					points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))))
 					.TransparentCrop()
 					.Upscale(2);
 			}
@@ -366,7 +364,7 @@ namespace Voxel2Pixel.Pack
 					perspective: Perspective.Underneath,
 					model: turnModel,
 					voxelColor: voxelColor,
-					voxelPoints: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))))
+					points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))))
 					.TransparentCrop()
 					.Upscale(5, 4);
 				turnModel.CounterZ();
@@ -374,7 +372,7 @@ namespace Voxel2Pixel.Pack
 					perspective: Perspective.IsoShadow,
 					model: turnModel,
 					voxelColor: voxelColor,
-					voxelPoints: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))))
+					points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))))
 					.TransparentCrop()
 					.Upscale(2);
 			}
