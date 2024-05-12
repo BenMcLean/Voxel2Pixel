@@ -146,19 +146,19 @@ namespace Voxel2Pixel.Pack
 					insertWidth: sprites[packingRectangle.Id].Width,
 					width: Width);
 		}
-		public Sprite(Dictionary<string, ISprite> dictionary, out TextureAtlas textureAtlas) : this(pairs: [.. dictionary], textureAtlas: out textureAtlas) { }
-		public Sprite(KeyValuePair<string, ISprite>[] pairs, out TextureAtlas textureAtlas) : this(packingRectangles: out RectpackSharp.PackingRectangle[] packingRectangles, sprites: pairs.Select(pair => pair.Value)) =>
+		public Sprite(Dictionary<string, ISprite> dictionary, out TextureAtlas textureAtlas) : this(sprites: [.. dictionary], textureAtlas: out textureAtlas) { }
+		public Sprite(KeyValuePair<string, ISprite>[] sprites, out TextureAtlas textureAtlas) : this(packingRectangles: out RectpackSharp.PackingRectangle[] packingRectangles, sprites: sprites.Select(pair => pair.Value)) =>
 			textureAtlas = new TextureAtlas
 			{
 				SubTextures = Enumerable.Range(0, packingRectangles.Length)
 					.Select(i => new SubTexture
 					{
-						Name = pairs[i].Key,
+						Name = sprites[i].Key,
 						X = (int)packingRectangles[i].X + 1,
 						Y = (int)packingRectangles[i].Y + 1,
 						Width = (int)packingRectangles[i].Width - 2,
 						Height = (int)packingRectangles[i].Height - 2,
-						Points = pairs[i].Value
+						Points = sprites[i].Value
 							.Select(point => new SubTexture.Point
 							{
 								Name = point.Key,
@@ -283,6 +283,12 @@ namespace Voxel2Pixel.Pack
 			x: 0,
 			y: Height - 4,
 			color: color);
+		public Sprite DrawPoint(string name = Origin, uint color = 0xFF00FFFFu)
+		{
+			Point point = this[name];
+			Rect((ushort)point.X, (ushort)point.Y, color);
+			return this;
+		}
 		#endregion Image manipulation
 		#region Voxel drawing
 		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, Point3D voxelOrigin, byte peakScaleX = 6, byte peakScaleY = 6) : this(perspective, model, voxelColor, new Dictionary<string, Point3D> { { Origin, voxelOrigin }, }, peakScaleX, peakScaleY) { }
@@ -377,8 +383,10 @@ namespace Voxel2Pixel.Pack
 					.Upscale(2);
 			}
 		}
-		public static Sprite AboveOutlinedWithShadow(IModel model, IVoxelColor voxelColor, uint shadow = 0x88u, uint outline = 0xFFu)
+		public static Sprite AboveOutlinedWithShadow(IModel model, IVoxelColor voxelColor, Point3D origin, uint shadow = 0x88u, uint outline = 0xFFu) => AboveOutlinedWithShadow(model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, }, shadow, outline);
+		public static Sprite AboveOutlinedWithShadow(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null, uint shadow = 0x88u, uint outline = 0xFFu)
 		{
+			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
 			Sprite sprite = new((ushort)(VoxelDraw.AboveWidth(model) * 5 + 2), (ushort)(VoxelDraw.AboveHeight(model) * 4 + 2))
 			{
 				VoxelColor = voxelColor,
@@ -403,10 +411,19 @@ namespace Voxel2Pixel.Pack
 				ScaleX = 5,
 				ScaleY = 4,
 			});
-			return shadowSprite.DrawTransparentInsert(0, 0, sprite.Outline(outline));
+			Point Point(Point3D point)
+			{
+				Point p = VoxelDraw.AboveLocate(model, point);
+				return new Point((p.X * 5) + 1, (p.Y * 4) + 1);
+			}
+			return shadowSprite
+				.DrawTransparentInsert(0, 0, sprite.Outline(outline))
+				.AddRange(points.Select(point => new KeyValuePair<string, Point>(point.Key, Point(point.Value))));
 		}
-		public static Sprite IsoOutlinedWithShadow(IModel model, IVoxelColor voxelColor, uint shadow = 0x88u, uint outline = 0xFFu)
+		public static Sprite IsoOutlinedWithShadow(IModel model, IVoxelColor voxelColor, Point3D origin, uint shadow = 0x88u, uint outline = 0xFFu) => IsoOutlinedWithShadow(model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, }, shadow, outline);
+		public static Sprite IsoOutlinedWithShadow(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null, uint shadow = 0x88u, uint outline = 0xFFu)
 		{
+			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
 			Sprite sprite = new((ushort)((VoxelDraw.IsoWidth(model) << 1) + 2), (ushort)(VoxelDraw.IsoHeight(model) + 2))
 			{
 				VoxelColor = voxelColor,
@@ -429,19 +446,38 @@ namespace Voxel2Pixel.Pack
 				OffsetY = 1,
 				ScaleX = 2,
 			});
-			return shadowSprite.DrawTransparentInsert(0, 0, sprite.Outline(outline));
+			Point Point(Point3D point)
+			{
+				Point p = VoxelDraw.IsoLocate(model, point);
+				return new Point((p.X * 2) + 1, p.Y + 1);
+			}
+			return shadowSprite
+				.DrawTransparentInsert(0, 0, sprite.Outline(outline))
+				.AddRange(points.Select(point => new KeyValuePair<string, Point>(point.Key, Point(point.Value))));
 		}
-		public static IEnumerable<Sprite> Iso8OutlinedWithShadows(IModel model, IVoxelColor voxelColor, uint shadow = 0x88u, uint outline = 0xFFu)
+		public static IEnumerable<Sprite> Iso8OutlinedWithShadows(IModel model, IVoxelColor voxelColor, Point3D origin, uint shadow = 0x88u, uint outline = 0xFFu) => Iso8OutlinedWithShadows(model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, }, shadow, outline);
+		public static IEnumerable<Sprite> Iso8OutlinedWithShadows(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null, uint shadow = 0x88u, uint outline = 0xFFu)
 		{
+			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
 			TurnModel turnModel = new()
 			{
 				Model = model,
 			};
 			for (byte angle = 0; angle < 4; angle++)
 			{
-				yield return AboveOutlinedWithShadow(turnModel, voxelColor, shadow, outline);
+				yield return AboveOutlinedWithShadow(
+					model: turnModel,
+					voxelColor: voxelColor,
+					points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))),
+					shadow: shadow,
+					outline: outline);
 				turnModel.CounterZ();
-				yield return IsoOutlinedWithShadow(turnModel, voxelColor, shadow, outline);
+				yield return IsoOutlinedWithShadow(
+					model: turnModel,
+					voxelColor: voxelColor,
+					points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))),
+					shadow: shadow,
+					outline: outline);
 			}
 		}
 		#endregion Voxel drawing
