@@ -13,7 +13,7 @@ using Xunit;
 using static Voxel2Pixel.Model.SvoModel;
 using static Voxel2PixelBlazor.ImageMaker;
 
-namespace Voxel2PixelTest.Model
+namespace Voxel2Pixel.Test.Model
 {
 	public class SvoModelTest(Xunit.Abstractions.ITestOutputHelper output)
 	{

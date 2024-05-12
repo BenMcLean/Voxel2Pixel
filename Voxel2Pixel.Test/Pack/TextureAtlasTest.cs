@@ -13,7 +13,7 @@ using Xunit;
 using static Voxel2Pixel.Pack.TextureAtlas;
 using static Voxel2PixelBlazor.ImageMaker;
 
-namespace Voxel2PixelTest.Pack
+namespace Voxel2Pixel.Test.Pack
 {
 	public class TextureAtlasTest
 	{
@@ -87,22 +87,22 @@ namespace Voxel2PixelTest.Pack
 			Assert.Equal(
 				expected: "<SubTexture name=\"pattern_0000.png\" x=\"1024\" y=\"1024\" width=\"512\" height=\"512\" />",
 				actual: xml);
-			SubTexture subTexture2 = (SubTexture)xmlSerializer.Deserialize(new StringReader(xml));
+			SubTexture? subTexture2 = xmlSerializer.Deserialize(new StringReader(xml)) as SubTexture;
 			Assert.Equal(
 				expected: subTexture.Name,
-				actual: subTexture2.Name);
+				actual: subTexture2?.Name);
 			Assert.Equal(
 				expected: subTexture.X,
-				actual: subTexture2.X);
+				actual: subTexture2?.X);
 			Assert.Equal(
 				expected: subTexture.Y,
-				actual: subTexture2.Y);
+				actual: subTexture2?.Y);
 			Assert.Equal(
 				expected: subTexture.Width,
-				actual: subTexture2.Width);
+				actual: subTexture2?.Width);
 			Assert.Equal(
 				expected: subTexture.Height,
-				actual: subTexture2.Height);
+				actual: subTexture2?.Height);
 		}
 		[Fact]
 		public void SoraTest()

@@ -8,7 +8,7 @@ using Voxel2Pixel.Render;
 using Xunit;
 using static Voxel2PixelBlazor.ImageMaker;
 
-namespace Voxel2PixelTest.Pack
+namespace Voxel2Pixel.Test.Pack
 {
 	public class ShadowTest
 	{

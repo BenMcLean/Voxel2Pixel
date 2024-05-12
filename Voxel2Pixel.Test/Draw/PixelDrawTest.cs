@@ -6,7 +6,7 @@ using Voxel2Pixel.Render;
 using Xunit;
 using static Voxel2Pixel.Draw.PixelDraw;
 
-namespace Voxel2PixelTest.Draw
+namespace Voxel2Pixel.Test.Draw
 {
 	public class PixelDrawTest
 	{

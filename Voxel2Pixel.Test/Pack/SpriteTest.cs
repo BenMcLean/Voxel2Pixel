@@ -8,7 +8,7 @@ using Xunit;
 using System.Linq;
 using Voxel2Pixel.Draw;
 
-namespace Voxel2PixelTest.Pack
+namespace Voxel2Pixel.Test.Pack
 {
 	public class SpriteTest
 	{

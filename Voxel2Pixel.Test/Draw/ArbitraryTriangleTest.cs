@@ -4,7 +4,7 @@ using Xunit;
 using static Voxel2Pixel.ExtensionMethods;
 using static Voxel2PixelBlazor.ImageMaker;
 
-namespace Voxel2PixelTest.Draw
+namespace Voxel2Pixel.Test.Draw
 {
 	public class ArbitraryTriangleTest
 	{

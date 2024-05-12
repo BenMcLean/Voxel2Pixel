@@ -1,7 +1,6 @@
 ﻿using Voxel2Pixel.Model;
-using Xunit;
 
-namespace Voxel2PixelTest.Model
+namespace Voxel2Pixel.Test.Model
 {
 	public class CuboidOrientationTest
 	{

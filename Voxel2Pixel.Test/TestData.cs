@@ -5,7 +5,7 @@ using static Voxel2Pixel.Draw.PixelDraw;
 using System.Collections.ObjectModel;
 using Voxel2Pixel.Model;
 
-namespace Voxel2PixelTest
+namespace Voxel2Pixel.Test
 {
 	public static class TestData
 	{
