@@ -431,6 +431,19 @@ namespace Voxel2Pixel.Pack
 			});
 			return shadowSprite.DrawTransparentInsert(0, 0, sprite.Outline(outline));
 		}
+		public static IEnumerable<Sprite> Iso8OutlinedWithShadows(IModel model, IVoxelColor voxelColor, uint shadow = 0x88u, uint outline = 0xFFu)
+		{
+			TurnModel turnModel = new()
+			{
+				Model = model,
+			};
+			for (byte angle = 0; angle < 4; angle++)
+			{
+				yield return AboveOutlinedWithShadow(turnModel, voxelColor, shadow, outline);
+				turnModel.CounterZ();
+				yield return IsoOutlinedWithShadow(turnModel, voxelColor, shadow, outline);
+			}
+		}
 		#endregion Voxel drawing
 	}
 }

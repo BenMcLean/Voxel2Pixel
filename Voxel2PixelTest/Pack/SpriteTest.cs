@@ -26,7 +26,6 @@ namespace Voxel2PixelTest.Pack
 				.AnimatedGif(frameDelay: 100)
 				.SaveAsGif("Sora.gif");
 		}
-		/*TODO
 		[Fact]
 		public void ShadowGif()
 		{
@@ -40,7 +39,6 @@ namespace Voxel2PixelTest.Pack
 				.AnimatedGif(frameDelay: 100)
 				.SaveAsGif("Shadows.gif");
 		}
-		*/
 		[Fact]
 		public void OverheadTest()
 		{
