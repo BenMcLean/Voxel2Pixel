@@ -24,11 +24,11 @@ namespace Voxel2Pixel.Model
 			SizeX = (ushort)(voxelData.VoxelsWide - 1);
 			SizeY = (ushort)(voxelData.VoxelsTall - 1);
 			SizeZ = (ushort)(voxelData.VoxelsDeep - 1);
-			for (ushort x = 0; x < SizeX; x++)
-				for (ushort y = 0; y < SizeY; y++)
-					for (ushort z = 0; z < SizeZ; z++)
-						if (voxelData.GetSafe(x, y, z) is byte voxel && voxel != 0)
-							this[x, y, z] = voxel;
+			foreach (KeyValuePair<int, byte> voxel in voxelData.Colors)
+			{
+				voxelData.Get3DPos(voxel.Key, out int x, out int y, out int z);
+				this[(ushort)x, (ushort)y, (ushort)z] = voxel.Value;
+			}
 		}
 		public VoxFileModel(string filePath, int frame = 0) : this(new FileToVoxCore.Vox.VoxReader().LoadModel(filePath), frame) { }
 		public VoxFileModel(Stream stream, int frame = 0) : this(new FileToVoxCore.Vox.VoxReader().LoadModel(stream), frame) { }
