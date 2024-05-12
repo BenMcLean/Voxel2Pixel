@@ -138,15 +138,21 @@ namespace Voxel2Pixel.Pack
 				rectangles: packingRectangles,
 				bounds: out PackingRectangle bounds,
 				packingHint: PackingHints.TryByBiggerSide);
-			Width = (ushort)PixelDraw.NextPowerOf2(bounds.BiggerSide);
-			Texture = new byte[Width * Width << 2];
+			Width = (ushort)bounds.Width;
+			Texture = new byte[bounds.Width * bounds.Height << 2];
 			foreach (PackingRectangle packingRectangle in packingRectangles)
 				Texture.DrawInsert(
-					x: (ushort)(packingRectangle.X + 1),
-					y: (ushort)(packingRectangle.Y + 1),
-					insert: sprites[packingRectangle.Id].Texture,
-					insertWidth: sprites[packingRectangle.Id].Width,
-					width: Width);
+						x: (ushort)(packingRectangle.X + 1),
+						y: (ushort)(packingRectangle.Y + 1),
+						insert: sprites[packingRectangle.Id].Texture,
+						insertWidth: sprites[packingRectangle.Id].Width,
+						width: Width)
+					.DrawPadding(
+						x: (ushort)(packingRectangle.X + 1),
+						y: (ushort)(packingRectangle.Y + 1),
+						areaWidth: sprites[packingRectangle.Id].Width,
+						areaHeight: sprites[packingRectangle.Id].Height,
+						width: Width);
 		}
 		public Sprite(Dictionary<string, ISprite> dictionary, out TextureAtlas textureAtlas) : this(sprites: [.. dictionary], textureAtlas: out textureAtlas) { }
 		public Sprite(KeyValuePair<string, ISprite>[] sprites, out TextureAtlas textureAtlas) : this(packingRectangles: out RectpackSharp.PackingRectangle[] packingRectangles, sprites: sprites.Select(pair => pair.Value)) =>
