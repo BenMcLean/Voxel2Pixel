@@ -1,4 +1,5 @@
 ﻿using RectpackSharp;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Voxel2Pixel.Color;
@@ -123,8 +124,8 @@ namespace Voxel2Pixel.Pack
 		public virtual void Diamond(ushort x, ushort y, byte index, VisibleFace visibleFace = VisibleFace.Front) => Diamond(x: x, y: y, color: VoxelColor[index, visibleFace]);
 		#endregion ITriangleRenderer
 		#region Image manipulation
-		public Sprite(out RectpackSharp.PackingRectangle[] packingRectangles, IEnumerable<ISprite> sprites) : this(packingRectangles: out packingRectangles, sprites: sprites.ToArray()) { }
-		public Sprite(out RectpackSharp.PackingRectangle[] packingRectangles, params ISprite[] sprites)
+		public Sprite(out PackingRectangle[] packingRectangles, IEnumerable<ISprite> sprites) : this(packingRectangles: out packingRectangles, sprites: sprites.ToArray()) { }
+		public Sprite(out PackingRectangle[] packingRectangles, params ISprite[] sprites)
 		{
 			packingRectangles = Enumerable.Range(0, sprites.Length)
 				.Select(i => new PackingRectangle(
@@ -178,7 +179,20 @@ namespace Voxel2Pixel.Pack
 		public static IEnumerable<Sprite> SameSize(ushort addWidth = 0, ushort addHeight = 0, params ISprite[] sprites) => sprites.AsEnumerable().SameSize(addWidth, addHeight);
 		public static IEnumerable<Sprite> SameSize(params ISprite[] sprites) => sprites.AsEnumerable().SameSize();
 		/// <returns>resized copy</returns>
-		public Sprite Resize(ushort croppedWidth, ushort croppedHeight) => Crop(0, 0, croppedWidth, croppedHeight);
+		public Sprite Resize(ushort newWidth, ushort newHeight) => new Sprite
+		{
+			Texture = Texture.Resize(newWidth, newHeight, Width),
+			Width = newWidth,
+		}.AddRange(this);
+		/// <summary>
+		/// Some game engines and graphics hardware require textures to be square and sized by a power of 2. LibGDX gave me some trouble on Android for not doing this back in the 2010s.
+		/// </summary>
+		/// <returns>enlarged copy</returns>
+		public Sprite EnlargeToPowerOf2()
+		{
+			ushort newSize = (ushort)PixelDraw.NextPowerOf2(Math.Max(Width, Height));
+			return Resize(newSize, newSize);
+		}
 		/// <returns>lower right cropped copy</returns>
 		public Sprite Crop(ushort x, ushort y) => Crop(x, y, (ushort)(Width - x), (ushort)(Height - y));
 		/// <returns>cropped copy</returns>
