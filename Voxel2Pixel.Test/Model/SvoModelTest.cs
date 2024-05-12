@@ -11,7 +11,7 @@ using Voxel2Pixel.Model;
 using Voxel2Pixel.Pack;
 using Xunit;
 using static Voxel2Pixel.Model.SvoModel;
-using static Voxel2PixelBlazor.ImageMaker;
+using static Voxel2Pixel.Web.ImageMaker;
 
 namespace Voxel2Pixel.Test.Model
 {

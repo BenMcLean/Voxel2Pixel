@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
-namespace Voxel2PixelBlazor
+namespace Voxel2Pixel.Web
 {
 	public class Program
 	{

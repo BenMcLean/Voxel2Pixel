@@ -2,7 +2,7 @@
 using Voxel2Pixel.Pack;
 using Xunit;
 using static Voxel2Pixel.ExtensionMethods;
-using static Voxel2PixelBlazor.ImageMaker;
+using static Voxel2Pixel.Web.ImageMaker;
 
 namespace Voxel2Pixel.Test.Draw
 {

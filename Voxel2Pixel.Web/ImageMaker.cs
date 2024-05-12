@@ -2,11 +2,10 @@
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Pack;
 
-namespace Voxel2PixelBlazor
+namespace Voxel2Pixel.Web
 {
 	public static class ImageMaker
 	{
-		#region SixLabors.ImageSharp
 		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> Png(ushort width = 0, params byte[] bytes)
 		{
 			if (width < 1)
@@ -40,13 +39,13 @@ namespace Voxel2PixelBlazor
 			return gif;
 		}
 		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(ushort scaleX, ushort scaleY, ushort width = 0, int frameDelay = 25, ushort repeatCount = 0, params byte[][] frames) => AnimatedGif(
-		width: (ushort)(width * scaleX),
-		frameDelay: frameDelay,
-		repeatCount: repeatCount,
-		frames: scaleX == 1 && scaleY == 1 ? frames
-			: frames
-				.Select(f => Voxel2Pixel.Draw.PixelDraw.Upscale(f, scaleX, scaleY, width))
-				.ToArray());
+			width: (ushort)(width * scaleX),
+			frameDelay: frameDelay,
+			repeatCount: repeatCount,
+			frames: scaleX == 1 && scaleY == 1 ? frames
+				: frames
+					.Select(f => Voxel2Pixel.Draw.PixelDraw.Upscale(f, scaleX, scaleY, width))
+					.ToArray());
 		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(ushort width = 0, int frameDelay = 25, ushort repeatCount = 0, params byte[][] frames)
 		{
 			if (width < 1)
@@ -70,6 +69,5 @@ namespace Voxel2PixelBlazor
 			gif.Frames.RemoveFrame(0);//I don't know why ImageSharp has me doing this but if I don't then I get an extra transparent frame at the start.
 			return gif;
 		}
-		#endregion SixLabors.ImageSharp
 	}
 }

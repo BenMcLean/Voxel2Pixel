@@ -1,6 +1,6 @@
 {
-  "name": "Voxel2PixelBlazor",
-  "short_name": "Voxel2PixelBlazor",
+  "name": "Voxel2Pixel.Web",
+  "short_name": "Voxel2Pixel.Web",
   "id": "./",
   "start_url": "./",
   "display": "standalone",
