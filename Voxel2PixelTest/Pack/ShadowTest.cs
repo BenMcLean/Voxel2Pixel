@@ -6,6 +6,7 @@ using Voxel2Pixel.Model;
 using Voxel2Pixel.Pack;
 using Voxel2Pixel.Render;
 using Xunit;
+using static Voxel2PixelBlazor.ImageMaker;
 
 namespace Voxel2PixelTest.Pack
 {

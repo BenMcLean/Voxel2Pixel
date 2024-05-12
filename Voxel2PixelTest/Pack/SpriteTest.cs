@@ -3,10 +3,10 @@ using Voxel2Pixel.Color;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Pack;
 using static Voxel2Pixel.ExtensionMethods;
+using static Voxel2PixelBlazor.ImageMaker;
 using Xunit;
 using System.Linq;
 using Voxel2Pixel.Draw;
-using System.IO;
 
 namespace Voxel2PixelTest.Pack
 {

@@ -11,13 +11,13 @@ using Voxel2Pixel.Model;
 using Voxel2Pixel.Pack;
 using Xunit;
 using static Voxel2Pixel.Model.SvoModel;
+using static Voxel2PixelBlazor.ImageMaker;
 
 namespace Voxel2PixelTest.Model
 {
-	public class SvoModelTest
+	public class SvoModelTest(Xunit.Abstractions.ITestOutputHelper output)
 	{
-		private readonly Xunit.Abstractions.ITestOutputHelper output;
-		public SvoModelTest(Xunit.Abstractions.ITestOutputHelper output) => this.output = output;
+		private readonly Xunit.Abstractions.ITestOutputHelper output = output;
 		private void CompareBinary(ushort a, ushort b) => output.WriteLine(
 			Convert.ToString(a, 2)
 			+ Environment.NewLine
@@ -222,17 +222,17 @@ namespace Voxel2PixelTest.Model
 			VoxFileModel model = new(@"..\..\..\Sora.vox");
 			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
 			SvoModel svo = new(model);
-			Sprite[] sprites = new Sprite[2]
-			{
-				new Sprite((ushort)(svo.SizeX + svo.SizeY), svo.SizeZ)
+			Sprite[] sprites =
+			[
+				new((ushort)(svo.SizeX + svo.SizeY), svo.SizeZ)
 				{
 					VoxelColor = voxelColor,
 				},
-				new Sprite((ushort)(svo.SizeX + svo.SizeY), svo.SizeZ)
+				new((ushort)(svo.SizeX + svo.SizeY), svo.SizeZ)
 				{
 					VoxelColor = voxelColor,
 				}
-			};
+			];
 			svo.Diagonal(sprites[0]);
 			VoxelDraw.Diagonal(svo, sprites[1]);
 			sprites
@@ -247,8 +247,8 @@ namespace Voxel2PixelTest.Model
 			VoxFileModel model = new(@"..\..\..\Sora.vox");
 			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
 			SvoModel svo = new(model);
-			Sprite[] sprites = new Sprite[2]
-			{
+			Sprite[] sprites =
+			[
 				new(svo.SizeX, (ushort)(svo.SizeY + svo.SizeZ))
 				{
 					VoxelColor = voxelColor,
@@ -257,7 +257,7 @@ namespace Voxel2PixelTest.Model
 				{
 					VoxelColor = voxelColor,
 				}
-			};
+			];
 			svo.Above(sprites[0]);
 			VoxelDraw.Above(svo, sprites[1]);
 			sprites
@@ -316,8 +316,8 @@ namespace Voxel2PixelTest.Model
 				voxelHeight = voxelWidth,
 				pixelWidth = voxelWidth,
 				pixelHeight = (ushort)(voxelDepth + voxelHeight + 1);
-			IVoxelColor voxelColor = new NaiveDimmer(ImageMaker.RainbowPalette);
-			List<Sprite> frames = new();
+			IVoxelColor voxelColor = new NaiveDimmer(TestData.RainbowPalette);
+			List<Sprite> frames = [];
 			for (ushort z = 0; z < voxelHeight; z++)
 				for (ushort x = 0; x < voxelWidth; x++)
 					for (ushort y = 0; y < voxelDepth; y++)
@@ -348,7 +348,7 @@ namespace Voxel2PixelTest.Model
 		{
 			ushort voxelDepth = 5,
 				voxelHeight = voxelDepth;
-			List<Voxel2Pixel.Model.Point> points = new();
+			List<Voxel2Pixel.Model.Point> points = [];
 			CountRenderer countRenderer = new();
 			for (ushort z = 0; z < voxelHeight; z++)
 				for (ushort y = 0; y < voxelDepth; y++)
@@ -364,7 +364,7 @@ namespace Voxel2PixelTest.Model
 							Y = z,
 						});
 				}
-			output.WriteLine("Count = " + points.Count());
+			output.WriteLine("Count = " + points.Count);
 			output.WriteLine(string.Join(",", points.Select(p => "(" + p.X + "," + p.Y + ")")));
 			Assert.Empty(points);
 		}

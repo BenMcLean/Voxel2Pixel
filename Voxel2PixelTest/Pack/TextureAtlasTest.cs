@@ -11,6 +11,7 @@ using Voxel2Pixel.Model;
 using Voxel2Pixel.Pack;
 using Xunit;
 using static Voxel2Pixel.Pack.TextureAtlas;
+using static Voxel2PixelBlazor.ImageMaker;
 
 namespace Voxel2PixelTest.Pack
 {
@@ -21,7 +22,7 @@ namespace Voxel2PixelTest.Pack
 		[Fact]
 		public void Test()
 		{
-			XmlSerializerNamespaces emptyNamespaces = new(namespaces: new[] { XmlQualifiedName.Empty });
+			XmlSerializerNamespaces emptyNamespaces = new(namespaces: [XmlQualifiedName.Empty]);
 			XmlWriterSettings settings = new()
 			{
 				Indent = true,
@@ -31,8 +32,8 @@ namespace Voxel2PixelTest.Pack
 			TextureAtlas textureAtlas = new()
 			{
 				ImagePath = "thin_double.png",
-				SubTextures = new SubTexture[]
-				{
+				SubTextures =
+				[
 					new() {
 						Name = "pattern_0000.png",
 						X = 1024,
@@ -47,7 +48,7 @@ namespace Voxel2PixelTest.Pack
 						Width = 512,
 						Height = 512,
 					},
-				},
+				],
 			};
 			StringBuilder stringBuilder = new();
 			XmlWriter xmlWriter = XmlWriter.Create(stringBuilder, settings);
@@ -63,7 +64,7 @@ namespace Voxel2PixelTest.Pack
 		[Fact]
 		public void SubTextureTest()
 		{
-			XmlSerializerNamespaces emptyNamespaces = new(new[] { XmlQualifiedName.Empty });
+			XmlSerializerNamespaces emptyNamespaces = new([XmlQualifiedName.Empty]);
 			XmlWriterSettings settings = new()
 			{
 				Indent = true,
@@ -108,7 +109,7 @@ namespace Voxel2PixelTest.Pack
 		{
 			VoxFileModel model = new(@"..\..\..\Sora.vox");
 			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
-			Dictionary<string, ISprite> dictionary = new();
+			Dictionary<string, ISprite> dictionary = [];
 			byte direction = 0;
 			foreach (ISprite iSprite in Sprite.Iso8(model, voxelColor)
 				.Select(sprite => sprite.CropOutline()))
