@@ -1,7 +1,11 @@
 ﻿@page "/"
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components.Web
+@using SixLabors.ImageSharp
+@using SixLabors.ImageSharp.Formats.Png
 @using Voxel2Pixel
+@using Voxel2Pixel.Color
+@using Voxel2Pixel.Pack
 
 <PageTitle>Home</PageTitle>
 
@@ -13,6 +17,7 @@ Welcome to your new app.
 @code {
 	public bool IsLoading = false;
 	public uint[]? Palette = null;
+	public string ImageString = string.Empty;
 	public MarkupString ExceptionMessage;
 	private async void LoadFile(InputFileChangeEventArgs e)
 	{
@@ -24,6 +29,14 @@ Welcome to your new app.
 			ms.Position = 0;
 			Voxel2Pixel.Model.VoxFileModel model = new(ms);
 			Palette = model.Palette;
+			ImageString = new Sprite(
+				perspective: Model.Perspective.Iso,
+				model: model,
+				voxelColor: new NaiveDimmer(model.Palette))
+				.Upscale(2)
+				.CropOutline()
+				.Png()
+				.ToBase64String(PngFormat.Instance);
 		}
 		catch (Exception ex)
 		{
@@ -44,11 +57,19 @@ Welcome to your new app.
 	<div>Loading...</div>
 	<br />
 }
-else if (Palette is not null)
+else
 {
-	foreach (uint color in Palette.Skip(1))
+	if (!string.IsNullOrWhiteSpace(ImageString))
 	{
-		string hex = "#" + (color >> 8).ToString("X");
-		<input type="color" value="@hex" disabled />
+		<img src="@ImageString" />
+		<br />
+	}
+	if (Palette is not null)
+	{
+		foreach (uint color in Palette.Skip(1))
+		{
+			string hex = "#" + (color >> 8).ToString("X");
+			<input type="color" value="@hex" disabled />
+		}
 	}
 }
