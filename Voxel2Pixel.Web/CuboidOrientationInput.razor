@@ -1,0 +1,18 @@
+﻿<h3>CuboidOrientationInput</h3>
+
+@code {
+
+}
+
+<table class="table">
+	<thead><tr><th>Clockwise</th><th>Counter-Clockwise</th></tr></thead>
+	<tbody>
+		@foreach (string axis in new string[] { "X", "Y", "Z" })
+		{
+			<tr>
+				<td><button>@axis axis clockwise</button></td>
+				<td><button>@axis axis counter-clockwise</button></td>
+			</tr>
+		}
+	</tbody>
+</table>
