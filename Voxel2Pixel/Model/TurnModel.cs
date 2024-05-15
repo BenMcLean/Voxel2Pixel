@@ -34,49 +34,9 @@ namespace Voxel2Pixel.Model
 		}
 		#endregion ContainerModel
 		#region ITurnable
-		public ITurnable Turn(Turn turn) => turn switch
+		public ITurnable Turn(params Turn[] turns)
 		{
-			Voxel2Pixel.Model.Turn.ClockX => ClockX(),
-			Voxel2Pixel.Model.Turn.ClockY => ClockY(),
-			Voxel2Pixel.Model.Turn.ClockZ => ClockZ(),
-			Voxel2Pixel.Model.Turn.CounterX => CounterX(),
-			Voxel2Pixel.Model.Turn.CounterY => CounterY(),
-			Voxel2Pixel.Model.Turn.CounterZ => CounterZ(),
-			_ => Reset(),
-		};
-		public ITurnable CounterX()
-		{
-			CuboidOrientation = (CuboidOrientation)CuboidOrientation.CounterX();
-			return this;
-		}
-		public ITurnable CounterY()
-		{
-			CuboidOrientation = (CuboidOrientation)CuboidOrientation.CounterY();
-			return this;
-		}
-		public ITurnable CounterZ()
-		{
-			CuboidOrientation = (CuboidOrientation)CuboidOrientation.CounterZ();
-			return this;
-		}
-		public ITurnable ClockX()
-		{
-			CuboidOrientation = (CuboidOrientation)CuboidOrientation.ClockX();
-			return this;
-		}
-		public ITurnable ClockY()
-		{
-			CuboidOrientation = (CuboidOrientation)CuboidOrientation.ClockY();
-			return this;
-		}
-		public ITurnable ClockZ()
-		{
-			CuboidOrientation = (CuboidOrientation)CuboidOrientation.ClockZ();
-			return this;
-		}
-		public ITurnable Reset()
-		{
-			CuboidOrientation = (CuboidOrientation)CuboidOrientation.Reset();
+			CuboidOrientation = (CuboidOrientation)CuboidOrientation.Turn(turns);
 			return this;
 		}
 		#endregion ITurnable

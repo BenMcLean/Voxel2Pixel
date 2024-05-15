@@ -63,7 +63,23 @@ namespace Voxel2Pixel.Model
 			}
 			return voxels;
 		}
-		#region Rotations
+		#region Turns
+		public static T[][][] Turn<T>(this T[][][] inputArray, params Turn[] turns)
+		{
+			T[][][] array = inputArray;
+			foreach (Turn turn in turns)
+				array = turn switch
+				{
+					Model.Turn.CounterX => CounterX(array),
+					Model.Turn.CounterY => CounterY(array),
+					Model.Turn.CounterZ => CounterZ(array),
+					Model.Turn.ClockX => ClockX(array),
+					Model.Turn.ClockY => ClockY(array),
+					Model.Turn.ClockZ => ClockZ(array),
+					_ => inputArray,
+				};
+			return array;
+		}
 		public static T[][][] CounterX<T>(this T[][][] inputArray)
 		{
 			T[][][] outputArray = Initialize<T>(inputArray[0].Length, inputArray.Length, inputArray[0][0].Length);
@@ -118,6 +134,6 @@ namespace Voxel2Pixel.Model
 						outputArray[z][y][inputArray.Length - 1 - x] = inputArray[x][y][z];
 			return outputArray;
 		}
-		#endregion Rotations
+		#endregion Turns
 	}
 }

@@ -93,23 +93,22 @@ namespace Voxel2Pixel.Model
 				Array.AsReadOnly(new byte[] { 20, 13, 18, 7, 21, 1, 17, 11, 22, 5, 16, 15, 23, 9, 19, 3, 0, 12, 8, 4, 10, 14, 2, 6 }),//x axis
 				Array.AsReadOnly(new byte[] { 3, 0, 1, 2, 7, 4, 5, 6, 11, 8, 9, 10, 15, 12, 13, 14, 19, 16, 17, 18, 23, 20, 21, 22 }),//y axis
 				Array.AsReadOnly(new byte[] { 12, 17, 6, 23, 0, 16, 10, 20, 4, 19, 14, 21, 8, 18, 2, 22, 15, 11, 7, 3, 13, 1, 5, 9 })});//z axis
-		public ITurnable Turn(Turn turn) => turn switch
+		public ITurnable Turn(params Turn[] turns)
 		{
-			Model.Turn.ClockX => ClockX(),
-			Model.Turn.ClockY => ClockY(),
-			Model.Turn.ClockZ => ClockZ(),
-			Model.Turn.CounterX => CounterX(),
-			Model.Turn.CounterY => CounterY(),
-			Model.Turn.CounterZ => CounterZ(),
-			_ => Reset(),
-		};
-		public ITurnable CounterX() => Values[Counter[0][Value]];
-		public ITurnable CounterY() => Values[Counter[1][Value]];
-		public ITurnable CounterZ() => Values[Counter[2][Value]];
-		public ITurnable ClockX() => Values[Clock[0][Value]];
-		public ITurnable ClockY() => Values[Clock[1][Value]];
-		public ITurnable ClockZ() => Values[Clock[2][Value]];
-		public ITurnable Reset() => SOUTH0;
+			CuboidOrientation cuboidOrientation = this;
+			foreach (Turn turn in turns)
+				cuboidOrientation = turn switch
+				{
+					Model.Turn.ClockX => Values[Clock[0][cuboidOrientation.Value]],
+					Model.Turn.ClockY => Values[Clock[1][cuboidOrientation.Value]],
+					Model.Turn.ClockZ => Values[Clock[2][cuboidOrientation.Value]],
+					Model.Turn.CounterX => Values[Counter[0][cuboidOrientation.Value]],
+					Model.Turn.CounterY => Values[Counter[1][cuboidOrientation.Value]],
+					Model.Turn.CounterZ => Values[Counter[2][cuboidOrientation.Value]],
+					_ => SOUTH0,
+				};
+			return cuboidOrientation;
+		}
 		#endregion ITurnable
 		#region Rotate
 		/// <summary>

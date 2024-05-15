@@ -35,47 +35,11 @@ namespace Voxel2Pixel.Model
 		}
 		#endregion IEditableModel
 		#region ITurnable
-		public ITurnable Turn(Turn turn) => turn switch
+		public ITurnable Turn(params Turn[] turns)
 		{
-			Model.Turn.ClockX => ClockX(),
-			Model.Turn.ClockY => ClockY(),
-			Model.Turn.ClockZ => ClockZ(),
-			Model.Turn.CounterX => CounterX(),
-			Model.Turn.CounterY => CounterY(),
-			Model.Turn.CounterZ => CounterZ(),
-			_ => Reset(),
-		};
-		public ITurnable CounterX()
-		{
-			Array = Array3D.CounterX(Array);
+			Array = Array.Turn(turns);
 			return this;
 		}
-		public ITurnable CounterY()
-		{
-			Array = Array3D.CounterY(Array);
-			return this;
-		}
-		public ITurnable CounterZ()
-		{
-			Array = Array3D.CounterZ(Array);
-			return this;
-		}
-		public ITurnable ClockX()
-		{
-			Array = Array3D.ClockX(Array);
-			return this;
-		}
-		public ITurnable ClockY()
-		{
-			Array = Array3D.ClockY(Array);
-			return this;
-		}
-		public ITurnable ClockZ()
-		{
-			Array = Array3D.ClockZ(Array);
-			return this;
-		}
-		public ITurnable Reset() => throw new System.NotImplementedException();
 		#endregion ITurnable
 	}
 }

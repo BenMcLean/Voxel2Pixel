@@ -348,7 +348,7 @@ namespace Voxel2Pixel.Pack
 					model: turnModel,
 					voxelColor: voxelColor,
 					points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))));
-				turnModel.CounterZ();
+				turnModel.Turn(Turn.CounterZ);
 			}
 		}
 		public static IEnumerable<Sprite> Iso8(IModel model, IVoxelColor voxelColor, Point3D origin) => Iso8(model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, });
@@ -368,7 +368,7 @@ namespace Voxel2Pixel.Pack
 					points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))))
 					.TransparentCrop()
 					.Upscale(5, 4);
-				turnModel.CounterZ();
+				turnModel.Turn(Turn.CounterZ);
 				yield return new Sprite(
 					perspective: Perspective.Iso,
 					model: turnModel,
@@ -395,7 +395,7 @@ namespace Voxel2Pixel.Pack
 					points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))))
 					.TransparentCrop()
 					.Upscale(5, 4);
-				turnModel.CounterZ();
+				turnModel.Turn(Turn.CounterZ);
 				yield return new Sprite(
 					perspective: Perspective.IsoShadow,
 					model: turnModel,
@@ -493,7 +493,7 @@ namespace Voxel2Pixel.Pack
 					points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))),
 					shadow: shadow,
 					outline: outline);
-				turnModel.CounterZ();
+				turnModel.Turn(Turn.CounterZ);
 				yield return IsoOutlinedWithShadow(
 					model: turnModel,
 					voxelColor: voxelColor,

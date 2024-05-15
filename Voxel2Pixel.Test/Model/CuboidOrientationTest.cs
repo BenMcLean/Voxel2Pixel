@@ -11,21 +11,21 @@ namespace Voxel2Pixel.Test.Model
 		{
 			foreach (CuboidOrientation cuboidOrientation in CuboidOrientation.Values)
 			{
-				Assert.Equal(cuboidOrientation, (CuboidOrientation)cuboidOrientation.CounterX().CounterX().CounterX().CounterX());
-				Assert.Equal(cuboidOrientation, (CuboidOrientation)cuboidOrientation.CounterY().CounterY().CounterY().CounterY());
-				Assert.Equal(cuboidOrientation, (CuboidOrientation)cuboidOrientation.CounterZ().CounterZ().CounterZ().CounterZ());
-				Assert.Equal(cuboidOrientation, (CuboidOrientation)cuboidOrientation.ClockX().ClockX().ClockX().ClockX());
-				Assert.Equal(cuboidOrientation, (CuboidOrientation)cuboidOrientation.ClockY().ClockY().ClockY().ClockY());
-				Assert.Equal(cuboidOrientation, (CuboidOrientation)cuboidOrientation.ClockZ().ClockZ().ClockZ().ClockZ());
-				Assert.NotEqual(cuboidOrientation, (CuboidOrientation)cuboidOrientation.ClockX());
-				Assert.NotEqual(cuboidOrientation, (CuboidOrientation)cuboidOrientation.ClockY());
-				Assert.NotEqual(cuboidOrientation, (CuboidOrientation)cuboidOrientation.ClockZ());
-				Assert.NotEqual(cuboidOrientation, (CuboidOrientation)cuboidOrientation.CounterX());
-				Assert.NotEqual(cuboidOrientation, (CuboidOrientation)cuboidOrientation.CounterY());
-				Assert.NotEqual(cuboidOrientation, (CuboidOrientation)cuboidOrientation.CounterZ());
-				Assert.Equal(cuboidOrientation, (CuboidOrientation)cuboidOrientation.ClockX().CounterX());
-				Assert.Equal(cuboidOrientation, (CuboidOrientation)cuboidOrientation.ClockY().CounterY());
-				Assert.Equal(cuboidOrientation, (CuboidOrientation)cuboidOrientation.ClockZ().CounterZ());
+				Assert.Equal(cuboidOrientation, (CuboidOrientation)cuboidOrientation.Turn(Turn.CounterX, Turn.CounterX, Turn.CounterX, Turn.CounterX));
+				Assert.Equal(cuboidOrientation, (CuboidOrientation)cuboidOrientation.Turn(Turn.CounterY, Turn.CounterY, Turn.CounterY, Turn.CounterY));
+				Assert.Equal(cuboidOrientation, (CuboidOrientation)cuboidOrientation.Turn(Turn.CounterZ, Turn.CounterZ, Turn.CounterZ, Turn.CounterZ));
+				Assert.Equal(cuboidOrientation, (CuboidOrientation)cuboidOrientation.Turn(Turn.ClockX, Turn.ClockX, Turn.ClockX, Turn.ClockX));
+				Assert.Equal(cuboidOrientation, (CuboidOrientation)cuboidOrientation.Turn(Turn.ClockY, Turn.ClockY, Turn.ClockY, Turn.ClockY));
+				Assert.Equal(cuboidOrientation, (CuboidOrientation)cuboidOrientation.Turn(Turn.ClockZ, Turn.ClockZ, Turn.ClockZ, Turn.ClockZ));
+				Assert.NotEqual(cuboidOrientation, (CuboidOrientation)cuboidOrientation.Turn(Turn.ClockX));
+				Assert.NotEqual(cuboidOrientation, (CuboidOrientation)cuboidOrientation.Turn(Turn.ClockY));
+				Assert.NotEqual(cuboidOrientation, (CuboidOrientation)cuboidOrientation.Turn(Turn.ClockZ));
+				Assert.NotEqual(cuboidOrientation, (CuboidOrientation)cuboidOrientation.Turn(Turn.CounterX));
+				Assert.NotEqual(cuboidOrientation, (CuboidOrientation)cuboidOrientation.Turn(Turn.CounterY));
+				Assert.NotEqual(cuboidOrientation, (CuboidOrientation)cuboidOrientation.Turn(Turn.CounterZ));
+				Assert.Equal(cuboidOrientation, (CuboidOrientation)cuboidOrientation.Turn(Turn.ClockX, Turn.CounterX));
+				Assert.Equal(cuboidOrientation, (CuboidOrientation)cuboidOrientation.Turn(Turn.ClockY, Turn.CounterY));
+				Assert.Equal(cuboidOrientation, (CuboidOrientation)cuboidOrientation.Turn(Turn.ClockZ, Turn.CounterZ));
 				int x = 0, y = 1, z = 2;
 				Point3D p = new(x, y, z),
 					p1 = cuboidOrientation.Rotate(p);
