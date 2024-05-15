@@ -34,6 +34,16 @@ namespace Voxel2Pixel.Model
 		}
 		#endregion ContainerModel
 		#region ITurnable
+		public ITurnable Turn(Turn turn) => turn switch
+		{
+			Voxel2Pixel.Model.Turn.ClockX => ClockX(),
+			Voxel2Pixel.Model.Turn.ClockY => ClockY(),
+			Voxel2Pixel.Model.Turn.ClockZ => ClockZ(),
+			Voxel2Pixel.Model.Turn.CounterX => CounterX(),
+			Voxel2Pixel.Model.Turn.CounterY => CounterY(),
+			Voxel2Pixel.Model.Turn.CounterZ => CounterZ(),
+			_ => Reset(),
+		};
 		public ITurnable CounterX()
 		{
 			CuboidOrientation = (CuboidOrientation)CuboidOrientation.CounterX();

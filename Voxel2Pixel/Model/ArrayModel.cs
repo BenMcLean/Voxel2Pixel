@@ -35,6 +35,16 @@ namespace Voxel2Pixel.Model
 		}
 		#endregion IEditableModel
 		#region ITurnable
+		public ITurnable Turn(Turn turn) => turn switch
+		{
+			Model.Turn.ClockX => ClockX(),
+			Model.Turn.ClockY => ClockY(),
+			Model.Turn.ClockZ => ClockZ(),
+			Model.Turn.CounterX => CounterX(),
+			Model.Turn.CounterY => CounterY(),
+			Model.Turn.CounterZ => CounterZ(),
+			_ => Reset(),
+		};
 		public ITurnable CounterX()
 		{
 			Array = Array3D.CounterX(Array);
