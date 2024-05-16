@@ -153,13 +153,7 @@ namespace Voxel2Pixel.Model
 		/// <summary>
 		/// Calculates the offsets to move the rotated voxel model so that it is in the x+,y+,z+ quadrant after the rotation.
 		/// </summary>
-		public void Offset(out int x, out int y, out int z, params ushort[] size)
-		{
-			x = Offset(0, size);
-			y = Offset(1, size);
-			z = Offset(2, size);
-			return;
-		}
+		public Point3D Offset(params ushort[] size) => new(Enumerable.Range(0, 3).Select(axis => Offset(axis, size)).ToArray());
 		#endregion Offset
 	}
 }
