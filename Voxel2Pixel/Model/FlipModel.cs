@@ -10,7 +10,7 @@ namespace Voxel2Pixel.Model
 		public bool FlipZ { get; set; } = false;
 		public FlipModel Set(params bool?[] @bool)
 		{
-			if (!(@bool is null) && @bool.Length > 0)
+			if (@bool is not null && @bool.Length > 0)
 			{
 				if (@bool[0] is bool flipX)
 					FlipX = flipX;
@@ -25,7 +25,7 @@ namespace Voxel2Pixel.Model
 			}
 			return this;
 		}
-		public bool[] Get => new bool[3] { FlipX, FlipY, FlipZ };
+		public bool[] Get => [FlipX, FlipY, FlipZ];
 		public override byte this[ushort x, ushort y, ushort z] => Model[
 			x: FlipX ? (ushort)(SizeX - 1 - x) : x,
 			y: FlipY ? (ushort)(SizeY - 1 - y) : y,

@@ -71,6 +71,10 @@ namespace Voxel2Pixel.Model
 			Reverse = Array.AsReadOnly(Enumerable.Range(0, 3).Select(i => ReverseLookup(i)).ToArray());
 		}
 		public override string ToString() => Name;
+		public static explicit operator CuboidOrientation(string @string) => Values
+			.Where(e => e.Name.Equals(@string, StringComparison.InvariantCultureIgnoreCase))
+			.FirstOrDefault()
+			?? throw new InvalidCastException();
 		public static bool operator ==(CuboidOrientation obj1, CuboidOrientation obj2) => obj1.Equals(obj2);
 		public static bool operator !=(CuboidOrientation obj1, CuboidOrientation obj2) => !(obj1 == obj2);
 		public override bool Equals(object other) => other is CuboidOrientation cuboidOrientation && Value == cuboidOrientation.Value;
