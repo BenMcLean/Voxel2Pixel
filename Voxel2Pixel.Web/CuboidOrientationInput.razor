@@ -6,28 +6,16 @@
 	public CuboidOrientation CuboidOrientation { get; set; } = CuboidOrientation.SOUTH0;
 	[Parameter]
 	public EventCallback<CuboidOrientation> OnChange { get; set; }
-	public string? CuboidOrientationString
-	{
-		get => CuboidOrientation.ToString();
-		set
-		{
-			if (!CuboidOrientation.ToString().Equals(value, StringComparison.InvariantCultureIgnoreCase))
-			{
-				CuboidOrientation = (CuboidOrientation)value;
-				OnChange.InvokeAsync();
-			}
-		}
-	}
 	public void Turn(params Turn[] turns)
 	{
 		CuboidOrientation = (CuboidOrientation)CuboidOrientation.Turn(turns);
 		OnChange.InvokeAsync();
 	}
 }
-<MudSelect class="form-select" @bind-Value="CuboidOrientationString">
-	@foreach (string option in CuboidOrientation.Values.Select(e => e.ToString()))
+<MudSelect @bind-Value="CuboidOrientation" onchange="@OnChange.InvokeAsync()" Class="flex-grow-0">
+	@foreach (CuboidOrientation cuboidOrientation in CuboidOrientation.Values)
 	{
-		<MudSelectItem Value="@option" />
+		<MudSelectItem Value="@cuboidOrientation" />
 	}
 </MudSelect>
 <MudButton Variant="Variant.Filled" Color="Color.Primary" name="ClockX" @onclick="@(e => Turn(Voxel2Pixel.Model.Turn.ClockX))">X&#x27F3;</MudButton>
