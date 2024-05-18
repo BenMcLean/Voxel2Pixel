@@ -24,16 +24,16 @@
 		OnChange.InvokeAsync();
 	}
 }
-<InputSelect class="form-select" @bind-Value="CuboidOrientationString">
+<MudSelect class="form-select" @bind-Value="CuboidOrientationString">
 	@foreach (string option in CuboidOrientation.Values.Select(e => e.ToString()))
 	{
-		<option>@option</option>
+		<MudSelectItem Value="@option" />
 	}
-</InputSelect>
-<button name="ClockX" @onclick="@(e => Turn(Voxel2Pixel.Model.Turn.ClockX))">X&#x27F3;</button>
-<button name="ClockY" @onclick="@(e => Turn(Voxel2Pixel.Model.Turn.ClockY))">Y&#x27F3;</button>
-<button name="ClockZ" @onclick="@(e => Turn(Voxel2Pixel.Model.Turn.ClockZ))">Z&#x27F3;</button>
-<button name="CounterX" @onclick="@(e => Turn(Voxel2Pixel.Model.Turn.CounterX))">X&#x27F2;</button>
-<button name="CounterY" @onclick="@(e => Turn(Voxel2Pixel.Model.Turn.CounterY))">Y&#x27F2;</button>
-<button name="CounterZ" @onclick="@(e => Turn(Voxel2Pixel.Model.Turn.CounterZ))">Z&#x27F2;</button>
-<button name="Reset" @onclick="@(e => Turn(Voxel2Pixel.Model.Turn.Reset))">Reset</button>
+</MudSelect>
+<MudButton Variant="Variant.Filled" Color="Color.Primary" name="ClockX" @onclick="@(e => Turn(Voxel2Pixel.Model.Turn.ClockX))">X&#x27F3;</MudButton>
+<MudButton Variant="Variant.Filled" Color="Color.Primary" name="ClockY" @onclick="@(e => Turn(Voxel2Pixel.Model.Turn.ClockY))">Y&#x27F3;</MudButton>
+<MudButton Variant="Variant.Filled" Color="Color.Primary" name="ClockZ" @onclick="@(e => Turn(Voxel2Pixel.Model.Turn.ClockZ))">Z&#x27F3;</MudButton>
+<MudButton Variant="Variant.Filled" Color="Color.Primary" name="CounterX" @onclick="@(e => Turn(Voxel2Pixel.Model.Turn.CounterX))">X&#x27F2;</MudButton>
+<MudButton Variant="Variant.Filled" Color="Color.Primary" name="CounterY" @onclick="@(e => Turn(Voxel2Pixel.Model.Turn.CounterY))">Y&#x27F2;</MudButton>
+<MudButton Variant="Variant.Filled" Color="Color.Primary" name="CounterZ" @onclick="@(e => Turn(Voxel2Pixel.Model.Turn.CounterZ))">Z&#x27F2;</MudButton>
+<MudButton Variant="Variant.Filled" Color="Color.Primary" name="Reset" @onclick="@(e => Turn(Voxel2Pixel.Model.Turn.Reset))">Reset</MudButton>
