@@ -5,6 +5,7 @@
 @using SixLabors.ImageSharp.Formats.Png
 @using Voxel2Pixel
 @using Voxel2Pixel.Color
+@using Voxel2Pixel.Interfaces
 @using Voxel2Pixel.Model
 @using Voxel2Pixel.Pack
 
@@ -21,10 +22,6 @@ Welcome to your new app.
 	public string ImageString = string.Empty;
 	public MarkupString ExceptionMessage;
 	public CuboidOrientation CuboidOrientation = CuboidOrientation.SOUTH0;
-	public void CuboidOrientationChanged(CuboidOrientation cuboidOrientation)
-	{
-		CuboidOrientation = cuboidOrientation;
-	}
 	private async void LoadFile(InputFileChangeEventArgs e)
 	{
 		IsLoading = true;
@@ -33,12 +30,19 @@ Welcome to your new app.
 		{
 			await e.File.OpenReadStream().CopyToAsync(ms);
 			ms.Position = 0;
-			Voxel2Pixel.Model.VoxFileModel model = new(ms);
-			Palette = model.Palette;
+			Voxel2Pixel.Model.VoxFileModel voxFileModel = new(ms);
+			Palette = voxFileModel.Palette;
+			IModel model = CuboidOrientation == CuboidOrientation.SOUTH0 ?
+				voxFileModel
+				: new TurnModel
+					{
+						Model = voxFileModel,
+						CuboidOrientation = CuboidOrientation,
+					};
 			ImageString = new Sprite(
 				perspective: Model.Perspective.Iso,
 				model: model,
-				voxelColor: new NaiveDimmer(model.Palette))
+				voxelColor: new NaiveDimmer(voxFileModel.Palette))
 				.Upscale(2)
 				.CropOutline()
 				.Png()
