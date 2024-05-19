@@ -41,6 +41,15 @@ namespace Voxel2Pixel.Pack
 				this[point.Key] = point.Value;
 			return this;
 		}
+		public Sprite ReplaceSelf(Sprite sprite)
+		{
+			Texture = sprite.Texture;
+			Width = sprite.Width;
+			VoxelColor = sprite.VoxelColor;
+			Clear();
+			AddRange(sprite);
+			return this;
+		}
 		#endregion Sprite
 		#region IVoxelColor
 		public IVoxelColor VoxelColor { get; set; }
@@ -245,7 +254,7 @@ namespace Voxel2Pixel.Pack
 			Width = Width,
 		}.AddRange(this);
 		/// <returns>cropped and outlined copy</returns>
-		public Sprite CropOutline(uint color = 0xFFu) => new Sprite
+		public Sprite CropOutline(uint color = 0xFFu, byte threshold = 128) => new Sprite
 		{
 			Texture = Texture
 				.TransparentCropPlusOne(
@@ -253,7 +262,8 @@ namespace Voxel2Pixel.Pack
 					cutTop: out int cutTop,
 					croppedWidth: out ushort croppedWidth,
 					croppedHeight: out _,
-					width: Width)
+					width: Width,
+					threshold: threshold)
 				.Outline(
 					width: croppedWidth,
 					color: color),
@@ -313,25 +323,63 @@ namespace Voxel2Pixel.Pack
 		}
 		#endregion Image manipulation
 		#region Voxel drawing
-		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, Point3D voxelOrigin, byte peakScaleX = 6, byte peakScaleY = 6) : this(perspective, model, voxelColor, new Dictionary<string, Point3D> { { Origin, voxelOrigin }, }, peakScaleX, peakScaleY) { }
-		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null, byte peakScaleX = 6, byte peakScaleY = 6) : this(
-			width: VoxelDraw.Width(perspective, model, peakScaleX),
-			height: VoxelDraw.Height(perspective, model, peakScaleY))
+		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, Point3D voxelOrigin, byte peakScaleX = 6, byte peakScaleY = 6, bool flipX = false, bool flipY = false, bool flipZ = false, CuboidOrientation cuboidOrientation = null, byte scaleX = 1, byte scaleY = 1, bool outline = false, uint outlineColor = DefaultOutlineColor, byte threshold = 128) : this(perspective: perspective, model: model, voxelColor: voxelColor, points: new Dictionary<string, Point3D> { { Origin, voxelOrigin }, }, peakScaleX: peakScaleX, peakScaleY: peakScaleY, flipX: flipX, flipY: flipY, flipZ: flipZ, cuboidOrientation: cuboidOrientation, scaleX: scaleX, scaleY: scaleY, outline: outline, outlineColor: outlineColor, threshold: threshold) { }
+		public Sprite(
+			Perspective perspective,
+			IModel model,
+			IVoxelColor voxelColor,
+			IEnumerable<KeyValuePair<string, Point3D>> points = null,
+			byte peakScaleX = 6,
+			byte peakScaleY = 6,
+			bool flipX = false,
+			bool flipY = false,
+			bool flipZ = false,
+			CuboidOrientation cuboidOrientation = null,
+			byte scaleX = 1,
+			byte scaleY = 1,
+			bool outline = false,
+			uint outlineColor = DefaultOutlineColor,
+			byte threshold = 128)
 		{
-			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
-			VoxelColor = voxelColor;
+			if (flipX || flipY || flipZ)
+				model = new FlipModel
+				{
+					Model = model,
+					FlipX = flipX,
+					FlipY = flipY,
+					FlipZ = flipZ,
+				};
+			cuboidOrientation ??= CuboidOrientation.SOUTH0;
+			if (cuboidOrientation != CuboidOrientation.SOUTH0)
+				model = new TurnModel
+				{
+					Model = model,
+					CuboidOrientation = cuboidOrientation,
+				};
+			ReplaceSelf(new Sprite(
+				width: VoxelDraw.Width(perspective, model, peakScaleX),
+				height: VoxelDraw.Height(perspective, model, peakScaleY))
+			{
+				VoxelColor = voxelColor,
+			});
 			VoxelDraw.Draw(
 				perspective: perspective,
 				model: model,
 				renderer: this,
 				peakScaleX: peakScaleX,
 				peakScaleY: peakScaleY);
+			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
 			AddRange(points.Select(point => new KeyValuePair<string, Point>(point.Key, VoxelDraw.Locate(
 				perspective: perspective,
 				model: model,
 				point: point.Value,
 				peakScaleX: peakScaleX,
 				peakScaleY: peakScaleY))));
+			if (scaleX > 1 || scaleY > 1)
+				ReplaceSelf(Upscale(scaleX, scaleY));
+			ReplaceSelf(outline ?
+				CropOutline(outlineColor, threshold)
+				: TransparentCrop(threshold));
 		}
 		public static IEnumerable<Sprite> Z4(Perspective perspective, IModel model, IVoxelColor voxelColor, Point3D origin) => Z4(perspective, model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, });
 		public static IEnumerable<Sprite> Z4(Perspective perspective, IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null)
