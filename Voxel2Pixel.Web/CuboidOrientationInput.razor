@@ -3,16 +3,12 @@
 @using Voxel2Pixel.Model
 @code {
 	[Parameter]
-	public CuboidOrientation CuboidOrientation { get; set; } = CuboidOrientation.SOUTH0;
+	public CuboidOrientation Value { get; set; } = CuboidOrientation.SOUTH0;
 	[Parameter]
-	public EventCallback<CuboidOrientation> OnChange { get; set; }
-	public void Turn(params Turn[] turns)
-	{
-		CuboidOrientation = (CuboidOrientation)CuboidOrientation.Turn(turns);
-		OnChange.InvokeAsync();
-	}
+	public EventCallback<CuboidOrientation> ValueChanged { get; set; }
+	public void Turn(params Turn[] turns) => ValueChanged.InvokeAsync((CuboidOrientation)Value.Turn(turns));
 }
-<MudSelect @bind-Value="CuboidOrientation" onchange="@OnChange.InvokeAsync()" Class="flex-grow-0">
+<MudSelect T="CuboidOrientation" Value="@Value" ValueChanged="@(value => ValueChanged.InvokeAsync(value))" Class="flex-grow-0">
 	@foreach (CuboidOrientation cuboidOrientation in CuboidOrientation.Values)
 	{
 		<MudSelectItem Value="@cuboidOrientation" />

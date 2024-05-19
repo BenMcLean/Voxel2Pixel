@@ -5,6 +5,7 @@
 @using SixLabors.ImageSharp.Formats.Png
 @using Voxel2Pixel
 @using Voxel2Pixel.Color
+@using Voxel2Pixel.Model
 @using Voxel2Pixel.Pack
 
 <PageTitle>Home</PageTitle>
@@ -19,6 +20,11 @@ Welcome to your new app.
 	public uint[]? Palette = null;
 	public string ImageString = string.Empty;
 	public MarkupString ExceptionMessage;
+	public CuboidOrientation CuboidOrientation = CuboidOrientation.SOUTH0;
+	public void CuboidOrientationChanged(CuboidOrientation cuboidOrientation)
+	{
+		CuboidOrientation = cuboidOrientation;
+	}
 	private async void LoadFile(InputFileChangeEventArgs e)
 	{
 		IsLoading = true;
@@ -72,6 +78,10 @@ else
 			<input type="color" value="@hex" disabled />
 		}
 	}
-	<br/>
-	<CuboidOrientationInput />
+	<br />
 }
+<span>Parent sees: @CuboidOrientation</span>
+<br />
+<CuboidOrientationInput @bind-Value="@CuboidOrientation" />
+<br />
+<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" name="ParentReset" @onclick="@(e => CuboidOrientation = CuboidOrientation.SOUTH0)">Parent Reset</MudButton>
