@@ -8,6 +8,7 @@
 @using Voxel2Pixel.Interfaces
 @using Voxel2Pixel.Model
 @using Voxel2Pixel.Pack
+@using Voxel2Pixel.Web.Components
 
 <PageTitle>Home</PageTitle>
 
@@ -32,19 +33,13 @@ Welcome to your new app.
 			ms.Position = 0;
 			Voxel2Pixel.Model.VoxFileModel voxFileModel = new(ms);
 			Palette = voxFileModel.Palette;
-			IModel model = CuboidOrientation == CuboidOrientation.SOUTH0 ?
-				voxFileModel
-				: new TurnModel
-					{
-						Model = voxFileModel,
-						CuboidOrientation = CuboidOrientation,
-					};
 			ImageString = new Sprite(
 				perspective: Model.Perspective.Iso,
-				model: model,
-				voxelColor: new NaiveDimmer(voxFileModel.Palette))
-				.Upscale(2)
-				.CropOutline()
+				model: voxFileModel,
+				voxelColor: new NaiveDimmer(voxFileModel.Palette),
+				cuboidOrientation: CuboidOrientation,
+				scaleX: 2,
+				outline: true)
 				.Png()
 				.ToBase64String(PngFormat.Instance);
 		}
