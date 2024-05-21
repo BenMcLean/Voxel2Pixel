@@ -32,20 +32,6 @@ namespace Voxel2Pixel
 		public static Point3D Center(this IModel model) => new(model.SizeX >> 1, model.SizeY >> 1, model.SizeZ >> 1);
 		public static Point3D BottomCenter(this IModel model) => new(model.SizeX >> 1, model.SizeY >> 1, 0);
 		#region Sprite
-		public static IEnumerable<Sprite> Process(
-			this IEnumerable<Sprite> sprites,
-			byte scaleX = 1,
-			byte scaleY = 1,
-			bool outline = false,
-			uint outlineColor = Sprite.DefaultOutlineColor,
-			byte threshold = 128)
-		{
-			if (scaleX > 1 || scaleY > 1)
-				sprites = sprites.Select(sprite => sprite.Upscale(scaleX, scaleY));
-			return outline ?
-				sprites.Select(sprite => sprite.CropOutline(outlineColor, threshold))
-				: sprites.Select(sprite => sprite.TransparentCrop(threshold));
-		}
 		public static IEnumerable<Sprite> AddFrameNumbers(this IEnumerable<Sprite> frames, uint color = 0xFFFFFFFFu)
 		{
 			int frame = 0;

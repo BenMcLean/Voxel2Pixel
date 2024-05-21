@@ -58,12 +58,13 @@ Welcome to your new app.
 	{
 		if (VoxFileModel is VoxFileModel)
 			ImageString = new Sprite(
-				perspective: Model.Perspective.Iso,
-				model: VoxFileModel,
-				voxelColor: new NaiveDimmer(VoxFileModel.Palette),
-				cuboidOrientation: CuboidOrientation,
-				scaleX: 2,
-				outline: true)
+					perspective: Model.Perspective.Iso,
+					model: VoxFileModel,
+					voxelColor: new NaiveDimmer(VoxFileModel.Palette),
+					cuboidOrientation: CuboidOrientation)
+				.Process(
+					scaleX: 2,
+					outline: true)
 				.Png()
 				.ToBase64String(PngFormat.Instance);
 	}

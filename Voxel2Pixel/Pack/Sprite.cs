@@ -185,6 +185,22 @@ namespace Voxel2Pixel.Pack
 							}).ToArray(),
 					}).ToArray(),
 			};
+		/// <returns>processed copy</returns>
+		public Sprite Process(
+			byte scaleX = 1,
+			byte scaleY = 1,
+			bool outline = false,
+			uint outlineColor = DefaultOutlineColor,
+			byte threshold = 128)
+		{
+			if (outline)
+				return (scaleX > 1 || scaleY > 1 ? Upscale(scaleX, scaleY) : this)
+					.CropOutline(outlineColor, threshold);
+			Sprite sprite = TransparentCrop(threshold);
+			return scaleX > 1 || scaleY > 1 ?
+				sprite.Upscale(scaleX, scaleY)
+				: sprite;
+		}
 		public static IEnumerable<Sprite> SameSize(ushort addWidth = 0, ushort addHeight = 0, params ISprite[] sprites) => sprites.AsEnumerable().SameSize(addWidth, addHeight);
 		public static IEnumerable<Sprite> SameSize(params ISprite[] sprites) => sprites.AsEnumerable().SameSize();
 		/// <returns>resized copy</returns>
@@ -323,7 +339,7 @@ namespace Voxel2Pixel.Pack
 		}
 		#endregion Image manipulation
 		#region Voxel drawing
-		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, Point3D voxelOrigin, byte peakScaleX = 6, byte peakScaleY = 6, bool flipX = false, bool flipY = false, bool flipZ = false, CuboidOrientation cuboidOrientation = null, byte scaleX = 1, byte scaleY = 1, bool outline = false, uint outlineColor = DefaultOutlineColor, byte threshold = 128) : this(perspective: perspective, model: model, voxelColor: voxelColor, points: new Dictionary<string, Point3D> { { Origin, voxelOrigin }, }, peakScaleX: peakScaleX, peakScaleY: peakScaleY, flipX: flipX, flipY: flipY, flipZ: flipZ, cuboidOrientation: cuboidOrientation, scaleX: scaleX, scaleY: scaleY, outline: outline, outlineColor: outlineColor, threshold: threshold) { }
+		public Sprite(Perspective perspective, IModel model, IVoxelColor voxelColor, Point3D voxelOrigin, byte peakScaleX = 6, byte peakScaleY = 6, bool flipX = false, bool flipY = false, bool flipZ = false, CuboidOrientation cuboidOrientation = null) : this(perspective: perspective, model: model, voxelColor: voxelColor, points: new Dictionary<string, Point3D> { { Origin, voxelOrigin }, }, peakScaleX: peakScaleX, peakScaleY: peakScaleY, flipX: flipX, flipY: flipY, flipZ: flipZ, cuboidOrientation: cuboidOrientation) { }
 		public Sprite(
 			Perspective perspective,
 			IModel model,
@@ -334,12 +350,7 @@ namespace Voxel2Pixel.Pack
 			bool flipX = false,
 			bool flipY = false,
 			bool flipZ = false,
-			CuboidOrientation cuboidOrientation = null,
-			byte scaleX = 1,
-			byte scaleY = 1,
-			bool outline = false,
-			uint outlineColor = DefaultOutlineColor,
-			byte threshold = 128)
+			CuboidOrientation cuboidOrientation = null)
 		{
 			if (flipX || flipY || flipZ)
 				model = new FlipModel
@@ -375,11 +386,6 @@ namespace Voxel2Pixel.Pack
 				point: point.Value,
 				peakScaleX: peakScaleX,
 				peakScaleY: peakScaleY))));
-			if (scaleX > 1 || scaleY > 1)
-				ReplaceSelf(Upscale(scaleX, scaleY));
-			ReplaceSelf(outline ?
-				CropOutline(outlineColor, threshold)
-				: TransparentCrop(threshold));
 		}
 		public static IEnumerable<Sprite> Z4(Perspective perspective, IModel model, IVoxelColor voxelColor, Point3D origin) => Z4(perspective, model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, });
 		public static IEnumerable<Sprite> Z4(Perspective perspective, IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null)
