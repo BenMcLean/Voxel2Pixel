@@ -9,6 +9,7 @@
 @using Voxel2Pixel.Model
 @using Voxel2Pixel.Pack
 @using Voxel2Pixel.Web.Components
+@inject ISnackbar Snackbar
 
 <PageTitle>Home</PageTitle>
 
@@ -19,10 +20,22 @@ Welcome to your new app.
 <InputFile OnChange="LoadFile" />
 @code {
 	public bool IsLoading = false;
-	public uint[]? Palette = null;
+	Voxel2Pixel.Model.VoxFileModel? VoxFileModel = null;
 	public string ImageString = string.Empty;
 	public MarkupString ExceptionMessage;
-	public CuboidOrientation CuboidOrientation = CuboidOrientation.SOUTH0;
+	public CuboidOrientation CuboidOrientation
+	{
+		get => _cuboidOrientation;
+		set
+		{
+			if (_cuboidOrientation != value)
+			{
+				_cuboidOrientation = value;
+				Preview();
+			}
+		}
+	}
+	private CuboidOrientation _cuboidOrientation = CuboidOrientation.SOUTH0;
 	private async void LoadFile(InputFileChangeEventArgs e)
 	{
 		IsLoading = true;
@@ -31,17 +44,8 @@ Welcome to your new app.
 		{
 			await e.File.OpenReadStream().CopyToAsync(ms);
 			ms.Position = 0;
-			Voxel2Pixel.Model.VoxFileModel voxFileModel = new(ms);
-			Palette = voxFileModel.Palette;
-			ImageString = new Sprite(
-				perspective: Model.Perspective.Iso,
-				model: voxFileModel,
-				voxelColor: new NaiveDimmer(voxFileModel.Palette),
-				cuboidOrientation: CuboidOrientation,
-				scaleX: 2,
-				outline: true)
-				.Png()
-				.ToBase64String(PngFormat.Instance);
+			VoxFileModel = new(ms);
+			Preview();
 		}
 		catch (Exception ex)
 		{
@@ -49,6 +53,19 @@ Welcome to your new app.
 		}
 		IsLoading = false;
 		StateHasChanged();
+	}
+	public void Preview()
+	{
+		if (VoxFileModel is VoxFileModel)
+			ImageString = new Sprite(
+				perspective: Model.Perspective.Iso,
+				model: VoxFileModel,
+				voxelColor: new NaiveDimmer(VoxFileModel.Palette),
+				cuboidOrientation: CuboidOrientation,
+				scaleX: 2,
+				outline: true)
+				.Png()
+				.ToBase64String(PngFormat.Instance);
 	}
 }
 <br />
@@ -69,9 +86,9 @@ else
 		<img src="@ImageString" />
 		<br />
 	}
-	if (Palette is not null)
+	if (VoxFileModel?.Palette is not null)
 	{
-		foreach (uint color in Palette.Skip(1))
+		foreach (uint color in VoxFileModel.Palette.Skip(1))
 		{
 			string hex = "#" + (color >> 8).ToString("X");
 			<input type="color" value="@hex" disabled />
