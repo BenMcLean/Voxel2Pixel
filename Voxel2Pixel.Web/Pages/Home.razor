@@ -81,20 +81,18 @@
 @if (!string.IsNullOrWhiteSpace(ExceptionMessage.ToString()))
 {
 	<div>@ExceptionMessage</div>
-	<br />
 }
 @if (IsLoading)
 {
 	<div>Loading...</div>
-	<br />
 }
 else
 {
 	if (!string.IsNullOrWhiteSpace(ImageString))
 	{
 		<img src="@ImageString" />
-		<br />
 	}
+	<!--
 	if (VoxFileModel?.Palette is not null)
 	{
 		foreach (uint color in VoxFileModel.Palette.Skip(1))
@@ -103,8 +101,9 @@ else
 			<input type="color" value="@hex" disabled />
 		}
 	}
-	<br />
+	-->
 }
+<br />
 <span>Parent sees: @CuboidOrientation</span>
 <br />
 <CuboidOrientationInput @bind-Value="@CuboidOrientation" />
