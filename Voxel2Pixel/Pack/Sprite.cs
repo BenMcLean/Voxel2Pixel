@@ -187,8 +187,8 @@ namespace Voxel2Pixel.Pack
 			};
 		/// <returns>processed copy</returns>
 		public Sprite Process(
-			byte scaleX = 1,
-			byte scaleY = 1,
+			ushort scaleX = 1,
+			ushort scaleY = 1,
 			bool outline = false,
 			uint outlineColor = DefaultOutlineColor,
 			byte threshold = 128)
@@ -208,6 +208,7 @@ namespace Voxel2Pixel.Pack
 		{
 			Texture = Texture.Resize(newWidth, newHeight, Width),
 			Width = newWidth,
+			VoxelColor = VoxelColor,
 		}.AddRange(this);
 		/// <summary>
 		/// Some game engines and graphics hardware require textures to be square and sized by a power of 2. LibGDX gave me some trouble on Android for not doing this back in the 2010s.
@@ -225,6 +226,7 @@ namespace Voxel2Pixel.Pack
 		{
 			Texture = Texture.Crop(x, y, croppedWidth, croppedHeight, Width),
 			Width = croppedWidth,
+			VoxelColor = VoxelColor,
 		}.AddRange(this.Select(point => new KeyValuePair<string, Point>(
 			key: point.Key,
 			value: new Point(
@@ -241,6 +243,7 @@ namespace Voxel2Pixel.Pack
 				width: Width,
 				threshold: threshold),
 			Width = croppedWidth,
+			VoxelColor = VoxelColor,
 		}.AddRange(this.Select(point => new KeyValuePair<string, Point>(
 			key: point.Key,
 			value: new Point(
@@ -257,6 +260,7 @@ namespace Voxel2Pixel.Pack
 				width: Width,
 				threshold: threshold),
 			Width = croppedWidth,
+			VoxelColor = VoxelColor,
 		}.AddRange(this.Select(point => new KeyValuePair<string, Point>(
 			key: point.Key,
 			value: new Point(
@@ -268,6 +272,7 @@ namespace Voxel2Pixel.Pack
 				width: Width,
 				color: color),
 			Width = Width,
+			VoxelColor = VoxelColor,
 		}.AddRange(this);
 		/// <returns>cropped and outlined copy</returns>
 		public Sprite CropOutline(uint color = 0xFFu, byte threshold = 128) => new Sprite
@@ -284,6 +289,7 @@ namespace Voxel2Pixel.Pack
 					width: croppedWidth,
 					color: color),
 			Width = croppedWidth,
+			VoxelColor = VoxelColor,
 		}.AddRange(this.Select(point => new KeyValuePair<string, Point>(
 			key: point.Key,
 			value: new Point(
@@ -298,6 +304,7 @@ namespace Voxel2Pixel.Pack
 				newWidth: out ushort newWidth,
 				width: Width),
 			Width = newWidth,
+			VoxelColor = VoxelColor,
 		}.AddRange(this.Select(point => new KeyValuePair<string, Point>(
 			key: point.Key,
 			value: new Point(
@@ -315,7 +322,7 @@ namespace Voxel2Pixel.Pack
 			Texture = Texture.DrawTransparentInsert(x, y, insert, insertWidth, Width, threshold);
 			return this;
 		}
-		public static IEnumerable<Sprite> AddFrameNumbers(uint color = 0xFFFFFFFF, params Sprite[] sprites) => sprites.AsEnumerable().AddFrameNumbers(color);
+		public static IEnumerable<Sprite> AddFrameNumbers(uint color = 0xFFFFFFFFu, params Sprite[] sprites) => sprites.AsEnumerable().AddFrameNumbers(color);
 		public Sprite Draw3x4(string @string, int x = 0, int y = 0, uint color = 0xFFFFFFFF)
 		{
 			Texture.Draw3x4(
@@ -326,7 +333,7 @@ namespace Voxel2Pixel.Pack
 				color: color);
 			return this;
 		}
-		public Sprite Draw3x4Bottom(string @string, uint color = 0xFFFFFFFF) => Draw3x4(
+		public Sprite Draw3x4Bottom(string @string, uint color = 0xFFFFFFFFu) => Draw3x4(
 			@string: @string,
 			x: 0,
 			y: Height - 4,
