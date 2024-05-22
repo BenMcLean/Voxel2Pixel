@@ -4,6 +4,10 @@ using Voxel2Pixel.Pack;
 
 namespace Voxel2Pixel.Web
 {
+	/// <summary>
+	/// ImageMaker glues Voxel2Pixel to ImageSharp.
+	/// It isn't included in the main project so that the library won't be subject to the ImageSharp license and could output to anything else instead.
+	/// </summary>
 	public static class ImageMaker
 	{
 		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> Png(ushort width = 0, params byte[] bytes)
