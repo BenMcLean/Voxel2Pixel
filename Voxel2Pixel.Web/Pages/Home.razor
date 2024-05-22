@@ -13,7 +13,17 @@
 
 <PageTitle>Voxel2Pixel</PageTitle>
 
-<InputFile OnChange="LoadFile" />
+<MudFileUpload T="IBrowserFile" FilesChanged="LoadFile">
+	<ButtonTemplate>
+		<MudButton HtmlTag="label"
+				   Variant="Variant.Filled"
+				   Color="MudBlazor.Color.Primary"
+				   StartIcon="@Icons.Material.Filled.CloudUpload"
+				   for="@context.Id">
+			Upload .vox File
+		</MudButton>
+	</ButtonTemplate>
+</MudFileUpload>
 @code {
 	#region Data
 	public bool IsLoading = false;
@@ -34,13 +44,13 @@
 	}
 	private CuboidOrientation _cuboidOrientation = CuboidOrientation.SOUTH0;
 	#endregion Data
-	private async void LoadFile(InputFileChangeEventArgs e)
+	private async void LoadFile(IBrowserFile file)
 	{
 		IsLoading = true;
 		MemoryStream ms = new();
 		try
 		{
-			await e.File.OpenReadStream().CopyToAsync(ms);
+			await file.OpenReadStream().CopyToAsync(ms);
 			ms.Position = 0;
 			VoxFileModel = new(ms);
 			Preview();
