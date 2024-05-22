@@ -11,14 +11,11 @@
 @using Voxel2Pixel.Web.Components
 @inject ISnackbar Snackbar
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Voxel2Pixel</PageTitle>
 
-<h1>Hello, world!</h1>
-
-Welcome to your new app.
-<br />
 <InputFile OnChange="LoadFile" />
 @code {
+	#region Data
 	public bool IsLoading = false;
 	Voxel2Pixel.Model.VoxFileModel? VoxFileModel = null;
 	public string ImageString = string.Empty;
@@ -36,6 +33,7 @@ Welcome to your new app.
 		}
 	}
 	private CuboidOrientation _cuboidOrientation = CuboidOrientation.SOUTH0;
+	#endregion Data
 	private async void LoadFile(InputFileChangeEventArgs e)
 	{
 		IsLoading = true;
