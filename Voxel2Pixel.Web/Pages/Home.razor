@@ -30,19 +30,12 @@
 	Voxel2Pixel.Model.VoxFileModel? VoxFileModel = null;
 	public string ImageString = string.Empty;
 	public MarkupString ExceptionMessage;
-	public CuboidOrientation CuboidOrientation
-	{
-		get => _cuboidOrientation;
-		set
-		{
-			if (_cuboidOrientation != value)
-			{
-				_cuboidOrientation = value;
-				Preview();
-			}
-		}
-	}
-	private CuboidOrientation _cuboidOrientation = CuboidOrientation.SOUTH0;
+	public Perspective Perspective = Perspective.Iso;
+	public CuboidOrientation CuboidOrientation = CuboidOrientation.SOUTH0;
+	public bool FlipX = false,
+		FlipY = false,
+		FlipZ = false,
+		Outline = false;
 	#endregion Data
 	private async void LoadFile(IBrowserFile file)
 	{
@@ -104,8 +97,15 @@ else
 	-->
 }
 <br />
-<span>Parent sees: @CuboidOrientation</span>
+Perspective:
+<MudSelect T="Perspective" @bind-Value="@Perspective" Class="flex-grow-0">
+	@foreach (Perspective perspective in Enum.GetValues(typeof(Perspective)))
+	{
+		<MudSelectItem Value="@perspective" />
+	}
+</MudSelect>
 <br />
+Orientation:
 <CuboidOrientationInput @bind-Value="@CuboidOrientation" />
 <br />
 <MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" name="ParentReset" @onclick="@(e => CuboidOrientation = CuboidOrientation.SOUTH0)">Parent Reset</MudButton>
