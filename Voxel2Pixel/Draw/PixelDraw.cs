@@ -999,7 +999,7 @@ namespace Voxel2Pixel.Draw
 			{
 				if (x >= 0 && y >= 0 && x < width && y < height
 					&& texture[Index(x, y)] is uint pixel
-					&& pixel.A() >= threshold)
+					&& (byte)pixel >= threshold)
 					neighbors.Add(pixel);
 			}
 			uint Average()
@@ -1010,15 +1010,15 @@ namespace Voxel2Pixel.Draw
 				int r = 0, g = 0, b = 0;
 				foreach (uint color in neighbors)
 				{
-					r += color.R();
-					g += color.G();
-					b += color.B();
+					r += (byte)(color >> 24);
+					g += (byte)(color >> 16);
+					b += (byte)(color >> 8);
 				}
 				return Color((byte)(r / count), (byte)(g / count), (byte)(b / count), 0);
 			}
 			for (int x = 0; x < width; x++)
 				for (int y = 0; y < height; y++)
-					if (texture[Index(x, y)].A() < threshold)
+					if ((byte)texture[Index(x, y)] < threshold)
 					{
 						neighbors.Clear();
 						Add(x - 1, y);
@@ -1360,10 +1360,6 @@ namespace Voxel2Pixel.Draw
 			width > 0 ?
 				(ushort)(length / width >> 2)
 				: (ushort)Math.Sqrt(length >> 2);
-		public static byte R(this uint color) => (byte)(color >> 24);
-		public static byte G(this uint color) => (byte)(color >> 16);
-		public static byte B(this uint color) => (byte)(color >> 8);
-		public static byte A(this uint color) => (byte)color;
 		public static uint Color(byte r, byte g, byte b, byte a) => (uint)(r << 24 | g << 16 | b << 8 | a);
 		/// <param name="rgba">rgba8888, Big Endian</param>
 		/// <returns>argb8888, Big Endian</returns>

@@ -36,11 +36,12 @@ namespace Voxel2Pixel.Model
 		public static uint Color(FileToVoxCore.Drawing.Color color) => ((uint)color.ToArgb()).Argb2rgba();
 		#endregion Read
 		#region Write
+
 		public static FileToVoxCore.Drawing.Color Color(uint color) => FileToVoxCore.Drawing.Color.FromArgb(
-			alpha: color.A(),
-			red: color.R(),
-			green: color.G(),
-			blue: color.B());
+			alpha: (byte)color,
+			red: (byte)(color >> 24),
+			green: (byte)(color >> 16),
+			blue: (byte)(color >> 8));
 		public static IEnumerable<FileToVoxCore.Schematics.Voxel> FileToVoxCoreVoxels(IModel model, uint[] palette) => model
 			.Select(voxel => new FileToVoxCore.Schematics.Voxel(
 				x: voxel.X,
