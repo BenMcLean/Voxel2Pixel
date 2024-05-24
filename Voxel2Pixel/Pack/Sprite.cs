@@ -553,8 +553,10 @@ namespace Voxel2Pixel.Pack
 					threshold: threshold)
 				.AddRange(points.Select(point => new KeyValuePair<string, Point>(point.Key, Point(point.Value))));
 		}
-		public static Sprite IsoOutlinedWithShadow(IModel model, IVoxelColor voxelColor, Point3D origin, uint shadow = DefaultShadowColor, uint outline = PixelDraw.DefaultOutlineColor, byte threshold = PixelDraw.DefaultTransparencyThreshold) => IsoOutlinedWithShadow(model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, }, shadow, outline, threshold);
-		public static Sprite IsoOutlinedWithShadow(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null, uint shadow = DefaultShadowColor, uint outline = PixelDraw.DefaultOutlineColor, byte threshold = PixelDraw.DefaultTransparencyThreshold)
+		public static Sprite IsoOutlinedWithShadow(IModel model, IVoxelColor voxelColor, Point3D origin, uint shadow = DefaultShadowColor, uint outline = PixelDraw.DefaultOutlineColor, byte threshold = PixelDraw.DefaultTransparencyThreshold) => IsoOutlinedWithShadow(model, voxelColor, shadow, new Dictionary<string, Point3D> { { Origin, origin }, }, outline, threshold);
+		public static Sprite IsoOutlinedWithShadow(IModel model, IVoxelColor voxelColor, IVoxelColor shadow, Point3D origin, uint outline = PixelDraw.DefaultOutlineColor, byte threshold = PixelDraw.DefaultTransparencyThreshold) => IsoOutlinedWithShadow(model, voxelColor, shadow, new Dictionary<string, Point3D> { { Origin, origin }, }, outline, threshold);
+		public static Sprite IsoOutlinedWithShadow(IModel model, IVoxelColor voxelColor, uint shadow = DefaultShadowColor, IEnumerable<KeyValuePair<string, Point3D>> points = null, uint outline = PixelDraw.DefaultOutlineColor, byte threshold = PixelDraw.DefaultTransparencyThreshold) => IsoOutlinedWithShadow(model, voxelColor, new OneVoxelColor(shadow), points, outline, threshold);
+		public static Sprite IsoOutlinedWithShadow(IModel model, IVoxelColor voxelColor, IVoxelColor shadow, IEnumerable<KeyValuePair<string, Point3D>> points = null, uint outline = PixelDraw.DefaultOutlineColor, byte threshold = PixelDraw.DefaultTransparencyThreshold)
 		{
 			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
 			Sprite sprite = new((ushort)((VoxelDraw.IsoWidth(model) << 1) + 2), (ushort)(VoxelDraw.IsoHeight(model) + 2))
@@ -563,7 +565,7 @@ namespace Voxel2Pixel.Pack
 			},
 			shadowSprite = new((ushort)((VoxelDraw.IsoWidth(model) << 1) + 2), (ushort)(VoxelDraw.IsoHeight(model) + 2))
 			{
-				VoxelColor = new OneVoxelColor(shadow),
+				VoxelColor = shadow,
 			};
 			VoxelDraw.IsoShadow(model, new OffsetRenderer()
 			{
