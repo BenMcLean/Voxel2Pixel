@@ -395,7 +395,11 @@ namespace Voxel2Pixel.Pack
 			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
 			if (shadow && perspective.HasShadow())
 			{
-				Sprite sprite = new(this);
+				Sprite sprite = new()
+				{
+					Texture = Texture,
+					Width = Width,
+				};
 				Texture = new byte[Texture.Length];
 				Perspective shadowPerspective = perspective == Perspective.Iso ? Perspective.IsoShadow : Perspective.Underneath;
 				VoxelColor = new OneVoxelColor(shadowColor);
