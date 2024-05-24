@@ -133,7 +133,7 @@ namespace Voxel2Pixel.Pack
 		}
 		public virtual void Diamond(ushort x, ushort y, byte index, VisibleFace visibleFace = VisibleFace.Front) => Diamond(x: x, y: y, color: VoxelColor[index, visibleFace]);
 		#endregion ITriangleRenderer
-		#region Image manipulation
+		#region Packing
 		public Sprite(out PackingRectangle[] packingRectangles, IEnumerable<ISprite> sprites) : this(packingRectangles: out packingRectangles, sprites: sprites.ToArray()) { }
 		public Sprite(out PackingRectangle[] packingRectangles, params ISprite[] sprites)
 		{
@@ -186,6 +186,8 @@ namespace Voxel2Pixel.Pack
 							}).ToArray(),
 					}).ToArray(),
 			};
+		#endregion Packing
+		#region Image manipulation
 		/// <returns>processed copy</returns>
 		public Sprite Process(
 			ushort scaleX = 1,
@@ -455,32 +457,32 @@ namespace Voxel2Pixel.Pack
 			for (byte angle = 0; angle < 4; angle++)
 			{
 				yield return new Sprite(
-					perspective: Perspective.Above,
-					model: turnModel,
-					voxelColor: voxelColor,
-					points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))),
-					shadow: shadow,
-					shadowColor: shadowColor,
-					threshold: threshold)
-					.TransparentCrop()
+						perspective: Perspective.Above,
+						model: turnModel,
+						voxelColor: voxelColor,
+						points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))),
+						shadow: shadow,
+						shadowColor: shadowColor,
+						threshold: threshold)
+					.TransparentCrop(threshold)
 					.Upscale(5, 4);
 				turnModel.Turn(Turn.CounterZ);
 				yield return new Sprite(
-					perspective: Perspective.Iso,
-					model: turnModel,
-					voxelColor: voxelColor,
-					points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))),
-					shadow: shadow,
-					shadowColor: shadowColor,
-					threshold: threshold)
-					.TransparentCrop()
+						perspective: Perspective.Iso,
+						model: turnModel,
+						voxelColor: voxelColor,
+						points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))),
+						shadow: shadow,
+						shadowColor: shadowColor,
+						threshold: threshold)
+					.TransparentCrop(threshold)
 					.Upscale(2);
 			}
 		}
 		public static IEnumerable<Sprite> Iso8Shadows(IModel model, Point3D origin, uint shadow = DefaultShadowColor) => Iso8Shadows(model, shadow, new Dictionary<string, Point3D> { { Origin, origin }, });
 		public static IEnumerable<Sprite> Iso8Shadows(IModel model, uint shadow = DefaultShadowColor, IEnumerable<KeyValuePair<string, Point3D>> points = null) => Iso8Shadows(model, new OneVoxelColor(shadow), points);
 		public static IEnumerable<Sprite> Iso8Shadows(IModel model, IVoxelColor voxelColor, Point3D origin) => Iso8Shadows(model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, });
-		public static IEnumerable<Sprite> Iso8Shadows(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null)
+		public static IEnumerable<Sprite> Iso8Shadows(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null, byte threshold = PixelDraw.DefaultTransparencyThreshold)
 		{
 			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
 			TurnModel turnModel = new()
@@ -490,24 +492,26 @@ namespace Voxel2Pixel.Pack
 			for (byte angle = 0; angle < 4; angle++)
 			{
 				yield return new Sprite(
-					perspective: Perspective.Underneath,
-					model: turnModel,
-					voxelColor: voxelColor,
-					points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))))
-					.TransparentCrop()
+						perspective: Perspective.Underneath,
+						model: turnModel,
+						voxelColor: voxelColor,
+						points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))),
+						threshold: threshold)
+					.TransparentCrop(threshold)
 					.Upscale(5, 4);
 				turnModel.Turn(Turn.CounterZ);
 				yield return new Sprite(
-					perspective: Perspective.IsoShadow,
-					model: turnModel,
-					voxelColor: voxelColor,
-					points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))))
-					.TransparentCrop()
+						perspective: Perspective.IsoShadow,
+						model: turnModel,
+						voxelColor: voxelColor,
+						points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))),
+						threshold: threshold)
+					.TransparentCrop(threshold)
 					.Upscale(2);
 			}
 		}
-		public static Sprite AboveOutlinedWithShadow(IModel model, IVoxelColor voxelColor, Point3D origin, uint shadow = DefaultShadowColor, uint outline = PixelDraw.DefaultOutlineColor) => AboveOutlinedWithShadow(model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, }, shadow, outline);
-		public static Sprite AboveOutlinedWithShadow(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null, uint shadow = DefaultShadowColor, uint outline = PixelDraw.DefaultOutlineColor)
+		public static Sprite AboveOutlinedWithShadow(IModel model, IVoxelColor voxelColor, Point3D origin, uint shadow = DefaultShadowColor, uint outline = PixelDraw.DefaultOutlineColor, byte threshold = PixelDraw.DefaultTransparencyThreshold) => AboveOutlinedWithShadow(model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, }, shadow, outline, threshold);
+		public static Sprite AboveOutlinedWithShadow(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null, uint shadow = DefaultShadowColor, uint outline = PixelDraw.DefaultOutlineColor, byte threshold = PixelDraw.DefaultTransparencyThreshold)
 		{
 			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
 			Sprite sprite = new((ushort)(VoxelDraw.AboveWidth(model) * 5 + 2), (ushort)(VoxelDraw.AboveHeight(model) * 4 + 2))
@@ -540,10 +544,14 @@ namespace Voxel2Pixel.Pack
 				return new Point((p.X * 5) + 1, (p.Y * 4) + 1);
 			}
 			return shadowSprite
-				.DrawTransparentInsert(0, 0, sprite.Outline(outline))
+				.DrawTransparentInsert(
+					x: 0,
+					y: 0,
+					insert: sprite.Outline(outline),
+					threshold: threshold)
 				.AddRange(points.Select(point => new KeyValuePair<string, Point>(point.Key, Point(point.Value))));
 		}
-		public static Sprite IsoOutlinedWithShadow(IModel model, IVoxelColor voxelColor, Point3D origin, uint shadow = DefaultShadowColor, uint outline = PixelDraw.DefaultOutlineColor) => IsoOutlinedWithShadow(model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, }, shadow, outline);
+		public static Sprite IsoOutlinedWithShadow(IModel model, IVoxelColor voxelColor, Point3D origin, uint shadow = DefaultShadowColor, uint outline = PixelDraw.DefaultOutlineColor, byte threshold = PixelDraw.DefaultTransparencyThreshold) => IsoOutlinedWithShadow(model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, }, shadow, outline, threshold);
 		public static Sprite IsoOutlinedWithShadow(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null, uint shadow = DefaultShadowColor, uint outline = PixelDraw.DefaultOutlineColor, byte threshold = PixelDraw.DefaultTransparencyThreshold)
 		{
 			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
@@ -582,8 +590,8 @@ namespace Voxel2Pixel.Pack
 					threshold: threshold)
 				.AddRange(points.Select(point => new KeyValuePair<string, Point>(point.Key, Point(point.Value))));
 		}
-		public static IEnumerable<Sprite> Iso8OutlinedWithShadows(IModel model, IVoxelColor voxelColor, Point3D origin, uint shadow = DefaultShadowColor, uint outline = PixelDraw.DefaultOutlineColor) => Iso8OutlinedWithShadows(model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, }, shadow, outline);
-		public static IEnumerable<Sprite> Iso8OutlinedWithShadows(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null, uint shadow = DefaultShadowColor, uint outline = PixelDraw.DefaultOutlineColor)
+		public static IEnumerable<Sprite> Iso8OutlinedWithShadows(IModel model, IVoxelColor voxelColor, Point3D origin, uint shadow = DefaultShadowColor, uint outline = PixelDraw.DefaultOutlineColor, byte threshold = PixelDraw.DefaultTransparencyThreshold) => Iso8OutlinedWithShadows(model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, }, shadow, outline, threshold);
+		public static IEnumerable<Sprite> Iso8OutlinedWithShadows(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null, uint shadow = DefaultShadowColor, uint outline = PixelDraw.DefaultOutlineColor, byte threshold = PixelDraw.DefaultTransparencyThreshold)
 		{
 			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
 			TurnModel turnModel = new()
@@ -597,14 +605,16 @@ namespace Voxel2Pixel.Pack
 					voxelColor: voxelColor,
 					points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))),
 					shadow: shadow,
-					outline: outline);
+					outline: outline,
+					threshold: threshold);
 				turnModel.Turn(Turn.CounterZ);
 				yield return IsoOutlinedWithShadow(
 					model: turnModel,
 					voxelColor: voxelColor,
 					points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))),
 					shadow: shadow,
-					outline: outline);
+					outline: outline,
+					threshold: threshold);
 			}
 		}
 		#endregion Voxel drawing
