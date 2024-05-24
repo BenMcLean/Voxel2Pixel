@@ -549,7 +549,7 @@ namespace Voxel2Pixel.Pack
 				.DrawTransparentInsert(
 					x: 0,
 					y: 0,
-					insert: sprite.Outline(outline),
+					insert: sprite.Outline(outline, threshold),
 					threshold: threshold)
 				.AddRange(points.Select(point => new KeyValuePair<string, Point>(point.Key, Point(point.Value))));
 		}
@@ -590,7 +590,7 @@ namespace Voxel2Pixel.Pack
 				.DrawTransparentInsert(
 					x: 0,
 					y: 0,
-					insert: sprite.Outline(outline),
+					insert: sprite.Outline(outline, threshold),
 					threshold: threshold)
 				.AddRange(points.Select(point => new KeyValuePair<string, Point>(point.Key, Point(point.Value))));
 		}
