@@ -14,17 +14,6 @@
 
 <PageTitle>Voxel2Pixel</PageTitle>
 
-<MudFileUpload T="IBrowserFile" FilesChanged="LoadFile">
-	<ButtonTemplate>
-		<MudButton HtmlTag="label"
-				   Variant="Variant.Filled"
-				   Color="MudBlazor.Color.Primary"
-				   StartIcon="@Icons.Material.Filled.CloudUpload"
-				   for="@context.Id">
-			Upload .vox File
-		</MudButton>
-	</ButtonTemplate>
-</MudFileUpload>
 @code {
 	#region Data
 	public bool IsLoading = false;
@@ -37,6 +26,8 @@
 		FlipY = false,
 		FlipZ = false,
 		Outline = false;
+	public byte PeakScaleX = 6,
+		PeakScaleY = 6;
 	public ushort ScaleX = 2,
 		ScaleY = 1;
 	public MudColor OutlineMudColor = new MudColor(0, 0, 0, 255);
@@ -75,6 +66,11 @@
 					perspective: Perspective,
 					model: VoxFileModel,
 					voxelColor: new NaiveDimmer(VoxFileModel.Palette),
+					peakScaleX: PeakScaleX,
+					peakScaleY: PeakScaleY,
+					flipX: FlipX,
+					flipY: FlipY,
+					flipZ: FlipZ,
 					cuboidOrientation: CuboidOrientation)
 				.Process(
 					scaleX: ScaleX,
@@ -85,6 +81,17 @@
 				.ToBase64String(PngFormat.Instance);
 	}
 }
+<MudFileUpload T="IBrowserFile" FilesChanged="LoadFile">
+	<ButtonTemplate>
+		<MudButton HtmlTag="label"
+				   Variant="Variant.Filled"
+				   Color="MudBlazor.Color.Primary"
+				   StartIcon="@Icons.Material.Filled.CloudUpload"
+				   for="@context.Id">
+			Upload .vox File
+		</MudButton>
+	</ButtonTemplate>
+</MudFileUpload>
 <br />
 @if (!string.IsNullOrWhiteSpace(ExceptionMessage.ToString()))
 {
@@ -94,41 +101,40 @@
 {
 	<div>Loading...</div>
 }
-else
+else if (!string.IsNullOrWhiteSpace(ImageString))
 {
-	if (!string.IsNullOrWhiteSpace(ImageString))
-	{
-		<img src="@ImageString" />
-	}
-	<!--
-	if (VoxFileModel?.Palette is not null)
-	{
-		foreach (uint color in VoxFileModel.Palette.Skip(1))
-		{
-			string hex = "#" + (color >> 8).ToString("X");
-			<input type="color" value="@hex" disabled />
-		}
-	}
-	-->
+	<img src="@ImageString" />
 }
 <br />
-<h3>Perspective:</h3>
+<h2>Perspective:</h2>
 <MudSelect T="Perspective" @bind-Value="@Perspective" Class="flex-grow-0">
 	@foreach (Perspective perspective in Enum.GetValues(typeof(Perspective)))
 	{
 		<MudSelectItem Value="@perspective" />
 	}
 </MudSelect>
+@if(Perspective.IsPeak())
+{
+	<MudNumericField T="byte" @bind-Value="PeakScaleX" Label="Peak Scale X" Variant="Variant.Text" Min="1" Max="255" />
+	<MudNumericField T="byte" @bind-Value="PeakScaleY" Label="Peak Scale Y" Variant="Variant.Text" Min="1" Max="255" />
+}
 <br />
-<h3>Orientation:</h3>
+<h2>Orientation:</h2>
 <MudCheckBox @bind-Value="@FlipX" Label="Flip X" />
 <MudCheckBox @bind-Value="@FlipY" Label="Flip Y" />
 <MudCheckBox @bind-Value="@FlipZ" Label="Flip Z" />
 <CuboidOrientationInput @bind-Value="@CuboidOrientation" />
 <br />
-<h3>Post-Processing:</h3>
+<h2>Post-Processing:</h2>
+<MudNumericField T="ushort" @bind-Value="ScaleX" Label="Scale X" Variant="Variant.Text" Min="1" />
+<MudNumericField T="ushort" @bind-Value="ScaleY" Label="Scale Y" Variant="Variant.Text" Min="1" />
 <MudCheckBox @bind-Value="@Outline" Label="Outline" />
 @if (Outline)
 {
 	<MudColorPicker @bind-Value="OutlineMudColor" Label="Outline Color" Placeholder="Select Color" Style="@($"color: {OutlineMudColor};")" />
+}
+<br />
+@if (VoxFileModel is not null)
+{
+	<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" name="Generate" @onclick="Preview">Generate Single Image</MudButton>
 }
