@@ -192,7 +192,7 @@ namespace Voxel2Pixel.Pack
 			ushort scaleY = 1,
 			bool outline = false,
 			uint outlineColor = PixelDraw.DefaultOutlineColor,
-			byte threshold = 128)
+			byte threshold = PixelDraw.DefaultTransparencyThreshold)
 		{
 			if (outline)
 				return (scaleX > 1 || scaleY > 1 ? Upscale(scaleX, scaleY) : this)
@@ -234,7 +234,7 @@ namespace Voxel2Pixel.Pack
 				X: point.Value.X - x,
 				Y: point.Value.Y - y))));
 		/// <returns>cropped copy</returns>
-		public Sprite TransparentCrop(byte threshold = 128) => new Sprite
+		public Sprite TransparentCrop(byte threshold = PixelDraw.DefaultTransparencyThreshold) => new Sprite
 		{
 			Texture = Texture.TransparentCrop(
 				cutLeft: out ushort cutLeft,
@@ -251,7 +251,7 @@ namespace Voxel2Pixel.Pack
 				X: point.Value.X - cutLeft,
 				Y: point.Value.Y - cutTop))));
 		/// <returns>cropped copy</returns>
-		public Sprite TransparentCropPlusOne(byte threshold = 128) => new Sprite
+		public Sprite TransparentCropPlusOne(byte threshold = PixelDraw.DefaultTransparencyThreshold) => new Sprite
 		{
 			Texture = Texture.TransparentCropPlusOne(
 				cutLeft: out int cutLeft,
@@ -267,16 +267,17 @@ namespace Voxel2Pixel.Pack
 			value: new Point(
 				X: point.Value.X - cutLeft,
 				Y: point.Value.Y - cutTop))));
-		public Sprite Outline(uint color = 0xFFu) => new Sprite
+		public Sprite Outline(uint color = PixelDraw.DefaultOutlineColor, byte threshold = PixelDraw.DefaultTransparencyThreshold) => new Sprite
 		{
 			Texture = Texture.Outline(
 				width: Width,
-				color: color),
+				color: color,
+				threshold: threshold),
 			Width = Width,
 			VoxelColor = VoxelColor,
 		}.AddRange(this);
 		/// <returns>cropped and outlined copy</returns>
-		public Sprite CropOutline(uint color = 0xFFu, byte threshold = 128) => new Sprite
+		public Sprite CropOutline(uint color = PixelDraw.DefaultOutlineColor, byte threshold = PixelDraw.DefaultTransparencyThreshold) => new Sprite
 		{
 			Texture = Texture
 				.TransparentCropPlusOne(
@@ -288,7 +289,8 @@ namespace Voxel2Pixel.Pack
 					threshold: threshold)
 				.Outline(
 					width: croppedWidth,
-					color: color),
+					color: color,
+					threshold: threshold),
 			Width = croppedWidth,
 			VoxelColor = VoxelColor,
 		}.AddRange(this.Select(point => new KeyValuePair<string, Point>(
@@ -317,8 +319,8 @@ namespace Voxel2Pixel.Pack
 			Texture = Texture.DrawInsert(x, y, insert, insertWidth, Width);
 			return this;
 		}
-		public Sprite DrawTransparentInsert(int x, int y, Sprite insert, byte threshold = 128) => DrawTransparentInsert(x, y, insert.Texture, insert.Width, threshold);
-		public Sprite DrawTransparentInsert(int x, int y, byte[] insert, ushort insertWidth = 0, byte threshold = 128)
+		public Sprite DrawTransparentInsert(int x, int y, Sprite insert, byte threshold = PixelDraw.DefaultTransparencyThreshold) => DrawTransparentInsert(x, y, insert.Texture, insert.Width, threshold);
+		public Sprite DrawTransparentInsert(int x, int y, byte[] insert, ushort insertWidth = 0, byte threshold = PixelDraw.DefaultTransparencyThreshold)
 		{
 			Texture = Texture.DrawTransparentInsert(x, y, insert, insertWidth, Width, threshold);
 			return this;
@@ -536,7 +538,7 @@ namespace Voxel2Pixel.Pack
 				.AddRange(points.Select(point => new KeyValuePair<string, Point>(point.Key, Point(point.Value))));
 		}
 		public static Sprite IsoOutlinedWithShadow(IModel model, IVoxelColor voxelColor, Point3D origin, uint shadow = DefaultShadowColor, uint outline = PixelDraw.DefaultOutlineColor) => IsoOutlinedWithShadow(model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, }, shadow, outline);
-		public static Sprite IsoOutlinedWithShadow(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null, uint shadow = DefaultShadowColor, uint outline = PixelDraw.DefaultOutlineColor)
+		public static Sprite IsoOutlinedWithShadow(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null, uint shadow = DefaultShadowColor, uint outline = PixelDraw.DefaultOutlineColor, byte threshold = PixelDraw.DefaultTransparencyThreshold)
 		{
 			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
 			Sprite sprite = new((ushort)((VoxelDraw.IsoWidth(model) << 1) + 2), (ushort)(VoxelDraw.IsoHeight(model) + 2))
@@ -567,7 +569,11 @@ namespace Voxel2Pixel.Pack
 				return new Point((p.X * 2) + 1, p.Y + 1);
 			}
 			return shadowSprite
-				.DrawTransparentInsert(0, 0, sprite.Outline(outline))
+				.DrawTransparentInsert(
+					x: 0,
+					y: 0,
+					insert: sprite.Outline(outline),
+					threshold: threshold)
 				.AddRange(points.Select(point => new KeyValuePair<string, Point>(point.Key, Point(point.Value))));
 		}
 		public static IEnumerable<Sprite> Iso8OutlinedWithShadows(IModel model, IVoxelColor voxelColor, Point3D origin, uint shadow = DefaultShadowColor, uint outline = PixelDraw.DefaultOutlineColor) => Iso8OutlinedWithShadows(model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, }, shadow, outline);
