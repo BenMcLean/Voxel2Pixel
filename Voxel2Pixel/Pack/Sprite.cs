@@ -477,6 +477,8 @@ namespace Voxel2Pixel.Pack
 					.Upscale(2);
 			}
 		}
+		public static IEnumerable<Sprite> Iso8Shadows(IModel model, Point3D origin, uint shadow = DefaultShadowColor) => Iso8Shadows(model, shadow, new Dictionary<string, Point3D> { { Origin, origin }, });
+		public static IEnumerable<Sprite> Iso8Shadows(IModel model, uint shadow = DefaultShadowColor, IEnumerable<KeyValuePair<string, Point3D>> points = null) => Iso8Shadows(model, new OneVoxelColor(shadow), points);
 		public static IEnumerable<Sprite> Iso8Shadows(IModel model, IVoxelColor voxelColor, Point3D origin) => Iso8Shadows(model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, });
 		public static IEnumerable<Sprite> Iso8Shadows(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null)
 		{
