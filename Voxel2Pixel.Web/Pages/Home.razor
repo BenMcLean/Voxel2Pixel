@@ -1,6 +1,7 @@
 ﻿@page "/"
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components.Web
+@using MudBlazor.Utilities
 @using SixLabors.ImageSharp
 @using SixLabors.ImageSharp.Formats.Png
 @using Voxel2Pixel
@@ -36,6 +37,18 @@
 		FlipY = false,
 		FlipZ = false,
 		Outline = false;
+	public ushort ScaleX = 2,
+		ScaleY = 1;
+	public MudColor OutlineMudColor = new MudColor(0, 0, 0, 255);
+	public uint OutlineColor
+	{
+		get => (uint)(OutlineMudColor.R << 24 | OutlineMudColor.G << 16 | OutlineMudColor.B << 8 | OutlineMudColor.A);
+		set => OutlineMudColor = new MudColor(
+			r: (byte)(value >> 24),
+			g: (byte)(value >> 16),
+			b: (byte)(value >> 8),
+			a: (byte)value);
+	}
 	#endregion Data
 	private async void LoadFile(IBrowserFile file)
 	{
@@ -59,13 +72,15 @@
 	{
 		if (VoxFileModel is VoxFileModel)
 			ImageString = new Sprite(
-					perspective: Model.Perspective.Iso,
+					perspective: Perspective,
 					model: VoxFileModel,
 					voxelColor: new NaiveDimmer(VoxFileModel.Palette),
 					cuboidOrientation: CuboidOrientation)
 				.Process(
-					scaleX: 2,
-					outline: true)
+					scaleX: ScaleX,
+					scaleY: ScaleY,
+					outline: Outline,
+					outlineColor: OutlineColor)
 				.Png()
 				.ToBase64String(PngFormat.Instance);
 	}
@@ -97,7 +112,7 @@ else
 	-->
 }
 <br />
-Perspective:
+<h3>Perspective:</h3>
 <MudSelect T="Perspective" @bind-Value="@Perspective" Class="flex-grow-0">
 	@foreach (Perspective perspective in Enum.GetValues(typeof(Perspective)))
 	{
@@ -105,7 +120,15 @@ Perspective:
 	}
 </MudSelect>
 <br />
-Orientation:
+<h3>Orientation:</h3>
+<MudCheckBox @bind-Value="@FlipX" Label="Flip X" />
+<MudCheckBox @bind-Value="@FlipY" Label="Flip Y" />
+<MudCheckBox @bind-Value="@FlipZ" Label="Flip Z" />
 <CuboidOrientationInput @bind-Value="@CuboidOrientation" />
 <br />
-<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" name="ParentReset" @onclick="@(e => CuboidOrientation = CuboidOrientation.SOUTH0)">Parent Reset</MudButton>
+<h3>Post-Processing:</h3>
+<MudCheckBox @bind-Value="@Outline" Label="Outline" />
+@if (Outline)
+{
+	<MudColorPicker @bind-Value="OutlineMudColor" Label="Outline Color" Placeholder="Select Color" Style="@($"color: {OutlineMudColor};")" />
+}
