@@ -28,6 +28,7 @@ namespace Voxel2Pixel
 		}
 		public static VisibleFace VisibleFace(this byte @byte) => (VisibleFace)(@byte & 192);
 		public static bool IsPeak(this Perspective perspective) => perspective == Perspective.FrontPeak || perspective == Perspective.DiagonalPeak;
+		public static bool HasShadow(this Perspective perspective) => perspective == Perspective.Above || perspective == Perspective.Iso;
 		public static byte Set(this IEditableModel model, Voxel voxel) => model[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
 		public static Point3D Center(this IModel model) => new(model.SizeX >> 1, model.SizeY >> 1, model.SizeZ >> 1);
 		public static Point3D BottomCenter(this IModel model) => new(model.SizeX >> 1, model.SizeY >> 1, 0);

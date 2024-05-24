@@ -23,6 +23,8 @@ namespace Voxel2Pixel.Draw
 		//TODO: DrawLine
 		//TODO: DrawCircle
 		//TODO: DrawEllipse
+		public const uint DefaultOutlineColor = 0xFFu;
+		public const byte DefaultTransparencyThreshold = 128;
 		#region Drawing
 		/// <summary>
 		/// Draws one pixel of the specified color
@@ -163,7 +165,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <param name="threshold">only draws pixel if alpha is higher than or equal to threshold</param>
 		/// <returns>same texture with insert drawn</returns>
-		public static byte[] DrawTransparentInsert(this byte[] texture, int x, int y, byte[] insert, ushort insertWidth = 0, ushort width = 0, byte threshold = 128)
+		public static byte[] DrawTransparentInsert(this byte[] texture, int x, int y, byte[] insert, ushort insertWidth = 0, ushort width = 0, byte threshold = DefaultTransparencyThreshold)
 		{
 			int insertX = 0, insertY = 0;
 			if (x < 0)
@@ -873,7 +875,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="width">width of source texture or 0 to assume square texture</param>
 		/// <param name="threshold">alpha channel lower than this will be evaluated as transparent</param>
 		/// <returns>cropped texture</returns>
-		public static byte[] TransparentCrop(this byte[] texture, out ushort cutLeft, out ushort cutTop, out ushort croppedWidth, out ushort croppedHeight, ushort width = 0, byte threshold = 128)
+		public static byte[] TransparentCrop(this byte[] texture, out ushort cutLeft, out ushort cutTop, out ushort croppedWidth, out ushort croppedHeight, ushort width = 0, byte threshold = DefaultTransparencyThreshold)
 		{
 			if (width < 1)
 				width = (ushort)Math.Sqrt(texture.Length >> 2);
@@ -892,7 +894,7 @@ namespace Voxel2Pixel.Draw
 				croppedHeight: croppedHeight,
 				width: width);
 		}
-		public static void TransparentCropInfo(this byte[] texture, out ushort cutLeft, out ushort cutTop, out ushort croppedWidth, out ushort croppedHeight, ushort width = 0, byte threshold = 128)
+		public static void TransparentCropInfo(this byte[] texture, out ushort cutLeft, out ushort cutTop, out ushort croppedWidth, out ushort croppedHeight, ushort width = 0, byte threshold = DefaultTransparencyThreshold)
 		{
 			if (width < 1)
 				width = (ushort)Math.Sqrt(texture.Length >> 2);
@@ -953,7 +955,7 @@ namespace Voxel2Pixel.Draw
 			}
 			croppedWidth = (ushort)(width - cutLeft - cutRight);
 		}
-		public static byte[] TransparentCropPlusOne(this byte[] texture, out int cutLeft, out int cutTop, out ushort croppedWidth, out ushort croppedHeight, ushort width = 0, byte threshold = 128)
+		public static byte[] TransparentCropPlusOne(this byte[] texture, out int cutLeft, out int cutTop, out ushort croppedWidth, out ushort croppedHeight, ushort width = 0, byte threshold = DefaultTransparencyThreshold)
 		{
 			if (width < 1)
 				width = (ushort)Math.Sqrt(texture.Length >> 2);
@@ -982,8 +984,8 @@ namespace Voxel2Pixel.Draw
 					insertWidth: (ushort)(croppedWidth - 2),
 					width: croppedWidth);
 		}
-		public static byte[] TransparentOutline(byte[] texture, ushort width = 0, byte threshold = 128) => UInt2ByteArray(TransparentOutline(Byte2UIntArray(texture), width, threshold));
-		public static uint[] TransparentOutline(uint[] texture, ushort width = 0, byte threshold = 128)
+		public static byte[] TransparentOutline(byte[] texture, ushort width = 0, byte threshold = DefaultTransparencyThreshold) => UInt2ByteArray(TransparentOutline(Byte2UIntArray(texture), width, threshold));
+		public static uint[] TransparentOutline(uint[] texture, ushort width = 0, byte threshold = DefaultTransparencyThreshold)
 		{
 			if (width < 1)
 				width = (ushort)Math.Sqrt(texture.Length >> 2);
@@ -1053,7 +1055,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="width">width of source texture or 0 to assume square texture</param>
 		/// <param name="threshold">alpha channel lower than this will be evaluated as transparent</param>
 		/// <returns>true if making a new texture was necessary</returns>
-		public static bool NeedsTransparentBorder(byte[] texture, out byte[] result, out ushort addLeft, out ushort addTop, out ushort resultWidth, out ushort resultHeight, ushort width = 0, byte threshold = 128)
+		public static bool NeedsTransparentBorder(byte[] texture, out byte[] result, out ushort addLeft, out ushort addTop, out ushort resultWidth, out ushort resultHeight, ushort width = 0, byte threshold = DefaultTransparencyThreshold)
 		{
 			addLeft = 0;
 			addTop = 0;
@@ -1105,7 +1107,7 @@ namespace Voxel2Pixel.Draw
 					width: resultWidth);
 			return true;
 		}
-		public static byte[] Outline(this byte[] texture, ushort width = 0, uint color = 0xFFu, byte threshold = 128)
+		public static byte[] Outline(this byte[] texture, ushort width = 0, uint color = DefaultOutlineColor, byte threshold = DefaultTransparencyThreshold)
 		{
 			if (width < 1)
 				width = (ushort)Math.Sqrt(texture.Length >> 2);
@@ -1125,62 +1127,6 @@ namespace Voxel2Pixel.Draw
 								length: 4),
 							value: color);
 			return result;
-		}
-		public static byte[] CropSprite(this byte[] sprite, ushort width, out ushort newWidth, out ushort[] newOrigin, params ushort[] origin)
-		{
-			byte[] result = TransparentCrop(
-				texture: sprite,
-				cutLeft: out ushort cutLeft,
-				cutTop: out ushort cutTop,
-				croppedWidth: out newWidth,
-				croppedHeight: out _,
-				width: width);
-			newOrigin = [(ushort)(origin[0] - cutLeft), (ushort)(origin[1] - cutTop)];
-			return result;
-		}
-		public static byte[][] CropSprites(this byte[][] sprites, ushort[] widths, ushort[][] pixelOrigins, out ushort[] newWidths, out ushort[][] newPixelOrigins)
-		{
-			byte[][] newSprites = new byte[sprites.Length][];
-			newWidths = new ushort[widths.Length];
-			newPixelOrigins = new ushort[pixelOrigins.Length][];
-			for (int i = 0; i < sprites.Length; i++)
-			{
-				newSprites[i] = sprites[i].CropSprite(
-					width: widths[i],
-					newWidth: out newWidths[i],
-					newOrigin: out newPixelOrigins[i],
-					origin: pixelOrigins[i]);
-			}
-			return newSprites;
-		}
-		public static byte[] CropOutlineSprite(this byte[] sprite, ushort width, out ushort newWidth, out ushort[] newOrigin, params ushort[] origin)
-		{
-			byte[] result = TransparentCropPlusOne(
-				texture: sprite,
-				cutLeft: out int cutLeft,
-				cutTop: out int cutTop,
-				croppedWidth: out ushort croppedWidth,
-				croppedHeight: out _,
-				width: width)
-				.Outline(croppedWidth);
-			newWidth = croppedWidth;
-			newOrigin = [(ushort)(origin[0] - cutLeft), (ushort)(origin[1] - cutTop)];
-			return result;
-		}
-		public static byte[][] CropOutlineSprites(this byte[][] sprites, ushort[] widths, ushort[][] pixelOrigins, out ushort[] newWidths, out ushort[][] newPixelOrigins)
-		{
-			byte[][] newSprites = new byte[sprites.Length][];
-			newWidths = new ushort[widths.Length];
-			newPixelOrigins = new ushort[pixelOrigins.Length][];
-			for (int i = 0; i < sprites.Length; i++)
-			{
-				newSprites[i] = sprites[i].CropOutlineSprite(
-					width: widths[i],
-					newWidth: out newWidths[i],
-					newOrigin: out newPixelOrigins[i],
-					origin: pixelOrigins[i]);
-			}
-			return newSprites;
 		}
 		/// <summary>
 		/// Makes a new texture and copies the old texture to its upper left corner
