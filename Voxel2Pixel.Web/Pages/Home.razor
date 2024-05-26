@@ -109,24 +109,34 @@
 		</MudSelect>
 		@if (Perspective.IsPeak())
 		{
-			<MudNumericField T="byte" @bind-Value="PeakScaleX" Label="Peak Scale X" Variant="Variant.Text" Min="1" Max="255" />
-			<MudNumericField T="byte" @bind-Value="PeakScaleY" Label="Peak Scale Y" Variant="Variant.Text" Min="1" Max="255" />
+			<MudElement Class="d-inline-flex">
+				<MudNumericField T="byte" @bind-Value="PeakScaleX" Label="Peak Scale X" Variant="Variant.Text" Min="1" Max="255" />
+				<MudNumericField T="byte" @bind-Value="PeakScaleY" Label="Peak Scale Y" Variant="Variant.Text" Min="1" Max="255" />
+			</MudElement>
 		}
 	</MudTabPanel>
 	<MudTabPanel Text="Orientation">
-		<MudCheckBox @bind-Value="@FlipX" Label="Flip X" />
-		<MudCheckBox @bind-Value="@FlipY" Label="Flip Y" />
-		<MudCheckBox @bind-Value="@FlipZ" Label="Flip Z" />
+		<MudElement Class="d-inline-flex">
+			<MudCheckBox @bind-Value="@FlipX" Label="Flip X" />
+			<MudCheckBox @bind-Value="@FlipY" Label="Flip Y" />
+			<MudCheckBox @bind-Value="@FlipZ" Label="Flip Z" />
+		</MudElement>
+		<br />
 		<CuboidOrientationInput @bind-Value="@CuboidOrientation" />
 	</MudTabPanel>
 	<MudTabPanel Text="Post-Processing">
-		<MudNumericField T="ushort" @bind-Value="ScaleX" Label="Scale X" Variant="Variant.Text" Min="1" />
-		<MudNumericField T="ushort" @bind-Value="ScaleY" Label="Scale Y" Variant="Variant.Text" Min="1" />
-		<MudCheckBox @bind-Value="@Outline" Label="Outline" />
-		@if (Outline)
-		{
-			<MudColorPicker @bind-Value="OutlineMudColor" Label="Outline Color" Placeholder="Select Color" Style="@($"color: {OutlineMudColor};")" />
-		}
+		<MudElement Class="d-inline-flex">
+			<MudNumericField T="ushort" @bind-Value="ScaleX" Label="Scale X" Variant="Variant.Text" Min="1" />
+			<MudNumericField T="ushort" @bind-Value="ScaleY" Label="Scale Y" Variant="Variant.Text" Min="1" />
+		</MudElement>
+		<br />
+		<MudElement Class="d-inline-flex">
+			<MudCheckBox @bind-Value="@Outline" Label="Outline" />
+			@if (Outline)
+			{
+				<MudColorPicker @bind-Value="OutlineMudColor" Label="Outline Color" Placeholder="Select Color" Style="@($"color: {OutlineMudColor};")" />
+			}
+		</MudElement>
 	</MudTabPanel>
 	<MudTabPanel Text="Export" Disabled="VoxFileModel is null">
 		<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" name="Generate" @onclick="Preview">Generate Single Image</MudButton>
