@@ -24,7 +24,7 @@ namespace Voxel2Pixel.Draw
 		//TODO: DrawCircle
 		//TODO: DrawEllipse
 		public const uint DefaultOutlineColor = 0xFFu;
-		public const byte DefaultTransparencyThreshold = 128;
+		public const byte DefaultTransparencyThreshold = 127;
 		#region Drawing
 		/// <summary>
 		/// Draws one pixel of the specified color
