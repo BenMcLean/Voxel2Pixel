@@ -6,7 +6,7 @@
 	public EventCallback<CuboidOrientation> ValueChanged { get; set; }
 	public void Turn(params Turn[] turns) => ValueChanged.InvokeAsync((CuboidOrientation)Value.Turn(turns));
 }
-<MudElement Class="d-inline-flex">
+<MudElement Class="d-inline-flex flex-wrap gap-2">
 	<MudSelect T="CuboidOrientation" Value="@Value" ValueChanged="@(value => ValueChanged.InvokeAsync(value))" Label="Orientation" Class="flex-grow-0">
 		@foreach (CuboidOrientation cuboidOrientation in CuboidOrientation.Values)
 		{
