@@ -42,7 +42,7 @@ namespace Voxel2Pixel.Pack
 				this[point.Key] = point.Value;
 			return this;
 		}
-		public Sprite ReplaceSelf(Sprite sprite)
+		protected Sprite ReplaceSelf(Sprite sprite)
 		{
 			Texture = sprite.Texture;
 			Width = sprite.Width;
@@ -481,6 +481,10 @@ namespace Voxel2Pixel.Pack
 			byte threshold = PixelDraw.DefaultTransparencyThreshold,
 			Turn turn = Turn.CounterZ)
 		{
+			if (peakScaleX < 2) throw new ArgumentOutOfRangeException("peakScaleX");
+			if (peakScaleY < 1) throw new ArgumentOutOfRangeException("peakScaleY");
+			if (scaleX < 1) throw new ArgumentOutOfRangeException("scaleX");
+			if (scaleY < 1) throw new ArgumentOutOfRangeException("scaleY");
 			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
 			if (flipX || flipY || flipZ)
 				model = new FlipModel
@@ -514,37 +518,65 @@ namespace Voxel2Pixel.Pack
 				turnModel.Turn(turn);
 			}
 		}
-		public static IEnumerable<Sprite> Iso8(IModel model, IVoxelColor voxelColor, Point3D origin, bool shadow = false, uint shadowColor = DefaultShadowColor, byte threshold = PixelDraw.DefaultTransparencyThreshold) => Iso8(model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, }, shadow, shadowColor, threshold);
-		public static IEnumerable<Sprite> Iso8(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null, bool shadow = false, uint shadowColor = DefaultShadowColor, byte threshold = PixelDraw.DefaultTransparencyThreshold)
+		public static IEnumerable<Sprite> Iso8(
+			IModel model,
+			IVoxelColor voxelColor,
+			IVoxelColor shadowColor,
+			IEnumerable<KeyValuePair<string, Point3D>> points = null,
+			bool flipX = false,
+			bool flipY = false,
+			bool flipZ = false,
+			CuboidOrientation cuboidOrientation = null,
+			ushort scaleX = 1,
+			ushort scaleY = 1,
+			bool shadow = false,
+			bool outline = false,
+			uint outlineColor = PixelDraw.DefaultOutlineColor,
+			byte threshold = PixelDraw.DefaultTransparencyThreshold)
 		{
+			if (scaleX < 1) throw new ArgumentOutOfRangeException("scaleX");
+			if (scaleY < 1) throw new ArgumentOutOfRangeException("scaleY");
 			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
+			if (flipX || flipY || flipZ)
+				model = new FlipModel
+				{
+					Model = model,
+					FlipX = flipX,
+					FlipY = flipY,
+					FlipZ = flipZ,
+				};
 			TurnModel turnModel = new()
 			{
 				Model = model,
+				CuboidOrientation = cuboidOrientation ?? CuboidOrientation.SOUTH0,
 			};
 			for (byte angle = 0; angle < 4; angle++)
 			{
 				yield return new Sprite(
-						perspective: Perspective.Above,
-						model: turnModel,
-						voxelColor: voxelColor,
-						points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))),
-						shadow: shadow,
-						shadowColor: shadowColor,
-						threshold: threshold)
-					.TransparentCrop(threshold)
-					.Upscale(5, 4);
+					model: turnModel,
+					voxelColor: voxelColor,
+					shadowColor: shadowColor,
+					points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))),
+					perspective: Perspective.Above,
+					scaleX: (ushort)(5 * scaleX),
+					scaleY: (ushort)(scaleY << 2),
+					shadow: shadow,
+					outline: outline,
+					outlineColor: outlineColor,
+					threshold: threshold);
 				turnModel.Turn(Turn.CounterZ);
 				yield return new Sprite(
-						perspective: Perspective.Iso,
-						model: turnModel,
-						voxelColor: voxelColor,
-						points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))),
-						shadow: shadow,
-						shadowColor: shadowColor,
-						threshold: threshold)
-					.TransparentCrop(threshold)
-					.Upscale(2);
+					model: turnModel,
+					voxelColor: voxelColor,
+					shadowColor: shadowColor,
+					points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))),
+					perspective: Perspective.Iso,
+					scaleX: (ushort)(scaleX << 1),
+					scaleY: scaleY,
+					shadow: shadow,
+					outline: outline,
+					outlineColor: outlineColor,
+					threshold: threshold);
 			}
 		}
 		#endregion Voxel drawing
