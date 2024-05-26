@@ -366,7 +366,11 @@ namespace Voxel2Pixel.Pack
 			bool flipY = false,
 			bool flipZ = false,
 			CuboidOrientation cuboidOrientation = null,
+			ushort scaleX = 1,
+			ushort scaleY = 1,
 			bool shadow = false,
+			bool outline = false,
+			uint outlineColor = PixelDraw.DefaultOutlineColor,
 			byte threshold = PixelDraw.DefaultTransparencyThreshold)
 		{
 			if (flipX || flipY || flipZ)
@@ -384,18 +388,25 @@ namespace Voxel2Pixel.Pack
 					Model = model,
 					CuboidOrientation = cuboidOrientation,
 				};
-			ReplaceSelf(new Sprite(
-				width: VoxelDraw.Width(perspective, model, peakScaleX),
-				height: VoxelDraw.Height(perspective, model, peakScaleY))
-			{
-				VoxelColor = voxelColor,
-			});
+			Width = (ushort)(VoxelDraw.Width(perspective, model, peakScaleX) * scaleX + (outline ? 2 : 0));
+			ushort height = (ushort)(VoxelDraw.Height(perspective, model, peakScaleY) * scaleY + (outline ? 2 : 0));
+			Texture = new byte[Width * height << 2];
+			VoxelColor = voxelColor;
 			VoxelDraw.Draw(
 				perspective: perspective,
 				model: model,
-				renderer: this,
+				renderer: new OffsetRenderer
+				{
+					RectangleRenderer = this,
+					OffsetX = outline ? 1 : 0,
+					OffsetY = outline ? 1 : 0,
+					ScaleX = scaleX,
+					ScaleY = scaleY,
+				},
 				peakScaleX: peakScaleX,
 				peakScaleY: peakScaleY);
+			if (outline)
+				Outline(outlineColor, threshold);
 			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
 			if (shadow && perspective.HasShadow())
 			{
@@ -413,8 +424,8 @@ namespace Voxel2Pixel.Pack
 					renderer: new OffsetRenderer
 					{
 						RectangleRenderer = this,
-						OffsetX = VoxelDraw.Width(perspective, model) - VoxelDraw.Width(shadowPerspective, model),
-						OffsetY = VoxelDraw.Height(perspective, model) - VoxelDraw.Height(shadowPerspective, model),
+						OffsetX = (VoxelDraw.Width(perspective, model) - VoxelDraw.Width(shadowPerspective, model)) * scaleX + (outline ? 1 : 0),
+						OffsetY = (VoxelDraw.Height(perspective, model) - VoxelDraw.Height(shadowPerspective, model)) * scaleY + (outline ? 1 : 0),
 					});
 				VoxelColor = voxelColor;
 				DrawTransparentInsert(
@@ -429,6 +440,7 @@ namespace Voxel2Pixel.Pack
 				point: point.Value,
 				peakScaleX: peakScaleX,
 				peakScaleY: peakScaleY))));
+			TransparentCrop(threshold);
 		}
 		public static IEnumerable<Sprite> Z4(Perspective perspective, IModel model, IVoxelColor voxelColor, Point3D origin) => Z4(perspective, model, voxelColor, new Dictionary<string, Point3D> { { Origin, origin }, });
 		public static IEnumerable<Sprite> Z4(Perspective perspective, IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null)
