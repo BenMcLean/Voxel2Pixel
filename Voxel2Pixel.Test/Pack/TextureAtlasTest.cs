@@ -1,7 +1,4 @@
 ﻿using SixLabors.ImageSharp;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
@@ -9,7 +6,6 @@ using Voxel2Pixel.Color;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Pack;
-using Xunit;
 using static Voxel2Pixel.Pack.TextureAtlas;
 using static Voxel2Pixel.Web.ImageMaker;
 
@@ -111,12 +107,10 @@ namespace Voxel2Pixel.Test.Pack
 			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
 			Dictionary<string, ISprite> dictionary = [];
 			byte direction = 0;
-			foreach (ISprite iSprite in Sprite.Iso8(model, voxelColor)
-				.Select(sprite => sprite.CropOutline()))
+			foreach (ISprite iSprite in Sprite.Iso8(model, voxelColor, outline: true))
 				dictionary.Add("Sora" + direction++, iSprite);
 			direction = 0;
-			foreach (ISprite iSprite in Sprite.Iso8Shadows(model, new OneVoxelColor(0x88u))
-				.Select(sprite => sprite.TransparentCrop()))
+			foreach (ISprite iSprite in Sprite.Iso8Shadows(model, 0x88u))
 				dictionary.Add("SoraShadow" + direction++, iSprite);
 			Sprite atlas = new(dictionary, out TextureAtlas textureAtlas);
 			textureAtlas.ImagePath = "TextureAtlas.png";
