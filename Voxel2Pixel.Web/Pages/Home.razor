@@ -6,6 +6,7 @@
 @using SixLabors.ImageSharp.Formats.Png
 @using Voxel2Pixel
 @using Voxel2Pixel.Color
+@using Voxel2Pixel.Draw
 @using Voxel2Pixel.Interfaces
 @using Voxel2Pixel.Model
 @using Voxel2Pixel.Pack
@@ -25,22 +26,31 @@
 	public bool FlipX = false,
 		FlipY = false,
 		FlipZ = false,
-		Outline = false;
+		Outline = false,
+		Shadow = false;
 	public byte PeakScaleX = 6,
 		PeakScaleY = 6;
 	public ushort ScaleX = 2,
 		ScaleY = 1;
-	public MudColor OutlineMudColor = new MudColor(0, 0, 0, 255);
+	public MudColor OutlineMudColor = MudColor(PixelDraw.DefaultOutlineColor);
 	public uint OutlineColor
 	{
-		get => (uint)(OutlineMudColor.R << 24 | OutlineMudColor.G << 16 | OutlineMudColor.B << 8 | OutlineMudColor.A);
-		set => OutlineMudColor = new MudColor(
-			r: (byte)(value >> 24),
-			g: (byte)(value >> 16),
-			b: (byte)(value >> 8),
-			a: (byte)value);
+		get => Color(OutlineMudColor);
+		set => OutlineMudColor = MudColor(value);
+	}
+	public MudColor ShadowMudColor = MudColor(Sprite.DefaultShadowColor);
+	public uint ShadowColor
+	{
+		get => Color(ShadowMudColor);
+		set => ShadowMudColor = MudColor(value);
 	}
 	#endregion Data
+	public static uint Color(MudColor color) => (uint)(color.R << 24 | color.G << 16 | color.B << 8 | color.A);
+	public static MudColor MudColor(uint rgba) => new MudColor(
+		r: (byte)(rgba >> 24),
+		g: (byte)(rgba >> 16),
+		b: (byte)(rgba >> 8),
+		a: (byte)rgba);
 	private async void LoadFile(IBrowserFile file)
 	{
 		IsLoading = true;
@@ -63,20 +73,21 @@
 	{
 		if (VoxFileModel is VoxFileModel)
 			ImageString = new Sprite(
-					perspective: Perspective,
 					model: VoxFileModel,
 					voxelColor: new NaiveDimmer(VoxFileModel.Palette),
+					perspective: Perspective,
 					peakScaleX: PeakScaleX,
 					peakScaleY: PeakScaleY,
 					flipX: FlipX,
 					flipY: FlipY,
 					flipZ: FlipZ,
-					cuboidOrientation: CuboidOrientation)
-				.Process(
+					cuboidOrientation: CuboidOrientation,
 					scaleX: ScaleX,
 					scaleY: ScaleY,
 					outline: Outline,
-					outlineColor: OutlineColor)
+					outlineColor: OutlineColor,
+					shadow: Shadow,
+					shadowColor: ShadowColor)
 				.Png()
 				.ToBase64String(PngFormat.Instance);
 	}
@@ -134,7 +145,15 @@
 			<MudCheckBox @bind-Value="@Outline" Label="Outline" />
 			@if (Outline)
 			{
-				<MudColorPicker @bind-Value="OutlineMudColor" Label="Outline Color" Placeholder="Select Color" Style="@($"color: {OutlineMudColor};")" />
+				<MudColorPicker @bind-Value="OutlineMudColor" Label="Outline Color" Style="@($"color: {OutlineMudColor};")" />
+			}
+		</MudElement>
+		<br />
+		<MudElement Class="d-inline-flex flex-wrap gap-2">
+			<MudCheckBox @bind-Value="@Shadow" Label="Shadow" />
+			@if (Shadow)
+			{
+				<MudColorPicker @bind-Value="ShadowMudColor" Label="Shadow Color" Style="@($"color: {ShadowMudColor};")" />
 			}
 		</MudElement>
 	</MudTabPanel>
