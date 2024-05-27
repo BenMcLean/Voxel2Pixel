@@ -582,6 +582,67 @@ namespace Voxel2Pixel.Pack
 					threshold: threshold);
 			}
 		}
+		public static IEnumerable<Sprite> Iso8Shadows(IModel model, IVoxelColor voxelColor, IVoxelColor shadowColor, Point3D origin, bool flipX = false, bool flipY = false, bool flipZ = false, CuboidOrientation cuboidOrientation = null, ushort scaleX = 1, ushort scaleY = 1, bool shadow = false, bool outline = false, uint outlineColor = PixelDraw.DefaultOutlineColor) => Iso8Shadows(model: model, voxelColor: voxelColor, shadowColor: shadowColor, points: new Dictionary<string, Point3D> { { Origin, origin }, }, flipX: flipX, flipY: flipY, flipZ: flipZ, cuboidOrientation: cuboidOrientation, scaleX: scaleX, scaleY: scaleY, shadow: shadow, outline: outline, outlineColor: outlineColor);
+		public static IEnumerable<Sprite> Iso8Shadows(IModel model, IVoxelColor voxelColor, Point3D voxelOrigin, bool flipX = false, bool flipY = false, bool flipZ = false, CuboidOrientation cuboidOrientation = null, ushort scaleX = 1, ushort scaleY = 1, bool shadow = false, uint shadowColor = DefaultShadowColor, bool outline = false, uint outlineColor = PixelDraw.DefaultOutlineColor) => Iso8Shadows(model: model, voxelColor: voxelColor, points: new Dictionary<string, Point3D> { { Origin, voxelOrigin }, }, flipX: flipX, flipY: flipY, flipZ: flipZ, cuboidOrientation: cuboidOrientation, scaleX: scaleX, scaleY: scaleY, shadow: shadow, shadowColor: shadowColor, outline: outline, outlineColor: outlineColor);
+		public static IEnumerable<Sprite> Iso8Shadows(IModel model, IVoxelColor voxelColor, IEnumerable<KeyValuePair<string, Point3D>> points = null, bool flipX = false, bool flipY = false, bool flipZ = false, CuboidOrientation cuboidOrientation = null, ushort scaleX = 1, ushort scaleY = 1, bool shadow = false, uint shadowColor = DefaultShadowColor, bool outline = false, uint outlineColor = PixelDraw.DefaultOutlineColor) => Iso8Shadows(model: model, voxelColor: voxelColor, shadowColor: new OneVoxelColor(shadowColor), points: points, flipX: flipX, flipY: flipY, flipZ: flipZ, cuboidOrientation: cuboidOrientation, scaleX: scaleX, scaleY: scaleY, shadow: shadow, outline: outline, outlineColor: outlineColor);
+		public static IEnumerable<Sprite> Iso8Shadows(
+			IModel model,
+			IVoxelColor voxelColor,
+			IVoxelColor shadowColor,
+			IEnumerable<KeyValuePair<string, Point3D>> points = null,
+			bool flipX = false,
+			bool flipY = false,
+			bool flipZ = false,
+			CuboidOrientation cuboidOrientation = null,
+			ushort scaleX = 1,
+			ushort scaleY = 1,
+			bool shadow = false,
+			bool outline = false,
+			uint outlineColor = PixelDraw.DefaultOutlineColor)
+		{
+			if (scaleX < 1) throw new ArgumentOutOfRangeException("scaleX");
+			if (scaleY < 1) throw new ArgumentOutOfRangeException("scaleY");
+			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
+			if (flipX || flipY || flipZ)
+				model = new FlipModel
+				{
+					Model = model,
+					FlipX = flipX,
+					FlipY = flipY,
+					FlipZ = flipZ,
+				};
+			TurnModel turnModel = new()
+			{
+				Model = model,
+				CuboidOrientation = cuboidOrientation ?? CuboidOrientation.SOUTH0,
+			};
+			for (byte angle = 0; angle < 4; angle++)
+			{
+				yield return new Sprite(
+					model: turnModel,
+					voxelColor: voxelColor,
+					shadowColor: shadowColor,
+					points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))),
+					perspective: Perspective.Underneath,
+					scaleX: (ushort)(5 * scaleX),
+					scaleY: (ushort)(scaleY << 2),
+					shadow: shadow,
+					outline: outline,
+					outlineColor: outlineColor);
+				turnModel.Turn(Turn.CounterZ);
+				yield return new Sprite(
+					model: turnModel,
+					voxelColor: voxelColor,
+					shadowColor: shadowColor,
+					points: points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))),
+					perspective: Perspective.IsoShadow,
+					scaleX: (ushort)(scaleX << 1),
+					scaleY: scaleY,
+					shadow: shadow,
+					outline: outline,
+					outlineColor: outlineColor);
+			}
+		}
 		#endregion Voxel drawing
 	}
 }
