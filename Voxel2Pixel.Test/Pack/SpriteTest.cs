@@ -17,7 +17,7 @@ namespace Voxel2Pixel.Test.Pack
 					model: model,
 					voxelColor: new NaiveDimmer(model.Palette),
 					outline: true)
-				.Select(sprite => sprite.TransparentCrop())
+				.Select(sprite => sprite.Crop2Content())
 				.SameSize()
 				.AddFrameNumbers()
 				.Select(sprite => sprite.Upscale(8, 8))
@@ -33,7 +33,7 @@ namespace Voxel2Pixel.Test.Pack
 					voxelColor: new NaiveDimmer(model.Palette),
 					shadow: true,
 					outline: true)
-				.Select(sprite => sprite.TransparentCrop())
+				.Select(sprite => sprite.Crop2Content())
 				.SameSize()
 				.AddFrameNumbers()
 				.Select(sprite => sprite.Upscale(8, 8))
@@ -48,7 +48,7 @@ namespace Voxel2Pixel.Test.Pack
 			new Sprite(
 					model: voxFileModel,
 					voxelColor: new NaiveDimmer(voxFileModel.Palette))
-				.TransparentCrop()
+				.Crop2Content()
 				.Png()
 				.SaveAsPng("Tree.png");
 		}
@@ -60,25 +60,25 @@ namespace Voxel2Pixel.Test.Pack
 			new Sprite(
 					model: new ArrayModel(bytes),
 					voxelColor: new NaiveDimmer(TestData.RainbowPalette))
-				.TransparentCrop()
+				.Crop2Content()
 				.Png()
 				.SaveAsPng("Arch.png");
 		}
 		[Fact]
-		public void TransparentCropInfo()
+		public void Crop2ContentInfo()
 		{
 			byte[][][] bytes = TestData.Arch(46);
 			bytes[1][0][0] = 1;
 			Sprite sprite = new(
 					model: new ArrayModel(bytes),
 					voxelColor: new NaiveDimmer(TestData.RainbowPalette));
-			sprite.Texture.TransparentCropInfo(
+			sprite.Texture.Crop2ContentInfo(
 				cutLeft: out ushort cutLeft,
 				cutTop: out ushort cutTop,
 				croppedWidth: out ushort croppedWidth,
 				croppedHeight: out ushort croppedHeight,
 				width: sprite.Width);
-			TransparentCropInfo2(
+			Crop2ContentInfo2(
 				texture: sprite.Texture,
 				cutLeft: out ushort cutLeft2,
 				cutTop: out ushort cutTop2,
@@ -90,7 +90,7 @@ namespace Voxel2Pixel.Test.Pack
 			Assert.Equal(croppedWidth, croppedWidth2);
 			Assert.Equal(croppedHeight, croppedHeight2);
 		}
-		protected static void TransparentCropInfo2(byte[] texture, out ushort cutLeft, out ushort cutTop, out ushort croppedWidth, out ushort croppedHeight, ushort width = 0, byte threshold = PixelDraw.DefaultTransparencyThreshold)
+		protected static void Crop2ContentInfo2(byte[] texture, out ushort cutLeft, out ushort cutTop, out ushort croppedWidth, out ushort croppedHeight, ushort width = 0, byte threshold = PixelDraw.DefaultTransparencyThreshold)
 		{
 			if (width < 1)
 				width = (ushort)Math.Sqrt(texture.Length >> 2);

@@ -875,11 +875,11 @@ namespace Voxel2Pixel.Draw
 		/// <param name="width">width of source texture or 0 to assume square texture</param>
 		/// <param name="threshold">alpha channel lower than this will be evaluated as transparent</param>
 		/// <returns>cropped texture</returns>
-		public static byte[] TransparentCrop(this byte[] texture, out ushort cutLeft, out ushort cutTop, out ushort croppedWidth, out ushort croppedHeight, ushort width = 0, byte threshold = DefaultTransparencyThreshold)
+		public static byte[] Crop2Content(this byte[] texture, out ushort cutLeft, out ushort cutTop, out ushort croppedWidth, out ushort croppedHeight, ushort width = 0, byte threshold = DefaultTransparencyThreshold)
 		{
 			if (width < 1)
 				width = (ushort)Math.Sqrt(texture.Length >> 2);
-			TransparentCropInfo(
+			Crop2ContentInfo(
 				texture: texture,
 				cutLeft: out cutLeft,
 				cutTop: out cutTop,
@@ -894,7 +894,7 @@ namespace Voxel2Pixel.Draw
 				croppedHeight: croppedHeight,
 				width: width);
 		}
-		public static void TransparentCropInfo(this byte[] texture, out ushort cutLeft, out ushort cutTop, out ushort croppedWidth, out ushort croppedHeight, ushort width = 0, byte threshold = DefaultTransparencyThreshold)
+		public static void Crop2ContentInfo(this byte[] texture, out ushort cutLeft, out ushort cutTop, out ushort croppedWidth, out ushort croppedHeight, ushort width = 0, byte threshold = DefaultTransparencyThreshold)
 		{
 			if (width < 1)
 				width = (ushort)Math.Sqrt(texture.Length >> 2);
@@ -922,11 +922,11 @@ namespace Voxel2Pixel.Draw
 			}
 			croppedWidth = (ushort)(cutRight - cutLeft + 1);
 		}
-		public static byte[] TransparentCropPlusOne(this byte[] texture, out int cutLeft, out int cutTop, out ushort croppedWidth, out ushort croppedHeight, ushort width = 0, byte threshold = DefaultTransparencyThreshold)
+		public static byte[] Crop2ContentPlus1(this byte[] texture, out int cutLeft, out int cutTop, out ushort croppedWidth, out ushort croppedHeight, ushort width = 0, byte threshold = DefaultTransparencyThreshold)
 		{
 			if (width < 1)
 				width = (ushort)Math.Sqrt(texture.Length >> 2);
-			TransparentCropInfo(
+			Crop2ContentInfo(
 				texture: texture,
 				cutLeft: out ushort cutLeftShort,
 				cutTop: out ushort cutTopShort,

@@ -199,7 +199,7 @@ namespace Voxel2Pixel.Pack
 			if (outline)
 				return (scaleX > 1 || scaleY > 1 ? Upscale(scaleX, scaleY) : this)
 					.CropOutline(outlineColor, threshold);
-			Sprite sprite = TransparentCrop(threshold);
+			Sprite sprite = Crop2Content(threshold);
 			return scaleX > 1 || scaleY > 1 ?
 				sprite.Upscale(scaleX, scaleY)
 				: sprite;
@@ -236,9 +236,9 @@ namespace Voxel2Pixel.Pack
 				X: point.Value.X - x,
 				Y: point.Value.Y - y))));
 		/// <returns>cropped copy</returns>
-		public Sprite TransparentCrop(byte threshold = PixelDraw.DefaultTransparencyThreshold) => new Sprite
+		public Sprite Crop2Content(byte threshold = PixelDraw.DefaultTransparencyThreshold) => new Sprite
 		{
-			Texture = Texture.TransparentCrop(
+			Texture = Texture.Crop2Content(
 				cutLeft: out ushort cutLeft,
 				cutTop: out ushort cutTop,
 				croppedWidth: out ushort croppedWidth,
@@ -253,9 +253,9 @@ namespace Voxel2Pixel.Pack
 				X: point.Value.X - cutLeft,
 				Y: point.Value.Y - cutTop))));
 		/// <returns>cropped copy</returns>
-		public Sprite TransparentCropPlusOne(byte threshold = PixelDraw.DefaultTransparencyThreshold) => new Sprite
+		public Sprite Crop2ContentPlus1(byte threshold = PixelDraw.DefaultTransparencyThreshold) => new Sprite
 		{
-			Texture = Texture.TransparentCropPlusOne(
+			Texture = Texture.Crop2ContentPlus1(
 				cutLeft: out int cutLeft,
 				cutTop: out int cutTop,
 				croppedWidth: out ushort croppedWidth,
@@ -282,7 +282,7 @@ namespace Voxel2Pixel.Pack
 		public Sprite CropOutline(uint color = PixelDraw.DefaultOutlineColor, byte threshold = PixelDraw.DefaultTransparencyThreshold) => new Sprite
 		{
 			Texture = Texture
-				.TransparentCropPlusOne(
+				.Crop2ContentPlus1(
 					cutLeft: out int cutLeft,
 					cutTop: out int cutTop,
 					croppedWidth: out ushort croppedWidth,
@@ -456,7 +456,7 @@ namespace Voxel2Pixel.Pack
 					Y: point.Y * scaleY + (outline ? 1 : 0));
 			}
 			AddRange(points.Select(point => new KeyValuePair<string, Point>(point.Key, Point(point.Value))));
-			ReplaceSelf(TransparentCrop(threshold));
+			ReplaceSelf(Crop2Content(threshold));
 		}
 		public static IEnumerable<Sprite> Z4(IModel model, IVoxelColor voxelColor, IVoxelColor shadowColor, Point3D origin, Perspective perspective = Perspective.Iso, byte peakScaleX = 6, byte peakScaleY = 6, bool flipX = false, bool flipY = false, bool flipZ = false, CuboidOrientation cuboidOrientation = null, ushort scaleX = 1, ushort scaleY = 1, bool shadow = false, bool outline = false, uint outlineColor = PixelDraw.DefaultOutlineColor, byte threshold = PixelDraw.DefaultTransparencyThreshold, Turn turn = Turn.CounterZ) => Z4(model: model, voxelColor: voxelColor, shadowColor: shadowColor, perspective: perspective, points: new Dictionary<string, Point3D> { { Origin, origin }, }, peakScaleX: peakScaleX, peakScaleY: peakScaleY, flipX: flipX, flipY: flipY, flipZ: flipZ, cuboidOrientation: cuboidOrientation, scaleX: scaleX, scaleY: scaleY, shadow: shadow, outline: outline, outlineColor: outlineColor, threshold: threshold, turn: turn);
 		public static IEnumerable<Sprite> Z4(IModel model, IVoxelColor voxelColor, Point3D voxelOrigin, Perspective perspective = Perspective.Iso, byte peakScaleX = 6, byte peakScaleY = 6, bool flipX = false, bool flipY = false, bool flipZ = false, CuboidOrientation cuboidOrientation = null, ushort scaleX = 1, ushort scaleY = 1, bool shadow = false, uint shadowColor = DefaultShadowColor, bool outline = false, uint outlineColor = PixelDraw.DefaultOutlineColor, byte threshold = PixelDraw.DefaultTransparencyThreshold, Turn turn = Turn.CounterZ) => Z4(model: model, voxelColor: voxelColor, perspective: perspective, points: new Dictionary<string, Point3D> { { Origin, voxelOrigin }, }, peakScaleX: peakScaleX, peakScaleY: peakScaleY, flipX: flipX, flipY: flipY, flipZ: flipZ, cuboidOrientation: cuboidOrientation, scaleX: scaleX, scaleY: scaleY, shadow: shadow, shadowColor: shadowColor, outline: outline, outlineColor: outlineColor, threshold: threshold, turn: turn);
