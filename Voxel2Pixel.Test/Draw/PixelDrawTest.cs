@@ -2,6 +2,7 @@ using SixLabors.ImageSharp;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Model;
+using Voxel2Pixel.Pack;
 using Voxel2Pixel.Render;
 using Xunit;
 using static Voxel2Pixel.Draw.PixelDraw;
@@ -89,6 +90,18 @@ namespace Voxel2Pixel.Test.Draw
 				.DrawRectangle(0xFFFFu, 0, 5, 5, 5, width);
 			Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes.Upscale(xScale, yScale), width * xScale, height * yScale)
 				.SaveAsPng("DrawRectangleTest.png");
+		}
+		[Fact]
+		public void Texture2UInt2D()
+		{
+			VoxFileModel voxFileModel = new(@"..\..\..\Tree.vox");
+			Sprite sprite = new(
+					model: voxFileModel,
+					voxelColor: new NaiveDimmer(voxFileModel.Palette));
+			byte[] stupid = sprite.Texture.Texture2UInt2D(sprite.Width).UInt2D2Texture();
+			Assert.Equal(sprite.Texture.Length, stupid.Length);
+			for (int x = 0; x < sprite.Texture.Length; x++)
+				Assert.Equal(sprite.Texture[x], stupid[x]);
 		}
 	}
 }

@@ -905,22 +905,22 @@ namespace Voxel2Pixel.Draw
 			indexTop = (ushort)(cutTop * xSide);
 			for (indexBottom = texture.Length - 1; indexBottom > indexTop && texture[indexBottom] < threshold; indexBottom -= 4) { }
 			int cutBottom = indexBottom / xSide + 1;
-			indexBottom = cutBottom * xSide;
-			int indexLeft = xSide, indexRight = 0;
-			for (int indexRow = indexTop; indexRow < indexBottom; indexRow += xSide)
-			{
-				int left;
-				for (left = 3; left < indexLeft && texture[indexRow + left] < threshold; left += 4) { }
-				if (left < indexLeft)
-					indexLeft = left;
-				int right;
-				for (right = xSide - 1; right > indexRight && texture[indexRow + right] < threshold; right -= 4) { }
-				if (right > indexRight)
-					indexRight = right;
-			}
-			cutLeft = (ushort)(indexLeft >> 2);
-			croppedWidth = (ushort)((indexRight >> 2) - cutLeft + 1);
 			croppedHeight = (ushort)(cutBottom - cutTop);
+			bool alpha(ushort x, ushort y) => texture[y * xSide + (x << 2) + 3] < threshold;
+			cutLeft = (ushort)(width - 1);
+			ushort cutRight = 0;
+			for (ushort y = cutTop; y < cutBottom; y++)
+			{
+				ushort left;
+				for (left = 0; left < cutLeft && alpha(left, y); left++) { }
+				if (left < cutLeft)
+					cutLeft = left;
+				ushort right;
+				for (right = (ushort)(width - 1); right > cutRight && alpha(right, y); right--) { }
+				if (right > cutRight)
+					cutRight = right;
+			}
+			croppedWidth = (ushort)(cutRight - cutLeft + 1);
 		}
 		public static byte[] TransparentCropPlusOne(this byte[] texture, out int cutLeft, out int cutTop, out ushort croppedWidth, out ushort croppedHeight, ushort width = 0, byte threshold = DefaultTransparencyThreshold)
 		{
