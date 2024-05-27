@@ -13,7 +13,7 @@ namespace Voxel2Pixel.Model
 		public VoxFileModel(FileToVoxCore.Vox.VoxModel model, int frame = 0)
 		{
 			Palette = new uint[256];
-			uint[] palette = model.Palette.Take(Palette.Length).Select(Color).ToArray();
+			uint[] palette = model.Palette.Take(Palette.Length).Select(color => Color(color) | 0xFFu).ToArray();
 			System.Array.Copy(
 				sourceArray: palette,
 				sourceIndex: 0,

@@ -129,7 +129,7 @@ namespace Voxel2Pixel.Test
 				rectWidth: width >> 1,
 				rectHeight: height >> 1,
 				width: width);
-		public static byte[][][] Pyramid(int width, params byte[] colors)
+		public static byte[][][] Pyramid(int width, params byte[]? colors)
 		{
 			if (colors is null || colors.Length < 1)
 				colors = Enumerable.Range(0, 256).Select(i => (byte)i).ToArray();
@@ -149,8 +149,8 @@ namespace Voxel2Pixel.Test
 			}
 			return voxels;
 		}
-		public static byte[][][] Pyramid2(int width, params byte[] colors) => Pyramid2(width, width, colors);
-		public static byte[][][] Pyramid2(int width, int depth, params byte[] colors)
+		public static byte[][][] Pyramid2(int width, params byte[]? colors) => Pyramid2(width, width, colors);
+		public static byte[][][] Pyramid2(int width, int depth, params byte[]? colors)
 		{
 			if (colors is null || colors.Length < 1)
 				colors = Enumerable.Range(0, 256).Select(i => (byte)i).ToArray();
@@ -161,6 +161,20 @@ namespace Voxel2Pixel.Test
 			voxels[width - 1][depth - 1][0] = colors[4];
 			for (int i = 0; i <= halfWidth; i++)
 				voxels[0][0][i] = colors[1];
+			return voxels;
+		}
+		public static byte[][][] Arch(int width, params byte[]? colors)
+		{
+			if (colors is null || colors.Length < 1)
+				colors = Enumerable.Range(0, 256).Select(i => (byte)i).ToArray();
+			int halfWidth = width >> 1;
+			byte[][][] voxels = Array3D.Initialize<byte>(width, width, halfWidth + 1);
+			for (int i = 0; i <= halfWidth - 1; i++)
+			{
+				voxels[i][i][i] = colors[1];
+				voxels[width - 1 - i][width - 1 - i][i] = colors[2];
+				voxels[halfWidth][halfWidth][i] = colors[3];
+			}
 			return voxels;
 		}
 	}

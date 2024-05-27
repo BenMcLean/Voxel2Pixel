@@ -6,7 +6,7 @@ using static Voxel2Pixel.Web.ImageMaker;
 
 namespace Voxel2Pixel.Test.Pack
 {
-	public class SpriteTest
+	public class SpriteTest(Xunit.Abstractions.ITestOutputHelper output)
 	{
 		[Fact]
 		public void SoraGif()
@@ -16,6 +16,7 @@ namespace Voxel2Pixel.Test.Pack
 					model: model,
 					voxelColor: new NaiveDimmer(model.Palette),
 					outline: true)
+				.Select(sprite => sprite.TransparentCrop())
 				.SameSize()
 				.AddFrameNumbers()
 				.Select(sprite => sprite.Upscale(8, 8))
@@ -31,11 +32,36 @@ namespace Voxel2Pixel.Test.Pack
 					voxelColor: new NaiveDimmer(model.Palette),
 					shadow: true,
 					outline: true)
+				.Select(sprite => sprite.TransparentCrop())
 				.SameSize()
 				.AddFrameNumbers()
 				.Select(sprite => sprite.Upscale(8, 8))
 				.AnimatedGif(frameDelay: 100)
 				.SaveAsGif("Shadows.gif");
+		}
+		[Fact]
+		public void CropTest()
+		{
+			VoxFileModel voxFileModel = new(@"..\..\..\Tree.vox");
+			output.WriteLine(string.Join(", ", voxFileModel.SizeX, voxFileModel.SizeY, voxFileModel.SizeZ));
+			new Sprite(
+					model: voxFileModel,
+					voxelColor: new NaiveDimmer(voxFileModel.Palette))
+				.TransparentCrop()
+				.Png()
+				.SaveAsPng("Tree.png");
+		}
+		[Fact]
+		public void ArchTest()
+		{
+			byte[][][] bytes = TestData.Arch(46);
+			bytes[1][0][0] = 1;
+			new Sprite(
+					model: new ArrayModel(bytes),
+					voxelColor: new NaiveDimmer(TestData.RainbowPalette))
+				.TransparentCrop()
+				.Png()
+				.SaveAsPng("Arch.png");
 		}
 	}
 }
