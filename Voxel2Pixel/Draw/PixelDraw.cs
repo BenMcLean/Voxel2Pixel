@@ -844,7 +844,7 @@ namespace Voxel2Pixel.Draw
 				y = 0;
 			}
 			if (croppedHeight < 1) throw new ArgumentException("croppedHeight < 1. Was: \"" + croppedHeight + "\"");
-			int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2;
+			int xSide = width << 2;
 			x <<= 2; // x *= 4;
 			if (x > xSide) throw new ArgumentException("x > xSide. x: \"" + x + "\", xSide: \"" + xSide + "\"");
 			int ySide = (width < 1 ? xSide : texture.Length / width) >> 2;
@@ -921,39 +921,6 @@ namespace Voxel2Pixel.Draw
 			cutLeft = (ushort)(indexLeft >> 2);
 			croppedWidth = (ushort)((indexRight >> 2) - cutLeft + 1);
 			croppedHeight = (ushort)(cutBottom - cutTop);
-		}
-		public static void TransparentCropInfo(this byte[,] bytes, out ushort cutLeft, out ushort cutTop, out ushort croppedWidth, out ushort croppedHeight, byte transparent = 0)
-		{
-			ushort width = (ushort)bytes.GetLength(0),
-				height = (ushort)bytes.GetLength(1),
-				cutRight = width,
-				cutBottom = height;
-			cutLeft = width;
-			cutTop = height;
-			for (ushort x = 0; x < width; x++)
-			{
-				ushort top;
-				for (top = 1; top <= height && bytes[x, height - top] == transparent; top++) { }
-				if (top < cutTop)
-					cutTop = top;
-				ushort bottom;
-				for (bottom = 0; bottom < height && bytes[x, bottom] == transparent; bottom++) { }
-				if (bottom < cutBottom)
-					cutBottom = bottom;
-			}
-			croppedHeight = (ushort)(height - cutTop - cutBottom);
-			for (ushort y = cutTop; y < height - cutBottom; y++)
-			{
-				ushort left;
-				for (left = 0; left < width && bytes[left, y] == transparent; left++) { }
-				if (left < cutLeft)
-					cutLeft = left;
-				ushort right;
-				for (right = 1; right < height && bytes[width - right, y] == transparent; right++) { }
-				if (right < cutRight)
-					cutRight = right;
-			}
-			croppedWidth = (ushort)(width - cutLeft - cutRight);
 		}
 		public static byte[] TransparentCropPlusOne(this byte[] texture, out int cutLeft, out int cutTop, out ushort croppedWidth, out ushort croppedHeight, ushort width = 0, byte threshold = DefaultTransparencyThreshold)
 		{
@@ -1424,6 +1391,35 @@ namespace Voxel2Pixel.Draw
 					start: i,
 					length: 4));
 			return uints;
+		}
+		public static uint[,] Texture2UInt2D(this byte[] texture, ushort width = 0)
+		{
+			if (width < 1)
+				width = (ushort)Math.Sqrt(texture.Length >> 2);
+			int height = (texture.Length >> 2) / width,
+				xSide = width << 2;
+			uint[,] uints = new uint[width, height];
+			for (int y = 0, y2 = 0; y < height; y++, y2 += xSide)
+				for (int x = 0, x2 = 0; x < width; x++, x2 += 4)
+					uints[x, y] = BinaryPrimitives.ReadUInt32BigEndian(texture.AsSpan(
+						start: y2 + x2,
+						length: 4));
+			return uints;
+		}
+		public static byte[] UInt2D2Texture(this uint[,] uints)
+		{
+			int width = uints.GetLength(0),
+				height = uints.GetLength(1),
+				xSide = width << 2;
+			byte[] texture = new byte[xSide * height];
+			for (int y = 0, y2 = 0; y < height; y++, y2 += xSide)
+				for (int x = 0, x2 = 0; x < width; x++, x2 += 4)
+					BinaryPrimitives.WriteUInt32BigEndian(
+						destination: texture.AsSpan(
+							start: y2 + x2,
+							length: 4),
+						value: uints[x, y]);
+			return texture;
 		}
 		public static T[] ConcatArrays<T>(params T[][] list)
 		{
