@@ -620,5 +620,26 @@ namespace Voxel2Pixel.Draw
 							color: (uint)texture[index] << 24 | (uint)texture[index + 1] << 16 | (uint)texture[index + 2] << 8 | alpha);
 		}
 		#endregion Isometric
+		#region Stacked
+		public static void ZSlice(IModel model, IRectangleRenderer renderer, ushort z = 0, double radians = 0, VisibleFace visibleFace = VisibleFace.Front)
+		{
+			Point size = model.RotatedSize(radians);
+			double cos = Math.Cos(radians),
+				sin = Math.Sin(radians),
+				offsetX = (model.SizeX >> 1) - cos * (size.X >> 1) - sin * (size.Y >> 1),
+				offsetY = (model.SizeY >> 1) - cos * (size.Y >> 1) + sin * (size.X >> 1);
+			for (ushort y = 0; y < size.Y; y++)
+				for (ushort x = 0; x < size.X; x++)
+					if ((int)(x * cos + y * sin + offsetX) is int oldX
+						&& oldX >= 0 && oldX < model.SizeX
+						&& (int)(y * cos - x * sin + offsetY) is int oldY
+						&& oldY >= 0 && oldY < model.SizeY)
+						renderer.Rect(
+							x: x,
+							y: y,
+							index: model[(ushort)oldX, (ushort)oldY, z],
+							visibleFace: visibleFace);
+		}
+		#endregion Stacked
 	}
 }
