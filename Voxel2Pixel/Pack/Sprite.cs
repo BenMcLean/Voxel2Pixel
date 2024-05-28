@@ -370,15 +370,19 @@ namespace Voxel2Pixel.Pack
 		{
 			double cos = Math.Cos(radians),
 				sin = Math.Sin(radians);
-			ushort height = (ushort)(Width * sin + Height * cos);
+			ushort height = 255;
 			Sprite sprite = new(
-				width: (ushort)(Width * cos + Height * sin),
+				width: 255,
 				height: height);
+			double x0 = (Width >> 1) - cos * (sprite.Width >> 1) - sin * (height >> 1),
+				y0 = (Height >> 1) - cos * (height >> 1) + sin * (sprite.Width >> 1);
+			double calcX(ushort x, ushort y) => x * cos + y * sin + x0;
+			double calcY(ushort x, ushort y) => y * cos - x * sin + y0;
 			for (ushort y = 0; y < height; y++)
 				for (ushort x = 0; x < sprite.Width; x++)
-					if ((int)(x * cos - y * sin) is int oldX
+					if ((int)calcX(x, y) is int oldX
 						&& oldX >= 0 && oldX < Width
-						&& (int)(x * sin + y * cos) is int oldY
+						&& (int)calcY(x, y) is int oldY
 						&& oldY >= 0 && oldY < Height)
 						sprite.DrawPixel(
 							x: x,

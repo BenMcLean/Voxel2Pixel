@@ -68,7 +68,7 @@ namespace Voxel2Pixel.Test.Pack
 					model: voxFileModel,
 					voxelColor: new NaiveDimmer(voxFileModel.Palette));
 			int numSprites = 16;
-			Enumerable.Range(0, 6)
+			Enumerable.Range(0, numSprites)
 				.Select(i => sprite.Rotate(Math.PI * 2d * ((double)i / numSprites)))
 				.AnimatedGif()
 				.SaveAsGif("Rotate.gif");
