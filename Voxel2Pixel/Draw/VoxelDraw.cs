@@ -630,6 +630,8 @@ namespace Voxel2Pixel.Draw
 				X: (int)(model.SizeX * cos + model.SizeY * sin),
 				Y: (int)(model.SizeX * sin + model.SizeY * cos));
 		}
+		public static ushort ZSliceWidth(IModel model, double radians = 0d) => (ushort)(model.SizeX * Math.Abs(Math.Cos(radians)) + model.SizeY * Math.Abs(Math.Sin(radians)));
+		public static ushort ZSliceHeight(IModel model, double radians = 0d) => (ushort)(model.SizeX * Math.Abs(Math.Sin(radians)) + model.SizeY * Math.Abs(Math.Cos(radians)));
 		public static void ZSlice(IModel model, IRectangleRenderer renderer, ushort z = 0, double radians = 0d, VisibleFace visibleFace = VisibleFace.Front)
 		{
 			Point size = ZSliceSize(model, radians);
@@ -658,6 +660,8 @@ namespace Voxel2Pixel.Draw
 				X: (int)(model.SizeX * cos + model.SizeY * sin),
 				Y: (int)(model.SizeX * sin + model.SizeY * cos) + model.SizeZ - 1);
 		}
+		public static ushort StackedWidth(IModel model, double radians = 0) => ZSliceWidth(model, radians);
+		public static ushort StackedHeight(IModel model, double radians = 0) => (ushort)(ZSliceHeight(model, radians) + model.SizeZ - 1);
 		public static void Stacked(IModel model, IRectangleRenderer renderer, double radians = 0d, VisibleFace visibleFace = VisibleFace.Front)
 		{
 			OffsetRenderer offsetRenderer = new()
