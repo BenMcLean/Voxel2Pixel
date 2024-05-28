@@ -372,25 +372,29 @@ namespace Voxel2Pixel.Pack
 		public Sprite Rotate(double radians)
 		{
 			Sprite sprite = new(RotatedSize(radians));
-			ushort height = sprite.Height;
-			sprite.Rect(0, 0, 0xFF0000FFu, sprite.Width, height);
+			sprite.Rect(0, 0, 0xFF0000FFu, sprite.Width, sprite.Height);
+			Rotate(radians, sprite);
+			return sprite;
+		}
+		public void Rotate(double radians, IRectangleRenderer renderer)
+		{
+			Point size = RotatedSize(radians);
 			double cos = Math.Cos(radians),
 				sin = Math.Sin(radians),
-				offsetX = (Width >> 1) - cos * (sprite.Width >> 1) - sin * (height >> 1),
-				offsetY = (Height >> 1) - cos * (height >> 1) + sin * (sprite.Width >> 1);
-			for (ushort y = 0; y < height; y++)
-				for (ushort x = 0; x < sprite.Width; x++)
+				offsetX = (Width >> 1) - cos * (size.X >> 1) - sin * (size.Y >> 1),
+				offsetY = (Height >> 1) - cos * (size.Y >> 1) + sin * (size.X >> 1);
+			for (ushort y = 0; y < size.Y; y++)
+				for (ushort x = 0; x < size.X; x++)
 					if ((int)(x * cos + y * sin + offsetX) is int oldX
 						&& oldX >= 0 && oldX < Width
 						&& (int)(y * cos - x * sin + offsetY) is int oldY
 						&& oldY >= 0 && oldY < Height)
-						sprite.Rect(
+						renderer.Rect(
 							x: x,
 							y: y,
 							color: Pixel(
 								x: (ushort)oldX,
 								y: (ushort)oldY));
-			return sprite;
 		}
 		#endregion Image manipulation
 		#region Voxel drawing
