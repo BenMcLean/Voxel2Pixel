@@ -1,5 +1,6 @@
 ﻿using RectpackSharp;
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
 using Voxel2Pixel.Color;
@@ -349,6 +350,9 @@ namespace Voxel2Pixel.Pack
 			Rect((ushort)point.X, (ushort)point.Y, color);
 			return this;
 		}
+		public uint Pixel(ushort x, ushort y) => BinaryPrimitives.ReadUInt32BigEndian(Texture.AsSpan(
+			start: (y * Width + x) << 2,
+			length: 4));
 		public Sprite DrawPixel(ushort x = 0, ushort y = 0, uint color = 0xFFFFFFFFu)
 		{
 			Texture.DrawPixel(
@@ -357,6 +361,32 @@ namespace Voxel2Pixel.Pack
 				y: y,
 				width: Width);
 			return this;
+		}
+		/// <summary>
+		/// Inspired by https://stackoverflow.com/a/6207833
+		/// Also trying to use this to get the destination width and height https://stackoverflow.com/a/57778745
+		/// </summary>
+		public Sprite Rotate(double radians)
+		{
+			double cos = Math.Cos(radians),
+				sin = Math.Sin(radians);
+			ushort height = (ushort)(Width * sin + Height * cos);
+			Sprite sprite = new(
+				width: (ushort)(Width * cos + Height * sin),
+				height: height);
+			for (ushort y = 0; y < height; y++)
+				for (ushort x = 0; x < sprite.Width; x++)
+					if ((int)(x * cos - y * sin) is int oldX
+						&& oldX >= 0 && oldX < sprite.Width
+						&& (int)(x * sin + y * cos) is int oldY
+						&& oldY >= 0 && oldY < height)
+						sprite.DrawPixel(
+							x: x,
+							y: y,
+							color: Pixel(
+								x: (ushort)oldX,
+								y: (ushort)oldY));
+			return sprite;
 		}
 		#endregion Image manipulation
 		#region Voxel drawing
