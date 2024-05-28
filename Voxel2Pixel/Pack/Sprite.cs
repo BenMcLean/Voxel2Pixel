@@ -28,6 +28,7 @@ namespace Voxel2Pixel.Pack
 			Texture = new byte[width * height << 2];
 			Width = width;
 		}
+		public Sprite(Point size) : this((ushort)size.X, (ushort)size.Y) { }
 		public Sprite(ISprite sprite) : this()
 		{
 			Texture = sprite.Texture;
@@ -353,38 +354,37 @@ namespace Voxel2Pixel.Pack
 		public uint Pixel(ushort x, ushort y) => BinaryPrimitives.ReadUInt32BigEndian(Texture.AsSpan(
 			start: y * (Width << 2) + (x << 2),
 			length: 4));
-		public Sprite DrawPixel(ushort x = 0, ushort y = 0, uint color = 0xFFFFFFFFu)
+		/// <summary>
+		/// Based on https://iiif.io/api/annex/notes/rotation/
+		/// </summary>
+		public Point RotatedSize(double radians)
 		{
-			Texture.DrawPixel(
-				color: color,
-				x: x,
-				y: y,
-				width: Width);
-			return this;
+			double cos = Math.Abs(Math.Cos(radians)),
+				sin = Math.Abs(Math.Sin(radians));
+			ushort height = Height;
+			return new Point(
+				X: (int)(Width * cos + height * sin),
+				Y: (int)(Width * sin + height * cos));
 		}
 		/// <summary>
-		/// Inspired by https://stackoverflow.com/a/6207833
-		/// Also trying to use this to get the destination width and height https://stackoverflow.com/a/57778745
+		/// Based on https://stackoverflow.com/a/6207833
 		/// </summary>
 		public Sprite Rotate(double radians)
 		{
+			Sprite sprite = new(RotatedSize(radians));
+			ushort height = sprite.Height;
+			sprite.Rect(0, 0, 0xFF0000FFu, sprite.Width, height);
 			double cos = Math.Cos(radians),
-				sin = Math.Sin(radians);
-			ushort height = 255;
-			Sprite sprite = new(
-				width: 255,
-				height: height);
-			double x0 = (Width >> 1) - cos * (sprite.Width >> 1) - sin * (height >> 1),
-				y0 = (Height >> 1) - cos * (height >> 1) + sin * (sprite.Width >> 1);
-			double calcX(ushort x, ushort y) => x * cos + y * sin + x0;
-			double calcY(ushort x, ushort y) => y * cos - x * sin + y0;
+				sin = Math.Sin(radians),
+				offsetX = (Width >> 1) - cos * (sprite.Width >> 1) - sin * (height >> 1),
+				offsetY = (Height >> 1) - cos * (height >> 1) + sin * (sprite.Width >> 1);
 			for (ushort y = 0; y < height; y++)
 				for (ushort x = 0; x < sprite.Width; x++)
-					if ((int)calcX(x, y) is int oldX
+					if ((int)(x * cos + y * sin + offsetX) is int oldX
 						&& oldX >= 0 && oldX < Width
-						&& (int)calcY(x, y) is int oldY
+						&& (int)(y * cos - x * sin + offsetY) is int oldY
 						&& oldY >= 0 && oldY < Height)
-						sprite.DrawPixel(
+						sprite.Rect(
 							x: x,
 							y: y,
 							color: Pixel(
@@ -687,10 +687,10 @@ namespace Voxel2Pixel.Pack
 				.Select(z => new Sprite(width: model.SizeX, height: model.SizeY))
 				.ToArray();
 			foreach (Voxel voxel in model)
-				stack[voxel.Z].DrawPixel(
-					color: voxelColor[voxel.Index, visibleFace],
+				stack[voxel.Z].Rect(
 					x: voxel.X,
-					y: voxel.Y);
+					y: voxel.Y,
+					color: voxelColor[voxel.Index, visibleFace]);
 			if (points.TryGetValue(Origin, out Point3D origin)
 				&& new Point(origin.X, origin.Y) is Point point)
 				foreach (Sprite sprite in stack)

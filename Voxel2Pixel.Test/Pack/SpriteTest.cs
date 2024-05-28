@@ -1,5 +1,6 @@
 ﻿using SixLabors.ImageSharp;
 using Voxel2Pixel.Color;
+using Voxel2Pixel.Draw;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Pack;
 using static Voxel2Pixel.Web.ImageMaker;
@@ -64,12 +65,21 @@ namespace Voxel2Pixel.Test.Pack
 		{
 			VoxFileModel voxFileModel = new(@"..\..\..\NumberCube.vox");
 			output.WriteLine(string.Join(", ", voxFileModel.SizeX, voxFileModel.SizeY, voxFileModel.SizeZ));
-			Sprite sprite = new(
-					model: voxFileModel,
-					voxelColor: new NaiveDimmer(voxFileModel.Palette));
-			int numSprites = 16;
+			Sprite sprite = new(VoxelDraw.Width(Perspective.Iso, voxFileModel), VoxelDraw.Height(Perspective.Iso, voxFileModel))
+			{
+				VoxelColor = new NaiveDimmer(voxFileModel.Palette),
+			};
+			sprite.Rect(0, 0, 0xFFFFu, sprite.Width, sprite.Height);
+			VoxelDraw.Draw(Perspective.Iso, voxFileModel, sprite);
+			Sprite originCenter(Sprite sprite)
+			{
+				sprite[Sprite.Origin] = new Voxel2Pixel.Model.Point(sprite.Width / 2, sprite.Height / 2);
+				return sprite;
+			}
+			int numSprites = 64;
 			Enumerable.Range(0, numSprites)
 				.Select(i => sprite.Rotate(Math.PI * 2d * ((double)i / numSprites)))
+				//.Select(originCenter)
 				.AnimatedGif()
 				.SaveAsGif("Rotate.gif");
 		}
