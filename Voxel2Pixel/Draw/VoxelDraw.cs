@@ -622,7 +622,7 @@ namespace Voxel2Pixel.Draw
 		}
 		#endregion Isometric
 		#region Stacked
-		public static Point ZSliceSize(IModel model, double radians = 0)
+		public static Point ZSliceSize(IModel model, double radians = 0d)
 		{
 			double cos = Math.Abs(Math.Cos(radians)),
 				sin = Math.Abs(Math.Sin(radians));
@@ -630,7 +630,7 @@ namespace Voxel2Pixel.Draw
 				X: (int)(model.SizeX * cos + model.SizeY * sin),
 				Y: (int)(model.SizeX * sin + model.SizeY * cos));
 		}
-		public static void ZSlice(IModel model, IRectangleRenderer renderer, ushort z = 0, double radians = 0, VisibleFace visibleFace = VisibleFace.Front)
+		public static void ZSlice(IModel model, IRectangleRenderer renderer, ushort z = 0, double radians = 0d, VisibleFace visibleFace = VisibleFace.Front)
 		{
 			Point size = ZSliceSize(model, radians);
 			double cos = Math.Cos(radians),
@@ -642,22 +642,23 @@ namespace Voxel2Pixel.Draw
 					if ((int)(x * cos + y * sin + offsetX) is int oldX
 						&& oldX >= 0 && oldX < model.SizeX
 						&& (int)(y * cos - x * sin + offsetY) is int oldY
-						&& oldY >= 0 && oldY < model.SizeY)
+						&& oldY >= 0 && oldY < model.SizeY
+						&& model[(ushort)oldX, (ushort)oldY, z] is byte index && index != 0)
 						renderer.Rect(
 							x: x,
 							y: y,
-							index: model[(ushort)oldX, (ushort)oldY, z],
+							index: index,
 							visibleFace: visibleFace);
 		}
-		public static Point StackedSize(this IModel model, double radians)
+		public static Point StackedSize(this IModel model, double radians = 0d)
 		{
 			double cos = Math.Abs(Math.Cos(radians)),
 				sin = Math.Abs(Math.Sin(radians));
 			return new Point(
 				X: (int)(model.SizeX * cos + model.SizeY * sin),
-				Y: (int)(model.SizeX * sin + model.SizeY * cos) + model.SizeZ);
+				Y: (int)(model.SizeX * sin + model.SizeY * cos) + model.SizeZ - 1);
 		}
-		public static void Stacked(IModel model, IRectangleRenderer renderer, double radians = 0, VisibleFace visibleFace = VisibleFace.Front)
+		public static void Stacked(IModel model, IRectangleRenderer renderer, double radians = 0d, VisibleFace visibleFace = VisibleFace.Front)
 		{
 			OffsetRenderer offsetRenderer = new()
 			{
@@ -665,8 +666,13 @@ namespace Voxel2Pixel.Draw
 			};
 			for (ushort z = 0; z < model.SizeZ; z++)
 			{
-				offsetRenderer.OffsetY = model.SizeZ - z;
-				ZSlice(model, renderer, z, radians, visibleFace);
+				offsetRenderer.OffsetY = model.SizeZ - 1 - z;
+				ZSlice(
+					model: model,
+					renderer: offsetRenderer,
+					z: z,
+					radians: radians,
+					visibleFace: visibleFace);
 			}
 		}
 		#endregion Stacked

@@ -1,6 +1,7 @@
 ﻿using SixLabors.ImageSharp;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
+using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Pack;
 using static Voxel2Pixel.Web.ImageMaker;
@@ -64,7 +65,6 @@ namespace Voxel2Pixel.Test.Pack
 		public void RotateTest()
 		{
 			VoxFileModel voxFileModel = new(@"..\..\..\NumberCube.vox");
-			output.WriteLine(string.Join(", ", voxFileModel.SizeX, voxFileModel.SizeY, voxFileModel.SizeZ));
 			Sprite sprite = new(VoxelDraw.Width(Perspective.Iso, voxFileModel), VoxelDraw.Height(Perspective.Iso, voxFileModel))
 			{
 				VoxelColor = new NaiveDimmer(voxFileModel.Palette),
@@ -85,6 +85,27 @@ namespace Voxel2Pixel.Test.Pack
 				.Select(origin)
 				.AnimatedGif()
 				.SaveAsGif("Rotate.gif");
+		}
+		[Fact]
+		public void Stacked()
+		{
+			VoxFileModel voxFileModel = new(@"..\..\..\Tree.vox");
+			IVoxelColor voxelColor = new FlatVoxelColor(voxFileModel.Palette);
+			int numSprites = 64;
+			List<Sprite> sprites = [];
+			for (int i = 0; i < numSprites; i++)
+			{
+				double radians = Math.PI * 2d * ((double)i / numSprites);
+				Sprite sprite = new(VoxelDraw.StackedSize(voxFileModel, radians))
+				{
+					VoxelColor = voxelColor,
+				};
+				VoxelDraw.Stacked(voxFileModel, sprite, radians);
+				sprites.Add(sprite.Upscale(8, 8));
+			}
+			sprites
+				.AnimatedGif(10)
+				.SaveAsGif("Stacked.gif");
 		}
 	}
 }
