@@ -643,7 +643,7 @@ namespace Voxel2Pixel.Draw
 						&& oldX >= 0 && oldX < model.SizeX
 						&& (int)(y * cos - x * sin + offsetY) is int oldY
 						&& oldY >= 0 && oldY < model.SizeY
-						&& model[(ushort)oldX, (ushort)oldY, z] is byte index && index != 0)
+						&& model[(ushort)oldX, (ushort)(model.SizeY - 1 - oldY), z] is byte index && index != 0)
 						renderer.Rect(
 							x: x,
 							y: y,
