@@ -646,8 +646,9 @@ namespace Voxel2Pixel.Pack
 					outlineColor: outlineColor);
 			}
 		}
-		public static Sprite[] Stack(IModel model, IVoxelColor voxelColor, VisibleFace visibleFace = VisibleFace.Front)
+		public static Sprite[] Stack(IModel model, IVoxelColor voxelColor, VisibleFace visibleFace = VisibleFace.Front, IDictionary<string, Point3D> points = null)
 		{
+			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
 			Sprite[] stack = Enumerable.Range(0, model.SizeZ)
 				.Select(z => new Sprite(width: model.SizeX, height: model.SizeY))
 				.ToArray();
@@ -656,6 +657,13 @@ namespace Voxel2Pixel.Pack
 					color: voxelColor[voxel.Index, visibleFace],
 					x: voxel.X,
 					y: voxel.Y);
+			if (points.TryGetValue(Origin, out Point3D origin)
+				&& new Point(origin.X, origin.Y) is Point point)
+				foreach (Sprite sprite in stack)
+					sprite[Origin] = point;
+			foreach (KeyValuePair<string, Point3D> pair in points
+				.Where(pair => !pair.Key.Equals(Origin)))
+				stack[pair.Value.Z][pair.Key] = new Point(pair.Value.X, pair.Value.Y);
 			return stack;
 		}
 		#endregion Voxel drawing
