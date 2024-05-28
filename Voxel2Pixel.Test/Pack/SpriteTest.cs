@@ -45,7 +45,6 @@ namespace Voxel2Pixel.Test.Pack
 			new Sprite(
 					model: voxFileModel,
 					voxelColor: new NaiveDimmer(voxFileModel.Palette))
-				.Crop2Content()
 				.Png()
 				.SaveAsPng("Tree.png");
 		}
@@ -57,9 +56,22 @@ namespace Voxel2Pixel.Test.Pack
 			new Sprite(
 					model: new ArrayModel(bytes),
 					voxelColor: new NaiveDimmer(TestData.RainbowPalette))
-				.Crop2Content()
 				.Png()
 				.SaveAsPng("Arch.png");
+		}
+		[Fact]
+		public void RotateTest()
+		{
+			VoxFileModel voxFileModel = new(@"..\..\..\NumberCube.vox");
+			output.WriteLine(string.Join(", ", voxFileModel.SizeX, voxFileModel.SizeY, voxFileModel.SizeZ));
+			Sprite sprite = new(
+					model: voxFileModel,
+					voxelColor: new NaiveDimmer(voxFileModel.Palette));
+			int numSprites = 16;
+			Enumerable.Range(0, 6)
+				.Select(i => sprite.Rotate(Math.PI * 2d * ((double)i / numSprites)))
+				.AnimatedGif()
+				.SaveAsGif("Rotate.gif");
 		}
 	}
 }

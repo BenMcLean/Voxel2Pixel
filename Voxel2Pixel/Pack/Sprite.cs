@@ -351,7 +351,7 @@ namespace Voxel2Pixel.Pack
 			return this;
 		}
 		public uint Pixel(ushort x, ushort y) => BinaryPrimitives.ReadUInt32BigEndian(Texture.AsSpan(
-			start: (y * Width + x) << 2,
+			start: y * (Width << 2) + (x << 2),
 			length: 4));
 		public Sprite DrawPixel(ushort x = 0, ushort y = 0, uint color = 0xFFFFFFFFu)
 		{
@@ -377,9 +377,9 @@ namespace Voxel2Pixel.Pack
 			for (ushort y = 0; y < height; y++)
 				for (ushort x = 0; x < sprite.Width; x++)
 					if ((int)(x * cos - y * sin) is int oldX
-						&& oldX >= 0 && oldX < sprite.Width
+						&& oldX >= 0 && oldX < Width
 						&& (int)(x * sin + y * cos) is int oldY
-						&& oldY >= 0 && oldY < height)
+						&& oldY >= 0 && oldY < Height)
 						sprite.DrawPixel(
 							x: x,
 							y: y,
