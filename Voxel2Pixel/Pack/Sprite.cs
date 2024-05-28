@@ -366,29 +366,42 @@ namespace Voxel2Pixel.Pack
 				X: (int)(Width * cos + height * sin),
 				Y: (int)(Width * sin + height * cos));
 		}
+		public Sprite Rotate(double radians)
+		{
+			Sprite sprite = new(RotatedSize(radians))
+			{
+				VoxelColor = VoxelColor,
+			};
+			Rotate(radians, sprite);
+			ushort height = Height,
+				newHeight = sprite.Height;
+			double cos = Math.Cos(radians),
+				sin = Math.Sin(radians),
+				offsetX = (Width >> 1) - cos * (sprite.Width >> 1) - sin * (newHeight >> 1),
+				offsetY = (height >> 1) - cos * (newHeight >> 1) + sin * (sprite.Width >> 1);
+			return sprite.AddRange(this.Select(pair => new KeyValuePair<string, Point>(
+				key: pair.Key,
+				value: new Point(
+					X: (int)(cos * (pair.Value.X - offsetX) - sin * (pair.Value.Y - offsetY)),
+					Y: (int)(sin * (pair.Value.X - offsetX) + cos * (pair.Value.Y - offsetY))))));
+		}
 		/// <summary>
 		/// Based on https://stackoverflow.com/a/6207833
 		/// </summary>
-		public Sprite Rotate(double radians)
-		{
-			Sprite sprite = new(RotatedSize(radians));
-			sprite.Rect(0, 0, 0xFF0000FFu, sprite.Width, sprite.Height);
-			Rotate(radians, sprite);
-			return sprite;
-		}
 		public void Rotate(double radians, IRectangleRenderer renderer)
 		{
 			Point size = RotatedSize(radians);
+			ushort height = Height;
 			double cos = Math.Cos(radians),
 				sin = Math.Sin(radians),
 				offsetX = (Width >> 1) - cos * (size.X >> 1) - sin * (size.Y >> 1),
-				offsetY = (Height >> 1) - cos * (size.Y >> 1) + sin * (size.X >> 1);
+				offsetY = (height >> 1) - cos * (size.Y >> 1) + sin * (size.X >> 1);
 			for (ushort y = 0; y < size.Y; y++)
 				for (ushort x = 0; x < size.X; x++)
 					if ((int)(x * cos + y * sin + offsetX) is int oldX
 						&& oldX >= 0 && oldX < Width
 						&& (int)(y * cos - x * sin + offsetY) is int oldY
-						&& oldY >= 0 && oldY < Height)
+						&& oldY >= 0 && oldY < height)
 						renderer.Rect(
 							x: x,
 							y: y,
