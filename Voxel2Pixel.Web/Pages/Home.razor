@@ -30,7 +30,7 @@
 		Shadow = false;
 	public byte PeakScaleX = 6,
 		PeakScaleY = 6;
-	public ushort ScaleX = 2,
+	public ushort ScaleX = 1,
 		ScaleY = 1;
 	public MudColor OutlineMudColor = MudColor(PixelDraw.DefaultOutlineColor);
 	public uint OutlineColor
@@ -122,7 +122,17 @@
 		{
 			<MudElement Class="d-inline-flex flex-wrap gap-2">
 				<MudNumericField T="byte" @bind-Value="PeakScaleX" Label="Peak Scale X" Variant="Variant.Text" Min="1" Max="255" />
-				<MudNumericField T="byte" @bind-Value="PeakScaleY" Label="Peak Scale Y" Variant="Variant.Text" Min="1" Max="255" />
+				<MudNumericField T="byte" @bind-Value="PeakScaleY" Label="Peak Scale Y" Variant="Variant.Text" Min="2" Max="255" />
+			</MudElement>
+		}
+		@if (Perspective.HasShadow())
+		{
+			<MudElement Class="d-inline-flex flex-wrap gap-2">
+				<MudCheckBox @bind-Value="@Shadow" Label="Shadow" />
+				@if (Shadow)
+				{
+					<MudColorPicker @bind-Value="ShadowMudColor" Label="Shadow Color" Style="@($"color: {ShadowMudColor};")" />
+				}
 			</MudElement>
 		}
 	</MudTabPanel>
@@ -146,14 +156,6 @@
 			@if (Outline)
 			{
 				<MudColorPicker @bind-Value="OutlineMudColor" Label="Outline Color" Style="@($"color: {OutlineMudColor};")" />
-			}
-		</MudElement>
-		<br />
-		<MudElement Class="d-inline-flex flex-wrap gap-2">
-			<MudCheckBox @bind-Value="@Shadow" Label="Shadow" />
-			@if (Shadow)
-			{
-				<MudColorPicker @bind-Value="ShadowMudColor" Label="Shadow Color" Style="@($"color: {ShadowMudColor};")" />
 			}
 		</MudElement>
 	</MudTabPanel>

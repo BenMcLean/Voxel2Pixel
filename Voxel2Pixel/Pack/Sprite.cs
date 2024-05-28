@@ -349,6 +349,15 @@ namespace Voxel2Pixel.Pack
 			Rect((ushort)point.X, (ushort)point.Y, color);
 			return this;
 		}
+		public Sprite DrawPixel(ushort x = 0, ushort y = 0, uint color = 0xFFFFFFFFu)
+		{
+			Texture.DrawPixel(
+				color: color,
+				x: x,
+				y: y,
+				width: Width);
+			return this;
+		}
 		#endregion Image manipulation
 		#region Voxel drawing
 		public Sprite(IModel model, IVoxelColor voxelColor, IVoxelColor shadowColor, Point3D origin, Perspective perspective = Perspective.Iso, byte peakScaleX = 6, byte peakScaleY = 6, bool flipX = false, bool flipY = false, bool flipZ = false, CuboidOrientation cuboidOrientation = null, ushort scaleX = 1, ushort scaleY = 1, bool shadow = false, bool outline = false, uint outlineColor = PixelDraw.DefaultOutlineColor, byte threshold = PixelDraw.DefaultTransparencyThreshold) : this(model: model, voxelColor: voxelColor, points: new Dictionary<string, Point3D> { { Origin, origin }, }, perspective: perspective, peakScaleX: peakScaleX, peakScaleY: peakScaleY, flipX: flipX, flipY: flipY, flipZ: flipZ, cuboidOrientation: cuboidOrientation, scaleX: scaleX, scaleY: scaleY, shadow: shadow, shadowColor: shadowColor, outline: outline, outlineColor: outlineColor, threshold: threshold) { }
@@ -373,8 +382,8 @@ namespace Voxel2Pixel.Pack
 			uint outlineColor = PixelDraw.DefaultOutlineColor,
 			byte threshold = PixelDraw.DefaultTransparencyThreshold)
 		{
-			if (peakScaleX < 2) throw new ArgumentOutOfRangeException("peakScaleX");
-			if (peakScaleY < 1) throw new ArgumentOutOfRangeException("peakScaleY");
+			if (peakScaleX < 1) throw new ArgumentOutOfRangeException("peakScaleX");
+			if (peakScaleY < 2) throw new ArgumentOutOfRangeException("peakScaleY");
 			if (scaleX < 1) throw new ArgumentOutOfRangeException("scaleX");
 			if (scaleY < 1) throw new ArgumentOutOfRangeException("scaleY");
 			if (flipX || flipY || flipZ)
@@ -481,8 +490,8 @@ namespace Voxel2Pixel.Pack
 			byte threshold = PixelDraw.DefaultTransparencyThreshold,
 			Turn turn = Turn.CounterZ)
 		{
-			if (peakScaleX < 2) throw new ArgumentOutOfRangeException("peakScaleX");
-			if (peakScaleY < 1) throw new ArgumentOutOfRangeException("peakScaleY");
+			if (peakScaleX < 1) throw new ArgumentOutOfRangeException("peakScaleX");
+			if (peakScaleY < 2) throw new ArgumentOutOfRangeException("peakScaleY");
 			if (scaleX < 1) throw new ArgumentOutOfRangeException("scaleX");
 			if (scaleY < 1) throw new ArgumentOutOfRangeException("scaleY");
 			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
@@ -636,6 +645,18 @@ namespace Voxel2Pixel.Pack
 					outline: outline,
 					outlineColor: outlineColor);
 			}
+		}
+		public static Sprite[] Stack(IModel model, IVoxelColor voxelColor, VisibleFace visibleFace = VisibleFace.Front)
+		{
+			Sprite[] stack = Enumerable.Range(0, model.SizeZ)
+				.Select(z => new Sprite(width: model.SizeX, height: model.SizeY))
+				.ToArray();
+			foreach (Voxel voxel in model)
+				stack[voxel.Z].DrawPixel(
+					color: voxelColor[voxel.Index, visibleFace],
+					x: voxel.X,
+					y: voxel.Y);
+			return stack;
 		}
 		#endregion Voxel drawing
 	}

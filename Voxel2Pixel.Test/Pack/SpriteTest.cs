@@ -1,6 +1,5 @@
 ﻿using SixLabors.ImageSharp;
 using Voxel2Pixel.Color;
-using Voxel2Pixel.Draw;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Pack;
 using static Voxel2Pixel.Web.ImageMaker;
@@ -17,7 +16,6 @@ namespace Voxel2Pixel.Test.Pack
 					model: model,
 					voxelColor: new NaiveDimmer(model.Palette),
 					outline: true)
-				.Select(sprite => sprite.Crop2Content())
 				.SameSize()
 				.AddFrameNumbers()
 				.Select(sprite => sprite.Upscale(8, 8))
@@ -33,7 +31,6 @@ namespace Voxel2Pixel.Test.Pack
 					voxelColor: new NaiveDimmer(model.Palette),
 					shadow: true,
 					outline: true)
-				.Select(sprite => sprite.Crop2Content())
 				.SameSize()
 				.AddFrameNumbers()
 				.Select(sprite => sprite.Upscale(8, 8))
