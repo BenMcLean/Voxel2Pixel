@@ -32,14 +32,6 @@ namespace Voxel2Pixel
 		public static byte Set(this IEditableModel model, Voxel voxel) => model[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
 		public static Point3D Center(this IModel model) => new(model.SizeX >> 1, model.SizeY >> 1, model.SizeZ >> 1);
 		public static Point3D BottomCenter(this IModel model) => new(model.SizeX >> 1, model.SizeY >> 1, 0);
-		public static Point RotatedSize(this IModel model, double radians)
-		{
-			double cos = Math.Abs(Math.Cos(radians)),
-				sin = Math.Abs(Math.Sin(radians));
-			return new Point(
-				X: (int)(model.SizeX * cos + model.SizeY * sin),
-				Y: (int)(model.SizeX * sin + model.SizeY * cos));
-		}
 		#region Sprite
 		public static IEnumerable<Sprite> AddFrameNumbers(this IEnumerable<Sprite> frames, uint color = 0xFFFFFFFFu)
 		{
