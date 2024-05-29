@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
+using Voxel2Pixel.Pack;
 using Voxel2Pixel.Render;
 
 namespace Voxel2Pixel.Draw
@@ -47,6 +48,9 @@ namespace Voxel2Pixel.Draw
 				case Perspective.IsoShadow:
 					IsoShadow(model, renderer);
 					break;
+				case Perspective.Stacked:
+					Stacked(model, renderer);
+					break;
 			}
 		}
 		public static ushort Width(Perspective perspective, IModel model, byte peakScaleX = 6) => perspective switch
@@ -59,6 +63,7 @@ namespace Voxel2Pixel.Draw
 			Perspective.Above => AboveWidth(model),
 			Perspective.Iso => IsoWidth(model),
 			Perspective.IsoShadow => IsoShadowWidth(model),
+			Perspective.Stacked => StackedWidth(model),
 			_ => FrontWidth(model),
 		};
 		public static ushort Height(Perspective perspective, IModel model, byte peakScaleY = 6) => perspective switch
@@ -71,6 +76,7 @@ namespace Voxel2Pixel.Draw
 			Perspective.Above => AboveHeight(model),
 			Perspective.Iso => IsoHeight(model),
 			Perspective.IsoShadow => IsoShadowHeight(model),
+			Perspective.Stacked => StackedHeight(model),
 			_ => FrontHeight(model),
 		};
 		public static Point Locate(Perspective perspective, IModel model, Point3D point, byte peakScaleX = 6, byte peakScaleY = 6)
@@ -96,6 +102,8 @@ namespace Voxel2Pixel.Draw
 					return IsoLocate(model, point);
 				case Perspective.IsoShadow:
 					return IsoShadowLocate(model, point);
+				case Perspective.Stacked:
+					return StackedLocate
 			}
 			return perspective.IsPeak() ? new()
 			{
@@ -662,6 +670,18 @@ namespace Voxel2Pixel.Draw
 		}
 		public static ushort StackedWidth(IModel model, double radians = 0) => ZSliceWidth(model, radians);
 		public static ushort StackedHeight(IModel model, double radians = 0) => (ushort)(ZSliceHeight(model, radians) + model.SizeZ - 1);
+		public static Point StackedLocate(IModel model, Point3D point, double radians = 0d)
+		{
+			double cos = Math.Cos(radians),
+				sin = Math.Sin(radians);
+			ushort width = (ushort)(model.SizeX * Math.Abs(cos) + model.SizeY * Math.Abs(sin)),
+				height = (ushort)(model.SizeX * Math.Abs(sin) + model.SizeY * Math.Abs(cos));
+			double offsetX = (model.SizeX >> 1) - cos * (width >> 1) - sin * (height >> 1),
+				offsetY = (model.SizeY >> 1) - cos * (height >> 1) + sin * (width >> 1);
+			return new Point(
+				X: (int)(cos * (point.X - offsetX) - sin * (point.Y - offsetY)),
+				Y: (int)(sin * (point.X - offsetX) + cos * (point.Y - offsetY) + model.SizeX - 1 - point.Z));
+		}
 		public static void Stacked(IModel model, IRectangleRenderer renderer, double radians = 0d, VisibleFace visibleFace = VisibleFace.Front)
 		{
 			OffsetRenderer offsetRenderer = new()
