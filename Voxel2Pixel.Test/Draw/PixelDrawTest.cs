@@ -95,9 +95,11 @@ namespace Voxel2Pixel.Test.Draw
 		public void Texture2UInt2D()
 		{
 			VoxFileModel voxFileModel = new(@"..\..\..\Tree.vox");
-			Sprite sprite = new(
-					model: voxFileModel,
-					voxelColor: new NaiveDimmer(voxFileModel.Palette));
+			Sprite sprite = new SpriteFactory
+			{
+				Model = voxFileModel,
+				VoxelColor = new NaiveDimmer(voxFileModel.Palette),
+			}.Build();
 			byte[] stupid = sprite.Texture.Texture2UInt2D(sprite.Width).UInt2D2Texture();
 			Assert.Equal(sprite.Texture.Length, stupid.Length);
 			for (int x = 0; x < sprite.Texture.Length; x++)
@@ -108,9 +110,11 @@ namespace Voxel2Pixel.Test.Draw
 		{
 			byte[][][] bytes = TestData.Arch(46);
 			bytes[1][0][0] = 1;
-			Sprite sprite = new(
-					model: new ArrayModel(bytes),
-					voxelColor: new NaiveDimmer(TestData.RainbowPalette));
+			Sprite sprite = new SpriteFactory
+			{
+				Model = new ArrayModel(bytes),
+				VoxelColor = new NaiveDimmer(TestData.RainbowPalette),
+			}.Build();
 			sprite.Texture.Crop2ContentInfo(
 				cutLeft: out ushort cutLeft,
 				cutTop: out ushort cutTop,

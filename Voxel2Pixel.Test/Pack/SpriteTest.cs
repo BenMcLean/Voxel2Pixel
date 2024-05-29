@@ -14,10 +14,13 @@ namespace Voxel2Pixel.Test.Pack
 		public void SoraGif()
 		{
 			VoxFileModel model = new(@"..\..\..\Sora.vox");
-			Sprite.Iso8(
-					model: model,
-					voxelColor: new NaiveDimmer(model.Palette),
-					outline: true)
+			new SpriteFactory
+			{
+				Model = model,
+				VoxelColor = new NaiveDimmer(model.Palette),
+				Outline = true,
+			}
+				.Iso8()
 				.SameSize()
 				.AddFrameNumbers()
 				.Select(sprite => sprite.Upscale(8, 8))
@@ -28,11 +31,14 @@ namespace Voxel2Pixel.Test.Pack
 		public void ShadowGif()
 		{
 			VoxFileModel model = new(@"..\..\..\Sora.vox");
-			Sprite.Iso8(
-					model: model,
-					voxelColor: new NaiveDimmer(model.Palette),
-					shadow: true,
-					outline: true)
+			new SpriteFactory
+			{
+				Model = model,
+				VoxelColor = new NaiveDimmer(model.Palette),
+				Shadow = true,
+				Outline = true,
+			}
+				.Iso8()
 				.SameSize()
 				.AddFrameNumbers()
 				.Select(sprite => sprite.Upscale(8, 8))
@@ -44,9 +50,11 @@ namespace Voxel2Pixel.Test.Pack
 		{
 			VoxFileModel voxFileModel = new(@"..\..\..\Tree.vox");
 			output.WriteLine(string.Join(", ", voxFileModel.SizeX, voxFileModel.SizeY, voxFileModel.SizeZ));
-			new Sprite(
-					model: voxFileModel,
-					voxelColor: new NaiveDimmer(voxFileModel.Palette))
+			new SpriteFactory
+			{
+				Model = voxFileModel,
+				VoxelColor = new NaiveDimmer(voxFileModel.Palette),
+			}.Build()
 				.Png()
 				.SaveAsPng("Tree.png");
 		}
@@ -55,9 +63,11 @@ namespace Voxel2Pixel.Test.Pack
 		{
 			byte[][][] bytes = TestData.Arch(80);
 			bytes[1][0][0] = 1;
-			new Sprite(
-					model: new ArrayModel(bytes),
-					voxelColor: new NaiveDimmer(TestData.RainbowPalette))
+			new SpriteFactory
+			{
+				Model = new ArrayModel(bytes),
+				VoxelColor = new NaiveDimmer(TestData.RainbowPalette),
+			}.Build()
 				.Png()
 				.SaveAsPng("Arch.png");
 		}

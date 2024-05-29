@@ -107,10 +107,18 @@ namespace Voxel2Pixel.Test.Pack
 			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
 			Dictionary<string, ISprite> dictionary = [];
 			byte direction = 0;
-			foreach (ISprite iSprite in Sprite.Iso8(model, voxelColor, outline: true))
+			foreach (ISprite iSprite in new SpriteFactory
+			{
+				Model = model,
+				VoxelColor = voxelColor,
+				Outline = true,
+			}.Iso8())
 				dictionary.Add("Sora" + direction++, iSprite);
 			direction = 0;
-			foreach (ISprite iSprite in Sprite.Iso8Shadows(model, 0x88u))
+			foreach (ISprite iSprite in new SpriteFactory
+			{
+				Model = model,
+			}.SetShadowColor(0x88u).Iso8Shadows())
 				dictionary.Add("SoraShadow" + direction++, iSprite);
 			Sprite atlas = new(dictionary, out TextureAtlas textureAtlas);
 			textureAtlas.ImagePath = "TextureAtlas.png";

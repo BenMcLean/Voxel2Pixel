@@ -71,25 +71,25 @@
 	}
 	public void Preview()
 	{
-		if (VoxFileModel is VoxFileModel)
-			ImageString = new Sprite(
-					model: VoxFileModel,
-					voxelColor: new NaiveDimmer(VoxFileModel.Palette),
-					perspective: Perspective,
-					peakScaleX: PeakScaleX,
-					peakScaleY: PeakScaleY,
-					flipX: FlipX,
-					flipY: FlipY,
-					flipZ: FlipZ,
-					cuboidOrientation: CuboidOrientation,
-					scaleX: ScaleX,
-					scaleY: ScaleY,
-					outline: Outline,
-					outlineColor: OutlineColor,
-					shadow: Shadow,
-					shadowColor: ShadowColor)
-				.Png()
-				.ToBase64String(PngFormat.Instance);
+		// if (VoxFileModel is VoxFileModel)
+		// 	ImageString = new Sprite(
+		// 			model: VoxFileModel,
+		// 			voxelColor: new NaiveDimmer(VoxFileModel.Palette),
+		// 			perspective: Perspective,
+		// 			peakScaleX: PeakScaleX,
+		// 			peakScaleY: PeakScaleY,
+		// 			flipX: FlipX,
+		// 			flipY: FlipY,
+		// 			flipZ: FlipZ,
+		// 			cuboidOrientation: CuboidOrientation,
+		// 			scaleX: ScaleX,
+		// 			scaleY: ScaleY,
+		// 			outline: Outline,
+		// 			outlineColor: OutlineColor,
+		// 			shadow: Shadow,
+		// 			shadowColor: ShadowColor)
+		// 		.Png()
+		// 		.ToBase64String(PngFormat.Instance);
 	}
 }
 @if (!string.IsNullOrWhiteSpace(ImageString))
