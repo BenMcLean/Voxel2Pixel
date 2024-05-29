@@ -17,33 +17,22 @@
 
 @code {
 	#region Data
-	public bool IsLoading = false;
-	Voxel2Pixel.Model.VoxFileModel? VoxFileModel = null;
-	public string ImageString = string.Empty;
-	public MarkupString ExceptionMessage;
-	public Perspective Perspective = Perspective.Iso;
-	public CuboidOrientation CuboidOrientation = CuboidOrientation.SOUTH0;
-	public bool FlipX = false,
-		FlipY = false,
-		FlipZ = false,
-		Outline = false,
-		Shadow = false;
-	public byte PeakScaleX = 6,
-		PeakScaleY = 6;
-	public ushort ScaleX = 1,
-		ScaleY = 1;
-	public MudColor OutlineMudColor = MudColor(PixelDraw.DefaultOutlineColor);
-	public uint OutlineColor
+	public bool IsLoading { get; set; } = false;
+	Voxel2Pixel.Model.VoxFileModel? VoxFileModel { get; set; } = null;
+	public string ImageString { get; set; } = string.Empty;
+	public MarkupString ExceptionMessage { get; set; }
+	public SpriteFactory SpriteFactory { get; set; } = new();
+	public MudColor OutlineMudColor
 	{
-		get => Color(OutlineMudColor);
-		set => OutlineMudColor = MudColor(value);
+		get => MudColor(SpriteFactory.OutlineColor);
+		set => SpriteFactory.SetOutlineColor(Color(value));
 	}
-	public MudColor ShadowMudColor = MudColor(Sprite.DefaultShadowColor);
-	public uint ShadowColor
+	public MudColor ShadowMudColor
 	{
-		get => Color(ShadowMudColor);
-		set => ShadowMudColor = MudColor(value);
+		get => shadowMudColor;
+		set => SpriteFactory.SetShadowColor(Color(shadowMudColor = value));
 	}
+	private MudColor shadowMudColor = MudColor(Sprite.DefaultShadowColor);
 	#endregion Data
 	public static uint Color(MudColor color) => (uint)(color.R << 24 | color.G << 16 | color.B << 8 | color.A);
 	public static MudColor MudColor(uint rgba) => new MudColor(
@@ -71,25 +60,13 @@
 	}
 	public void Preview()
 	{
-		// if (VoxFileModel is VoxFileModel)
-		// 	ImageString = new Sprite(
-		// 			model: VoxFileModel,
-		// 			voxelColor: new NaiveDimmer(VoxFileModel.Palette),
-		// 			perspective: Perspective,
-		// 			peakScaleX: PeakScaleX,
-		// 			peakScaleY: PeakScaleY,
-		// 			flipX: FlipX,
-		// 			flipY: FlipY,
-		// 			flipZ: FlipZ,
-		// 			cuboidOrientation: CuboidOrientation,
-		// 			scaleX: ScaleX,
-		// 			scaleY: ScaleY,
-		// 			outline: Outline,
-		// 			outlineColor: OutlineColor,
-		// 			shadow: Shadow,
-		// 			shadowColor: ShadowColor)
-		// 		.Png()
-		// 		.ToBase64String(PngFormat.Instance);
+		if (VoxFileModel is VoxFileModel)
+			ImageString = SpriteFactory
+				.Set(VoxFileModel)
+				.Set(new NaiveDimmer(VoxFileModel.Palette))
+				.Build()
+				.Png()
+				.ToBase64String(PngFormat.Instance);
 	}
 }
 @if (!string.IsNullOrWhiteSpace(ImageString))
@@ -112,24 +89,24 @@
 		</MudFileUpload>
 	</MudTabPanel>
 	<MudTabPanel Text="Perspective">
-		<MudSelect T="Perspective" @bind-Value="@Perspective" Class="flex-grow-0">
+		<MudSelect T="Perspective" @bind-Value="@SpriteFactory.Perspective" Class="flex-grow-0">
 			@foreach (Perspective perspective in Enum.GetValues(typeof(Perspective)))
 			{
 				<MudSelectItem Value="@perspective" />
 			}
 		</MudSelect>
-		@if (Perspective.IsPeak())
+		@if (SpriteFactory.Perspective.IsPeak())
 		{
 			<MudElement Class="d-inline-flex flex-wrap gap-2">
-				<MudNumericField T="byte" @bind-Value="PeakScaleX" Label="Peak Scale X" Variant="Variant.Text" Min="1" Max="255" />
-				<MudNumericField T="byte" @bind-Value="PeakScaleY" Label="Peak Scale Y" Variant="Variant.Text" Min="2" Max="255" />
+				<MudNumericField T="byte" @bind-Value="SpriteFactory.PeakScaleX" Label="Peak Scale X" Variant="Variant.Text" Min="1" Max="255" />
+				<MudNumericField T="byte" @bind-Value="SpriteFactory.PeakScaleY" Label="Peak Scale Y" Variant="Variant.Text" Min="2" Max="255" />
 			</MudElement>
 		}
-		@if (Perspective.HasShadow())
+		@if (SpriteFactory.Perspective.HasShadow())
 		{
 			<MudElement Class="d-inline-flex flex-wrap gap-2">
-				<MudCheckBox @bind-Value="@Shadow" Label="Shadow" />
-				@if (Shadow)
+				<MudCheckBox @bind-Value="@SpriteFactory.Shadow" Label="Shadow" />
+				@if (SpriteFactory.Shadow)
 				{
 					<MudColorPicker @bind-Value="ShadowMudColor" Label="Shadow Color" Style="@($"color: {ShadowMudColor};")" />
 				}
@@ -138,22 +115,22 @@
 	</MudTabPanel>
 	<MudTabPanel Text="Orientation">
 		<MudElement Class="d-inline-flex flex-wrap gap-2">
-			<MudCheckBox @bind-Value="@FlipX" Label="Flip X" />
-			<MudCheckBox @bind-Value="@FlipY" Label="Flip Y" />
-			<MudCheckBox @bind-Value="@FlipZ" Label="Flip Z" />
+			<MudCheckBox @bind-Value="@SpriteFactory.FlipX" Label="Flip X" />
+			<MudCheckBox @bind-Value="@SpriteFactory.FlipY" Label="Flip Y" />
+			<MudCheckBox @bind-Value="@SpriteFactory.FlipZ" Label="Flip Z" />
 		</MudElement>
 		<br />
-		<CuboidOrientationInput @bind-Value="@CuboidOrientation" />
+		<CuboidOrientationInput @bind-Value="@SpriteFactory.CuboidOrientation" />
 	</MudTabPanel>
 	<MudTabPanel Text="Post-Processing">
 		<MudElement Class="d-inline-flex flex-wrap gap-2">
-			<MudNumericField T="ushort" @bind-Value="ScaleX" Label="Scale X" Variant="Variant.Text" Min="1" />
-			<MudNumericField T="ushort" @bind-Value="ScaleY" Label="Scale Y" Variant="Variant.Text" Min="1" />
+			<MudNumericField T="ushort" @bind-Value="SpriteFactory.ScaleX" Label="Scale X" Variant="Variant.Text" Min="1" />
+			<MudNumericField T="ushort" @bind-Value="SpriteFactory.ScaleY" Label="Scale Y" Variant="Variant.Text" Min="1" />
 		</MudElement>
 		<br />
 		<MudElement Class="d-inline-flex flex-wrap gap-2">
-			<MudCheckBox @bind-Value="@Outline" Label="Outline" />
-			@if (Outline)
+			<MudCheckBox @bind-Value="@SpriteFactory.Outline" Label="Outline" />
+			@if (SpriteFactory.Outline)
 			{
 				<MudColorPicker @bind-Value="OutlineMudColor" Label="Outline Color" Style="@($"color: {OutlineMudColor};")" />
 			}

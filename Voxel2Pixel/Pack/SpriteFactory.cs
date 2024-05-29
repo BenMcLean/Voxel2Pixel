@@ -143,7 +143,7 @@ namespace Voxel2Pixel.Pack
 		public static Sprite Build(SpriteFactory factory)
 		{
 			if (factory.NeedsReorientation)
-				factory = factory.Reorient();
+				factory = factory.Reoriented();
 			Sprite sprite = new(
 				width: (ushort)(VoxelDraw.Width(factory.Perspective, factory.Model, factory.PeakScaleX) * factory.ScaleX + (factory.Outline ? 2 : 0)),
 				height: (ushort)(VoxelDraw.Height(factory.Perspective, factory.Model, factory.PeakScaleX) * factory.ScaleX + (factory.Outline ? 2 : 0)))
@@ -226,7 +226,7 @@ namespace Voxel2Pixel.Pack
 				};
 			return factory;
 		}
-		protected SpriteFactory Reorient()
+		protected SpriteFactory Reoriented()
 		{
 			SpriteFactory factory = Flipped();
 			if (factory.CuboidOrientation != CuboidOrientation.SOUTH0)
