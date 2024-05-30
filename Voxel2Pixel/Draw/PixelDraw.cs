@@ -33,7 +33,7 @@ namespace Voxel2Pixel.Draw
 		/// <param name="color">rgba color to draw</param>
 		/// <param name="width">width of texture or 0 to assume square texture</param>
 		/// <returns>same texture with pixel drawn</returns>
-		public static byte[] DrawPixel(this byte[] texture, uint color, ushort x, ushort y, ushort width = 0)
+		public static byte[] DrawPixel(this byte[] texture, ushort x, ushort y, uint color = 0xFFFFFFFFu, ushort width = 0)
 		{
 			ushort xSide = (ushort)((width < 1 ? (ushort)Math.Sqrt(texture.Length >> 2) : width) << 2),
 				ySide = (ushort)((width < 1 ? xSide : texture.Length / width) >> 2);
@@ -58,7 +58,7 @@ namespace Voxel2Pixel.Draw
 		public static byte[] DrawRectangle(this byte[] texture, uint color, int x, int y, int rectWidth = 1, int rectHeight = 1, ushort width = 0)
 		{
 			if (rectWidth == 1 && rectHeight == 1)
-				return texture.DrawPixel(color, (ushort)x, (ushort)y, width);
+				return texture.DrawPixel((ushort)x, (ushort)y, color, width);
 			if (rectHeight < 1) rectHeight = rectWidth;
 			if (x < 0)
 			{
@@ -291,6 +291,47 @@ namespace Voxel2Pixel.Draw
 						destinationIndex: y + xSide - 4 - x,
 						length: 4);
 			return flipped;
+		}
+		/// <summary>
+		/// Based on https://iiif.io/api/annex/notes/rotation/
+		/// </summary>
+		public static void RotatedSize(ushort width, ushort height, out ushort rotatedWidth, out ushort rotatedHeight, double radians = 0d)
+		{
+			double cos = Math.Abs(Math.Cos(radians)),
+				sin = Math.Abs(Math.Sin(radians));
+			rotatedWidth = (ushort)(width * cos + height * sin);
+			rotatedHeight = (ushort)(width * sin + height * cos);
+		}
+		/// <summary>
+		/// Based on https://stackoverflow.com/a/6207833
+		/// </summary>
+		public static byte[] Rotate(this byte[] texture, out ushort rotatedWidth, out ushort rotatedHeight, double radians = 0d, ushort width = 0)
+		{
+			if (width < 1)
+				width = (ushort)Math.Sqrt(texture.Length >> 2);
+			ushort height = Height(texture.Length, width);
+			double cos = Math.Cos(radians),
+				sin = Math.Sin(radians);
+			rotatedWidth = (ushort)(width * Math.Abs(cos) + height * Math.Abs(sin));
+			rotatedHeight = (ushort)(width * Math.Abs(sin) + height * Math.Abs(cos));
+			byte[] rotated = new byte[rotatedWidth * rotatedHeight << 2];
+			double offsetX = (width >> 1) - cos * (rotatedWidth >> 1) - sin * (rotatedHeight >> 1),
+				offsetY = (height >> 1) - cos * (rotatedHeight >> 1) + sin * (rotatedWidth >> 1);
+			for (ushort y = 0; y < rotatedHeight; y++)
+				for (ushort x = 0; x < rotatedWidth; x++)
+					if ((int)(x * cos + y * sin + offsetX) is int oldX
+						&& oldX >= 0 && oldX < width
+						&& (int)(y * cos - x * sin + offsetY) is int oldY
+						&& oldY >= 0 && oldY < height)
+						rotated.DrawPixel(
+							x: x,
+							y: y,
+							color: texture.Pixel(
+								x: (ushort)oldX,
+								y: (ushort)oldY,
+								width: width),
+							width: rotatedWidth);
+			return rotated;
 		}
 		/// <summary>
 		/// Rotates image clockwise by 45 degrees
@@ -1255,6 +1296,9 @@ namespace Voxel2Pixel.Draw
 		}
 		#endregion Image manipulation
 		#region Utilities
+		public static uint Pixel(this byte[] texture, ushort x, ushort y, ushort width = 0) => BinaryPrimitives.ReadUInt32BigEndian(texture.AsSpan(
+			start: y * ((width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2) + (x << 2),
+			length: 4));
 		/// <summary>
 		/// Compute power of two greater than or equal to `n`
 		/// </summary>
