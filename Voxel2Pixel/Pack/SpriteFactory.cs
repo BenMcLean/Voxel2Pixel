@@ -168,7 +168,8 @@ namespace Voxel2Pixel.Pack
 					ScaleY = factory.ScaleY,
 				},
 				peakScaleX: factory.PeakScaleX,
-				peakScaleY: factory.PeakScaleY);
+				peakScaleY: factory.PeakScaleY,
+				radians: factory.Radians);
 			if (factory.Outline)
 				sprite = sprite.Outline(
 					color: factory.OutlineColor,

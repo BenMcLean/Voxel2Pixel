@@ -112,6 +112,10 @@
 				}
 			</MudElement>
 		}
+		@if (SpriteFactory.Perspective == Perspective.Stacked)
+		{
+			<MudSlider @bind-Value="@SpriteFactory.Radians" Min="0d" Max="@Math.Tau">Radians</MudSlider>
+		}
 	</MudTabPanel>
 	<MudTabPanel Text="Orientation">
 		<MudElement Class="d-inline-flex flex-wrap gap-2">

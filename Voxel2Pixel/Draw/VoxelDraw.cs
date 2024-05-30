@@ -15,7 +15,7 @@ namespace Voxel2Pixel.Draw
 	public static class VoxelDraw
 	{
 		#region Perspectives
-		public static void Draw(Perspective perspective, IModel model, ITriangleRenderer renderer, byte peakScaleX = 6, byte peakScaleY = 6)
+		public static void Draw(Perspective perspective, IModel model, ITriangleRenderer renderer, byte peakScaleX = 6, byte peakScaleY = 6, double radians = 0d)
 		{
 			switch (perspective)
 			{
@@ -48,7 +48,7 @@ namespace Voxel2Pixel.Draw
 					IsoShadow(model, renderer);
 					break;
 				case Perspective.Stacked:
-					Stacked(model, renderer);
+					Stacked(model, renderer, radians);
 					break;
 				case Perspective.ZSlices:
 					ZSlices(model, renderer);
