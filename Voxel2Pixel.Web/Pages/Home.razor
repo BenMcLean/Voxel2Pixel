@@ -114,7 +114,7 @@
 		}
 		@if (SpriteFactory.Perspective == Perspective.Stacked)
 		{
-			<MudSlider @bind-Value="@SpriteFactory.Radians" Min="0d" Max="@Math.Tau">Radians</MudSlider>
+			<MudSlider @bind-Value="@SpriteFactory.Radians" Min="0d" Max="@Math.Tau" Step="double.Epsilon">Radians</MudSlider>
 		}
 	</MudTabPanel>
 	<MudTabPanel Text="Orientation">
