@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
-using Voxel2Pixel.Pack;
 using Voxel2Pixel.Render;
 
 namespace Voxel2Pixel.Draw
@@ -53,33 +52,20 @@ namespace Voxel2Pixel.Draw
 					break;
 			}
 		}
-		public static ushort Width(Perspective perspective, IModel model, byte peakScaleX = 6) => perspective switch
+		public static Point Size(Perspective perspective, IModel model, byte peakScaleX = 6, byte peakScaleY = 6, double radians = 0d) => perspective switch
 		{
-			Perspective.FrontPeak => (ushort)(FrontWidth(model) * peakScaleX),
-			Perspective.Overhead => OverheadWidth(model),
-			Perspective.Underneath => UnderneathWidth(model),
-			Perspective.Diagonal => DiagonalWidth(model),
-			Perspective.DiagonalPeak => (ushort)(DiagonalWidth(model) * peakScaleX),
-			Perspective.Above => AboveWidth(model),
-			Perspective.Iso => IsoWidth(model),
-			Perspective.IsoShadow => IsoShadowWidth(model),
-			Perspective.Stacked => StackedWidth(model),
-			_ => FrontWidth(model),
+			Perspective.FrontPeak => FrontPeakSize(model, peakScaleX, peakScaleY),
+			Perspective.Overhead => OverheadSize(model),
+			Perspective.Underneath => UnderneathSize(model),
+			Perspective.Diagonal => DiagonalSize(model),
+			Perspective.DiagonalPeak => DiagonalPeakSize(model, peakScaleX, peakScaleY),
+			Perspective.Above => AboveSize(model),
+			Perspective.Iso => IsoSize(model),
+			Perspective.IsoShadow => IsoShadowSize(model),
+			Perspective.Stacked => StackedSize(model, radians),
+			_ => FrontSize(model),
 		};
-		public static ushort Height(Perspective perspective, IModel model, byte peakScaleY = 6) => perspective switch
-		{
-			Perspective.FrontPeak => (ushort)(FrontHeight(model) * peakScaleY),
-			Perspective.Overhead => OverheadHeight(model),
-			Perspective.Underneath => UnderneathHeight(model),
-			Perspective.Diagonal => DiagonalHeight(model),
-			Perspective.DiagonalPeak => (ushort)(DiagonalHeight(model) * peakScaleY),
-			Perspective.Above => AboveHeight(model),
-			Perspective.Iso => IsoHeight(model),
-			Perspective.IsoShadow => IsoShadowHeight(model),
-			Perspective.Stacked => StackedHeight(model),
-			_ => FrontHeight(model),
-		};
-		public static Point Locate(Perspective perspective, IModel model, Point3D point, byte peakScaleX = 6, byte peakScaleY = 6)
+		public static Point Locate(Perspective perspective, IModel model, Point3D point, byte peakScaleX = 6, byte peakScaleY = 6, double radians = 0d)
 		{
 			Point result;
 			switch (perspective)
@@ -103,7 +89,7 @@ namespace Voxel2Pixel.Draw
 				case Perspective.IsoShadow:
 					return IsoShadowLocate(model, point);
 				case Perspective.Stacked:
-					return StackedLocate
+					return StackedLocate(model, point, radians);
 			}
 			return perspective.IsPeak() ? new()
 			{
@@ -128,8 +114,7 @@ namespace Voxel2Pixel.Draw
 		}
 		#endregion Records
 		#region Straight
-		public static ushort FrontWidth(IModel model) => model.SizeX;
-		public static ushort FrontHeight(IModel model) => model.SizeZ;
+		public static Point FrontSize(IModel model) => new(model.SizeX, model.SizeZ);
 		public static Point FrontLocate(IModel model, Point3D point) => FrontLocate(model.SizeZ, point.X, point.Z);
 		public static Point FrontLocate(ushort sizeZ, int voxelX = 0, int voxelZ = 0) => new()
 		{
@@ -158,6 +143,7 @@ namespace Voxel2Pixel.Draw
 							index: voxelY.Index,
 							visibleFace: visibleFace);
 		}
+		public static Point FrontPeakSize(IModel model, ushort peakScaleX = 6, ushort peakScaleY = 6) => new(model.SizeX * peakScaleX, model.SizeZ * peakScaleY);
 		public static void FrontPeak(IModel model, IRectangleRenderer renderer, byte scaleX = 6, byte scaleY = 6)
 		{
 			ushort voxelWidth = model.SizeX,
@@ -203,8 +189,7 @@ namespace Voxel2Pixel.Draw
 								sizeX: scaleX,
 								sizeY: scaleY);
 		}
-		public static ushort OverheadWidth(IModel model) => model.SizeX;
-		public static ushort OverheadHeight(IModel model) => model.SizeY;
+		public static Point OverheadSize(IModel model) => new(model.SizeX, model.SizeY);
 		public static void Overhead(IModel model, IRectangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Top)
 		{
 			ushort width = model.SizeX,
@@ -227,8 +212,7 @@ namespace Voxel2Pixel.Draw
 							index: voxelZ.Index,
 							visibleFace: visibleFace);
 		}
-		public static ushort UnderneathWidth(IModel model) => model.SizeX;
-		public static ushort UnderneathHeight(IModel model) => model.SizeY;
+		public static Point UnderneathSize(IModel model) => new(model.SizeX, model.SizeY);
 		public static void Underneath(IModel model, IRectangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Top)
 		{
 			ushort width = model.SizeX,
@@ -253,14 +237,13 @@ namespace Voxel2Pixel.Draw
 		}
 		#endregion Straight
 		#region Diagonal
-		public static ushort DiagonalWidth(IModel model) => (ushort)(model.SizeX + model.SizeY);
-		public static ushort DiagonalHeight(IModel model) => model.SizeZ;
+		public static Point DiagonalSize(IModel model) => new(
+			X: model.SizeX + model.SizeY,
+			Y: model.SizeZ);
 		public static Point DiagonalLocate(IModel model, Point3D point) => DiagonalLocate(model.SizeZ, point);
-		public static Point DiagonalLocate(ushort sizeZ, Point3D point) => new()
-		{
-			X = point.X + point.Y,
-			Y = sizeZ - 1 - point.Z,
-		};
+		public static Point DiagonalLocate(ushort sizeZ, Point3D point) => new(
+			X: point.X + point.Y,
+			Y: sizeZ - 1 - point.Z);
 		public static void Diagonal(IModel model, IRectangleRenderer renderer)
 		{
 			ushort voxelWidth = model.SizeX,
@@ -303,8 +286,9 @@ namespace Voxel2Pixel.Draw
 							index: rect.Index,
 							visibleFace: rect.VisibleFace);
 		}
-		public static ushort DiagonalPeakWidth(IModel model, byte scaleX = 6) => (ushort)((model.SizeX + model.SizeY) * scaleX);
-		public static ushort DiagonalPeakHeight(IModel model, byte scaleY = 6) => (ushort)(model.SizeZ * scaleY);
+		public static Point DiagonalPeakSize(IModel model, byte peakScaleX = 6, byte peakScaleY = 6) => new(
+			X: (model.SizeX + model.SizeY) * peakScaleX,
+			Y: model.SizeZ * peakScaleY);
 		public static void DiagonalPeak(IModel model, IRectangleRenderer renderer, byte scaleX = 6, byte scaleY = 6)
 		{
 			ushort voxelWidth = model.SizeX,
@@ -368,13 +352,12 @@ namespace Voxel2Pixel.Draw
 								sizeX: scaleX,
 								sizeY: scaleY);
 		}
-		public static ushort AboveWidth(IModel model) => model.SizeX;
-		public static ushort AboveHeight(IModel model) => (ushort)(model.SizeY + model.SizeZ);
-		public static Point AboveLocate(IModel model, Point3D point) => new()
-		{
-			X = point.X,
-			Y = AboveHeight(model) - 1 - point.Y - point.Z,
-		};
+		public static Point AboveSize(IModel model) => new(
+			X: model.SizeX,
+			Y: model.SizeY + model.SizeZ);
+		public static Point AboveLocate(IModel model, Point3D point) => new(
+			X: point.X,
+			Y: model.SizeY + model.SizeZ - 1 - point.Y - point.Z);
 		/// <summary>
 		/// Renders from a 3/4 perspective
 		/// </summary>
@@ -422,19 +405,18 @@ namespace Voxel2Pixel.Draw
 		}
 		#endregion Diagonal
 		#region Isometric
-		public static ushort IsoWidth(IModel model) => (ushort)(2 * (model.SizeX + model.SizeY));
-		public static ushort IsoHeight(IModel model) => (ushort)(2 * (model.SizeX + model.SizeY) + 4 * model.SizeZ - 1);
-		public static Point IsoLocate(IModel model, Point3D point) => new()
-		{
+		public static Point IsoSize(IModel model) => new(
+			X: 2 * (model.SizeX + model.SizeY),
+			Y: 2 * (model.SizeX + model.SizeY) + 4 * model.SizeZ - 1);
+		public static Point IsoLocate(IModel model, Point3D point) => new(
 			// To move one x+ in voxels is x + 2, y - 2 in pixels.
 			// To move one x- in voxels is x - 2, y + 2 in pixels.
 			// To move one y+ in voxels is x - 2, y - 2 in pixels.
 			// To move one y- in voxels is x + 2, y + 2 in pixels.
 			// To move one z+ in voxels is y - 4 in pixels.
 			// To move one z- in voxels is y + 4 in pixels.
-			X = 2 * (model.SizeY + point.X - point.Y),
-			Y = IsoHeight(model) - 2 * (point.X + point.Y) - 4 * point.Z - 1,
-		};
+			X: 2 * (model.SizeY + point.X - point.Y),
+			Y: IsoSize(model).Y - 2 * (point.X + point.Y) - 4 * point.Z - 1);
 		public static void Iso(IModel model, ITriangleRenderer renderer)
 		{
 			ushort voxelWidth = model.SizeX,
@@ -513,17 +495,16 @@ namespace Voxel2Pixel.Draw
 					index: triangle.Value.Index,
 					visibleFace: triangle.Value.VisibleFace);
 		}
-		public static ushort IsoShadowWidth(IModel model) => IsoWidth(model);
-		public static ushort IsoShadowHeight(IModel model) => (ushort)(2 * (model.SizeX + model.SizeY) - 1);
-		public static Point IsoShadowLocate(IModel model, Point3D point) => new()
-		{
+		public static Point IsoShadowSize(IModel model) => new(
+			X: 2 * (model.SizeX + model.SizeY),
+			Y: 2 * (model.SizeX + model.SizeY) - 1);
+		public static Point IsoShadowLocate(IModel model, Point3D point) => new(
 			// To move one x+ in voxels is x + 2, y - 2 in pixels.
 			// To move one x- in voxels is x - 2, y + 2 in pixels.
 			// To move one y+ in voxels is x - 2, y - 2 in pixels.
 			// To move one y- in voxels is x + 2, y + 2 in pixels.
-			X = 2 * (model.SizeY + point.X - point.Y),
-			Y = 2 * (point.X + point.Y) - 1,
-		};
+			X: 2 * (model.SizeY + point.X - point.Y),
+			Y: 2 * (point.X + point.Y) - 1);
 		public static void IsoShadow(IModel model, ITriangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Top)
 		{
 			ushort width = model.SizeX,
@@ -638,8 +619,6 @@ namespace Voxel2Pixel.Draw
 				X: (int)(model.SizeX * cos + model.SizeY * sin),
 				Y: (int)(model.SizeX * sin + model.SizeY * cos));
 		}
-		public static ushort ZSliceWidth(IModel model, double radians = 0d) => (ushort)(model.SizeX * Math.Abs(Math.Cos(radians)) + model.SizeY * Math.Abs(Math.Sin(radians)));
-		public static ushort ZSliceHeight(IModel model, double radians = 0d) => (ushort)(model.SizeX * Math.Abs(Math.Sin(radians)) + model.SizeY * Math.Abs(Math.Cos(radians)));
 		public static void ZSlice(IModel model, IRectangleRenderer renderer, ushort z = 0, double radians = 0d, VisibleFace visibleFace = VisibleFace.Front)
 		{
 			Point size = ZSliceSize(model, radians);
@@ -668,8 +647,6 @@ namespace Voxel2Pixel.Draw
 				X: (int)(model.SizeX * cos + model.SizeY * sin),
 				Y: (int)(model.SizeX * sin + model.SizeY * cos) + model.SizeZ - 1);
 		}
-		public static ushort StackedWidth(IModel model, double radians = 0) => ZSliceWidth(model, radians);
-		public static ushort StackedHeight(IModel model, double radians = 0) => (ushort)(ZSliceHeight(model, radians) + model.SizeZ - 1);
 		public static Point StackedLocate(IModel model, Point3D point, double radians = 0d)
 		{
 			double cos = Math.Cos(radians),

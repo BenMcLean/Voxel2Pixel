@@ -75,7 +75,7 @@ namespace Voxel2Pixel.Test.Pack
 		public void RotateTest()
 		{
 			VoxFileModel voxFileModel = new(@"..\..\..\NumberCube.vox");
-			Sprite sprite = new(VoxelDraw.Width(Perspective.Iso, voxFileModel), VoxelDraw.Height(Perspective.Iso, voxFileModel))
+			Sprite sprite = new(VoxelDraw.Size(Perspective.Iso, voxFileModel))
 			{
 				VoxelColor = new NaiveDimmer(voxFileModel.Palette),
 			};

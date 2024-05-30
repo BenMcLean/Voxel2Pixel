@@ -144,9 +144,15 @@ namespace Voxel2Pixel.Pack
 		{
 			if (factory.NeedsReorientation)
 				factory = factory.Reoriented();
+			Point size = VoxelDraw.Size(
+				perspective: factory.Perspective,
+				model: factory.Model,
+				peakScaleX: factory.PeakScaleX,
+				peakScaleY: factory.PeakScaleY,
+				radians: factory.Radians);
 			Sprite sprite = new(
-				width: (ushort)(VoxelDraw.Width(factory.Perspective, factory.Model, factory.PeakScaleX) * factory.ScaleX + (factory.Outline ? 2 : 0)),
-				height: (ushort)(VoxelDraw.Height(factory.Perspective, factory.Model, factory.PeakScaleX) * factory.ScaleX + (factory.Outline ? 2 : 0)))
+				width: (ushort)(size.X * factory.ScaleX + (factory.Outline ? 2 : 0)),
+				height: (ushort)(size.Y * factory.ScaleX + (factory.Outline ? 2 : 0)))
 			{
 				VoxelColor = factory.VoxelColor,
 			};
@@ -173,14 +179,17 @@ namespace Voxel2Pixel.Pack
 				sprite.Texture = new byte[sprite.Texture.Length];
 				Perspective shadowPerspective = factory.Perspective == Perspective.Iso ? Perspective.IsoShadow : Perspective.Underneath;
 				sprite.VoxelColor = factory.ShadowColor;
+				Point shadowSize = VoxelDraw.Size(
+					perspective: shadowPerspective,
+					model: factory.Model);
 				VoxelDraw.Draw(
 					perspective: shadowPerspective,
 					model: factory.Model,
 					renderer: new OffsetRenderer
 					{
 						RectangleRenderer = sprite,
-						OffsetX = (VoxelDraw.Width(factory.Perspective, factory.Model) - VoxelDraw.Width(shadowPerspective, factory.Model)) * factory.ScaleX + (factory.Outline ? 1 : 0),
-						OffsetY = (VoxelDraw.Height(factory.Perspective, factory.Model) - VoxelDraw.Height(shadowPerspective, factory.Model)) * factory.ScaleY + (factory.Outline ? 1 : 0),
+						OffsetX = (size.X - shadowSize.X) * factory.ScaleX + (factory.Outline ? 1 : 0),
+						OffsetY = (size.Y - shadowSize.Y) * factory.ScaleY + (factory.Outline ? 1 : 0),
 						ScaleX = factory.ScaleX,
 						ScaleY = factory.ScaleY,
 					});
