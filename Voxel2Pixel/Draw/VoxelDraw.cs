@@ -50,6 +50,9 @@ namespace Voxel2Pixel.Draw
 				case Perspective.Stacked:
 					Stacked(model, renderer);
 					break;
+				case Perspective.ZSlices:
+					ZSlices(model, renderer);
+					break;
 			}
 		}
 		public static Point Size(Perspective perspective, IModel model, byte peakScaleX = 6, byte peakScaleY = 6, double radians = 0d) => perspective switch
@@ -63,6 +66,7 @@ namespace Voxel2Pixel.Draw
 			Perspective.Iso => IsoSize(model),
 			Perspective.IsoShadow => IsoShadowSize(model),
 			Perspective.Stacked => StackedSize(model, radians),
+			Perspective.ZSlices => ZSlicesSize(model),
 			_ => FrontSize(model),
 		};
 		public static Point Locate(Perspective perspective, IModel model, Point3D point, byte peakScaleX = 6, byte peakScaleY = 6, double radians = 0d)
@@ -90,6 +94,8 @@ namespace Voxel2Pixel.Draw
 					return IsoShadowLocate(model, point);
 				case Perspective.Stacked:
 					return StackedLocate(model, point, radians);
+				case Perspective.ZSlices:
+					return ZSlicesLocate(model, point);
 			}
 			return perspective.IsPeak() ? new()
 			{
@@ -619,7 +625,18 @@ namespace Voxel2Pixel.Draw
 				X: (int)(model.SizeX * cos + model.SizeY * sin),
 				Y: (int)(model.SizeX * sin + model.SizeY * cos));
 		}
-		public static void ZSlice(IModel model, IRectangleRenderer renderer, ushort z = 0, double radians = 0d, VisibleFace visibleFace = VisibleFace.Front)
+		public static void ZSlice(IModel model, IRectangleRenderer renderer, ushort z = 0, VisibleFace visibleFace = VisibleFace.Front)
+		{
+			for (ushort y = 0; y < model.SizeY; y++)
+				for (ushort x = 0; x < model.SizeX; x++)
+					if (model[x, (ushort)(model.SizeY - 1 - y), z] is byte index && index != 0)
+						renderer.Rect(
+							x: x,
+							y: y,
+							index: index,
+							visibleFace: visibleFace);
+		}
+		public static void ZSlice(IModel model, IRectangleRenderer renderer, double radians, ushort z = 0, VisibleFace visibleFace = VisibleFace.Front)
 		{
 			Point size = ZSliceSize(model, radians);
 			double cos = Math.Cos(radians),
@@ -664,17 +681,34 @@ namespace Voxel2Pixel.Draw
 			OffsetRenderer offsetRenderer = new()
 			{
 				RectangleRenderer = renderer,
+				OffsetY = model.SizeZ - 1,
 			};
-			for (ushort z = 0; z < model.SizeZ; z++)
+			for (ushort z = 0; z < model.SizeZ; z++, offsetRenderer.OffsetY--)
+				ZSlice(
+					model: model,
+					renderer: offsetRenderer,
+					radians: radians,
+					z: z,
+					visibleFace: visibleFace);
+		}
+		public static Point ZSlicesSize(IModel model) => new(
+			X: model.SizeX * model.SizeZ,
+			Y: model.SizeY);
+		public static Point ZSlicesLocate(IModel model, Point3D point) => new(
+			X: model.SizeX * point.Z + point.X,
+			Y: point.Y);
+		public static void ZSlices(IModel model, IRectangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Front)
+		{
+			OffsetRenderer offsetRenderer = new()
 			{
-				offsetRenderer.OffsetY = model.SizeZ - 1 - z;
+				RectangleRenderer = renderer,
+			};
+			for (ushort z = 0; z < model.SizeZ; z++, offsetRenderer.OffsetX += model.SizeX)
 				ZSlice(
 					model: model,
 					renderer: offsetRenderer,
 					z: z,
-					radians: radians,
 					visibleFace: visibleFace);
-			}
 		}
 		#endregion Stacked
 	}
