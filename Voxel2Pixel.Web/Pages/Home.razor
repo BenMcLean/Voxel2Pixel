@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Components.Web
 @using MudBlazor.Utilities
 @using SixLabors.ImageSharp
+@using SixLabors.ImageSharp.Formats.Gif
 @using SixLabors.ImageSharp.Formats.Png
 @using Voxel2Pixel
 @using Voxel2Pixel.Color
@@ -21,16 +22,16 @@
 	Voxel2Pixel.Model.VoxFileModel? VoxFileModel { get; set; } = null;
 	public string ImageString { get; set; } = string.Empty;
 	public MarkupString ExceptionMessage { get; set; }
-	public SpriteMaker SpriteFactory { get; set; } = new();
+	public SpriteMaker SpriteMaker { get; set; } = new();
 	public MudColor OutlineMudColor
 	{
-		get => MudColor(SpriteFactory.OutlineColor);
-		set => SpriteFactory.SetOutlineColor(Color(value));
+		get => MudColor(SpriteMaker.OutlineColor);
+		set => SpriteMaker.SetOutlineColor(Color(value));
 	}
 	public MudColor ShadowMudColor
 	{
 		get => shadowMudColor;
-		set => SpriteFactory.SetShadowColor(Color(shadowMudColor = value));
+		set => SpriteMaker.SetShadowColor(Color(shadowMudColor = value));
 	}
 	private MudColor shadowMudColor = MudColor(Sprite.DefaultShadowColor);
 	#endregion Data
@@ -49,7 +50,7 @@
 			await file.OpenReadStream().CopyToAsync(ms);
 			ms.Position = 0;
 			VoxFileModel = new(ms);
-			Preview();
+			SingleImage();
 		}
 		catch (Exception ex)
 		{
@@ -58,15 +59,35 @@
 		IsLoading = false;
 		StateHasChanged();
 	}
-	public void Preview()
+	public void SingleImage()
 	{
 		if (VoxFileModel is VoxFileModel)
-			ImageString = SpriteFactory
+			ImageString = SpriteMaker
 				.Set(VoxFileModel)
 				.Set(new NaiveDimmer(VoxFileModel.Palette))
 				.Make()
 				.Png()
 				.ToBase64String(PngFormat.Instance);
+	}
+	public void Iso8Gif()
+	{
+		if (VoxFileModel is VoxFileModel)
+			ImageString = SpriteMaker
+				.Set(VoxFileModel)
+				.Set(new NaiveDimmer(VoxFileModel.Palette))
+				.Iso8()
+				.AnimatedGif()
+				.ToBase64String(GifFormat.Instance);
+	}
+	public void StacksGif()
+	{
+		if (VoxFileModel is VoxFileModel)
+			ImageString = SpriteMaker
+				.Set(VoxFileModel)
+				.Set(new NaiveDimmer(VoxFileModel.Palette))
+				.Stacks()
+				.AnimatedGif()
+				.ToBase64String(GifFormat.Instance);
 	}
 }
 @if (!string.IsNullOrWhiteSpace(ImageString))
@@ -89,59 +110,61 @@
 		</MudFileUpload>
 	</MudTabPanel>
 	<MudTabPanel Text="Perspective">
-		<MudSelect T="Perspective" @bind-Value="@SpriteFactory.Perspective" Class="flex-grow-0">
+		<MudSelect T="Perspective" @bind-Value="@SpriteMaker.Perspective" Class="flex-grow-0">
 			@foreach (Perspective perspective in Enum.GetValues(typeof(Perspective)))
 			{
 				<MudSelectItem Value="@perspective" />
 			}
 		</MudSelect>
-		@if (SpriteFactory.Perspective.IsPeak())
+		@if (SpriteMaker.Perspective.IsPeak())
 		{
 			<MudElement Class="d-inline-flex flex-wrap gap-2">
-				<MudNumericField T="byte" @bind-Value="SpriteFactory.PeakScaleX" Label="Peak Scale X" Variant="Variant.Text" Min="1" Max="255" />
-				<MudNumericField T="byte" @bind-Value="SpriteFactory.PeakScaleY" Label="Peak Scale Y" Variant="Variant.Text" Min="2" Max="255" />
+				<MudNumericField T="byte" @bind-Value="SpriteMaker.PeakScaleX" Label="Peak Scale X" Variant="Variant.Text" Min="1" Max="255" />
+				<MudNumericField T="byte" @bind-Value="SpriteMaker.PeakScaleY" Label="Peak Scale Y" Variant="Variant.Text" Min="2" Max="255" />
 			</MudElement>
 		}
-		@if (SpriteFactory.Perspective.HasShadow())
+		@if (SpriteMaker.Perspective.HasShadow())
 		{
 			<MudElement Class="d-inline-flex flex-wrap gap-2">
-				<MudCheckBox @bind-Value="@SpriteFactory.Shadow" Label="Shadow" />
-				@if (SpriteFactory.Shadow)
+				<MudCheckBox @bind-Value="@SpriteMaker.Shadow" Label="Shadow" />
+				@if (SpriteMaker.Shadow)
 				{
 					<MudColorPicker @bind-Value="ShadowMudColor" Label="Shadow Color" Style="@($"color: {ShadowMudColor};")" />
 				}
 			</MudElement>
 		}
-		@if (SpriteFactory.Perspective == Perspective.Stacked)
+		@if (SpriteMaker.Perspective == Perspective.Stacked)
 		{
-			<MudSlider @bind-Value="@SpriteFactory.Radians" Min="0d" Max="@Math.Tau" Step="double.Epsilon">Radians</MudSlider>
+			<MudSlider @bind-Value="@SpriteMaker.Radians" Min="0d" Max="@Math.Tau" Step="double.Epsilon">Radians</MudSlider>
 		}
 	</MudTabPanel>
 	<MudTabPanel Text="Orientation">
 		<MudElement Class="d-inline-flex flex-wrap gap-2">
-			<MudCheckBox @bind-Value="@SpriteFactory.FlipX" Label="Flip X" />
-			<MudCheckBox @bind-Value="@SpriteFactory.FlipY" Label="Flip Y" />
-			<MudCheckBox @bind-Value="@SpriteFactory.FlipZ" Label="Flip Z" />
+			<MudCheckBox @bind-Value="@SpriteMaker.FlipX" Label="Flip X" />
+			<MudCheckBox @bind-Value="@SpriteMaker.FlipY" Label="Flip Y" />
+			<MudCheckBox @bind-Value="@SpriteMaker.FlipZ" Label="Flip Z" />
 		</MudElement>
 		<br />
-		<CuboidOrientationInput @bind-Value="@SpriteFactory.CuboidOrientation" />
+		<CuboidOrientationInput @bind-Value="@SpriteMaker.CuboidOrientation" />
 	</MudTabPanel>
 	<MudTabPanel Text="Post-Processing">
 		<MudElement Class="d-inline-flex flex-wrap gap-2">
-			<MudNumericField T="ushort" @bind-Value="SpriteFactory.ScaleX" Label="Scale X" Variant="Variant.Text" Min="1" />
-			<MudNumericField T="ushort" @bind-Value="SpriteFactory.ScaleY" Label="Scale Y" Variant="Variant.Text" Min="1" />
+			<MudNumericField T="ushort" @bind-Value="SpriteMaker.ScaleX" Label="Scale X" Variant="Variant.Text" Min="1" />
+			<MudNumericField T="ushort" @bind-Value="SpriteMaker.ScaleY" Label="Scale Y" Variant="Variant.Text" Min="1" />
 		</MudElement>
 		<br />
 		<MudElement Class="d-inline-flex flex-wrap gap-2">
-			<MudCheckBox @bind-Value="@SpriteFactory.Outline" Label="Outline" />
-			@if (SpriteFactory.Outline)
+			<MudCheckBox @bind-Value="@SpriteMaker.Outline" Label="Outline" />
+			@if (SpriteMaker.Outline)
 			{
 				<MudColorPicker @bind-Value="OutlineMudColor" Label="Outline Color" Style="@($"color: {OutlineMudColor};")" />
 			}
 		</MudElement>
 	</MudTabPanel>
 	<MudTabPanel Text="Export" Disabled="VoxFileModel is null">
-		<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" name="Generate" @onclick="Preview">Generate Single Image</MudButton>
+		<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" name="SingleImage" @onclick="SingleImage">Generate Single Image</MudButton>
+		<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" name="Iso8" @onclick="Iso8Gif">Generate 8 Isometric Directional Sprites Animation</MudButton>
+		<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" name="Iso8" @onclick="StacksGif">Generate Sprite Stacks Animation</MudButton>
 	</MudTabPanel>
 </MudTabs>
 @if (!string.IsNullOrWhiteSpace(ExceptionMessage.ToString()))
