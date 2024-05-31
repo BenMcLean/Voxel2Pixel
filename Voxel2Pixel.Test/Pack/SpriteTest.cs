@@ -105,7 +105,7 @@ namespace Voxel2Pixel.Test.Pack
 			List<Sprite> sprites = [];
 			for (int i = 0; i < numSprites; i++)
 			{
-				double radians = Math.PI * 2d * ((double)i / numSprites);
+				double radians = Math.Tau * ((double)i / numSprites);
 				Sprite sprite = new(VoxelDraw.StackedSize(voxFileModel, radians))
 				{
 					VoxelColor = voxelColor,

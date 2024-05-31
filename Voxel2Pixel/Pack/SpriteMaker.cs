@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Voxel2Pixel.Color;
@@ -322,6 +323,16 @@ namespace Voxel2Pixel.Pack
 					.AddRange(points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))))
 					.Make();
 			}
+		}
+		public const double Tau = 2d * Math.PI;
+		public IEnumerable<Sprite> Stacks(ushort quantity = 24)
+		{
+			SpriteMaker maker = Reoriented()
+				.Set(Perspective.Stacked);
+			for (ushort i = 0; i < quantity; i++)
+				yield return maker
+					.SetRadians(Radians + Tau * ((double)i / quantity))
+					.Make();
 		}
 		#endregion Makers
 	}
