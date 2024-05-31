@@ -243,7 +243,8 @@ namespace Voxel2Pixel.Pack
 					model: maker.Model,
 					point: point3D,
 					peakScaleX: maker.PeakScaleX,
-					peakScaleY: maker.PeakScaleY);
+					peakScaleY: maker.PeakScaleY,
+					radians: maker.Radians);
 				return new Point(
 					X: point.X * maker.ScaleX + (maker.Outline ? 1 : 0),
 					Y: point.Y * maker.ScaleY + (maker.Outline ? 1 : 0));

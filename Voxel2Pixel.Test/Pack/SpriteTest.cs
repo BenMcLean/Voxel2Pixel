@@ -42,7 +42,7 @@ namespace Voxel2Pixel.Test.Pack
 				.SameSize()
 				.AddFrameNumbers()
 				.Select(sprite => sprite.Upscale(8, 8))
-				.AnimatedGif(frameDelay: 100)
+				.AnimatedGif()
 				.SaveAsGif("Shadows.gif");
 		}
 		[Fact]
@@ -101,20 +101,18 @@ namespace Voxel2Pixel.Test.Pack
 		{
 			VoxFileModel voxFileModel = new(@"..\..\..\Tree.vox");
 			IVoxelColor voxelColor = new FlatVoxelColor(voxFileModel.Palette);
-			int numSprites = 64;
-			List<Sprite> sprites = [];
-			for (int i = 0; i < numSprites; i++)
+			new SpriteMaker
 			{
-				double radians = Math.Tau * ((double)i / numSprites);
-				Sprite sprite = new(VoxelDraw.StackedSize(voxFileModel, radians))
-				{
-					VoxelColor = voxelColor,
-				};
-				VoxelDraw.Stacked(voxFileModel, sprite, radians);
-				sprites.Add(sprite.Upscale(8, 8));
+				Model = voxFileModel,
+				VoxelColor = voxelColor,
+				Outline = true,
 			}
-			sprites
-				.AnimatedGif(10)
+				.Stacks(24)
+				.Select(sprite => sprite.DrawPoint())
+				.SameSize()
+				.AddFrameNumbers()
+				.Select(sprite => sprite.Upscale(8, 8))
+				.AnimatedGif(25)
 				.SaveAsGif("Stacked.gif");
 		}
 	}

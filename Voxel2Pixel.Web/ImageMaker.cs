@@ -10,6 +10,7 @@ namespace Voxel2Pixel.Web
 	/// </summary>
 	public static class ImageMaker
 	{
+		public const int DefaultFrameDelay = 100;
 		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> Png(ushort width = 0, params byte[] bytes)
 		{
 			if (width < 1)
@@ -23,8 +24,8 @@ namespace Voxel2Pixel.Web
 			data: sprite.Texture,
 			width: sprite.Width,
 			height: sprite.Height);
-		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(int frameDelay = 25, ushort repeatCount = 0, params ISprite[] sprites) => sprites.AsEnumerable().AnimatedGif(frameDelay, repeatCount);
-		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(this IEnumerable<ISprite> sprites, int frameDelay = 25, ushort repeatCount = 0)
+		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(int frameDelay = DefaultFrameDelay, ushort repeatCount = 0, params ISprite[] sprites) => sprites.AsEnumerable().AnimatedGif(frameDelay, repeatCount);
+		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(this IEnumerable<ISprite> sprites, int frameDelay = DefaultFrameDelay, ushort repeatCount = 0)
 		{
 			Sprite[] resized = Voxel2Pixel.ExtensionMethods.SameSize(sprites).ToArray();
 			SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> gif = new(resized[0].Width, resized[0].Height);
@@ -42,7 +43,7 @@ namespace Voxel2Pixel.Web
 			gif.Frames.RemoveFrame(0);//I don't know why ImageSharp has me doing this but if I don't then I get an extra transparent frame at the start.
 			return gif;
 		}
-		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(ushort scaleX, ushort scaleY, ushort width = 0, int frameDelay = 25, ushort repeatCount = 0, params byte[][] frames) => AnimatedGif(
+		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(ushort scaleX, ushort scaleY, ushort width = 0, int frameDelay = DefaultFrameDelay, ushort repeatCount = 0, params byte[][] frames) => AnimatedGif(
 			width: (ushort)(width * scaleX),
 			frameDelay: frameDelay,
 			repeatCount: repeatCount,
@@ -50,7 +51,7 @@ namespace Voxel2Pixel.Web
 				: frames
 					.Select(f => Voxel2Pixel.Draw.PixelDraw.Upscale(f, scaleX, scaleY, width))
 					.ToArray());
-		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(ushort width = 0, int frameDelay = 25, ushort repeatCount = 0, params byte[][] frames)
+		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(ushort width = 0, int frameDelay = DefaultFrameDelay, ushort repeatCount = 0, params byte[][] frames)
 		{
 			if (width < 1)
 				width = (ushort)Math.Sqrt(frames[0].Length >> 2);
