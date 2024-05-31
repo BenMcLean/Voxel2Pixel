@@ -21,7 +21,7 @@
 	Voxel2Pixel.Model.VoxFileModel? VoxFileModel { get; set; } = null;
 	public string ImageString { get; set; } = string.Empty;
 	public MarkupString ExceptionMessage { get; set; }
-	public SpriteFactory SpriteFactory { get; set; } = new();
+	public SpriteMaker SpriteFactory { get; set; } = new();
 	public MudColor OutlineMudColor
 	{
 		get => MudColor(SpriteFactory.OutlineColor);
@@ -64,7 +64,7 @@
 			ImageString = SpriteFactory
 				.Set(VoxFileModel)
 				.Set(new NaiveDimmer(VoxFileModel.Palette))
-				.Build()
+				.Make()
 				.Png()
 				.ToBase64String(PngFormat.Instance);
 	}

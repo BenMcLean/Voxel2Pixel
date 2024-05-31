@@ -107,7 +107,7 @@ namespace Voxel2Pixel.Test.Pack
 			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
 			Dictionary<string, ISprite> dictionary = [];
 			byte direction = 0;
-			foreach (ISprite iSprite in new SpriteFactory
+			foreach (ISprite iSprite in new SpriteMaker
 			{
 				Model = model,
 				VoxelColor = voxelColor,
@@ -115,7 +115,7 @@ namespace Voxel2Pixel.Test.Pack
 			}.Iso8())
 				dictionary.Add("Sora" + direction++, iSprite);
 			direction = 0;
-			foreach (ISprite iSprite in new SpriteFactory
+			foreach (ISprite iSprite in new SpriteMaker
 			{
 				Model = model,
 			}.SetShadowColor(0x88u).Iso8Shadows())

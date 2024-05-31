@@ -14,7 +14,7 @@ namespace Voxel2Pixel.Test.Pack
 		public void SoraGif()
 		{
 			VoxFileModel model = new(@"..\..\..\Sora.vox");
-			new SpriteFactory
+			new SpriteMaker
 			{
 				Model = model,
 				VoxelColor = new NaiveDimmer(model.Palette),
@@ -31,7 +31,7 @@ namespace Voxel2Pixel.Test.Pack
 		public void ShadowGif()
 		{
 			VoxFileModel model = new(@"..\..\..\Sora.vox");
-			new SpriteFactory
+			new SpriteMaker
 			{
 				Model = model,
 				VoxelColor = new NaiveDimmer(model.Palette),
@@ -50,11 +50,11 @@ namespace Voxel2Pixel.Test.Pack
 		{
 			VoxFileModel voxFileModel = new(@"..\..\..\Tree.vox");
 			output.WriteLine(string.Join(", ", voxFileModel.SizeX, voxFileModel.SizeY, voxFileModel.SizeZ));
-			new SpriteFactory
+			new SpriteMaker
 			{
 				Model = voxFileModel,
 				VoxelColor = new NaiveDimmer(voxFileModel.Palette),
-			}.Build()
+			}.Make()
 				.Png()
 				.SaveAsPng("Tree.png");
 		}
@@ -63,11 +63,11 @@ namespace Voxel2Pixel.Test.Pack
 		{
 			byte[][][] bytes = TestData.Arch(80);
 			bytes[1][0][0] = 1;
-			new SpriteFactory
+			new SpriteMaker
 			{
 				Model = new ArrayModel(bytes),
 				VoxelColor = new NaiveDimmer(TestData.RainbowPalette),
-			}.Build()
+			}.Make()
 				.Png()
 				.SaveAsPng("Arch.png");
 		}
