@@ -357,26 +357,30 @@ namespace Voxel2Pixel.Pack
 		/// </summary>
 		public Point RotatedSize(double radians)
 		{
-			double cos = Math.Abs(Math.Cos(radians)),
-				sin = Math.Abs(Math.Sin(radians));
-			ushort height = Height;
-			return new Point(
-				X: (int)(Width * cos + height * sin),
-				Y: (int)(Width * sin + height * cos));
+			PixelDraw.RotatedSize(
+				width: Width,
+				height: Height,
+				rotatedWidth: out ushort rotatedWidth,
+				rotatedHeight: out ushort rotatedHeight,
+				radians: radians);
+			return new Point(rotatedWidth, rotatedHeight);
 		}
 		public Sprite Rotate(double radians)
 		{
-			Sprite sprite = new(RotatedSize(radians))
+			Sprite sprite = new()
 			{
+				Texture = Texture.Rotate(
+					rotatedWidth: out ushort rotatedWidth,
+					rotatedHeight: out ushort rotatedHeight,
+					radians: radians,
+					width: Width),
+				Width = rotatedWidth,
 				VoxelColor = VoxelColor,
 			};
-			Rotate(radians, sprite);
-			ushort height = Height,
-				newHeight = sprite.Height;
 			double cos = Math.Cos(radians),
 				sin = Math.Sin(radians),
-				offsetX = (Width >> 1) - cos * (sprite.Width >> 1) - sin * (newHeight >> 1),
-				offsetY = (height >> 1) - cos * (newHeight >> 1) + sin * (sprite.Width >> 1);
+				offsetX = (Width >> 1) - cos * (rotatedWidth >> 1) - sin * (rotatedHeight >> 1),
+				offsetY = (Height >> 1) - cos * (rotatedHeight >> 1) + sin * (rotatedWidth >> 1);
 			return sprite.AddRange(this.Select(pair => new KeyValuePair<string, Point>(
 				key: pair.Key,
 				value: new Point(
@@ -408,27 +412,5 @@ namespace Voxel2Pixel.Pack
 								y: (ushort)oldY));
 		}
 		#endregion Image manipulation
-		#region Voxel drawing
-		public static Sprite[] Stack(IModel model, IVoxelColor voxelColor, VisibleFace visibleFace = VisibleFace.Front, IDictionary<string, Point3D> points = null)
-		{
-			points ??= new Dictionary<string, Point3D> { { Origin, model.BottomCenter() }, };
-			Sprite[] stack = Enumerable.Range(0, model.SizeZ)
-				.Select(z => new Sprite(width: model.SizeX, height: model.SizeY))
-				.ToArray();
-			foreach (Voxel voxel in model)
-				stack[voxel.Z].Rect(
-					x: voxel.X,
-					y: voxel.Y,
-					color: voxelColor[voxel.Index, visibleFace]);
-			if (points.TryGetValue(Origin, out Point3D origin)
-				&& new Point(origin.X, origin.Y) is Point point)
-				foreach (Sprite sprite in stack)
-					sprite[Origin] = point;
-			foreach (KeyValuePair<string, Point3D> pair in points
-				.Where(pair => !pair.Key.Equals(Origin)))
-				stack[pair.Value.Z][pair.Key] = new Point(pair.Value.X, pair.Value.Y);
-			return stack;
-		}
-		#endregion Voxel drawing
 	}
 }

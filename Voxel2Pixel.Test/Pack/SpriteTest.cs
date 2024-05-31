@@ -83,17 +83,17 @@ namespace Voxel2Pixel.Test.Pack
 			VoxelDraw.Draw(Perspective.Iso, voxFileModel, sprite);
 			sprite["dot"] = new Voxel2Pixel.Model.Point(sprite.Width / 4, 3 * sprite.Height / 4);
 			int numSprites = 64;
-			Sprite origin(Sprite sprite)
+			static Sprite origin(Sprite sprite)
 			{
 				sprite[Sprite.Origin] = new Voxel2Pixel.Model.Point(0, 0);
 				return sprite;
 			}
 			Enumerable.Range(0, numSprites)
 				.Select(i => sprite
-					.Rotate(Math.PI * 2d * ((double)i / numSprites))
+					.Rotate(Math.Tau * ((double)i / numSprites))
 					.DrawPoint("dot"))
 				.Select(origin)
-				.AnimatedGif()
+				.AnimatedGif(10)
 				.SaveAsGif("Rotate.gif");
 		}
 		[Fact]
@@ -108,7 +108,7 @@ namespace Voxel2Pixel.Test.Pack
 				Outline = true,
 			}
 				.Stacks(24)
-				.Select(sprite => sprite.DrawPoint())
+				//.Select(sprite => sprite.DrawPoint())
 				.SameSize()
 				.AddFrameNumbers()
 				.Select(sprite => sprite.Upscale(8, 8))
