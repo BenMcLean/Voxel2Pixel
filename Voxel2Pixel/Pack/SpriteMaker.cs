@@ -76,6 +76,7 @@ namespace Voxel2Pixel.Pack
 		public uint OutlineColor { get; set; } = PixelDraw.DefaultOutlineColor;
 		public double Radians { get; set; } = 0d;
 		public byte Threshold { get; set; } = PixelDraw.DefaultTransparencyThreshold;
+		public bool Crop { get; set; } = true;
 		#endregion Data
 		#region Constructors
 		public SpriteMaker() { }
@@ -99,6 +100,7 @@ namespace Voxel2Pixel.Pack
 			OutlineColor = maker.OutlineColor;
 			Radians = maker.Radians;
 			Threshold = maker.Threshold;
+			Crop = maker.Crop;
 		}
 		#endregion Constructors
 		#region Setters
@@ -114,6 +116,7 @@ namespace Voxel2Pixel.Pack
 		public SpriteMaker SetScaleX(ushort scaleX) { ScaleX = scaleX; return this; }
 		public SpriteMaker SetScaleY(ushort scaleY) { ScaleY = scaleY; return this; }
 		public SpriteMaker SetShadow(bool shadow) { Shadow = shadow; return this; }
+		public SpriteMaker ToggleShadow() => SetShadow(!Shadow);
 		public SpriteMaker SetShadowColor(IVoxelColor shadowColor) { ShadowColor = shadowColor; return this; }
 		public SpriteMaker SetShadowColor(uint rgba)
 		{
@@ -121,9 +124,12 @@ namespace Voxel2Pixel.Pack
 			return this;
 		}
 		public SpriteMaker SetOutline(bool outline) { Outline = outline; return this; }
+		public SpriteMaker ToggleOutline() => SetOutline(!Outline);
 		public SpriteMaker SetOutlineColor(uint rgba) { OutlineColor = rgba; return this; }
 		public SpriteMaker SetRadians(double radians) { Radians = radians; return this; }
 		public SpriteMaker SetThreshold(byte threshold) { Threshold = threshold; return this; }
+		public SpriteMaker SetCrop(bool crop) { Crop = crop; return this; }
+		public SpriteMaker ToggleCrop() => SetCrop(!Crop);
 		public SpriteMaker Set(Point3D origin)
 		{
 			Points ??= [];
@@ -212,23 +218,49 @@ namespace Voxel2Pixel.Pack
 			{
 				Sprite insert = new(sprite);
 				sprite.Texture = new byte[sprite.Texture.Length];
+				//sprite.Rect(0, 0, 0xFF0000FFu, sprite.Width, sprite.Height);
 				Perspective shadowPerspective = maker.Perspective == Perspective.Iso ? Perspective.IsoShadow : Perspective.Underneath;
-				sprite.VoxelColor = maker.ShadowColor;
-				Point shadowSize = VoxelDraw.Size(
-					perspective: shadowPerspective,
-					model: maker.Model);
-				VoxelDraw.Draw(
-					perspective: shadowPerspective,
-					model: maker.Model,
-					renderer: new OffsetRenderer
-					{
-						RectangleRenderer = sprite,
-						OffsetX = (size.X - shadowSize.X) * maker.ScaleX + (maker.Outline ? 1 : 0),
-						OffsetY = (size.Y - shadowSize.Y) * maker.ScaleY + (maker.Outline ? 1 : 0),
-						ScaleX = maker.ScaleX,
-						ScaleY = maker.ScaleY,
-					});
-				sprite.VoxelColor = maker.VoxelColor;
+				if (maker.Perspective == Perspective.Stacked)
+				{
+					Sprite shadow = new SpriteMaker(maker)
+						.Set(shadowPerspective)
+						.Set(maker.ShadowColor)
+						.SetOutline(false)
+						.SetCrop(false)
+						.SetScaleX(1)
+						.SetScaleY(1)
+						.Make();
+					Point shadowSize = shadow.RotatedSize(maker.Radians);
+					shadow.Rotate(
+						radians: maker.Radians,
+						renderer: new OffsetRenderer
+						{
+							RectangleRenderer = sprite,
+							OffsetX = maker.Outline ? 1 : 0,
+							OffsetY = maker.Model.SizeZ - 1 + (maker.Outline ? 1 : 0),
+							ScaleX = maker.ScaleX,
+							ScaleY = maker.ScaleY,
+						});
+				}
+				else
+				{
+					sprite.VoxelColor = maker.ShadowColor;
+					Point shadowSize = VoxelDraw.Size(
+						perspective: shadowPerspective,
+						model: maker.Model);
+					VoxelDraw.Draw(
+						perspective: shadowPerspective,
+						model: maker.Model,
+						renderer: new OffsetRenderer
+						{
+							RectangleRenderer = sprite,
+							OffsetX = (size.X - shadowSize.X) * maker.ScaleX + (maker.Outline ? 1 : 0),
+							OffsetY = (size.Y - shadowSize.Y) * maker.ScaleY + (maker.Outline ? 1 : 0),
+							ScaleX = maker.ScaleX,
+							ScaleY = maker.ScaleY,
+						});
+					sprite.VoxelColor = maker.VoxelColor;
+				}
 				sprite.DrawTransparentInsert(
 					x: 0,
 					y: 0,
@@ -250,7 +282,9 @@ namespace Voxel2Pixel.Pack
 					Y: point.Y * maker.ScaleY + (maker.Outline ? 1 : 0));
 			}
 			sprite.AddRange(points.Select(point => new KeyValuePair<string, Point>(point.Key, Point(point.Value))));
-			return sprite.Crop2Content(maker.Threshold);
+			return maker.Crop ?
+				sprite.Crop2Content(maker.Threshold)
+				: sprite;
 		}
 		public IEnumerable<Sprite> Z4(Turn turn = Turn.CounterZ)
 		{
@@ -335,6 +369,13 @@ namespace Voxel2Pixel.Pack
 					.SetRadians(Radians + Tau * ((double)i / quantity))
 					.Make();
 		}
+		public Sprite StackedShadow() => Reoriented()
+			.Set(Perspective.Underneath)
+			.Set(ShadowColor)
+			.SetScaleX(1)
+			.SetScaleY(1)
+			.Make()
+			.Rotate(Radians);
 		#endregion Makers
 	}
 }

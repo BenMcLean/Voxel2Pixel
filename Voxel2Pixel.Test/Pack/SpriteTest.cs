@@ -71,6 +71,11 @@ namespace Voxel2Pixel.Test.Pack
 				.Png()
 				.SaveAsPng("Arch.png");
 		}
+		public static Sprite Origin0(Sprite sprite)
+		{
+			sprite[Sprite.Origin] = new Voxel2Pixel.Model.Point(0, 0);
+			return sprite;
+		}
 		[Fact]
 		public void RotateTest()
 		{
@@ -83,34 +88,31 @@ namespace Voxel2Pixel.Test.Pack
 			VoxelDraw.Draw(Perspective.Iso, voxFileModel, sprite);
 			sprite["dot"] = new Voxel2Pixel.Model.Point(sprite.Width / 4, 3 * sprite.Height / 4);
 			int numSprites = 64;
-			static Sprite origin(Sprite sprite)
-			{
-				sprite[Sprite.Origin] = new Voxel2Pixel.Model.Point(0, 0);
-				return sprite;
-			}
 			Enumerable.Range(0, numSprites)
 				.Select(i => sprite
 					.Rotate(Math.Tau * ((double)i / numSprites))
 					.DrawPoint("dot"))
-				.Select(origin)
+				.Select(Origin0)
 				.AnimatedGif(10)
 				.SaveAsGif("Rotate.gif");
 		}
 		[Fact]
 		public void Stacked()
 		{
-			VoxFileModel voxFileModel = new(@"..\..\..\Tree.vox");
+			VoxFileModel voxFileModel = new(@"..\..\..\Sora.vox");
 			IVoxelColor voxelColor = new FlatVoxelColor(voxFileModel.Palette);
 			new SpriteMaker
 			{
 				Model = voxFileModel,
 				VoxelColor = voxelColor,
 				Outline = true,
+				Shadow = true,
 			}
 				.Stacks(24)
+				//.Select(Origin0)
 				//.Select(sprite => sprite.DrawPoint())
-				.SameSize()
-				.AddFrameNumbers()
+				//.SameSize()
+				//.AddFrameNumbers()
 				.Select(sprite => sprite.Upscale(8, 8))
 				.AnimatedGif(25)
 				.SaveAsGif("Stacked.gif");
