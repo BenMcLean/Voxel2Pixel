@@ -42,15 +42,6 @@ namespace Voxel2Pixel.Pack
 				this[point.Key] = point.Value;
 			return this;
 		}
-		protected Sprite ReplaceSelf(Sprite sprite)
-		{
-			Texture = sprite.Texture;
-			Width = sprite.Width;
-			VoxelColor = sprite.VoxelColor;
-			Clear();
-			AddRange(sprite);
-			return this;
-		}
 		#endregion Sprite
 		#region IVoxelColor
 		public IVoxelColor VoxelColor { get; set; }
