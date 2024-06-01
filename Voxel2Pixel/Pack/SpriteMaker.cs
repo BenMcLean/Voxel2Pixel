@@ -282,7 +282,7 @@ namespace Voxel2Pixel.Pack
 					X: point.X * maker.ScaleX + (maker.Outline ? 1 : 0),
 					Y: point.Y * maker.ScaleY + (maker.Outline ? 1 : 0));
 			}
-			sprite.AddRange(points.Select(point => new KeyValuePair<string, Point>(point.Key, Point(point.Value))));
+			sprite.SetRange(points.Select(point => new KeyValuePair<string, Point>(point.Key, Point(point.Value))));
 			return maker.Crop ?
 				sprite.Crop2Content(maker.Threshold)
 				: sprite;

@@ -33,10 +33,10 @@ namespace Voxel2Pixel.Pack
 			Width = sprite.Width;
 			if (sprite is Sprite s)
 				VoxelColor = s.VoxelColor;
-			AddRange(sprite);
+			SetRange(sprite);
 		}
-		public Sprite AddRange(params KeyValuePair<string, Point>[] points) => AddRange(points.AsEnumerable());
-		public Sprite AddRange(IEnumerable<KeyValuePair<string, Point>> points)
+		public Sprite SetRange(params KeyValuePair<string, Point>[] points) => SetRange(points.AsEnumerable());
+		public Sprite SetRange(IEnumerable<KeyValuePair<string, Point>> points)
 		{
 			foreach (KeyValuePair<string, Point> point in points)
 				this[point.Key] = point.Value;
@@ -203,7 +203,7 @@ namespace Voxel2Pixel.Pack
 			Texture = Texture.Resize(newWidth, newHeight, Width),
 			Width = newWidth,
 			VoxelColor = VoxelColor,
-		}.AddRange(this);
+		}.SetRange(this);
 		/// <summary>
 		/// Some game engines and graphics hardware require textures to be square and sized by a power of 2. LibGDX gave me some trouble on Android for not doing this back in the 2010s.
 		/// </summary>
@@ -221,7 +221,7 @@ namespace Voxel2Pixel.Pack
 			Texture = Texture.Crop(x, y, croppedWidth, croppedHeight, Width),
 			Width = croppedWidth,
 			VoxelColor = VoxelColor,
-		}.AddRange(this.Select(point => new KeyValuePair<string, Point>(
+		}.SetRange(this.Select(point => new KeyValuePair<string, Point>(
 			key: point.Key,
 			value: new Point(
 				X: point.Value.X - x,
@@ -238,7 +238,7 @@ namespace Voxel2Pixel.Pack
 				threshold: threshold),
 			Width = croppedWidth,
 			VoxelColor = VoxelColor,
-		}.AddRange(this.Select(point => new KeyValuePair<string, Point>(
+		}.SetRange(this.Select(point => new KeyValuePair<string, Point>(
 			key: point.Key,
 			value: new Point(
 				X: point.Value.X - cutLeft,
@@ -255,7 +255,7 @@ namespace Voxel2Pixel.Pack
 				threshold: threshold),
 			Width = croppedWidth,
 			VoxelColor = VoxelColor,
-		}.AddRange(this.Select(point => new KeyValuePair<string, Point>(
+		}.SetRange(this.Select(point => new KeyValuePair<string, Point>(
 			key: point.Key,
 			value: new Point(
 				X: point.Value.X - cutLeft,
@@ -268,7 +268,7 @@ namespace Voxel2Pixel.Pack
 				threshold: threshold),
 			Width = Width,
 			VoxelColor = VoxelColor,
-		}.AddRange(this);
+		}.SetRange(this);
 		/// <returns>cropped and outlined copy</returns>
 		public Sprite CropOutline(uint color = PixelDraw.DefaultOutlineColor, byte threshold = PixelDraw.DefaultTransparencyThreshold) => new Sprite
 		{
@@ -286,7 +286,7 @@ namespace Voxel2Pixel.Pack
 					threshold: threshold),
 			Width = croppedWidth,
 			VoxelColor = VoxelColor,
-		}.AddRange(this.Select(point => new KeyValuePair<string, Point>(
+		}.SetRange(this.Select(point => new KeyValuePair<string, Point>(
 			key: point.Key,
 			value: new Point(
 				X: point.Value.X - cutLeft,
@@ -301,7 +301,7 @@ namespace Voxel2Pixel.Pack
 				width: Width),
 			Width = newWidth,
 			VoxelColor = VoxelColor,
-		}.AddRange(this.Select(point => new KeyValuePair<string, Point>(
+		}.SetRange(this.Select(point => new KeyValuePair<string, Point>(
 			key: point.Key,
 			value: new Point(
 				X: point.Value.X * factorX,
@@ -372,7 +372,7 @@ namespace Voxel2Pixel.Pack
 				sin = Math.Sin(radians),
 				offsetX = (Width >> 1) - cos * (rotatedWidth >> 1) - sin * (rotatedHeight >> 1),
 				offsetY = (Height >> 1) - cos * (rotatedHeight >> 1) + sin * (rotatedWidth >> 1);
-			return sprite.AddRange(this.Select(pair => new KeyValuePair<string, Point>(
+			return sprite.SetRange(this.Select(pair => new KeyValuePair<string, Point>(
 				key: pair.Key,
 				value: new Point(
 					X: (int)(cos * (pair.Value.X - offsetX) - sin * (pair.Value.Y - offsetY)),

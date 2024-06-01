@@ -67,7 +67,7 @@ namespace Voxel2Pixel
 							insertWidth: sprite.Width,
 							width: width),
 					Width = width,
-				}.AddRange(new KeyValuePair<string, Point>(Sprite.Origin, new Point(X: originX, Y: originY)));
+				}.SetRange(new KeyValuePair<string, Point>(Sprite.Origin, new Point(X: originX, Y: originY)));
 		}
 		#endregion Sprite
 		#region Geometry
