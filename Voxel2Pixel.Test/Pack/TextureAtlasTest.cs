@@ -101,7 +101,7 @@ namespace Voxel2Pixel.Test.Pack
 				actual: subTexture2?.Height);
 		}
 		[Fact]
-		public void SoraTest()
+		public void Iso8()
 		{
 			VoxFileModel model = new(@"..\..\..\Sora.vox");
 			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
@@ -112,7 +112,32 @@ namespace Voxel2Pixel.Test.Pack
 				Outline = true,
 				Shadow = true,
 			}.Iso8TextureAtlas(out TextureAtlas textureAtlas, "Sora");
-			textureAtlas.ImagePath = "TextureAtlas.png";
+			textureAtlas.ImagePath = "TextureAtlasIso8.png";
+			atlas.Png().SaveAsPng(textureAtlas.ImagePath);
+			StringBuilder stringBuilder = new();
+			new XmlSerializer(typeof(TextureAtlas))
+				.Serialize(XmlWriter.Create(stringBuilder, new XmlWriterSettings()
+				{
+					Indent = true,
+					IndentChars = "\t",
+				}), textureAtlas);
+			File.WriteAllText(
+				path: Path.GetFileNameWithoutExtension(textureAtlas.ImagePath) + ".xml",
+				contents: stringBuilder.ToString());
+		}
+		[Fact]
+		public void Stacks()
+		{
+			VoxFileModel model = new(@"..\..\..\Sora.vox");
+			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
+			Sprite atlas = new SpriteMaker
+			{
+				Model = model,
+				VoxelColor = voxelColor,
+				Outline = true,
+				Shadow = true,
+			}.StacksTextureAtlas(out TextureAtlas textureAtlas, "Sora");
+			textureAtlas.ImagePath = "TextureAtlasStacks.png";
 			atlas.Png().SaveAsPng(textureAtlas.ImagePath);
 			StringBuilder stringBuilder = new();
 			new XmlSerializer(typeof(TextureAtlas))
