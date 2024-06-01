@@ -105,22 +105,13 @@ namespace Voxel2Pixel.Test.Pack
 		{
 			VoxFileModel model = new(@"..\..\..\Sora.vox");
 			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
-			Dictionary<string, ISprite> dictionary = [];
-			byte direction = 0;
-			foreach (ISprite iSprite in new SpriteMaker
+			Sprite atlas = new SpriteMaker
 			{
 				Model = model,
 				VoxelColor = voxelColor,
 				Outline = true,
-			}.Iso8())
-				dictionary.Add("Sora" + direction++, iSprite);
-			direction = 0;
-			foreach (ISprite iSprite in new SpriteMaker
-			{
-				Model = model,
-			}.SetShadowColor(0x88u).Iso8Shadows())
-				dictionary.Add("SoraShadow" + direction++, iSprite);
-			Sprite atlas = new(dictionary, out TextureAtlas textureAtlas);
+				Shadow = true,
+			}.Iso8TextureAtlas(out TextureAtlas textureAtlas, "Sora");
 			textureAtlas.ImagePath = "TextureAtlas.png";
 			atlas.Png().SaveAsPng(textureAtlas.ImagePath);
 			StringBuilder stringBuilder = new();

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -358,6 +359,24 @@ namespace Voxel2Pixel.Pack
 					.AddRange(points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))))
 					.Make();
 			}
+		}
+		public Sprite Iso8TextureAtlas(out TextureAtlas textureAtlas, string name = "Sprite")
+		{
+			Dictionary<string, ISprite> dictionary = [];
+			byte direction = 0;
+			foreach (Sprite sprite in new SpriteMaker(this)
+				.SetShadow(false)
+				.Iso8())
+				dictionary.Add(name + direction++, sprite);
+			direction = 0;
+			if (Shadow)
+				foreach (Sprite sprite in new SpriteMaker(this)
+					.SetOutline(false)
+					.Iso8Shadows())
+					dictionary.Add(name + "Shadow" + direction++, sprite);
+			return new Sprite(
+				dictionary: dictionary,
+				textureAtlas: out textureAtlas);
 		}
 		public const double Tau = 2d * Math.PI;
 		public IEnumerable<Sprite> Stacks(ushort quantity = 24)
