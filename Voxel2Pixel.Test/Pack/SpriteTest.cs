@@ -99,7 +99,7 @@ namespace Voxel2Pixel.Test.Pack
 		[Fact]
 		public void Stacked()
 		{
-			VoxFileModel voxFileModel = new(@"..\..\..\Sora.vox");
+			VoxFileModel voxFileModel = new(@"..\..\..\Tree.vox");
 			IVoxelColor voxelColor = new FlatVoxelColor(voxFileModel.Palette);
 			new SpriteMaker
 			{
@@ -108,13 +108,14 @@ namespace Voxel2Pixel.Test.Pack
 				Outline = true,
 				Shadow = true,
 			}
+				.SetShadowColor(0xFFu)
 				.Stacks(24)
 				//.Select(Origin0)
 				//.Select(sprite => sprite.DrawPoint())
-				//.SameSize()
-				//.AddFrameNumbers()
+				.SameSize()
+				.AddFrameNumbers()
 				.Select(sprite => sprite.Upscale(8, 8))
-				.AnimatedGif(25)
+				.AnimatedGif(50)
 				.SaveAsGif("Stacked.gif");
 		}
 	}

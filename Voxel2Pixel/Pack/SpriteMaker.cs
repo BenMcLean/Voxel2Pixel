@@ -372,10 +372,21 @@ namespace Voxel2Pixel.Pack
 		public Sprite StackedShadow() => Reoriented()
 			.Set(Perspective.Underneath)
 			.Set(ShadowColor)
-			.SetScaleX(1)
-			.SetScaleY(1)
+			.SetOutline(false)
+			.SetCrop(false)
 			.Make()
 			.Rotate(Radians);
+		public IEnumerable<Sprite> StackedShadows(ushort quantity = 24)
+		{
+			Sprite shadow = Reoriented()
+				.Set(Perspective.Underneath)
+				.Set(ShadowColor)
+				.SetOutline(false)
+				.SetCrop(true)
+				.Make();
+			for (ushort i = 0; i < quantity; i++)
+				yield return shadow.Rotate(Radians + Tau * ((double)i / quantity));
+		}
 		#endregion Makers
 	}
 }
