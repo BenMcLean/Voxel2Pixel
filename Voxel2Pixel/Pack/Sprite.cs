@@ -134,8 +134,8 @@ namespace Voxel2Pixel.Pack
 		public virtual void Diamond(ushort x, ushort y, byte index, VisibleFace visibleFace = VisibleFace.Front) => Diamond(x: x, y: y, color: VoxelColor[index, visibleFace]);
 		#endregion ITriangleRenderer
 		#region Packing
-		public Sprite(out PackingRectangle[] packingRectangles, IEnumerable<ISprite> sprites) : this(packingRectangles: out packingRectangles, sprites: sprites.ToArray()) { }
-		public Sprite(out PackingRectangle[] packingRectangles, params ISprite[] sprites)
+		public Sprite(out PackingRectangle[] packingRectangles, IEnumerable<Sprite> sprites) : this(packingRectangles: out packingRectangles, sprites: sprites.ToArray()) { }
+		public Sprite(out PackingRectangle[] packingRectangles, params Sprite[] sprites)
 		{
 			packingRectangles = Enumerable.Range(0, sprites.Length)
 				.Select(i => new PackingRectangle(
@@ -165,8 +165,8 @@ namespace Voxel2Pixel.Pack
 						areaHeight: sprites[packingRectangle.Id].Height,
 						width: Width);
 		}
-		public Sprite(Dictionary<string, ISprite> dictionary, out TextureAtlas textureAtlas) : this(sprites: [.. dictionary], textureAtlas: out textureAtlas) { }
-		public Sprite(KeyValuePair<string, ISprite>[] sprites, out TextureAtlas textureAtlas) : this(packingRectangles: out RectpackSharp.PackingRectangle[] packingRectangles, sprites: sprites.Select(pair => pair.Value)) =>
+		public Sprite(Dictionary<string, Sprite> dictionary, out TextureAtlas textureAtlas) : this(sprites: [.. dictionary], textureAtlas: out textureAtlas) { }
+		public Sprite(KeyValuePair<string, Sprite>[] sprites, out TextureAtlas textureAtlas) : this(packingRectangles: out RectpackSharp.PackingRectangle[] packingRectangles, sprites: sprites.Select(pair => pair.Value)) =>
 			textureAtlas = new TextureAtlas
 			{
 				SubTextures = Enumerable.Range(0, packingRectangles.Length)
@@ -204,8 +204,8 @@ namespace Voxel2Pixel.Pack
 				sprite.Upscale(scaleX, scaleY)
 				: sprite;
 		}
-		public static IEnumerable<Sprite> SameSize(ushort addWidth = 0, ushort addHeight = 0, params ISprite[] sprites) => sprites.AsEnumerable().SameSize(addWidth, addHeight);
-		public static IEnumerable<Sprite> SameSize(params ISprite[] sprites) => sprites.AsEnumerable().SameSize();
+		public static IEnumerable<Sprite> SameSize(ushort addWidth = 0, ushort addHeight = 0, params Sprite[] sprites) => sprites.AsEnumerable().SameSize(addWidth, addHeight);
+		public static IEnumerable<Sprite> SameSize(params Sprite[] sprites) => sprites.AsEnumerable().SameSize();
 		/// <returns>resized copy</returns>
 		public Sprite Resize(ushort newWidth, ushort newHeight) => new Sprite
 		{

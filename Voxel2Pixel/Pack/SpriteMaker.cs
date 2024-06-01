@@ -360,9 +360,10 @@ namespace Voxel2Pixel.Pack
 					.Make();
 			}
 		}
-		public Sprite Iso8TextureAtlas(out TextureAtlas textureAtlas, string name = "Sprite")
+		public Sprite Iso8TextureAtlas(out TextureAtlas textureAtlas, string name = "Sprite") => new(dictionary: Iso8TextureAtlas(name), textureAtlas: out textureAtlas);
+		public Dictionary<string, Sprite> Iso8TextureAtlas(string name = "Sprite")
 		{
-			Dictionary<string, ISprite> dictionary = [];
+			Dictionary<string, Sprite> dictionary = [];
 			byte direction = 0;
 			foreach (Sprite sprite in new SpriteMaker(this)
 				.SetShadow(false)
@@ -374,9 +375,7 @@ namespace Voxel2Pixel.Pack
 					.SetOutline(false)
 					.Iso8Shadows())
 					dictionary.Add(name + "Shadow" + direction++, sprite);
-			return new Sprite(
-				dictionary: dictionary,
-				textureAtlas: out textureAtlas);
+			return dictionary;
 		}
 		public const double Tau = 2d * Math.PI;
 		public IEnumerable<Sprite> Stacks(ushort quantity = 24)
@@ -395,7 +394,7 @@ namespace Voxel2Pixel.Pack
 			.SetCrop(false)
 			.Make()
 			.Rotate(Radians);
-		public IEnumerable<Sprite> StackedShadows(ushort quantity = 24)
+		public IEnumerable<Sprite> StacksShadows(ushort quantity = 24)
 		{
 			Sprite shadow = Reoriented()
 				.Set(Perspective.Underneath)
@@ -405,6 +404,23 @@ namespace Voxel2Pixel.Pack
 				.Make();
 			for (ushort i = 0; i < quantity; i++)
 				yield return shadow.Rotate(Radians + Tau * ((double)i / quantity));
+		}
+		public Sprite StacksTextureAtlas(out TextureAtlas textureAtlas, string name = "SpriteStack", ushort quantity = 24) => new(dictionary: StacksTextureAtlas(name, quantity), textureAtlas: out textureAtlas);
+		public Dictionary<string, Sprite> StacksTextureAtlas(string name = "SpriteStack", ushort quantity = 24)
+		{
+			Dictionary<string, Sprite> dictionary = [];
+			byte direction = 0;
+			foreach (Sprite sprite in new SpriteMaker(this)
+				.SetShadow(false)
+				.Stacks(quantity))
+				dictionary.Add(name + direction++, sprite);
+			direction = 0;
+			if (Shadow)
+				foreach (Sprite sprite in new SpriteMaker(this)
+					.SetOutline(false)
+					.StacksShadows(quantity))
+					dictionary.Add(name + "Shadow" + direction++, sprite);
+			return dictionary;
 		}
 		#endregion Makers
 	}
