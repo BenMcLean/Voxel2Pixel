@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
@@ -71,7 +72,15 @@ namespace Voxel2Pixel
 		}
 		#endregion Sprite
 		#region SpriteMaker
-		public static IEnumerable<Sprite> Make(this IEnumerable<SpriteMaker> makers) => makers.Select(sprite => sprite.Make());
+		public static IEnumerable<Sprite> Make(this IEnumerable<SpriteMaker> makers)
+		{
+			Task<Sprite>[] tasks = makers.Select(maker => Task.Factory.StartNew(
+				function: obj => ((SpriteMaker)obj).Make(),
+				state: maker))
+				.ToArray();
+			Task.WaitAll(tasks);
+			return tasks.Select(task => task.Result);
+		}
 		public static Dictionary<string, Sprite> Make(this IDictionary<string, SpriteMaker> makers)
 		{
 			Dictionary<string, Sprite> dictionary = [];
