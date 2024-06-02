@@ -83,9 +83,20 @@ namespace Voxel2Pixel
 		}
 		public static Dictionary<string, Sprite> Make(this IDictionary<string, SpriteMaker> makers)
 		{
+			Task<KeyValuePair<string, Sprite>>[] tasks = makers.Select(maker => Task.Factory.StartNew(
+				function: obj =>
+				{
+					KeyValuePair<string, SpriteMaker> pair = (KeyValuePair<string, SpriteMaker>)obj;
+					return new KeyValuePair<string, Sprite>(
+						key: pair.Key,
+						value: pair.Value.Make());
+				},
+				state: maker))
+				.ToArray();
+			Task.WaitAll(tasks);
 			Dictionary<string, Sprite> dictionary = [];
-			foreach (KeyValuePair<string, SpriteMaker> pair in makers)
-				dictionary[pair.Key] = pair.Value.Make();
+			foreach (KeyValuePair<string, Sprite> pair in tasks.Select(task => task.Result))
+				dictionary[pair.Key] = pair.Value;
 			return dictionary;
 		}
 		#endregion SpriteMaker
