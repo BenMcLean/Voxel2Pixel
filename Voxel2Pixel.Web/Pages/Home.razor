@@ -76,6 +76,7 @@
 				.Set(VoxFileModel)
 				.Set(new NaiveDimmer(VoxFileModel.Palette))
 				.Iso8()
+				.Make()
 				.AnimatedGif()
 				.ToBase64String(GifFormat.Instance);
 	}
@@ -86,6 +87,7 @@
 				.Set(VoxFileModel)
 				.Set(new NaiveDimmer(VoxFileModel.Palette))
 				.Stacks()
+				.Make()
 				.AnimatedGif(25)
 				.ToBase64String(GifFormat.Instance);
 	}

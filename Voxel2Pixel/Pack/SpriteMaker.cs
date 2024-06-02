@@ -136,8 +136,8 @@ namespace Voxel2Pixel.Pack
 			Points[Sprite.Origin] = origin;
 			return this;
 		}
-		public SpriteMaker AddRange(params KeyValuePair<string, Point3D>[] points) => AddRange(points.AsEnumerable());
-		public SpriteMaker AddRange(IEnumerable<KeyValuePair<string, Point3D>> points)
+		public SpriteMaker SetRange(params KeyValuePair<string, Point3D>[] points) => SetRange(points.AsEnumerable());
+		public SpriteMaker SetRange(IEnumerable<KeyValuePair<string, Point3D>> points)
 		{
 			Points ??= [];
 			foreach (KeyValuePair<string, Point3D> point in points)
@@ -286,105 +286,119 @@ namespace Voxel2Pixel.Pack
 				sprite.Crop2Content(maker.Threshold)
 				: sprite;
 		}
-		public IEnumerable<Sprite> Z4(Turn turn = Turn.CounterZ)
+		public IEnumerable<SpriteMaker> Z4(Turn turn = Turn.CounterZ)
 		{
-			SpriteMaker maker = Flipped();
-			TurnModel turnModel = new()
-			{
-				Model = maker.Model,
-				CuboidOrientation = maker.CuboidOrientation,
-			};
-			maker.Model = turnModel;
+			CuboidOrientation cuboidOrientation = CuboidOrientation;
+			SpriteMaker maker = Flipped()
+				.Set(CuboidOrientation.SOUTH0);
 			Dictionary<string, Point3D> points = Points ?? new() { { Sprite.Origin, maker.Model.BottomCenter() }, };
 			for (byte angle = 0; angle < 4; angle++)
 			{
-				yield return maker
-					.AddRange(points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))))
-					.Make();
-				turnModel.Turn(turn);
+				TurnModel turnModel = new()
+				{
+					Model = maker.Model,
+					CuboidOrientation = cuboidOrientation,
+				};
+				yield return new SpriteMaker(maker)
+					.Set(turnModel)
+					.SetRange(points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))));
+				cuboidOrientation.Turn(turn);
 			}
 		}
-		public IEnumerable<Sprite> Iso8()
+		public IEnumerable<SpriteMaker> Iso8()
 		{
-			SpriteMaker maker = Flipped();
-			TurnModel turnModel = new()
-			{
-				Model = maker.Model,
-				CuboidOrientation = maker.CuboidOrientation,
-			};
-			maker.Model = turnModel;
+			CuboidOrientation cuboidOrientation = CuboidOrientation;
+			SpriteMaker maker = Flipped()
+				.Set(CuboidOrientation.SOUTH0);
 			Dictionary<string, Point3D> points = Points ?? new() { { Sprite.Origin, maker.Model.BottomCenter() }, };
 			for (byte angle = 0; angle < 4; angle++)
 			{
-				yield return maker
+				TurnModel turnModel = new()
+				{
+					Model = maker.Model,
+					CuboidOrientation = cuboidOrientation,
+				};
+				yield return new SpriteMaker(maker)
+					.Set(turnModel)
 					.Set(Perspective.Above)
 					.SetScaleX((ushort)(5 * ScaleX))
 					.SetScaleY((ushort)(ScaleY << 2))
-					.AddRange(points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))))
-					.Make();
-				turnModel.Turn(Turn.CounterZ);
-				yield return maker
+					.SetRange(points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))));
+				cuboidOrientation = (CuboidOrientation)cuboidOrientation.Turn(Turn.CounterZ);
+				turnModel = new()
+				{
+					Model = maker.Model,
+					CuboidOrientation = cuboidOrientation,
+				};
+				yield return new SpriteMaker(maker)
+					.Set(turnModel)
 					.Set(Perspective.Iso)
 					.SetScaleX((ushort)(ScaleX << 1))
 					.SetScaleY(ScaleY)
-					.AddRange(points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))))
-					.Make();
+					.SetRange(points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))));
 			}
 		}
-		public IEnumerable<Sprite> Iso8Shadows()
+		public IEnumerable<SpriteMaker> Iso8Shadows()
 		{
-			SpriteMaker maker = Flipped();
-			maker.VoxelColor = ShadowColor;
-			TurnModel turnModel = new()
-			{
-				Model = maker.Model,
-				CuboidOrientation = maker.CuboidOrientation,
-			};
-			maker.Model = turnModel;
+			CuboidOrientation cuboidOrientation = CuboidOrientation;
+			SpriteMaker maker = Flipped()
+				.Set(CuboidOrientation.SOUTH0)
+				.Set(ShadowColor)
+				.SetOutline(false)
+				.SetShadow(false);
 			Dictionary<string, Point3D> points = Points ?? new() { { Sprite.Origin, maker.Model.BottomCenter() }, };
 			for (byte angle = 0; angle < 4; angle++)
 			{
-				yield return maker
+				TurnModel turnModel = new()
+				{
+					Model = maker.Model,
+					CuboidOrientation = cuboidOrientation,
+				};
+				yield return new SpriteMaker(maker)
+					.Set(turnModel)
 					.Set(Perspective.Underneath)
 					.SetScaleX((ushort)(5 * ScaleX))
 					.SetScaleY((ushort)(ScaleY << 2))
-					.AddRange(points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))))
-					.Make();
-				turnModel.Turn(Turn.CounterZ);
-				yield return maker
+					.SetRange(points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))));
+				cuboidOrientation = (CuboidOrientation)cuboidOrientation.Turn(Turn.CounterZ);
+				turnModel = new()
+				{
+					Model = maker.Model,
+					CuboidOrientation = cuboidOrientation,
+				};
+				yield return new SpriteMaker(maker)
+					.Set(turnModel)
 					.Set(Perspective.IsoShadow)
 					.SetScaleX((ushort)(ScaleX << 1))
 					.SetScaleY(ScaleY)
-					.AddRange(points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))))
-					.Make();
+					.SetRange(points.Select(point => new KeyValuePair<string, Point3D>(point.Key, turnModel.ReverseRotate(point.Value))));
 			}
 		}
-		public Sprite Iso8TextureAtlas(out TextureAtlas textureAtlas, string name = "Sprite") => new(dictionary: Iso8TextureAtlas(name), textureAtlas: out textureAtlas);
-		public Dictionary<string, Sprite> Iso8TextureAtlas(string name = "Sprite")
+		public Sprite Iso8TextureAtlas(out TextureAtlas textureAtlas, string name = "Sprite") => new(dictionary: Iso8TextureAtlas(name).Make(), textureAtlas: out textureAtlas);
+		public Dictionary<string, SpriteMaker> Iso8TextureAtlas(string name = "Sprite")
 		{
-			Dictionary<string, Sprite> dictionary = [];
+			Dictionary<string, SpriteMaker> dictionary = [];
 			byte direction = 0;
-			foreach (Sprite sprite in new SpriteMaker(this)
+			foreach (SpriteMaker maker in new SpriteMaker(this)
 				.SetShadow(false)
 				.Iso8())
-				dictionary.Add(name + direction++, sprite);
+				dictionary.Add(name + direction++, maker);
 			direction = 0;
 			if (Shadow)
-				foreach (Sprite sprite in new SpriteMaker(this)
+				foreach (SpriteMaker maker in new SpriteMaker(this)
 					.SetOutline(false)
 					.Iso8Shadows())
-					dictionary.Add(name + "Shadow" + direction++, sprite);
+					dictionary.Add(name + "Shadow" + direction++, maker);
 			return dictionary;
 		}
 		public const double Tau = 2d * Math.PI;
-		public IEnumerable<Sprite> Stacks(ushort quantity = 24)
+		public IEnumerable<SpriteMaker> Stacks(ushort quantity = 24)
 		{
 			SpriteMaker maker = Reoriented()
 				.Set(Perspective.Stacked);
 			for (ushort i = 0; i < quantity; i++)
-				yield return maker
-					.SetRadians(Radians + Tau * ((double)i / quantity))
-					.Make();
+				yield return new SpriteMaker(maker)
+					.SetRadians(Radians + Tau * ((double)i / quantity));
 		}
 		public Sprite StackedShadow() => Reoriented()
 			.Set(Perspective.Underneath)
@@ -398,7 +412,6 @@ namespace Voxel2Pixel.Pack
 			Sprite shadow = Reoriented()
 				.Set(Perspective.Underneath)
 				.Set(ShadowColor)
-				.SetOutline(false)
 				.SetCrop(true)
 				.Make();
 			for (ushort i = 0; i < quantity; i++)
@@ -411,7 +424,8 @@ namespace Voxel2Pixel.Pack
 			byte direction = 0;
 			foreach (Sprite sprite in new SpriteMaker(this)
 				.SetShadow(false)
-				.Stacks(quantity))
+				.Stacks(quantity)
+				.Make())
 				dictionary.Add(name + direction++, sprite);
 			direction = 0;
 			if (Shadow)

@@ -128,7 +128,7 @@ namespace Voxel2Pixel.Test.Pack
 		[Fact]
 		public void Stacks()
 		{
-			VoxFileModel model = new(@"..\..\..\Sora.vox");
+			VoxFileModel model = new(@"..\..\..\Husk_64.vox");
 			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
 			Sprite atlas = new SpriteMaker
 			{

@@ -70,6 +70,16 @@ namespace Voxel2Pixel
 				}.SetRange(new KeyValuePair<string, Point>(Sprite.Origin, new Point(X: originX, Y: originY)));
 		}
 		#endregion Sprite
+		#region SpriteMaker
+		public static IEnumerable<Sprite> Make(this IEnumerable<SpriteMaker> makers) => makers.Select(sprite => sprite.Make());
+		public static Dictionary<string, Sprite> Make(this IDictionary<string, SpriteMaker> makers)
+		{
+			Dictionary<string, Sprite> dictionary = [];
+			foreach (KeyValuePair<string, SpriteMaker> pair in makers)
+				dictionary[pair.Key] = pair.Value.Make();
+			return dictionary;
+		}
+		#endregion SpriteMaker
 		#region Geometry
 		public readonly record struct HorizontalLine(int X, int Y, int Width);
 		public static IEnumerable<HorizontalLine> TriangleRows(params Point[] points)

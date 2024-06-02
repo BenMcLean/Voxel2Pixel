@@ -21,6 +21,7 @@ namespace Voxel2Pixel.Test.Pack
 				Outline = true,
 			}
 				.Iso8()
+				.Make()
 				.SameSize()
 				.AddFrameNumbers()
 				.Select(sprite => sprite.Upscale(8, 8))
@@ -30,7 +31,7 @@ namespace Voxel2Pixel.Test.Pack
 		[Fact]
 		public void ShadowGif()
 		{
-			VoxFileModel model = new(@"..\..\..\Sora.vox");
+			VoxFileModel model = new(@"..\..\..\Tree.vox");
 			new SpriteMaker
 			{
 				Model = model,
@@ -38,7 +39,9 @@ namespace Voxel2Pixel.Test.Pack
 				Shadow = true,
 				Outline = true,
 			}
+				.SetShadowColor(0xFFu)
 				.Iso8()
+				.Make()
 				.SameSize()
 				.AddFrameNumbers()
 				.Select(sprite => sprite.Upscale(8, 8))
@@ -110,6 +113,7 @@ namespace Voxel2Pixel.Test.Pack
 			}
 				.SetShadowColor(0xFFu)
 				.Stacks(24)
+				.Make()
 				//.Select(Origin0)
 				//.Select(sprite => sprite.DrawPoint())
 				.SameSize()
