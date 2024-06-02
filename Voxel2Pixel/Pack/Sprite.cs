@@ -3,6 +3,7 @@ using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
@@ -142,8 +143,9 @@ namespace Voxel2Pixel.Pack
 				packingHint: PackingHints.TryByBiggerSide);
 			Width = (ushort)bounds.Width;
 			Texture = new byte[bounds.Width * bounds.Height << 2];
-			foreach (PackingRectangle packingRectangle in packingRectangles)
-				Texture.DrawInsert(
+			Parallel.Invoke(packingRectangles
+				.Select<PackingRectangle, Action>(packingRectangle => () => Texture
+					.DrawInsert(
 						x: (ushort)(packingRectangle.X + 1),
 						y: (ushort)(packingRectangle.Y + 1),
 						insert: sprites[packingRectangle.Id].Texture,
@@ -154,7 +156,8 @@ namespace Voxel2Pixel.Pack
 						y: (ushort)(packingRectangle.Y + 1),
 						areaWidth: sprites[packingRectangle.Id].Width,
 						areaHeight: sprites[packingRectangle.Id].Height,
-						width: Width);
+						width: Width))
+				.ToArray());
 		}
 		public Sprite(Dictionary<string, Sprite> dictionary, out TextureAtlas textureAtlas) : this(sprites: [.. dictionary], textureAtlas: out textureAtlas) { }
 		public Sprite(KeyValuePair<string, Sprite>[] sprites, out TextureAtlas textureAtlas) : this(packingRectangles: out RectpackSharp.PackingRectangle[] packingRectangles, sprites: sprites.Select(pair => pair.Value)) =>
