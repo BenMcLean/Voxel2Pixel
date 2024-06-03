@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
@@ -130,12 +131,15 @@ namespace Voxel2Pixel.Pack
 		public SpriteMaker SetThreshold(byte threshold) { Threshold = threshold; return this; }
 		public SpriteMaker SetCrop(bool crop) { Crop = crop; return this; }
 		public SpriteMaker ToggleCrop() => SetCrop(!Crop);
+		public SpriteMaker SetPoints(Dictionary<string, Point3D> points) { Points = points; return this; }
 		public SpriteMaker Set(Point3D origin)
 		{
 			Points ??= [];
 			Points[Sprite.Origin] = origin;
 			return this;
 		}
+		public SpriteMaker SetAll(params KeyValuePair<string, Point3D>[] points) => SetAll(points);
+		public SpriteMaker SetAll(IEnumerable<KeyValuePair<string, Point3D>> points) => SetPoints([]).SetRange(points);
 		public SpriteMaker SetRange(params KeyValuePair<string, Point3D>[] points) => SetRange(points.AsEnumerable());
 		public SpriteMaker SetRange(IEnumerable<KeyValuePair<string, Point3D>> points)
 		{
@@ -414,8 +418,12 @@ namespace Voxel2Pixel.Pack
 				.Set(ShadowColor)
 				.SetCrop(true)
 				.Make();
-			for (ushort i = 0; i < quantity; i++)
-				yield return shadow.Rotate(Radians + Tau * ((double)i / quantity));
+			Task<Sprite>[] tasks = Enumerable.Range(0, quantity).Select(i => Task.Factory.StartNew(
+				function: obj => shadow.Rotate(Radians + Tau * ((int)obj / (double)quantity)),
+				state: i))
+				.ToArray();
+			Task.WaitAll(tasks);
+			return tasks.Select(task => task.Result);
 		}
 		public Sprite StacksTextureAtlas(out TextureAtlas textureAtlas, string name = "SpriteStack", ushort quantity = 24) => new(dictionary: StacksTextureAtlas(name, quantity), textureAtlas: out textureAtlas);
 		public Dictionary<string, Sprite> StacksTextureAtlas(string name = "SpriteStack", ushort quantity = 24)

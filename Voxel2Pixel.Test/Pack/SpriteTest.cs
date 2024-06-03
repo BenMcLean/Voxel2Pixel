@@ -31,7 +31,7 @@ namespace Voxel2Pixel.Test.Pack
 		[Fact]
 		public void ShadowGif()
 		{
-			VoxFileModel model = new(@"..\..\..\Tree.vox");
+			VoxFileModel model = new(@"..\..\..\Sora.vox");
 			new SpriteMaker
 			{
 				Model = model,
