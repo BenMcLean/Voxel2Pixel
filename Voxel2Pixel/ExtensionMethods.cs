@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
@@ -73,15 +72,9 @@ namespace Voxel2Pixel
 		}
 		#endregion Sprite
 		#region SpriteMaker
-		public static IEnumerable<Sprite> Make(this IEnumerable<SpriteMaker> makers)
-		{
-			Task<Sprite>[] tasks = makers.Select(maker => Task.Factory.StartNew(
-				function: obj => ((SpriteMaker)obj).Make(),
-				state: maker))
-				.ToArray();
-			Task.WaitAll(tasks);
-			return tasks.Select(task => task.Result);
-		}
+		public static IEnumerable<T> DoTasks<T>(this IEnumerable<Task<T>> tasks) => Task.WhenAll(tasks).Result;
+		public static IEnumerable<Sprite> Make(this IEnumerable<SpriteMaker> makers) => Tasks(makers).DoTasks();
+		public static IEnumerable<Task<Sprite>> Tasks(this IEnumerable<SpriteMaker> makers) => makers.Select(maker => Task.Factory.StartNew(maker.Make));
 		public static Dictionary<string, Sprite> Make(this IEnumerable<KeyValuePair<string, SpriteMaker>> makers)
 		{
 			Task<KeyValuePair<string, Sprite>>[] tasks = makers.Select(maker => Task.Factory.StartNew(
@@ -99,14 +92,6 @@ namespace Voxel2Pixel
 			foreach (KeyValuePair<string, Sprite> pair in tasks.Select(task => task.Result))
 				dictionary[pair.Key] = pair.Value;
 			return dictionary;
-		}
-		public static IEnumerable<T> DoTasks<T>(this IEnumerable<Task<T>> tasks) => DoTasks(tasks.ToArray());
-		public static IEnumerable<T> DoTasks<T>(params Task<T>[] tasks)
-		{
-			foreach (Task<T> task in tasks)
-				task.Start();
-			Task.WaitAll(tasks);
-			return tasks.Select(task => task.Result);
 		}
 		#endregion SpriteMaker
 		#region Geometry
