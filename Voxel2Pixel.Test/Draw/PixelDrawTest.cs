@@ -2,9 +2,8 @@ using SixLabors.ImageSharp;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Model;
+using Voxel2Pixel.Model.FileFormats;
 using Voxel2Pixel.Pack;
-using Voxel2Pixel.Render;
-using Xunit;
 using static Voxel2Pixel.Draw.PixelDraw;
 
 namespace Voxel2Pixel.Test.Draw

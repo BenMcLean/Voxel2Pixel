@@ -10,6 +10,7 @@
 @using Voxel2Pixel.Draw
 @using Voxel2Pixel.Interfaces
 @using Voxel2Pixel.Model
+@using Voxel2Pixel.Model.FileFormats
 @using Voxel2Pixel.Pack
 @using Voxel2Pixel.Web.Components
 @inject ISnackbar Snackbar
@@ -19,7 +20,7 @@
 @code {
 	#region Data
 	public bool IsLoading { get; set; } = false;
-	Voxel2Pixel.Model.VoxFileModel? VoxFileModel { get; set; } = null;
+	VoxFileModel? VoxFileModel { get; set; } = null;
 	public string ImageString { get; set; } = string.Empty;
 	public MarkupString ExceptionMessage { get; set; }
 	public SpriteMaker SpriteMaker { get; set; } = new();

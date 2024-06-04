@@ -5,7 +5,7 @@ using System.Linq;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
 
-namespace Voxel2Pixel.Model
+namespace Voxel2Pixel.Model.FileFormats
 {
 	public class VoxFileModel : DictionaryModel
 	{
@@ -13,8 +13,8 @@ namespace Voxel2Pixel.Model
 		public VoxFileModel(FileToVoxCore.Vox.VoxModel model, int frame = 0)
 		{
 			Palette = new uint[256];
-			uint[] palette = model.Palette.Take(Palette.Length).Select(color => Color(color) | 0xFFu).ToArray();
-			System.Array.Copy(
+			uint[] palette = model.Palette.Take(Palette.Length).Select(Color).ToArray();
+			Array.Copy(
 				sourceArray: palette,
 				sourceIndex: 0,
 				destinationArray: Palette,
