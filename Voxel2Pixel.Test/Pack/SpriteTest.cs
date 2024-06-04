@@ -22,6 +22,7 @@ namespace Voxel2Pixel.Test.Pack
 			}
 				.Iso8()
 				.Make()
+				.Select(sprite => sprite.DrawPoint())
 				.SameSize()
 				.AddFrameNumbers()
 				.Select(sprite => sprite.Upscale(8, 8))
@@ -39,9 +40,12 @@ namespace Voxel2Pixel.Test.Pack
 				Shadow = true,
 				Outline = true,
 			}
+				//.Set(new Point3D(0, 0, 0))
 				.SetShadowColor(0xFFu)
 				.Iso8()
 				.Make()
+				.Select(sprite => sprite.DrawPoint())
+				//.Select(Origin0)
 				.SameSize()
 				.AddFrameNumbers()
 				.Select(sprite => sprite.Upscale(8, 8))
@@ -114,8 +118,8 @@ namespace Voxel2Pixel.Test.Pack
 				.SetShadowColor(0xFFu)
 				.Stacks(24)
 				.Make()
+				.Select(sprite => sprite.DrawPoint())
 				//.Select(Origin0)
-				//.Select(sprite => sprite.DrawPoint())
 				.SameSize()
 				.AddFrameNumbers()
 				.Select(sprite => sprite.Upscale(8, 8))

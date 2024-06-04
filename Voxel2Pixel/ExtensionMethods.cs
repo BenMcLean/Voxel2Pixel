@@ -81,7 +81,7 @@ namespace Voxel2Pixel
 			Task.WaitAll(tasks);
 			return tasks.Select(task => task.Result);
 		}
-		public static Dictionary<string, Sprite> Make(this IDictionary<string, SpriteMaker> makers)
+		public static Dictionary<string, Sprite> Make(this IEnumerable<KeyValuePair<string, SpriteMaker>> makers)
 		{
 			Task<KeyValuePair<string, Sprite>>[] tasks = makers.Select(maker => Task.Factory.StartNew(
 				function: obj =>
