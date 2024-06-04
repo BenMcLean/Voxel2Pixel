@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
@@ -98,6 +99,14 @@ namespace Voxel2Pixel
 			foreach (KeyValuePair<string, Sprite> pair in tasks.Select(task => task.Result))
 				dictionary[pair.Key] = pair.Value;
 			return dictionary;
+		}
+		public static IEnumerable<T> DoTasks<T>(this IEnumerable<Task<T>> tasks) => DoTasks(tasks.ToArray());
+		public static IEnumerable<T> DoTasks<T>(params Task<T>[] tasks)
+		{
+			foreach (Task<T> task in tasks)
+				task.Start();
+			Task.WaitAll(tasks);
+			return tasks.Select(task => task.Result);
 		}
 		#endregion SpriteMaker
 		#region Geometry

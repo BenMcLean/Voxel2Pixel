@@ -395,17 +395,22 @@ namespace Voxel2Pixel.Pack
 			.Rotate(Radians);
 		public IEnumerable<Sprite> StacksShadows(ushort quantity = 24)
 		{
+			Task<Sprite>[] tasks = StacksShadowsTasks(quantity).ToArray();
+			foreach (Task<Sprite> task in tasks)
+				task.Start();
+			Task.WaitAll(tasks);
+			return tasks.Select(task => task.Result);
+		}
+		public IEnumerable<Task<Sprite>> StacksShadowsTasks(ushort quantity = 24)
+		{
 			Sprite shadow = Reoriented()
 				.Set(Perspective.Underneath)
 				.Set(ShadowColor)
 				.SetCrop(true)
 				.Make();
-			Task<Sprite>[] tasks = Enumerable.Range(0, quantity).Select(i => Task.Factory.StartNew(
-				function: obj => shadow.Rotate(Radians + Tau * ((int)obj / (double)quantity)),
-				state: i))
-				.ToArray();
-			Task.WaitAll(tasks);
-			return tasks.Select(task => task.Result);
+			return Enumerable.Range(0, quantity)
+				.Select(i => new Task<Sprite>(() =>
+				shadow.Rotate(Radians + Tau * ((double)i / quantity))));
 		}
 		public Sprite StacksTextureAtlas(out TextureAtlas textureAtlas, string name = "SpriteStack", ushort quantity = 24) => new(dictionary: StacksTextureAtlas(name, quantity), textureAtlas: out textureAtlas);
 		public Dictionary<string, Sprite> StacksTextureAtlas(string name = "SpriteStack", ushort quantity = 24)
