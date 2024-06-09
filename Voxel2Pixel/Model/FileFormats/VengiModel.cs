@@ -1,7 +1,8 @@
 ﻿using System.Buffers.Binary;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using System.Xml;
+using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model.FileFormats
 {
@@ -123,28 +124,41 @@ namespace Voxel2Pixel.Model.FileFormats
 	/// <summary>
 	/// Vengi file format: https://github.com/vengi-voxel/vengi/blob/master/src/modules/voxelformat/private/vengi/VENGIFormat.cpp
 	/// </summary>
-	public class VengiModel//: IModel
+	public class VengiModel : IBinaryWritable
 	{
-		public enum MagicNumber : uint
+		public VengiModel(Stream stream)
 		{
-			VENG = 0x56454E47u,//Vengi
-			NODE = 0x4E4F4445u,//Node
-			PROP = 0x50524F50u,//Property
-			DATA = 0x44415441u,//Data
-			PALC = 0x50414C43u,//Palette Colors
-			PALI = 0x50414C49u,//Palette Identifier
-			ANIM = 0x414E494Du,//Animation
-			KEYF = 0x4B455946u,//Key Frame
-			ENDN = 0x454E444Eu,//End Node
-			ENDA = 0x454E4441u,//End Animation
+			BinaryReader reader = new(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true);
+			if (BinaryPrimitives.ReadUInt32BigEndian(reader.ReadBytes(4)) != FourCC("VENG"))
+				throw new InvalidDataException("Vengi format must start with \"VENG\"");
+			reader.BaseStream.Position += 2;//zlib header (0x78, 0xDA)
+			stream = new DeflateStream(stream: stream, mode: CompressionMode.Decompress, leaveOpen: false);
+			reader = new(stream);
+			if (reader.ReadUInt32() != 3)
+				throw new InvalidDataException("Unexpected version!");
+			if (BinaryPrimitives.ReadUInt32BigEndian(reader.ReadBytes(4)) != FourCC("NODE"))
+				throw new InvalidDataException("expected NODE");
+			Header = HeaderChunk.Read(stream);
+			if (BinaryPrimitives.ReadUInt32BigEndian(reader.ReadBytes(4)) != FourCC("PALC"))
+				throw new InvalidDataException("expected PALC");
+			Palc = PalcChunk.Read(stream);
 		}
+		public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+		public void Write(BinaryWriter writer)
+		{
+			writer.Write(FourCC("VENG"));
+		}
+		#region Utilities
+		public static uint FourCC(string four) => BinaryPrimitives.ReadUInt32BigEndian(System.Text.Encoding.UTF8.GetBytes(four.Substring(0, 4)));
 		public static string ReadPascalString(BinaryReader reader) => System.Text.Encoding.UTF8.GetString(reader.ReadBytes(reader.ReadUInt16()));
 		public static void WritePascalString(BinaryWriter writer, string s)
 		{
 			writer.Write((ushort)s.Length);
 			writer.Write(System.Text.Encoding.UTF8.GetBytes(s));
 		}
-		public readonly record struct Node(
+		#endregion Utilities
+		#region Chunks
+		public readonly record struct HeaderChunk(
 			string Name,
 			string Type,
 			int ID,
@@ -154,26 +168,23 @@ namespace Voxel2Pixel.Model.FileFormats
 			uint Color,
 			float PivotX,
 			float PivotY,
-			float PivotZ)
+			float PivotZ) : IBinaryWritable
 		{
-			public static Node Read(Stream stream)
+			public static HeaderChunk Read(Stream stream) => Read(new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public static HeaderChunk Read(BinaryReader reader) => new(
+				Name: ReadPascalString(reader),
+				Type: ReadPascalString(reader),
+				ID: reader.ReadUInt16(),
+				ReferenceID: reader.ReadUInt16(),
+				Visible: reader.ReadBoolean(),
+				Locked: reader.ReadBoolean(),
+				Color: reader.ReadUInt32(),
+				PivotX: reader.ReadSingle(),
+				PivotY: reader.ReadSingle(),
+				PivotZ: reader.ReadSingle());
+			public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public void Write(BinaryWriter writer)
 			{
-				BinaryReader reader = new(stream);
-				return new Node(
-					Name: ReadPascalString(reader),
-					Type: ReadPascalString(reader),
-					ID: reader.ReadUInt16(),
-					ReferenceID: reader.ReadUInt16(),
-					Visible: reader.ReadBoolean(),
-					Locked: reader.ReadBoolean(),
-					Color: reader.ReadUInt32(),
-					PivotX: reader.ReadSingle(),
-					PivotY: reader.ReadSingle(),
-					PivotZ: reader.ReadSingle());
-			}
-			public void Write(Stream stream)
-			{
-				BinaryWriter writer = new(stream);
 				WritePascalString(writer, Name);
 				WritePascalString(writer, Type);
 				writer.Write(ID);
@@ -186,29 +197,54 @@ namespace Voxel2Pixel.Model.FileFormats
 				writer.Write(PivotZ);
 			}
 		}
-		public VengiModel(Stream stream)
+		public HeaderChunk Header;
+		public readonly record struct PalcChunk(
+			uint[] Colors,
+			uint[] EmitColors,
+			byte[] Indices,
+			uint Type,
+			KeyValuePair<string, float>[] Materials) : IBinaryWritable
 		{
-			BinaryReader reader = new(stream);
-			if (BinaryPrimitives.ReadUInt32BigEndian(reader.ReadBytes(4)) != (uint)MagicNumber.VENG)
-				throw new InvalidDataException("Vengi format must start with \"VENG\"");
-			reader.BaseStream.Position += 2;//zlib header (0x78, 0xDA)
-			Stream deflated = new DeflateStream(stream, CompressionMode.Decompress);
-			reader = new(deflated);
-			uint version = reader.ReadUInt32();
-			if (version != 3)
-				throw new InvalidDataException("Unexpected version!");
-			if (BinaryPrimitives.ReadUInt32BigEndian(reader.ReadBytes(4)) != (uint)MagicNumber.NODE)
-				throw new InvalidDataException("Node must start with \"NODE\"");
-			Node node = Node.Read(deflated);
-			//FileStream o = new("kingkong.bin", FileMode.Create, FileAccess.Write);
-			//deflated.CopyTo(o);
-			//o.Close();
+			public static PalcChunk Read(Stream stream) => Read(new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public static PalcChunk Read(BinaryReader reader)
+			{
+				uint[] colors = new uint[reader.ReadUInt32()];
+				for (uint i = 0; i < colors.Length; i++)
+					colors[i] = reader.ReadUInt32();
+				uint[] emitColors = new uint[colors.Length];
+				for (uint i = 0; i < colors.Length; i++)
+					emitColors[i] = reader.ReadUInt32();
+				byte[] indices = reader.ReadBytes(colors.Length);
+				uint type = reader.ReadUInt32();
+				KeyValuePair<string, float>[] materials = new KeyValuePair<string, float>[reader.ReadByte()];
+				for (ushort i = 0; i < materials.Length; i++)
+					materials[i] = new(ReadPascalString(reader), reader.ReadSingle());
+				return new(
+					Colors: colors,
+					EmitColors: emitColors,
+					Indices: indices,
+					Type: type,
+					Materials: materials);
+			}
+			public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public void Write(BinaryWriter writer)
+			{
+				writer.Write((uint)Colors.Length);
+				foreach (uint color in Colors)
+					writer.Write(color);
+				foreach (uint emitColor in EmitColors)
+					writer.Write(emitColor);
+				writer.Write(Indices);
+				writer.Write(Type);
+				writer.Write((byte)Materials.Length);
+				foreach (KeyValuePair<string, float> material in Materials)
+				{
+					WritePascalString(writer, material.Key);
+					writer.Write(material.Value);
+				}
+			}
 		}
-		public Node N;
-		public void Write(Stream stream)
-		{
-			BinaryWriter writer = new(stream);
-			writer.Write((uint)MagicNumber.VENG);
-		}
+		public PalcChunk Palc;
+		#endregion Chunks
 	}
 }
