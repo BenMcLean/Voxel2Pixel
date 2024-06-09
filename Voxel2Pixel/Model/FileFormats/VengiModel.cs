@@ -133,12 +133,14 @@ namespace Voxel2Pixel.Model.FileFormats
 				throw new InvalidDataException("Vengi format must start with \"VENG\"");
 			reader.BaseStream.Position += 2;//zlib header (0x78, 0xDA)
 			stream = new DeflateStream(stream: stream, mode: CompressionMode.Decompress, leaveOpen: false);
-			reader = new(stream);
+			//stream.CopyTo(new FileStream("kingkong-deflated.bin", FileMode.Create)); return;
+			reader = new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: false);
 			if (reader.ReadUInt32() != 3)
 				throw new InvalidDataException("Unexpected version!");
 			if (BinaryPrimitives.ReadUInt32BigEndian(reader.ReadBytes(4)) != FourCC("NODE"))
 				throw new InvalidDataException("expected NODE");
 			Header = HeaderChunk.Read(stream);
+			//stream.CopyTo(new FileStream("kingkong.bin", FileMode.Create)); return;
 			if (BinaryPrimitives.ReadUInt32BigEndian(reader.ReadBytes(4)) != FourCC("PALC"))
 				throw new InvalidDataException("expected PALC");
 			Palc = PalcChunk.Read(stream);
@@ -174,8 +176,8 @@ namespace Voxel2Pixel.Model.FileFormats
 			public static HeaderChunk Read(BinaryReader reader) => new(
 				Name: ReadPascalString(reader),
 				Type: ReadPascalString(reader),
-				ID: reader.ReadUInt16(),
-				ReferenceID: reader.ReadUInt16(),
+				ID: reader.ReadInt32(),
+				ReferenceID: reader.ReadInt32(),
 				Visible: reader.ReadBoolean(),
 				Locked: reader.ReadBoolean(),
 				Color: reader.ReadUInt32(),
