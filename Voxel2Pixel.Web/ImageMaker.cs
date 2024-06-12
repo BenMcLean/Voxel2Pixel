@@ -82,7 +82,7 @@ namespace Voxel2Pixel.Web
 		public static Stream PngStream(this byte[] pixels, ushort width = 0) => SKImage.FromPixelCopy(
 				info: new SKImageInfo(
 					width: width,
-					height: (pixels.Length / width) >> 2,
+					height: (pixels.Length >> 2) / width,
 					colorType: SKColorType.Rgba8888),
 				pixels: pixels,
 				rowBytes: width << 2)
