@@ -10,7 +10,7 @@ namespace Voxel2Pixel.Test.Render
 		[Fact]
 		public void PngTest()
 		{
-			using FileStream fs = new("SkiaSharp.png", FileMode.Create);
+			using FileStream fs = new(path: "SkiaSharp.png", mode: FileMode.Create, access: FileAccess.Write);
 			VoxFileModel model = new(@"..\..\..\Sora.vox");
 			new SpriteMaker
 			{

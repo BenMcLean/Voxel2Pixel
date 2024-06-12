@@ -88,11 +88,16 @@ namespace Voxel2Pixel.Web
 				rowBytes: width << 2)
 			.Encode()
 			.AsStream();
-		public static string ToBase64(this Stream stream)
+		public static string PngBase64String(this ISprite sprite) => sprite.Texture.PngBase64String(sprite.Width);
+		/// <summary>
+		/// Based on https://github.com/SixLabors/ImageSharp/blob/ede2f2d2d1e567dea74a44a482099302af9ed14d/src/ImageSharp/ImageExtensions.cs#L173-L183
+		/// </summary>
+		public static string PngBase64String(this byte[] pixels, ushort width = 0)
 		{
 			using MemoryStream memoryStream = new();
-			stream.CopyTo(memoryStream);
-			return Convert.ToBase64String(memoryStream.ToArray());
+			PngStream(pixels, width).CopyTo(memoryStream);
+			memoryStream.TryGetBuffer(out ArraySegment<byte> buffer);
+			return "data:image/png;base64," + Convert.ToBase64String(buffer.Array ?? [], 0, (int)memoryStream.Length);
 		}
 		#endregion SkiaSharp
 	}

@@ -67,8 +67,7 @@
 				.Set(VoxFileModel)
 				.Set(new NaiveDimmer(VoxFileModel.Palette))
 				.Make()
-				.PngStream()
-				.ToBase64();
+				.PngBase64String();
 	}
 	public void Iso8Gif()
 	{
