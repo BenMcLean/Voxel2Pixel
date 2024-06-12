@@ -79,20 +79,34 @@ namespace Voxel2Pixel.Web
 		#endregion ImageSharp
 		#region SkiaSharp
 		public static Stream PngStream(this ISprite sprite) => sprite.Texture.PngStream(sprite.Width);
-		public static Stream PngStream(this byte[] pixels, ushort width = 0) => SKImage.FromPixelCopy(
-				info: new SKImageInfo(
-					width: width,
-					height: (pixels.Length >> 2) / width,
-					colorType: SKColorType.Rgba8888),
-				pixels: pixels,
-				rowBytes: width << 2)
-			.Encode()
-			.AsStream();
-		public static string PngBase64String(this ISprite sprite) => sprite.Texture.PngBase64String(sprite.Width);
+		public static Stream PngStream(this byte[] pixels, ushort width = 0)
+		{
+			if (width < 1)
+				width = (ushort)Math.Sqrt(pixels.Length >> 2);
+			return SKImage.FromPixelCopy(
+					info: new SKImageInfo(
+						width: width,
+						height: (pixels.Length >> 2) / width,
+						colorType: SKColorType.Rgba8888),
+					pixels: pixels,
+					rowBytes: width << 2)
+				.Encode()
+				.AsStream();
+		}
+		public static void Png(this ISprite sprite, string path) => sprite.Texture.Png(path: path, width: sprite.Width);
+		public static void Png(this byte[] pixels, string path, ushort width = 0)
+		{
+			using FileStream fileStream = new(
+				path: path,
+				mode: FileMode.Create,
+				access: FileAccess.Write);
+			PngStream(pixels, width).CopyTo(fileStream);
+		}
+		public static string PngBase64(this ISprite sprite) => sprite.Texture.PngBase64(sprite.Width);
 		/// <summary>
 		/// Based on https://github.com/SixLabors/ImageSharp/blob/ede2f2d2d1e567dea74a44a482099302af9ed14d/src/ImageSharp/ImageExtensions.cs#L173-L183
 		/// </summary>
-		public static string PngBase64String(this byte[] pixels, ushort width = 0)
+		public static string PngBase64(this byte[] pixels, ushort width = 0)
 		{
 			using MemoryStream memoryStream = new();
 			PngStream(pixels, width).CopyTo(memoryStream);
