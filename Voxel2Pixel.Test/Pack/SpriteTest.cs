@@ -4,7 +4,7 @@ using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Model.FileFormats;
-using Voxel2Pixel.Pack;
+using Voxel2Pixel.Render;
 using static Voxel2Pixel.Web.ImageMaker;
 
 namespace Voxel2Pixel.Test.Pack

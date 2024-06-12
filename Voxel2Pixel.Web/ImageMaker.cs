@@ -1,6 +1,6 @@
 ﻿using SixLabors.ImageSharp;
 using Voxel2Pixel.Interfaces;
-using Voxel2Pixel.Pack;
+using Voxel2Pixel.Render;
 
 namespace Voxel2Pixel.Web
 {

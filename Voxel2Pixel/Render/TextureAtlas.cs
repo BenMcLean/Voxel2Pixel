@@ -3,7 +3,7 @@ using System.Runtime.Serialization;
 using System.Xml;
 using System.Xml.Serialization;
 
-namespace Voxel2Pixel.Pack
+namespace Voxel2Pixel.Render
 {
 	/// <summary>
 	/// This is an expansion upon the XML texture atlas metadata format used by Kenney. https://kenney.nl/
