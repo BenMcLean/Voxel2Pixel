@@ -9,10 +9,11 @@
 				<PackageReference Include="Cromulent.Encoding.Z85" Version="1.0.0" />
 				<PackageReference Include="FileToVoxCore" Version="1.4.0" />
 				<PackageReference Include="PolySharp" Version="1.14.1">
-				  <PrivateAssets>all</PrivateAssets>
-				  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+						<PrivateAssets>all</PrivateAssets>
+						<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 				</PackageReference>
 				<PackageReference Include="RectpackSharp" Version="1.1.0" />
+				<PackageReference Include="SkiaSharp" Version="2.88.8" />
 				<PackageReference Include="System.Memory" Version="4.5.5" />
 		</ItemGroup>
 
