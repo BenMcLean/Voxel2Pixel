@@ -1,6 +1,7 @@
 ﻿using SixLabors.ImageSharp;
+using SkiaSharp;
 using Voxel2Pixel.Interfaces;
-using Voxel2Pixel.Pack;
+using Voxel2Pixel.Render;
 
 namespace Voxel2Pixel.Web
 {
@@ -11,6 +12,7 @@ namespace Voxel2Pixel.Web
 	public static class ImageMaker
 	{
 		public const int DefaultFrameDelay = 100;
+		#region ImageSharp
 		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> Png(ushort width = 0, params byte[] bytes)
 		{
 			if (width < 1)
@@ -74,5 +76,43 @@ namespace Voxel2Pixel.Web
 			gif.Frames.RemoveFrame(0);//I don't know why ImageSharp has me doing this but if I don't then I get an extra transparent frame at the start.
 			return gif;
 		}
+		#endregion ImageSharp
+		#region SkiaSharp
+		public static Stream PngStream(this ISprite sprite) => sprite.Texture.PngStream(sprite.Width);
+		public static Stream PngStream(this byte[] pixels, ushort width = 0)
+		{
+			if (width < 1)
+				width = (ushort)Math.Sqrt(pixels.Length >> 2);
+			return SKImage.FromPixelCopy(
+					info: new SKImageInfo(
+						width: width,
+						height: (pixels.Length >> 2) / width,
+						colorType: SKColorType.Rgba8888),
+					pixels: pixels,
+					rowBytes: width << 2)
+				.Encode()
+				.AsStream();
+		}
+		public static void Png(this ISprite sprite, string path) => sprite.Texture.Png(path: path, width: sprite.Width);
+		public static void Png(this byte[] pixels, string path, ushort width = 0)
+		{
+			using FileStream fileStream = new(
+				path: path,
+				mode: FileMode.Create,
+				access: FileAccess.Write);
+			PngStream(pixels, width).CopyTo(fileStream);
+		}
+		public static string PngBase64(this ISprite sprite) => sprite.Texture.PngBase64(sprite.Width);
+		/// <summary>
+		/// Based on https://github.com/SixLabors/ImageSharp/blob/ede2f2d2d1e567dea74a44a482099302af9ed14d/src/ImageSharp/ImageExtensions.cs#L173-L183
+		/// </summary>
+		public static string PngBase64(this byte[] pixels, ushort width = 0)
+		{
+			using MemoryStream memoryStream = new();
+			PngStream(pixels, width).CopyTo(memoryStream);
+			memoryStream.TryGetBuffer(out ArraySegment<byte> buffer);
+			return "data:image/png;base64," + Convert.ToBase64String(buffer.Array ?? [], 0, (int)memoryStream.Length);
+		}
+		#endregion SkiaSharp
 	}
 }

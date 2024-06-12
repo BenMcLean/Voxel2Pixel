@@ -1,5 +1,5 @@
 ﻿using SixLabors.ImageSharp;
-using Voxel2Pixel.Pack;
+using Voxel2Pixel.Render;
 using Xunit;
 using static Voxel2Pixel.ExtensionMethods;
 using static Voxel2Pixel.Web.ImageMaker;

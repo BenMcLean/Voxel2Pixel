@@ -11,7 +11,7 @@
 @using Voxel2Pixel.Interfaces
 @using Voxel2Pixel.Model
 @using Voxel2Pixel.Model.FileFormats
-@using Voxel2Pixel.Pack
+@using Voxel2Pixel.Render
 @using Voxel2Pixel.Web.Components
 @inject ISnackbar Snackbar
 
@@ -55,7 +55,7 @@
 		}
 		catch (Exception ex)
 		{
-			ExceptionMessage = new MarkupString(ex.GetType().Name + ": " + ex.Message + "<br />" + ex.StackTrace);
+			ExceptionMessage = new MarkupString(ex.GetType().Name + ": \"" + ex.Message + "\"<br />" + ex.StackTrace);
 		}
 		IsLoading = false;
 		StateHasChanged();
@@ -67,8 +67,7 @@
 				.Set(VoxFileModel)
 				.Set(new NaiveDimmer(VoxFileModel.Palette))
 				.Make()
-				.Png()
-				.ToBase64String(PngFormat.Instance);
+				.PngBase64();
 	}
 	public void Iso8Gif()
 	{

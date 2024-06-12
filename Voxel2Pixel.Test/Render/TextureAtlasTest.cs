@@ -5,11 +5,11 @@ using System.Xml.Serialization;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model.FileFormats;
-using Voxel2Pixel.Pack;
-using static Voxel2Pixel.Pack.TextureAtlas;
+using Voxel2Pixel.Render;
+using static Voxel2Pixel.Render.TextureAtlas;
 using static Voxel2Pixel.Web.ImageMaker;
 
-namespace Voxel2Pixel.Test.Pack
+namespace Voxel2Pixel.Test.Render
 {
 	public class TextureAtlasTest
 	{
