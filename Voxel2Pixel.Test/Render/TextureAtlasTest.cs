@@ -9,7 +9,7 @@ using Voxel2Pixel.Render;
 using static Voxel2Pixel.Render.TextureAtlas;
 using static Voxel2Pixel.Web.ImageMaker;
 
-namespace Voxel2Pixel.Test.Pack
+namespace Voxel2Pixel.Test.Render
 {
 	public class TextureAtlasTest
 	{

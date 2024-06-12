@@ -55,7 +55,7 @@
 		}
 		catch (Exception ex)
 		{
-			ExceptionMessage = new MarkupString(ex.GetType().Name + ": " + ex.Message + "<br />" + ex.StackTrace);
+			ExceptionMessage = new MarkupString(ex.GetType().Name + ": \"" + ex.Message + "\"<br />" + ex.StackTrace);
 		}
 		IsLoading = false;
 		StateHasChanged();
@@ -67,8 +67,8 @@
 				.Set(VoxFileModel)
 				.Set(new NaiveDimmer(VoxFileModel.Palette))
 				.Make()
-				.Png()
-				.ToBase64String(PngFormat.Instance);
+				.PngStream()
+				.ToBase64();
 	}
 	public void Iso8Gif()
 	{

@@ -7,7 +7,7 @@ using Voxel2Pixel.Model.FileFormats;
 using Voxel2Pixel.Render;
 using static Voxel2Pixel.Web.ImageMaker;
 
-namespace Voxel2Pixel.Test.Pack
+namespace Voxel2Pixel.Test.Render
 {
 	public class SpriteTest(Xunit.Abstractions.ITestOutputHelper output)
 	{

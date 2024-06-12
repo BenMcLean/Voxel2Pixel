@@ -1,4 +1,5 @@
 ﻿using SixLabors.ImageSharp;
+using SkiaSharp;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Render;
 
@@ -11,6 +12,7 @@ namespace Voxel2Pixel.Web
 	public static class ImageMaker
 	{
 		public const int DefaultFrameDelay = 100;
+		#region ImageSharp
 		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> Png(ushort width = 0, params byte[] bytes)
 		{
 			if (width < 1)
@@ -74,5 +76,24 @@ namespace Voxel2Pixel.Web
 			gif.Frames.RemoveFrame(0);//I don't know why ImageSharp has me doing this but if I don't then I get an extra transparent frame at the start.
 			return gif;
 		}
+		#endregion ImageSharp
+		#region SkiaSharp
+		public static Stream PngStream(this ISprite sprite) => sprite.Texture.PngStream(sprite.Width);
+		public static Stream PngStream(this byte[] pixels, ushort width = 0) => SKImage.FromPixelCopy(
+				info: new SKImageInfo(
+					width: width,
+					height: (pixels.Length / width) >> 2,
+					colorType: SKColorType.Rgba8888),
+				pixels: pixels,
+				rowBytes: width << 2)
+			.Encode()
+			.AsStream();
+		public static string ToBase64(this Stream stream)
+		{
+			using MemoryStream memoryStream = new();
+			stream.CopyTo(memoryStream);
+			return Convert.ToBase64String(memoryStream.ToArray());
+		}
+		#endregion SkiaSharp
 	}
 }
