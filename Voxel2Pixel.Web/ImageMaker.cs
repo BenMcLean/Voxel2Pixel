@@ -100,7 +100,7 @@ namespace Voxel2Pixel.Web
 				path: path,
 				mode: FileMode.Create,
 				access: FileAccess.Write);
-			PngStream(pixels, width).CopyTo(fileStream);
+			pixels.PngStream(width).CopyTo(fileStream);
 		}
 		public static string PngBase64(this ISprite sprite) => sprite.Texture.PngBase64(sprite.Width);
 		/// <summary>
@@ -109,7 +109,7 @@ namespace Voxel2Pixel.Web
 		public static string PngBase64(this byte[] pixels, ushort width = 0)
 		{
 			using MemoryStream memoryStream = new();
-			PngStream(pixels, width).CopyTo(memoryStream);
+			pixels.PngStream(width).CopyTo(memoryStream);
 			memoryStream.TryGetBuffer(out ArraySegment<byte> buffer);
 			return "data:image/png;base64," + Convert.ToBase64String(buffer.Array ?? [], 0, (int)memoryStream.Length);
 		}
