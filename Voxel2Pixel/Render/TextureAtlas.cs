@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.Serialization;
+using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -60,5 +61,22 @@ namespace Voxel2Pixel.Render
 		[DataMember]
 		[XmlElement("SubTexture")]
 		public SubTexture[] SubTextures { get; set; }
+		#region Serialize
+		public string XML(bool indent = true)
+		{
+			StringBuilder stringBuilder = new();
+			new XmlSerializer(typeof(TextureAtlas)).Serialize(
+				xmlWriter: XmlWriter.Create(
+					output: stringBuilder,
+					settings: new()
+					{
+						Indent = indent,
+						IndentChars = "\t",
+					}),
+				o: this,
+				namespaces: new([XmlQualifiedName.Empty]));
+			return stringBuilder.ToString();
+		}
+		#endregion Serialize
 	}
 }

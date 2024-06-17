@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Buffers.Binary;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Voxel2Pixel.Draw
 {
@@ -124,16 +126,15 @@ namespace Voxel2Pixel.Draw
 		});
 		public static byte[] Draw3x4(this byte[] texture, string @string, int width = 0, int x = 0, int y = 0, uint color = 0xFFFFFFFF)
 		{
-			foreach (char @char in @string)
-			{
+			Parallel.Invoke(Enumerable.Range(0, @string.Length)
+				.Select<int, Action>(i => () =>
 				texture.Draw3x4(
-					@char: @char,
+					@char: @string[i],
 					width: width,
-					x: x,
+					x: x + (i << 2),
 					y: y,
-					color: color);
-				x += 4;
-			}
+					color: color))
+				.ToArray());
 			return texture;
 		}
 		public static byte[] Draw3x4(this byte[] texture, char @char, int width = 0, int x = 0, int y = 0, uint color = 0xFFFFFFFF)

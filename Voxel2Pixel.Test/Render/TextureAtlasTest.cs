@@ -16,20 +16,16 @@ namespace Voxel2Pixel.Test.Render
 		//private readonly Xunit.Abstractions.ITestOutputHelper output;
 		//public TextureAtlasTest(Xunit.Abstractions.ITestOutputHelper output) => this.output = output;
 		[Fact]
-		public void Test()
-		{
-			XmlSerializerNamespaces emptyNamespaces = new(namespaces: [XmlQualifiedName.Empty]);
-			XmlWriterSettings settings = new()
-			{
-				Indent = true,
-				OmitXmlDeclaration = true,
-				IndentChars = "\t",
-			};
-			TextureAtlas textureAtlas = new()
+		public void Test() => Assert.Equal(
+			expected: @"<?xml version=""1.0"" encoding=""utf-16""?>
+<TextureAtlas imagePath=""thin_double.png"">
+	<SubTexture name=""pattern_0000.png"" x=""1024"" y=""1024"" width=""512"" height=""512"" />
+	<SubTexture name=""pattern_0001.png"" x=""2048"" y=""2048"" width=""512"" height=""512"" />
+</TextureAtlas>",
+			actual: new TextureAtlas()
 			{
 				ImagePath = "thin_double.png",
-				SubTextures =
-				[
+				SubTextures = [
 					new() {
 						Name = "pattern_0000.png",
 						X = 1024,
@@ -45,18 +41,7 @@ namespace Voxel2Pixel.Test.Render
 						Height = 512,
 					},
 				],
-			};
-			StringBuilder stringBuilder = new();
-			XmlWriter xmlWriter = XmlWriter.Create(stringBuilder, settings);
-			XmlSerializer xmlSerializer = new(typeof(TextureAtlas));
-			xmlSerializer.Serialize(xmlWriter, textureAtlas, emptyNamespaces);
-			Assert.Equal(
-				expected: @"<TextureAtlas imagePath=""thin_double.png"">
-	<SubTexture name=""pattern_0000.png"" x=""1024"" y=""1024"" width=""512"" height=""512"" />
-	<SubTexture name=""pattern_0001.png"" x=""2048"" y=""2048"" width=""512"" height=""512"" />
-</TextureAtlas>",
-				actual: stringBuilder.ToString());
-		}
+			}.XML());
 		[Fact]
 		public void SubTextureTest()
 		{
