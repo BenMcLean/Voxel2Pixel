@@ -8,6 +8,7 @@ using System.Text;
 namespace Voxel2Pixel.Draw
 {
 	/// <summary>
+	/// All methods in this static class are actually stateless functions, meaning that they do not reference any modifiable variables besides their parameters.
 	/// These methods assume rgba8888 a.k.a. rgba32 color, stored Big-Endian.
 	/// That means every four bytes represent one pixel.
 	/// A texture is a byte array of size = wdith * 4 * height.

@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace Voxel2Pixel.Draw
 {
+	/// <summary>
+	/// All methods in this static class are actually stateless functions, meaning that they do not reference any modifiable variables besides their parameters. This makes them as thread-safe as their parameters.
+	/// </summary>
 	public static class DrawFont3x4
 	{
 		/// <summary>
@@ -124,7 +127,7 @@ namespace Voxel2Pixel.Draw
 			0x6C00, // 0x7E ~ 011 110 000
 			0xA4A4  // 0x7F   101 010 101 010 // Alternative: Could even have a "full" 4x4 checkerboard
 		});
-		public static byte[] Draw3x4(this byte[] texture, string @string, int width = 0, int x = 0, int y = 0, uint color = 0xFFFFFFFF)
+		public static byte[] Draw3x4(this byte[] texture, string @string, int width = 0, int x = 0, int y = 0, uint color = 0xFFFFFFFFu)
 		{
 			Parallel.Invoke(Enumerable.Range(0, @string.Length)
 				.Select<int, Action>(i => () =>
@@ -240,14 +243,14 @@ namespace Voxel2Pixel.Draw
 			//if ((glyph & 0b0000000000000001) != 0)
 			return texture;
 		}
-		public static byte[][] AddFrameNumbers(this byte[][] frames, ushort width = 0, uint color = 0xFFFFFFFF)
+		public static byte[][] AddFrameNumbers(this byte[][] frames, ushort width = 0, uint color = 0xFFFFFFFFu)
 		{
 			for (int frame = 0; frame < frames.Length; frame++)
 				frames[frame].Draw3x4(
 					@string: frame.ToString(),
 					width: width,
 					x: 0,
-					y: (frames[frame].Length / width >> 2) - 4,
+					y: (frames[frame].Length >> 2) / width - 4,
 					color: color);
 			return frames;
 		}
