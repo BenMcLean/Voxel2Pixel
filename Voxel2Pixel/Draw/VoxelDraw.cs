@@ -16,7 +16,7 @@ namespace Voxel2Pixel.Draw
 	public static class VoxelDraw
 	{
 		#region Perspectives
-		public static void Draw(Perspective perspective, IModel model, ITriangleRenderer renderer, byte peakScaleX = 6, byte peakScaleY = 6, double radians = 0d)
+		public static void Draw(Perspective perspective, IModel model, IRenderer renderer, byte peakScaleX = 6, byte peakScaleY = 6, double radians = 0d)
 		{
 			switch (perspective)
 			{

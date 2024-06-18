@@ -45,12 +45,12 @@
 	private async void LoadFile(IBrowserFile file)
 	{
 		IsLoading = true;
-		MemoryStream ms = new();
+		MemoryStream memoryStream = new();
 		try
 		{
-			await file.OpenReadStream().CopyToAsync(ms);
-			ms.Position = 0;
-			VoxFileModel = new(ms);
+			await file.OpenReadStream().CopyToAsync(memoryStream);
+			memoryStream.Position = 0;
+			VoxFileModel = new(memoryStream);
 			SingleImage();
 		}
 		catch (Exception ex)
@@ -67,7 +67,8 @@
 				.Set(VoxFileModel)
 				.Set(new NaiveDimmer(VoxFileModel.Palette))
 				.Make()
-				.PngBase64();
+				.Png()
+				.ToBase64String(PngFormat.Instance);
 	}
 	public void Iso8Gif()
 	{

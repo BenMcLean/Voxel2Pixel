@@ -1,26 +1,25 @@
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
-  </PropertyGroup>
+		<PropertyGroup>
+				<TargetFramework>net8.0</TargetFramework>
+				<Nullable>enable</Nullable>
+				<ImplicitUsings>enable</ImplicitUsings>
+				<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
+		</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.6" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.5" PrivateAssets="all" />
-    <PackageReference Include="MudBlazor" Version="6.20.0" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.4" />
-    <PackageReference Include="SkiaSharp.Views.Blazor" Version="2.88.8" />
-  </ItemGroup>
+		<ItemGroup>
+				<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.6" />
+				<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.5" PrivateAssets="all" />
+				<PackageReference Include="MudBlazor" Version="6.20.0" />
+				<PackageReference Include="SixLabors.ImageSharp" Version="3.1.4" />
+		</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Voxel2Pixel\Voxel2Pixel.csproj" />
-  </ItemGroup>
+		<ItemGroup>
+				<ProjectReference Include="..\Voxel2Pixel\Voxel2Pixel.csproj" />
+		</ItemGroup>
 
-  <ItemGroup>
-    <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
-  </ItemGroup>
+		<ItemGroup>
+				<ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
+		</ItemGroup>
 
 </Project>
