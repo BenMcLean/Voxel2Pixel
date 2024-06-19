@@ -129,13 +129,13 @@ namespace Voxel2Pixel.Render
 		public Sprite(out PackingRectangle[] packingRectangles, IEnumerable<Sprite> sprites) : this(packingRectangles: out packingRectangles, sprites: sprites.ToArray()) { }
 		public Sprite(out PackingRectangle[] packingRectangles, params Sprite[] sprites)
 		{
-			packingRectangles = Enumerable.Range(0, sprites.Length)
-				.Select(i => new PackingRectangle(
+			packingRectangles = sprites
+				.Select((sprite, index) => new PackingRectangle(
 					x: 0,
 					y: 0,
-					width: (ushort)(sprites[i].Width + 2),
-					height: (ushort)(sprites[i].Height + 2),
-					id: i))
+					width: (ushort)(sprite.Width + 2),
+					height: (ushort)(sprite.Height + 2),
+					id: index))
 				.ToArray();
 			RectanglePacker.Pack(
 				rectangles: packingRectangles,
