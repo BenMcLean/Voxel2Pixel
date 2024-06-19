@@ -129,14 +129,16 @@ namespace Voxel2Pixel.Draw
 		});
 		public static byte[] Draw3x4(this byte[] texture, string @string, int width = 0, int x = 0, int y = 0, uint color = 0xFFFFFFFFu)
 		{
-			Parallel.Invoke(Enumerable.Range(0, @string.Length)
-				.Select<int, Action>(i => () =>
-				texture.Draw3x4(
-					@char: @string[i],
-					width: width,
-					x: x + (i << 2),
-					y: y,
-					color: color))
+			if (width < 1)
+				width = (int)Math.Sqrt(texture.Length >> 2);
+			Parallel.Invoke(@string
+				.Select<char, Action>((char @char, int index) => () =>
+					texture.Draw3x4(
+						@char: @char,
+						width: width,
+						x: x + (index << 2),
+						y: y,
+						color: color))
 				.ToArray());
 			return texture;
 		}
