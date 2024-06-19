@@ -73,15 +73,7 @@ namespace Voxel2Pixel
 		}
 		#endregion Sprite
 		#region SpriteMaker
-		public static Sprite[] Make(this IEnumerable<SpriteMaker> spriteMakers) => Make(spriteMakers.ToArray());
-		public static Sprite[] Make(params SpriteMaker[] spriteMakers)
-		{
-			Sprite[] sprites = new Sprite[spriteMakers.Length];
-			Parallel.Invoke(Enumerable.Range(0, spriteMakers.Length)
-				.Select<int, Action>(i => () => sprites[i] = spriteMakers[i].Make())
-				.ToArray());
-			return sprites;
-		}
+		public static Sprite[] Make(this IEnumerable<SpriteMaker> spriteMakers) => SpriteMaker.Make(spriteMakers.ToArray());
 		public static ConcurrentDictionary<string, Sprite> Make(this IDictionary<string, SpriteMaker> spriteMakers)
 		{
 			ConcurrentDictionary<string, Sprite> dictionary = [];

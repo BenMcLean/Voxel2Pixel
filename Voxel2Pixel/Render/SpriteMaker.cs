@@ -300,6 +300,14 @@ namespace Voxel2Pixel.Render
 				sprite.Crop2Content(maker.Threshold)
 				: sprite;
 		}
+		public static Sprite[] Make(params SpriteMaker[] spriteMakers)
+		{
+			Sprite[] sprites = new Sprite[spriteMakers.Length];
+			Parallel.Invoke(Enumerable.Range(0, spriteMakers.Length)
+				.Select<int, Action>(i => () => sprites[i] = spriteMakers[i].Make())
+				.ToArray());
+			return sprites;
+		}
 		public IEnumerable<SpriteMaker> Z4(Turn turn = Turn.CounterZ)
 		{
 			CuboidOrientation cuboidOrientation = CuboidOrientation;
