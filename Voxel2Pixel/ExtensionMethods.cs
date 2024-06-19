@@ -78,7 +78,7 @@ namespace Voxel2Pixel
 			.OrderBy(spriteTuple => spriteTuple.index)
 			.AsEnumerable()
 			.Select(spriteTuple => spriteTuple.sprite);
-		public static Dictionary<string, Sprite> Make(this IDictionary<string, SpriteMaker> spriteMakers) => spriteMakers
+		public static Dictionary<T, Sprite> Make<T>(this IDictionary<T, SpriteMaker> spriteMakers) => spriteMakers
 			.AsParallel()
 			.Select(spriteMakerPair => (
 				key: spriteMakerPair.Key,
