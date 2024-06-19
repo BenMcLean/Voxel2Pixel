@@ -159,7 +159,7 @@ namespace Voxel2Pixel.Render
 						width: Width))
 				.ToArray());
 		}
-		public Sprite(Dictionary<string, Sprite> dictionary, out TextureAtlas textureAtlas) : this(sprites: [.. dictionary], textureAtlas: out textureAtlas) { }
+		public Sprite(IDictionary<string, Sprite> dictionary, out TextureAtlas textureAtlas) : this(sprites: [.. dictionary], textureAtlas: out textureAtlas) { }
 		public Sprite(KeyValuePair<string, Sprite>[] sprites, out TextureAtlas textureAtlas) : this(packingRectangles: out PackingRectangle[] packingRectangles, sprites: sprites.Select(pair => pair.Value)) =>
 			textureAtlas = new TextureAtlas
 			{

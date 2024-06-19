@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -72,25 +73,21 @@ namespace Voxel2Pixel
 		}
 		#endregion Sprite
 		#region SpriteMaker
-		public static IEnumerable<T> DoTasks<T>(this IEnumerable<Task<T>> tasks) => Task.WhenAll(tasks).Result;
-		public static IEnumerable<Sprite> Make(this IEnumerable<SpriteMaker> makers) => Tasks(makers).DoTasks();
-		public static IEnumerable<Task<Sprite>> Tasks(this IEnumerable<SpriteMaker> makers) => makers.Select(maker => Task.Factory.StartNew(maker.Make));
-		public static Dictionary<string, Sprite> Make(this IEnumerable<KeyValuePair<string, SpriteMaker>> makers)
+		public static Sprite[] Make(this IEnumerable<SpriteMaker> spriteMakers) => Make(spriteMakers.ToArray());
+		public static Sprite[] Make(params SpriteMaker[] spriteMakers)
 		{
-			Task<KeyValuePair<string, Sprite>>[] tasks = makers.Select(maker => Task.Factory.StartNew(
-				function: obj =>
-				{
-					KeyValuePair<string, SpriteMaker> pair = (KeyValuePair<string, SpriteMaker>)obj;
-					return new KeyValuePair<string, Sprite>(
-						key: pair.Key,
-						value: pair.Value.Make());
-				},
-				state: maker))
-				.ToArray();
-			Task.WaitAll(tasks);
-			Dictionary<string, Sprite> dictionary = [];
-			foreach (KeyValuePair<string, Sprite> pair in tasks.Select(task => task.Result))
-				dictionary[pair.Key] = pair.Value;
+			Sprite[] sprites = new Sprite[spriteMakers.Length];
+			Parallel.Invoke(Enumerable.Range(0, spriteMakers.Length)
+				.Select<int, Action>(i => () => sprites[i] = spriteMakers[i].Make())
+				.ToArray());
+			return sprites;
+		}
+		public static ConcurrentDictionary<string, Sprite> Make(this IDictionary<string, SpriteMaker> spriteMakers)
+		{
+			ConcurrentDictionary<string, Sprite> dictionary = [];
+			Parallel.Invoke(spriteMakers
+				.Select<KeyValuePair<string, SpriteMaker>, Action>(pair => () => dictionary[pair.Key] = pair.Value.Make())
+				.ToArray());
 			return dictionary;
 		}
 		#endregion SpriteMaker
