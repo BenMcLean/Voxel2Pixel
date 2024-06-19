@@ -163,22 +163,21 @@ namespace Voxel2Pixel.Render
 		public Sprite(KeyValuePair<string, Sprite>[] sprites, out TextureAtlas textureAtlas) : this(packingRectangles: out PackingRectangle[] packingRectangles, sprites: sprites.Select(pair => pair.Value)) =>
 			textureAtlas = new TextureAtlas
 			{
-				SubTextures = Enumerable.Range(0, packingRectangles.Length)
-					.Select(i => new SubTexture
-					{
-						Name = sprites[i].Key,
-						X = (int)packingRectangles[i].X + 1,
-						Y = (int)packingRectangles[i].Y + 1,
-						Width = (int)packingRectangles[i].Width - 2,
-						Height = (int)packingRectangles[i].Height - 2,
-						Points = sprites[i].Value
-							.Select(point => new SubTexture.Point
-							{
-								Name = point.Key,
-								X = point.Value.X,
-								Y = point.Value.Y,
-							}).ToArray(),
-					}).ToArray(),
+				SubTextures = packingRectangles.Zip(sprites, (packingRectangle, spritePair) => new SubTexture
+				{
+					Name = spritePair.Key,
+					X = (int)packingRectangle.X + 1,
+					Y = (int)packingRectangle.Y + 1,
+					Width = (int)packingRectangle.Width - 2,
+					Height = (int)packingRectangle.Height - 2,
+					Points = spritePair.Value
+						.Select(pointPair => new SubTexture.Point
+						{
+							Name = pointPair.Key,
+							X = pointPair.Value.X,
+							Y = pointPair.Value.Y,
+						}).ToArray(),
+				}).ToArray(),
 			};
 		#endregion Packing
 		#region Image manipulation
