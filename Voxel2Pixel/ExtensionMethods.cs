@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
@@ -73,15 +71,21 @@ namespace Voxel2Pixel
 		}
 		#endregion Sprite
 		#region SpriteMaker
-		public static Sprite[] Make(this IEnumerable<SpriteMaker> spriteMakers) => SpriteMaker.Make(spriteMakers.ToArray());
-		public static ConcurrentDictionary<string, Sprite> Make(this IDictionary<string, SpriteMaker> spriteMakers)
-		{
-			ConcurrentDictionary<string, Sprite> dictionary = [];
-			Parallel.Invoke(spriteMakers
-				.Select<KeyValuePair<string, SpriteMaker>, Action>(pair => () => dictionary[pair.Key] = pair.Value.Make())
-				.ToArray());
-			return dictionary;
-		}
+		public static IEnumerable<Sprite> Make(this IEnumerable<SpriteMaker> spriteMakers) => spriteMakers
+			.Select((spriteMaker, index) => (spriteMaker, index))
+			.AsParallel()
+			.Select(spriteMakerTuple => (sprite: spriteMakerTuple.spriteMaker.Make(), spriteMakerTuple.index))
+			.OrderBy(spriteTuple => spriteTuple.index)
+			.AsEnumerable()
+			.Select(spriteTuple => spriteTuple.sprite);
+		public static Dictionary<string, Sprite> Make(this IDictionary<string, SpriteMaker> spriteMakers) => spriteMakers
+			.AsParallel()
+			.Select(spriteMakerPair => (
+				key: spriteMakerPair.Key,
+				sprite: spriteMakerPair.Value.Make()))
+			.ToDictionary(//sequential
+				keySelector: tuple => tuple.key,
+				elementSelector: tuple => tuple.sprite);
 		#endregion SpriteMaker
 		#region Geometry
 		public readonly record struct HorizontalLine(int X, int Y, int Width);
