@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
@@ -72,27 +71,21 @@ namespace Voxel2Pixel
 		}
 		#endregion Sprite
 		#region SpriteMaker
-		public static IEnumerable<T> DoTasks<T>(this IEnumerable<Task<T>> tasks) => Task.WhenAll(tasks).Result;
-		public static IEnumerable<Sprite> Make(this IEnumerable<SpriteMaker> makers) => Tasks(makers).DoTasks();
-		public static IEnumerable<Task<Sprite>> Tasks(this IEnumerable<SpriteMaker> makers) => makers.Select(maker => Task.Factory.StartNew(maker.Make));
-		public static Dictionary<string, Sprite> Make(this IEnumerable<KeyValuePair<string, SpriteMaker>> makers)
-		{
-			Task<KeyValuePair<string, Sprite>>[] tasks = makers.Select(maker => Task.Factory.StartNew(
-				function: obj =>
-				{
-					KeyValuePair<string, SpriteMaker> pair = (KeyValuePair<string, SpriteMaker>)obj;
-					return new KeyValuePair<string, Sprite>(
-						key: pair.Key,
-						value: pair.Value.Make());
-				},
-				state: maker))
-				.ToArray();
-			Task.WaitAll(tasks);
-			Dictionary<string, Sprite> dictionary = [];
-			foreach (KeyValuePair<string, Sprite> pair in tasks.Select(task => task.Result))
-				dictionary[pair.Key] = pair.Value;
-			return dictionary;
-		}
+		public static IEnumerable<Sprite> Make(this IEnumerable<SpriteMaker> spriteMakers) => spriteMakers
+			.Select((spriteMaker, index) => (spriteMaker, index))
+			.AsParallel()
+			.Select(spriteMakerTuple => (sprite: spriteMakerTuple.spriteMaker.Make(), spriteMakerTuple.index))
+			.OrderBy(spriteTuple => spriteTuple.index)
+			.AsEnumerable()
+			.Select(spriteTuple => spriteTuple.sprite);
+		public static Dictionary<T, Sprite> Make<T>(this IDictionary<T, SpriteMaker> spriteMakers) => spriteMakers
+			.AsParallel()
+			.Select(spriteMakerPair => (
+				key: spriteMakerPair.Key,
+				sprite: spriteMakerPair.Value.Make()))
+			.ToDictionary(//sequential
+				keySelector: tuple => tuple.key,
+				elementSelector: tuple => tuple.sprite);
 		#endregion SpriteMaker
 		#region Geometry
 		public readonly record struct HorizontalLine(int X, int Y, int Width);

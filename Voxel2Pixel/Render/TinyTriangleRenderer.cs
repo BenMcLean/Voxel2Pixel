@@ -3,7 +3,7 @@ using Voxel2Pixel.Model;
 
 namespace Voxel2Pixel.Render
 {
-	public class TinyTriangleRenderer : ITriangleRenderer
+	public class TinyTriangleRenderer : IRenderer
 	{
 		public virtual IRectangleRenderer RectangleRenderer { get; set; }
 		public virtual IVoxelColor VoxelColor { get; set; }

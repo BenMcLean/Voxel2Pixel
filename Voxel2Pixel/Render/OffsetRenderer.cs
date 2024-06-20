@@ -2,7 +2,7 @@
 
 namespace Voxel2Pixel.Render
 {
-	public class OffsetRenderer : TriangleRenderer
+	public class OffsetRenderer : Renderer
 	{
 		public IRectangleRenderer RectangleRenderer
 		{

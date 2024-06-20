@@ -45,12 +45,12 @@
 	private async void LoadFile(IBrowserFile file)
 	{
 		IsLoading = true;
-		MemoryStream ms = new();
+		MemoryStream memoryStream = new();
 		try
 		{
-			await file.OpenReadStream().CopyToAsync(ms);
-			ms.Position = 0;
-			VoxFileModel = new(ms);
+			await file.OpenReadStream().CopyToAsync(memoryStream);
+			memoryStream.Position = 0;
+			VoxFileModel = new(memoryStream);
 			SingleImage();
 		}
 		catch (Exception ex)
@@ -67,7 +67,24 @@
 				.Set(VoxFileModel)
 				.Set(new NaiveDimmer(VoxFileModel.Palette))
 				.Make()
-				.PngBase64();
+				.Png()
+				.ToBase64String(PngFormat.Instance);
+	}
+	public void Iso8TextureAtlas()
+	{
+		if (VoxFileModel is VoxFileModel)
+		{
+			Dictionary<string, Sprite> sprites = [];
+			byte direction = 0;
+			foreach (SpriteMaker spriteMaker in new SpriteMaker()
+				.Set(VoxFileModel)
+				.Set(new NaiveDimmer(VoxFileModel.Palette))
+				.Iso8())
+				sprites.Add("Sprite" + direction++, spriteMaker.Make());
+			ImageString = new Sprite(sprites, out _)
+				.Png()
+				.ToBase64String(PngFormat.Instance);
+		}
 	}
 	public void Iso8Gif()
 	{
@@ -165,6 +182,7 @@
 	</MudTabPanel>
 	<MudTabPanel Text="Export" Disabled="VoxFileModel is null">
 		<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" name="SingleImage" @onclick="SingleImage">Generate Single Image</MudButton>
+		<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" name="Iso8TextureAtlas" @onclick="Iso8TextureAtlas">Generate 8 Isometric Directional Sprites Texture Atlas</MudButton>
 		<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" name="Iso8" @onclick="Iso8Gif">Generate 8 Isometric Directional Sprites Animation</MudButton>
 		<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" name="Iso8" @onclick="StacksGif">Generate Sprite Stacks Animation</MudButton>
 	</MudTabPanel>

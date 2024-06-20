@@ -1,5 +1,4 @@
 ﻿using SixLabors.ImageSharp;
-using SkiaSharp;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Render;
 
@@ -8,6 +7,7 @@ namespace Voxel2Pixel.Web
 	/// <summary>
 	/// ImageMaker glues Voxel2Pixel to ImageSharp.
 	/// It isn't included in the main project so that the library won't be subject to the ImageSharp license and could output to anything else instead.
+	/// There's another ImageMaker class in the Test project which connects to SkiaSharp and ImageSharp.
 	/// </summary>
 	public static class ImageMaker
 	{
@@ -20,7 +20,7 @@ namespace Voxel2Pixel.Web
 			return SixLabors.ImageSharp.Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(
 				data: bytes,
 				width: width,
-				height: bytes.Length / width >> 2);
+				height: (bytes.Length >> 2) / width);
 		}
 		public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> Png(this ISprite sprite) => SixLabors.ImageSharp.Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(
 			data: sprite.Texture,
@@ -57,7 +57,7 @@ namespace Voxel2Pixel.Web
 		{
 			if (width < 1)
 				width = (ushort)Math.Sqrt(frames[0].Length >> 2);
-			int height = frames[0].Length / width >> 2;
+			int height = (frames[0].Length >> 2) / width;
 			SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> gif = new(width, height);
 			SixLabors.ImageSharp.Formats.Gif.GifMetadata gifMetaData = gif.Metadata.GetGifMetadata();
 			gifMetaData.RepeatCount = repeatCount;
@@ -77,42 +77,5 @@ namespace Voxel2Pixel.Web
 			return gif;
 		}
 		#endregion ImageSharp
-		#region SkiaSharp
-		public static Stream PngStream(this ISprite sprite) => sprite.Texture.PngStream(sprite.Width);
-		public static Stream PngStream(this byte[] pixels, ushort width = 0)
-		{
-			if (width < 1)
-				width = (ushort)Math.Sqrt(pixels.Length >> 2);
-			return SKImage.FromPixelCopy(
-					info: new SKImageInfo(
-						width: width,
-						height: (pixels.Length >> 2) / width,
-						colorType: SKColorType.Rgba8888),
-					pixels: pixels,
-					rowBytes: width << 2)
-				.Encode()
-				.AsStream();
-		}
-		public static void Png(this ISprite sprite, string path) => sprite.Texture.Png(path: path, width: sprite.Width);
-		public static void Png(this byte[] pixels, string path, ushort width = 0)
-		{
-			using FileStream fileStream = new(
-				path: path,
-				mode: FileMode.Create,
-				access: FileAccess.Write);
-			pixels.PngStream(width).CopyTo(fileStream);
-		}
-		public static string PngBase64(this ISprite sprite) => sprite.Texture.PngBase64(sprite.Width);
-		/// <summary>
-		/// Based on https://github.com/SixLabors/ImageSharp/blob/ede2f2d2d1e567dea74a44a482099302af9ed14d/src/ImageSharp/ImageExtensions.cs#L173-L183
-		/// </summary>
-		public static string PngBase64(this byte[] pixels, ushort width = 0)
-		{
-			using MemoryStream memoryStream = new();
-			pixels.PngStream(width).CopyTo(memoryStream);
-			memoryStream.TryGetBuffer(out ArraySegment<byte> buffer);
-			return "data:image/png;base64," + Convert.ToBase64String(buffer.Array ?? [], 0, (int)memoryStream.Length);
-		}
-		#endregion SkiaSharp
 	}
 }
