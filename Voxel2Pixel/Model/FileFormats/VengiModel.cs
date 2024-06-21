@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Numerics;
 using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model.FileFormats
@@ -123,6 +124,7 @@ namespace Voxel2Pixel.Model.FileFormats
 	*/
 	/// <summary>
 	/// Vengi file format: https://github.com/vengi-voxel/vengi/blob/master/src/modules/voxelformat/private/vengi/VENGIFormat.cpp
+	/// Spec: https://vengi-voxel.github.io/vengi/FormatSpec/
 	/// </summary>
 	public class VengiModel : IBinaryWritable
 	{
@@ -151,7 +153,7 @@ namespace Voxel2Pixel.Model.FileFormats
 			writer.Write(FourCC("VENG"));
 		}
 		#region Utilities
-		public static uint FourCC(string four) => BinaryPrimitives.ReadUInt32BigEndian(System.Text.Encoding.UTF8.GetBytes(four.Substring(0, 4)));
+		public static uint FourCC(string four) => BinaryPrimitives.ReadUInt32BigEndian(System.Text.Encoding.UTF8.GetBytes(four[..4]));
 		public static string ReadPascalString(BinaryReader reader) => System.Text.Encoding.UTF8.GetString(reader.ReadBytes(reader.ReadUInt16()));
 		public static void WritePascalString(BinaryWriter writer, string s)
 		{
@@ -247,6 +249,62 @@ namespace Voxel2Pixel.Model.FileFormats
 			}
 		}
 		public PalcChunk Palc;
+		public string Pali;
+		public readonly record struct AnimChunk(
+			string Name,
+			KeyfChunk[] Keyframes);
+		public readonly record struct KeyfChunk(
+			uint Index,
+			bool Rotation,
+			string InterpolationType,
+			Matrix4x4 LocalMatrix) : IBinaryWritable
+		{
+			public static KeyfChunk Read(Stream stream) => Read(new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public static KeyfChunk Read(BinaryReader reader) => new(
+				Index: reader.ReadUInt32(),
+				Rotation: reader.ReadBoolean(),
+				InterpolationType: ReadPascalString(reader),
+				LocalMatrix: new Matrix4x4(
+					m11: reader.ReadSingle(),
+					m12: reader.ReadSingle(),
+					m13: reader.ReadSingle(),
+					m14: reader.ReadSingle(),
+					m21: reader.ReadSingle(),
+					m22: reader.ReadSingle(),
+					m23: reader.ReadSingle(),
+					m24: reader.ReadSingle(),
+					m31: reader.ReadSingle(),
+					m32: reader.ReadSingle(),
+					m33: reader.ReadSingle(),
+					m34: reader.ReadSingle(),
+					m41: reader.ReadSingle(),
+					m42: reader.ReadSingle(),
+					m43: reader.ReadSingle(),
+					m44: reader.ReadSingle()));
+			public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public void Write(BinaryWriter writer)
+			{
+				writer.Write(Index);
+				writer.Write(Rotation);
+				WritePascalString(writer, InterpolationType);
+				writer.Write(LocalMatrix.M11);
+				writer.Write(LocalMatrix.M12);
+				writer.Write(LocalMatrix.M13);
+				writer.Write(LocalMatrix.M14);
+				writer.Write(LocalMatrix.M21);
+				writer.Write(LocalMatrix.M22);
+				writer.Write(LocalMatrix.M23);
+				writer.Write(LocalMatrix.M24);
+				writer.Write(LocalMatrix.M31);
+				writer.Write(LocalMatrix.M32);
+				writer.Write(LocalMatrix.M33);
+				writer.Write(LocalMatrix.M34);
+				writer.Write(LocalMatrix.M41);
+				writer.Write(LocalMatrix.M42);
+				writer.Write(LocalMatrix.M43);
+				writer.Write(LocalMatrix.M44);
+			}
+		}
 		#endregion Chunks
 	}
 }
