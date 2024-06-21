@@ -250,9 +250,97 @@ namespace Voxel2Pixel.Model.FileFormats
 		}
 		public PalcChunk Palc;
 		public string Pali;
+		public readonly record struct DataChunk(
+			int LowerX,
+			int LowerY,
+			int LowerZ,
+			int UpperX,
+			int UpperY,
+			int UpperZ,
+			VengiVoxel[] Voxels) : IBinaryWritable
+		{
+			public static DataChunk Read(Stream stream) => Read(new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public static DataChunk Read(BinaryReader reader)
+			{
+				int lowerX = reader.ReadInt32(),
+					lowerY = reader.ReadInt32(),
+					lowerZ = reader.ReadInt32(),
+					upperX = reader.ReadInt32(),
+					upperY = reader.ReadInt32(),
+					upperZ = reader.ReadInt32();
+				List<VengiVoxel> voxels = [];
+				for (int z = lowerZ; z < upperZ; z++)
+					for (int y = lowerY; y < upperY; y++)
+						for (int x = lowerX; x < upperX; x++)
+							voxels.Add(VengiVoxel.Read(reader));
+				return new(
+					LowerX: lowerX,
+					LowerY: lowerY,
+					LowerZ: lowerZ,
+					UpperX: upperX,
+					UpperY: upperY,
+					UpperZ: upperZ,
+					Voxels: [.. voxels]);
+			}
+			public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public void Write(BinaryWriter writer)
+			{
+				writer.Write(LowerX);
+				writer.Write(LowerY);
+				writer.Write(LowerZ);
+				writer.Write(UpperX);
+				writer.Write(UpperY);
+				writer.Write(UpperZ);
+				int index = 0;
+				for (int z = LowerZ; z < UpperZ; z++)
+					for (int y = LowerY; y < UpperY; y++)
+						for (int x = LowerX; x < UpperX; x++)
+							Voxels[index++].Write(writer);
+			}
+		}
+		public readonly record struct VengiVoxel(
+			bool Air,
+			byte Color) : IBinaryWritable
+		{
+			public static VengiVoxel Read(Stream stream) => Read(new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public static VengiVoxel Read(BinaryReader reader) => reader.ReadBoolean() ?
+				new VengiVoxel(Air: true, Color: 0)
+				: new VengiVoxel(Air: false, Color: reader.ReadByte());
+			public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public void Write(BinaryWriter writer)
+			{
+				writer.Write(Air);
+				if (!Air)
+					writer.Write(Color);
+			}
+		}
 		public readonly record struct AnimChunk(
 			string Name,
-			KeyfChunk[] Keyframes);
+			KeyfChunk[] Keyframes) : IBinaryWritable
+		{
+			public static AnimChunk Read(Stream stream) => Read(new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public static AnimChunk Read(BinaryReader reader)
+			{
+				string name = ReadPascalString(reader);
+				List<KeyfChunk> keyframes = [];
+				while (reader.ReadUInt32() == FourCC("KEYF"))
+					keyframes.Add(KeyfChunk.Read(reader));
+				return new(
+					Name: name,
+					Keyframes: [.. keyframes]);
+			}
+			public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public void Write(BinaryWriter writer)
+			{
+				writer.Write(Name);
+				foreach (KeyfChunk keyframe in Keyframes)
+				{
+					writer.Write(FourCC("KEYF"));
+					keyframe.Write(writer);
+				}
+				writer.Write(FourCC("ENDA"));
+			}
+		}
 		public readonly record struct KeyfChunk(
 			uint Index,
 			bool Rotation,
