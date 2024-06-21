@@ -1,4 +1,5 @@
-﻿using System.Buffers.Binary;
+﻿using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -131,7 +132,7 @@ namespace Voxel2Pixel.Model.FileFormats
 		public VengiModel(Stream stream)
 		{
 			BinaryReader reader = new(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true);
-			if (BinaryPrimitives.ReadUInt32BigEndian(reader.ReadBytes(4)) != FourCC("VENG"))
+			if (!FourCC(reader).Equals("VENG"))
 				throw new InvalidDataException("Vengi format must start with \"VENG\"");
 			reader.BaseStream.Position += 2;//zlib header (0x78, 0xDA)
 			stream = new DeflateStream(stream: stream, mode: CompressionMode.Decompress, leaveOpen: false);
@@ -139,13 +140,13 @@ namespace Voxel2Pixel.Model.FileFormats
 			reader = new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: false);
 			if (reader.ReadUInt32() != 3)
 				throw new InvalidDataException("Unexpected version!");
-			if (BinaryPrimitives.ReadUInt32BigEndian(reader.ReadBytes(4)) != FourCC("NODE"))
-				throw new InvalidDataException("expected NODE");
-			Header = HeaderChunk.Read(stream);
-			//stream.CopyTo(new FileStream("kingkong.bin", FileMode.Create)); return;
-			if (BinaryPrimitives.ReadUInt32BigEndian(reader.ReadBytes(4)) != FourCC("PALC"))
-				throw new InvalidDataException("expected PALC");
-			Palc = PalcChunk.Read(stream);
+			//if (!FourCC(reader).Equals("NODE"))
+			//	throw new InvalidDataException("expected NODE");
+			//Header = HeaderChunk.Read(stream);
+			////stream.CopyTo(new FileStream("kingkong.bin", FileMode.Create)); return;
+			//if (!FourCC(reader).Equals("PALC"))
+			//	throw new InvalidDataException("expected PALC");
+			//Palc = PalcChunk.Read(stream);
 		}
 		public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
 		public void Write(BinaryWriter writer)
@@ -154,6 +155,8 @@ namespace Voxel2Pixel.Model.FileFormats
 		}
 		#region Utilities
 		public static uint FourCC(string four) => BinaryPrimitives.ReadUInt32BigEndian(System.Text.Encoding.UTF8.GetBytes(four[..4]));
+		public static string FourCC(uint @uint) => System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes(@uint));
+		public static string FourCC(BinaryReader reader) => System.Text.Encoding.UTF8.GetString(reader.ReadBytes(4));
 		public static string ReadPascalString(BinaryReader reader) => System.Text.Encoding.UTF8.GetString(reader.ReadBytes(reader.ReadUInt16()));
 		public static void WritePascalString(BinaryWriter writer, string s)
 		{
@@ -162,7 +165,55 @@ namespace Voxel2Pixel.Model.FileFormats
 		}
 		#endregion Utilities
 		#region Chunks
-		public readonly record struct HeaderChunk(
+		public readonly record struct Node(
+			Header Header,
+			Prop? Properties,
+			Data? Data,
+			string PaletteIdentifier,
+			Palc? Palette,
+			Anim? Animation) : IBinaryWritable
+		{
+			public static Node Read(Stream stream) => Read(new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public static Node Read(BinaryReader reader)
+			{
+				Header header = Header.Read(reader);
+				Prop? properties = null;
+				Data? data = null;
+				string paletteIdentifier = null;
+				Palc? palette = null;
+				Anim? animation = null;
+				while (FourCC(reader) is string fourCC && !fourCC.Equals("ENDN"))
+					switch (fourCC)
+					{
+						case "PROP":
+							properties = Prop.Read(reader);
+							break;
+						case "DATA":
+							data = VengiModel.Data.Read(reader);
+							break;
+						case "PALI":
+							paletteIdentifier = ReadPascalString(reader);
+							break;
+						case "PALC":
+							palette = Palc.Read(reader);
+							break;
+						case "ANIM":
+							animation = Anim.Read(reader);
+							break;
+						default: throw new InvalidDataException("FourCC was \"" + fourCC + "\".");
+					}
+				return new(
+					Header: header,
+					Properties: properties,
+					Data: data,
+					PaletteIdentifier: paletteIdentifier,
+					Palette: palette,
+					Animation: animation);
+			}
+			public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public void Write(BinaryWriter writer) => throw new NotImplementedException();//TODO
+		}
+		public readonly record struct Header(
 			string Name,
 			string Type,
 			int ID,
@@ -174,8 +225,8 @@ namespace Voxel2Pixel.Model.FileFormats
 			float PivotY,
 			float PivotZ) : IBinaryWritable
 		{
-			public static HeaderChunk Read(Stream stream) => Read(new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
-			public static HeaderChunk Read(BinaryReader reader) => new(
+			public static Header Read(Stream stream) => Read(new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public static Header Read(BinaryReader reader) => new(
 				Name: ReadPascalString(reader),
 				Type: ReadPascalString(reader),
 				ID: reader.ReadInt32(),
@@ -201,12 +252,11 @@ namespace Voxel2Pixel.Model.FileFormats
 				writer.Write(PivotZ);
 			}
 		}
-		public HeaderChunk Header;
-		public readonly record struct PropChunk(
+		public readonly record struct Prop(
 			KeyValuePair<string, string>[] Properties) : IBinaryWritable
 		{
-			public static PropChunk Read(Stream stream) => Read(new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
-			public static PropChunk Read(BinaryReader reader)
+			public static Prop Read(Stream stream) => Read(new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public static Prop Read(BinaryReader reader)
 			{
 				KeyValuePair<string, string>[] properties = new KeyValuePair<string, string>[reader.ReadUInt32()];
 				for (uint i = 0; i < properties.Length; i++)
@@ -224,15 +274,15 @@ namespace Voxel2Pixel.Model.FileFormats
 				}
 			}
 		}
-		public readonly record struct PalcChunk(
+		public readonly record struct Palc(
 			uint[] Colors,
 			uint[] EmitColors,
 			byte[] Indices,
 			uint Type,
 			KeyValuePair<string, float>[] Materials) : IBinaryWritable
 		{
-			public static PalcChunk Read(Stream stream) => Read(new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
-			public static PalcChunk Read(BinaryReader reader)
+			public static Palc Read(Stream stream) => Read(new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public static Palc Read(BinaryReader reader)
 			{
 				uint[] colors = new uint[reader.ReadUInt32()];
 				for (uint i = 0; i < colors.Length; i++)
@@ -270,19 +320,17 @@ namespace Voxel2Pixel.Model.FileFormats
 				}
 			}
 		}
-		public PalcChunk Palc;
-		public string Pali;
-		public readonly record struct DataChunk(
+		public readonly record struct Data(
 			int LowerX,
 			int LowerY,
 			int LowerZ,
 			int UpperX,
 			int UpperY,
 			int UpperZ,
-			VengiVoxel[] Voxels) : IBinaryWritable
+			Voxel[] Voxels) : IBinaryWritable
 		{
-			public static DataChunk Read(Stream stream) => Read(new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
-			public static DataChunk Read(BinaryReader reader)
+			public static Data Read(Stream stream) => Read(new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public static Data Read(BinaryReader reader)
 			{
 				int lowerX = reader.ReadInt32(),
 					lowerY = reader.ReadInt32(),
@@ -290,11 +338,11 @@ namespace Voxel2Pixel.Model.FileFormats
 					upperX = reader.ReadInt32(),
 					upperY = reader.ReadInt32(),
 					upperZ = reader.ReadInt32();
-				List<VengiVoxel> voxels = [];
+				List<Voxel> voxels = [];
 				for (int z = lowerZ; z < upperZ; z++)
 					for (int y = lowerY; y < upperY; y++)
 						for (int x = lowerX; x < upperX; x++)
-							voxels.Add(VengiVoxel.Read(reader));
+							voxels.Add(Voxel.Read(reader));
 				return new(
 					LowerX: lowerX,
 					LowerY: lowerY,
@@ -320,14 +368,14 @@ namespace Voxel2Pixel.Model.FileFormats
 							Voxels[index++].Write(writer);
 			}
 		}
-		public readonly record struct VengiVoxel(
+		public readonly record struct Voxel(
 			bool Air,
 			byte Color) : IBinaryWritable
 		{
-			public static VengiVoxel Read(Stream stream) => Read(new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
-			public static VengiVoxel Read(BinaryReader reader) => reader.ReadBoolean() ?
-				new VengiVoxel(Air: true, Color: 0)
-				: new VengiVoxel(Air: false, Color: reader.ReadByte());
+			public static Voxel Read(Stream stream) => Read(new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public static Voxel Read(BinaryReader reader) => reader.ReadBoolean() ?
+				new Voxel(Air: true, Color: 0)
+				: new Voxel(Air: false, Color: reader.ReadByte());
 			public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
 			public void Write(BinaryWriter writer)
 			{
@@ -336,17 +384,17 @@ namespace Voxel2Pixel.Model.FileFormats
 					writer.Write(Color);
 			}
 		}
-		public readonly record struct AnimChunk(
+		public readonly record struct Anim(
 			string Name,
-			KeyfChunk[] Keyframes) : IBinaryWritable
+			Keyf[] Keyframes) : IBinaryWritable
 		{
-			public static AnimChunk Read(Stream stream) => Read(new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
-			public static AnimChunk Read(BinaryReader reader)
+			public static Anim Read(Stream stream) => Read(new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public static Anim Read(BinaryReader reader)
 			{
 				string name = ReadPascalString(reader);
-				List<KeyfChunk> keyframes = [];
-				while (reader.ReadUInt32() == FourCC("KEYF"))
-					keyframes.Add(KeyfChunk.Read(reader));
+				List<Keyf> keyframes = [];
+				while (FourCC(reader).Equals("KEYF"))
+					keyframes.Add(Keyf.Read(reader));
 				return new(
 					Name: name,
 					Keyframes: [.. keyframes]);
@@ -355,7 +403,7 @@ namespace Voxel2Pixel.Model.FileFormats
 			public void Write(BinaryWriter writer)
 			{
 				writer.Write(Name);
-				foreach (KeyfChunk keyframe in Keyframes)
+				foreach (Keyf keyframe in Keyframes)
 				{
 					writer.Write(FourCC("KEYF"));
 					keyframe.Write(writer);
@@ -363,14 +411,14 @@ namespace Voxel2Pixel.Model.FileFormats
 				writer.Write(FourCC("ENDA"));
 			}
 		}
-		public readonly record struct KeyfChunk(
+		public readonly record struct Keyf(
 			uint Index,
 			bool Rotation,
 			string InterpolationType,
 			Matrix4x4 LocalMatrix) : IBinaryWritable
 		{
-			public static KeyfChunk Read(Stream stream) => Read(new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
-			public static KeyfChunk Read(BinaryReader reader) => new(
+			public static Keyf Read(Stream stream) => Read(new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public static Keyf Read(BinaryReader reader) => new(
 				Index: reader.ReadUInt32(),
 				Rotation: reader.ReadBoolean(),
 				InterpolationType: ReadPascalString(reader),
