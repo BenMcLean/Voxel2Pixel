@@ -129,6 +129,7 @@ namespace Voxel2Pixel.Model.FileFormats
 	/// </summary>
 	public class VengiModel : IBinaryWritable
 	{
+		public readonly List<Node> Nodes = [];
 		public VengiModel(Stream stream)
 		{
 			BinaryReader reader = new(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true);
@@ -140,19 +141,12 @@ namespace Voxel2Pixel.Model.FileFormats
 			reader = new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: false);
 			if (reader.ReadUInt32() != 3)
 				throw new InvalidDataException("Unexpected version!");
-			//if (!FourCC(reader).Equals("NODE"))
-			//	throw new InvalidDataException("expected NODE");
-			//Header = HeaderChunk.Read(stream);
-			////stream.CopyTo(new FileStream("kingkong.bin", FileMode.Create)); return;
-			//if (!FourCC(reader).Equals("PALC"))
-			//	throw new InvalidDataException("expected PALC");
-			//Palc = PalcChunk.Read(stream);
+			while (reader.BaseStream.Position + 4 < reader.BaseStream.Length
+				&& FourCC(reader).Equals("NODE"))
+				Nodes.Add(Node.Read(reader));
 		}
 		public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
-		public void Write(BinaryWriter writer)
-		{
-			writer.Write(FourCC("VENG"));
-		}
+		public void Write(BinaryWriter writer) => throw new NotImplementedException();//TODO
 		#region Utilities
 		public static uint FourCC(string four) => BinaryPrimitives.ReadUInt32BigEndian(System.Text.Encoding.UTF8.GetBytes(four[..4]));
 		public static string FourCC(uint @uint) => System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes(@uint));
