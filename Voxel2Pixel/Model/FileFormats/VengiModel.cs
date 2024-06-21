@@ -202,6 +202,28 @@ namespace Voxel2Pixel.Model.FileFormats
 			}
 		}
 		public HeaderChunk Header;
+		public readonly record struct PropChunk(
+			KeyValuePair<string, string>[] Properties) : IBinaryWritable
+		{
+			public static PropChunk Read(Stream stream) => Read(new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public static PropChunk Read(BinaryReader reader)
+			{
+				KeyValuePair<string, string>[] properties = new KeyValuePair<string, string>[reader.ReadUInt32()];
+				for (uint i = 0; i < properties.Length; i++)
+					properties[i] = new(ReadPascalString(reader), ReadPascalString(reader));
+				return new(properties);
+			}
+			public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public void Write(BinaryWriter writer)
+			{
+				writer.Write((uint)Properties.Length);
+				foreach (KeyValuePair<string, string> property in Properties)
+				{
+					WritePascalString(writer, property.Key);
+					WritePascalString(writer, property.Value);
+				}
+			}
+		}
 		public readonly record struct PalcChunk(
 			uint[] Colors,
 			uint[] EmitColors,
