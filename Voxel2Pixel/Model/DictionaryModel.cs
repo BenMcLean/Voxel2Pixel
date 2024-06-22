@@ -20,11 +20,12 @@ namespace Voxel2Pixel.Model
 		}
 		public DictionaryModel() { }
 		public DictionaryModel(IModel model) : this(model, model.SizeX, model.SizeY, model.SizeZ) { }
+		public DictionaryModel(IEnumerable<Voxel> voxels, Point3D size) : this(voxels, (ushort)size.X, (ushort)size.Y, (ushort)size.Z) { }
 		public DictionaryModel(IEnumerable<Voxel> voxels, params ushort[] size)
 		{
 			foreach (Voxel voxel in voxels)
 				this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
-			if (!(size is null) && size.Length > 0)
+			if (size is not null && size.Length > 0)
 			{
 				SizeX = size[0];
 				if (size.Length > 1)
