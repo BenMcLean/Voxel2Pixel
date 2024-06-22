@@ -16,7 +16,7 @@ namespace Voxel2Pixel.Render
 		#region Data
 		public IModel Model { get; set; }
 		public IVoxelColor VoxelColor { get; set; }
-		public Dictionary<string, Point3D> Points { get; set; } = null;
+		public Dictionary<string, Point3D> Points { get; set; } = [];
 		public Perspective Perspective { get; set; } = Perspective.Iso;
 		public byte PeakScaleX
 		{

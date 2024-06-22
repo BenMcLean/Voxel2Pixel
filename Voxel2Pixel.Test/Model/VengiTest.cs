@@ -1,7 +1,10 @@
-﻿using Voxel2Pixel.Color;
+﻿using SixLabors.ImageSharp;
+using Voxel2Pixel.Color;
+using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Model.FileFormats;
 using Voxel2Pixel.Render;
+using Voxel2Pixel.Web;
 
 namespace Voxel2Pixel.Test.Model
 {
@@ -25,8 +28,15 @@ namespace Voxel2Pixel.Test.Model
 			{
 				Model = new DictionaryModel(model.Data?.GetVoxels(), model.Data?.Size ?? throw new InvalidDataException()),
 				VoxelColor = new NaiveDimmer(model.Palette?.Palette),
-			}.Make()
-				.Png("Vengi.png");
+				CuboidOrientation = CuboidOrientation.NORTH0,
+			}.Stacks().Make()
+				.AsParallel()
+				.Select((sprite, index) => (sprite: sprite.Upscale(8, 8), index))
+				.OrderBy(spriteTuple => spriteTuple.index)
+				.AsEnumerable()
+				.Select((spriteTuple, index) => spriteTuple.sprite)
+				.AnimatedGif(frameDelay: 10)
+				.SaveAsGif("Vengi.gif");
 		}
 	}
 }

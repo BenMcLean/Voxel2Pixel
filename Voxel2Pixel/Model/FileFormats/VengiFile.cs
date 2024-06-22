@@ -198,7 +198,7 @@ namespace Voxel2Pixel.Model.FileFormats
 				for (byte i = 0; i < Indices.Length; i++)
 					yield return BinaryPrimitives.ReverseEndianness(Colors[Indices[i]]);
 			}
-			public uint[] Palette => [0, .. ReorderedColors().Take(255)];
+			public uint[] Palette => [0u, .. ReorderedColors().Take(255)];
 		}
 		public readonly record struct Material(
 			uint Type,
@@ -274,6 +274,10 @@ namespace Voxel2Pixel.Model.FileFormats
 						for (int z = LowerZ; z <= UpperZ; z++)
 							Voxels[index++].Write(writer);
 			}
+			/// <summary>
+			/// In 3D space for voxels, I'm following the MagicaVoxel convention, which is Z+up, right-handed, so X+ means right/east, Y+ means forwards/north and Z+ means up.
+			/// Vengu is Y-up, right-handed, so X+ means right/east, Y+ means up and Z+ means forwards/north. 
+			/// </summary>
 			public IEnumerable<Voxel2Pixel.Model.Voxel> GetVoxels()
 			{
 				int index = 0;
@@ -285,14 +289,14 @@ namespace Voxel2Pixel.Model.FileFormats
 								&& voxel.Color != byte.MaxValue)
 								yield return new Voxel2Pixel.Model.Voxel(
 									X: (ushort)(x - LowerX),
-									Y: (ushort)(y - LowerY),
-									Z: (ushort)(z - LowerZ),
+									Y: (ushort)(z - LowerZ),
+									Z: (ushort)(y - LowerY),
 									Index: (byte)(voxel.Color + 1));
 			}
 			public Point3D Size => new(
 				X: UpperX - LowerX + 1,
-				Y: UpperY - LowerY + 1,
-				Z: UpperZ - LowerZ + 1);
+				Y: UpperZ - LowerZ + 1,
+				Z: UpperY - LowerY + 1);
 		}
 		public readonly record struct Voxel(
 			bool Air,
