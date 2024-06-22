@@ -9,8 +9,8 @@ using Voxel2Pixel.Interfaces;
 namespace Voxel2Pixel.Model.FileFormats
 {
 	/// <summary>
-	/// Vengi file format: https://github.com/vengi-voxel/vengi/blob/master/src/modules/voxelformat/private/vengi/VENGIFormat.cpp
-	/// Spec: (very false as of this writing) https://vengi-voxel.github.io/vengi/FormatSpec/
+	/// Vengi file format spec: https://vengi-voxel.github.io/vengi/FormatSpec/
+	/// Vengi file format code: https://github.com/vengi-voxel/vengi/blob/master/src/modules/voxelformat/private/vengi/VENGIFormat.cpp
 	/// </summary>
 	public static class VengiFile
 	{
@@ -240,9 +240,9 @@ namespace Voxel2Pixel.Model.FileFormats
 					upperY = reader.ReadInt32(),
 					upperZ = reader.ReadInt32();
 				List<Voxel> voxels = [];
-				for (int z = lowerZ; z < upperZ; z++)
-					for (int y = lowerY; y < upperY; y++)
-						for (int x = lowerX; x < upperX; x++)
+				for (int x = lowerX; x <= upperX; x++)
+					for (int y = lowerY; y <= upperY; y++)
+						for (int z = lowerZ; z <= upperZ; z++)
 							voxels.Add(Voxel.Read(reader));
 				return new(
 					LowerX: lowerX,
@@ -263,17 +263,17 @@ namespace Voxel2Pixel.Model.FileFormats
 				writer.Write(UpperY);
 				writer.Write(UpperZ);
 				int index = 0;
-				for (int z = LowerZ; z < UpperZ; z++)
-					for (int y = LowerY; y < UpperY; y++)
-						for (int x = LowerX; x < UpperX; x++)
+				for (int x = LowerX; x <= UpperX; x++)
+					for (int y = LowerY; y <= UpperY; y++)
+						for (int z = LowerZ; z <= UpperZ; z++)
 							Voxels[index++].Write(writer);
 			}
 			public IEnumerable<Voxel2Pixel.Model.Voxel> GetVoxels()
 			{
 				int index = 0;
-				for (int z = LowerZ; z < UpperZ; z++)
-					for (int y = LowerY; y < UpperY; y++)
-						for (int x = LowerX; x < UpperX; x++)
+				for (int x = LowerX; x <= UpperX; x++)
+					for (int y = LowerY; y <= UpperY; y++)
+						for (int z = LowerZ; z <= UpperZ; z++)
 							if (Voxels[index++] is Voxel voxel
 								&& !voxel.Air
 								&& voxel.Color != byte.MaxValue)
@@ -284,9 +284,9 @@ namespace Voxel2Pixel.Model.FileFormats
 									Index: (byte)(voxel.Color + 1));
 			}
 			public Point3D Size => new(
-				X: UpperX - LowerX,
-				Y: UpperY - LowerY,
-				Z: UpperZ - LowerZ);
+				X: UpperX - LowerX + 1,
+				Y: UpperY - LowerY + 1,
+				Z: UpperZ - LowerZ + 1);
 		}
 		public readonly record struct Voxel(
 			bool Air,
