@@ -9,7 +9,7 @@ namespace Voxel2Pixel.Model
 	public class DictionaryModel : IEditableModel
 	{
 		#region DictionaryModel
-		private readonly Dictionary<ulong, byte> Dictionary = new Dictionary<ulong, byte>();
+		private readonly Dictionary<ulong, byte> Dictionary = [];
 		public void Clear() => Dictionary.Clear();
 		public static ulong Encode(ushort x, ushort y, ushort z) => ((ulong)z << 32) | ((uint)y << 16) | x;
 		public static void Decode(ulong @ulong, out ushort x, out ushort y, out ushort z)
@@ -23,8 +23,6 @@ namespace Voxel2Pixel.Model
 		public DictionaryModel(IEnumerable<Voxel> voxels, Point3D size) : this(voxels, (ushort)size.X, (ushort)size.Y, (ushort)size.Z) { }
 		public DictionaryModel(IEnumerable<Voxel> voxels, params ushort[] size)
 		{
-			foreach (Voxel voxel in voxels)
-				this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
 			if (size is not null && size.Length > 0)
 			{
 				SizeX = size[0];
@@ -35,6 +33,8 @@ namespace Voxel2Pixel.Model
 						SizeZ = size[2];
 				}
 			}
+			foreach (Voxel voxel in voxels)
+				this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
 		}
 		#endregion DictionaryModel
 		#region IEditableModel
