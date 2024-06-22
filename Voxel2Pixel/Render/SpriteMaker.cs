@@ -196,8 +196,9 @@ namespace Voxel2Pixel.Render
 		public Sprite Make() => Make(this);
 		public static Sprite Make(SpriteMaker maker)
 		{
-			if (maker.NeedsReorientation)
-				maker = maker.Reoriented();
+			maker = maker.NeedsReorientation ? maker.Reoriented() : new(maker);
+			if (!maker.Points.ContainsKey(Sprite.Origin))
+				maker.Points[Sprite.Origin] = maker.Model.BottomCenter();
 			Point size = VoxelDraw.Size(
 				perspective: maker.Perspective,
 				model: maker.Model,
