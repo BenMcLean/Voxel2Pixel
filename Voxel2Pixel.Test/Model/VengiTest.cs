@@ -11,20 +11,20 @@ namespace Voxel2Pixel.Test.Model
 		public void KingKong()
 		{
 			VengiFile.Node root = VengiFile.Read(new FileStream(@"..\..\..\kingkong.vengi", FileMode.Open));
-			static VengiFile.Data? Data(VengiFile.Node parent)
+			static VengiFile.Node? Model(VengiFile.Node parent)
 			{
 				if (parent.Header.Type.Equals("Model"))
-					return parent.Data;
+					return parent;
 				foreach (VengiFile.Node child in parent.Children)
-					if (Data(child) is VengiFile.Data data)
-						return data;
+					if (Model(child) is VengiFile.Node model)
+						return model;
 				return null;
 			}
-			VengiFile.Data data = Data(root) ?? throw new InvalidDataException();
+			VengiFile.Node model = Model(root) ?? throw new InvalidDataException();
 			new SpriteMaker()
 			{
-				Model = new DictionaryModel(data.GetVoxels(), data.Size),
-				VoxelColor = new OneVoxelColor(0xFF0000FFu),
+				Model = new DictionaryModel(model.Data?.GetVoxels(), model.Data?.Size ?? throw new InvalidDataException()),
+				VoxelColor = new NaiveDimmer(model.Palette?.Palette),
 			}.Make()
 				.Png("Vengi.png");
 		}

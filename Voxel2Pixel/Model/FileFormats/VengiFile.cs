@@ -3,6 +3,7 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Numerics;
 using Voxel2Pixel.Interfaces;
 
@@ -192,7 +193,12 @@ namespace Voxel2Pixel.Model.FileFormats
 				foreach (Material material in Materials)
 					material.Write(writer);
 			}
-			public uint[] Palette => [0, .. Colors.AsSpan(0, Math.Min(255, Colors.Length))];
+			public IEnumerable<uint> ReorderedColors()
+			{
+				for (byte i = 0; i < Indices.Length; i++)
+					yield return BinaryPrimitives.ReverseEndianness(Colors[Indices[i]]);
+			}
+			public uint[] Palette => [0, .. ReorderedColors().Take(255)];
 		}
 		public readonly record struct Material(
 			uint Type,
