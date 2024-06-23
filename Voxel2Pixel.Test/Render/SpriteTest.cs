@@ -118,12 +118,13 @@ namespace Voxel2Pixel.Test.Render
 			}
 				.SetShadowColor(0xFFu)
 				.Stacks(24)
-				.Make()
-				.Select(sprite => sprite.DrawPoint())
+				.Parallelize(spriteMaker => spriteMaker
+					.Make()
+					.DrawPoint())
 				//.Select(Origin0)
 				.SameSize()
 				.AddFrameNumbers()
-				.Select(sprite => sprite.Upscale(8, 8))
+				.Parallelize(sprite => sprite.Upscale(8, 8))
 				.AnimatedGif(50)
 				.SaveAsGif("Stacked.gif");
 		}

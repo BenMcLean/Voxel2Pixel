@@ -84,7 +84,7 @@ namespace Voxel2Pixel.Render
 		{
 			Model = maker.Model;
 			VoxelColor = maker.VoxelColor;
-			Points = maker.Points;
+			Points = new(maker.Points);
 			Perspective = maker.Perspective;
 			PeakScaleX = maker.PeakScaleX;
 			PeakScaleY = maker.PeakScaleY;

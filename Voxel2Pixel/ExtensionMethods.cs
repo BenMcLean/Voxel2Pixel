@@ -36,13 +36,14 @@ namespace Voxel2Pixel
 		/// <summary>
 		/// Parallelizes the execution of a Select query while preserving the order of the source sequence.
 		/// </summary>
-		public static IEnumerable<TResult> Parallelize<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector) => source
+		public static List<TResult> Parallelize<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector) => source
 			.Select((element, index) => (element, index))
 			.AsParallel()
 			.Select(sourceTuple => (result: selector.Invoke(sourceTuple.element), sourceTuple.index))
 			.OrderBy(resultTuple => resultTuple.index)
 			.AsEnumerable()
-			.Select(resultTuple => resultTuple.result);
+			.Select(resultTuple => resultTuple.result)
+			.ToList();
 		#endregion PLINQ
 		#region Sprite
 		public static IEnumerable<Sprite> AddFrameNumbers(this IEnumerable<Sprite> frames, uint color = 0xFFFFFFFFu)
@@ -83,7 +84,7 @@ namespace Voxel2Pixel
 		}
 		#endregion Sprite
 		#region SpriteMaker
-		public static IEnumerable<Sprite> Make(this IEnumerable<SpriteMaker> spriteMakers) => spriteMakers.Parallelize(spriteMaker => spriteMaker.Make());
+		public static List<Sprite> Make(this IEnumerable<SpriteMaker> spriteMakers) => spriteMakers.Parallelize(spriteMaker => spriteMaker.Make());
 		public static Dictionary<T, Sprite> Make<T>(this IDictionary<T, SpriteMaker> spriteMakers) => spriteMakers
 			.AsParallel()
 			.Select(spriteMakerPair => (
