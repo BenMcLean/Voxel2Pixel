@@ -32,6 +32,18 @@ namespace Voxel2Pixel
 		public static byte Set(this IEditableModel model, Voxel voxel) => model[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
 		public static Point3D Center(this IModel model) => new(model.SizeX >> 1, model.SizeY >> 1, model.SizeZ >> 1);
 		public static Point3D BottomCenter(this IModel model) => new(model.SizeX >> 1, model.SizeY >> 1, 0);
+		#region PLINQ
+		/// <summary>
+		/// Parallelizes the execution of a Select query while preserving the order of the source sequence.
+		/// </summary>
+		public static IEnumerable<TResult> Parallelize<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector) => source
+			.Select((element, index) => (element, index))
+			.AsParallel()
+			.Select(sourceTuple => (result: selector.Invoke(sourceTuple.element), sourceTuple.index))
+			.OrderBy(resultTuple => resultTuple.index)
+			.AsEnumerable()
+			.Select(resultTuple => resultTuple.result);
+		#endregion PLINQ
 		#region Sprite
 		public static IEnumerable<Sprite> AddFrameNumbers(this IEnumerable<Sprite> frames, uint color = 0xFFFFFFFFu)
 		{
@@ -71,13 +83,7 @@ namespace Voxel2Pixel
 		}
 		#endregion Sprite
 		#region SpriteMaker
-		public static IEnumerable<Sprite> Make(this IEnumerable<SpriteMaker> spriteMakers) => spriteMakers
-			.Select((spriteMaker, index) => (spriteMaker, index))
-			.AsParallel()
-			.Select(spriteMakerTuple => (sprite: spriteMakerTuple.spriteMaker.Make(), spriteMakerTuple.index))
-			.OrderBy(spriteTuple => spriteTuple.index)
-			.AsEnumerable()
-			.Select(spriteTuple => spriteTuple.sprite);
+		public static IEnumerable<Sprite> Make(this IEnumerable<SpriteMaker> spriteMakers) => spriteMakers.Parallelize(spriteMaker => spriteMaker.Make());
 		public static Dictionary<T, Sprite> Make<T>(this IDictionary<T, SpriteMaker> spriteMakers) => spriteMakers
 			.AsParallel()
 			.Select(spriteMakerPair => (
