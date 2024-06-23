@@ -196,7 +196,9 @@ namespace Voxel2Pixel.Model.FileFormats
 			public IEnumerable<uint> ReorderedColors()
 			{
 				for (byte i = 0; i < Indices.Length; i++)
-					yield return BinaryPrimitives.ReverseEndianness(Colors[Indices[i]]);
+					if (Indices[i] is byte index
+						 && index != 0)
+						yield return BinaryPrimitives.ReverseEndianness(Colors[index]);
 			}
 			public uint[] Palette => [0u, .. ReorderedColors().Take(255)];
 		}
@@ -288,7 +290,7 @@ namespace Voxel2Pixel.Model.FileFormats
 								&& !voxel.Air
 								&& voxel.Color != byte.MaxValue)
 								yield return new Voxel2Pixel.Model.Voxel(
-									X: (ushort)(x - LowerX),
+									X: (ushort)(UpperX - x - LowerX),
 									Y: (ushort)(z - LowerZ),
 									Z: (ushort)(y - LowerY),
 									Index: (byte)(voxel.Color + 1));
