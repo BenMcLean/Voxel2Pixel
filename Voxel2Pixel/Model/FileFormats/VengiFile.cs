@@ -17,17 +17,17 @@ namespace Voxel2Pixel.Model.FileFormats
 	{
 		public static Node Read(Stream stream)
 		{
-			BinaryReader reader = new(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: false);
+			using BinaryReader reader = new(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: false);
 			if (!FourCC(reader).Equals("VENG"))
 				throw new InvalidDataException("Vengi format must start with \"VENG\"");
 			reader.BaseStream.Position += 2;//zlib header (0x78, 0xDA)
 			stream = new DeflateStream(stream: stream, mode: CompressionMode.Decompress, leaveOpen: false);
-			reader = new BinaryReader(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: false);
-			if (reader.ReadUInt32() != 3)
+			using BinaryReader deflatedReader = new(input: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: false);
+			if (deflatedReader.ReadUInt32() != 3)
 				throw new InvalidDataException("Unexpected version!");
-			if (!FourCC(reader).Equals("NODE"))
+			if (!FourCC(deflatedReader).Equals("NODE"))
 				throw new InvalidDataException("Did not find root node!");
-			return Node.Read(reader);
+			return Node.Read(deflatedReader);
 		}
 		#region Utilities
 		public static uint FourCC(string four) => BinaryPrimitives.ReadUInt32BigEndian(System.Text.Encoding.UTF8.GetBytes(four[..4]));
