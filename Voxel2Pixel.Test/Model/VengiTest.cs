@@ -30,12 +30,10 @@ namespace Voxel2Pixel.Test.Model
 				VoxelColor = new NaiveDimmer(node.Palette?.Palette),
 				Model = model,
 				CuboidOrientation = CuboidOrientation.NORTH0,
-			}.Stacks().Make()
-				.AsParallel()
-				.Select((sprite, index) => (sprite: sprite.Upscale(8, 8), index))
-				.OrderBy(spriteTuple => spriteTuple.index)
-				.AsEnumerable()
-				.Select((spriteTuple, index) => spriteTuple.sprite)
+			}.Stacks()
+				.Parallelize(spriteMaker => spriteMaker
+					.Make()
+					.Upscale(8, 8))
 				.AnimatedGif(frameDelay: 10)
 				.SaveAsGif("Vengi.gif");
 		}

@@ -193,14 +193,7 @@ namespace Voxel2Pixel.Model.FileFormats
 				foreach (Material material in Materials)
 					material.Write(writer);
 			}
-			public IEnumerable<uint> ReorderedColors()
-			{
-				for (byte i = 0; i < Indices.Length; i++)
-					if (Indices[i] is byte index
-						 && index != 0)
-						yield return BinaryPrimitives.ReverseEndianness(Colors[index]);
-			}
-			public uint[] Palette => [0u, .. ReorderedColors().Take(255)];
+			public uint[] Palette => [0u, .. Colors.Take(255).Select(BinaryPrimitives.ReverseEndianness)];
 		}
 		public readonly record struct Material(
 			uint Type,
@@ -288,7 +281,8 @@ namespace Voxel2Pixel.Model.FileFormats
 						for (int z = LowerZ; z <= UpperZ; z++)
 							if (Voxels[index++] is Voxel voxel
 								&& !voxel.Air
-								&& voxel.Color != byte.MaxValue)
+								&& voxel.Color != 0
+								&& voxel.Color != 255)
 								yield return new Voxel2Pixel.Model.Voxel(
 									X: (ushort)(UpperX - x - LowerX),
 									Y: (ushort)(z - LowerZ),
