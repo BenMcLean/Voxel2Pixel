@@ -123,35 +123,31 @@ namespace Voxel2Pixel.Model
 			public Branch(Stream stream, Node parent = null)
 			{
 				Parent = parent;
-				using (BinaryReader reader = new(
+				using BinaryReader reader = new(
 					input: stream,
 					encoding: System.Text.Encoding.UTF8,
-					leaveOpen: true))
+					leaveOpen: true);
+				byte header = reader.ReadByte(),
+					children = (byte)(((header >> 3) & 0b111) + 1);
+				Octant = (byte)(header & 0b111);
+				for (byte child = 0; child < children; child++)
 				{
-					byte header = reader.ReadByte(),
-						children = (byte)(((header >> 3) & 0b111) + 1);
-					Octant = (byte)(header & 0b111);
-					for (byte child = 0; child < children; child++)
-					{
-						header = reader.ReadByte();
-						reader.BaseStream.Position--;
-						this[(byte)(header & 0b111)] = (header & 0b10000000) > 0 ?
-							new Leaf(stream, this)
-							: new Branch(stream, this);
-					}
+					header = reader.ReadByte();
+					reader.BaseStream.Position--;
+					this[(byte)(header & 0b111)] = (header & 0b10000000) > 0 ?
+						new Leaf(stream, this)
+						: new Branch(stream, this);
 				}
 			}
 			public override void Write(Stream stream)
 			{
-				using (BinaryWriter writer = new(
+				using BinaryWriter writer = new(
 					output: stream,
 					encoding: System.Text.Encoding.UTF8,
-					leaveOpen: true))
-				{
-					writer.Write(Header);
-					foreach (Node child in this)
-						child.Write(stream);
-				}
+					leaveOpen: true);
+				writer.Write(Header);
+				foreach (Node child in this)
+					child.Write(stream);
 			}
 			#region IEnumerable<Node>
 			IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -193,25 +189,21 @@ namespace Voxel2Pixel.Model
 			public Leaf(Stream stream, Node parent = null)
 			{
 				Parent = parent;
-				using (BinaryReader reader = new(
+				using BinaryReader reader = new(
 					input: stream,
 					encoding: System.Text.Encoding.UTF8,
-					leaveOpen: true))
-				{
-					Octant = (byte)(reader.ReadByte() & 0b111);
-					Data = reader.ReadUInt64();
-				}
+					leaveOpen: true);
+				Octant = (byte)(reader.ReadByte() & 0b111);
+				Data = reader.ReadUInt64();
 			}
 			public override void Write(Stream stream)
 			{
-				using (BinaryWriter writer = new(
+				using BinaryWriter writer = new(
 					output: stream,
 					encoding: System.Text.Encoding.UTF8,
-					leaveOpen: true))
-				{
-					writer.Write(Header);
-					writer.Write(Data);
-				}
+					leaveOpen: true);
+				writer.Write(Header);
+				writer.Write(Data);
 			}
 			public Voxel Voxel(byte octant)
 			{
