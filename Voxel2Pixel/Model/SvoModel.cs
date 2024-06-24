@@ -125,7 +125,7 @@ namespace Voxel2Pixel.Model
 				Parent = parent;
 				using (BinaryReader reader = new(
 					input: stream,
-					encoding: System.Text.Encoding.Default,
+					encoding: System.Text.Encoding.UTF8,
 					leaveOpen: true))
 				{
 					byte header = reader.ReadByte(),
@@ -145,7 +145,7 @@ namespace Voxel2Pixel.Model
 			{
 				using (BinaryWriter writer = new(
 					output: stream,
-					encoding: System.Text.Encoding.Default,
+					encoding: System.Text.Encoding.UTF8,
 					leaveOpen: true))
 				{
 					writer.Write(Header);
@@ -195,7 +195,7 @@ namespace Voxel2Pixel.Model
 				Parent = parent;
 				using (BinaryReader reader = new(
 					input: stream,
-					encoding: System.Text.Encoding.Default,
+					encoding: System.Text.Encoding.UTF8,
 					leaveOpen: true))
 				{
 					Octant = (byte)(reader.ReadByte() & 0b111);
@@ -206,7 +206,7 @@ namespace Voxel2Pixel.Model
 			{
 				using (BinaryWriter writer = new(
 					output: stream,
-					encoding: System.Text.Encoding.Default,
+					encoding: System.Text.Encoding.UTF8,
 					leaveOpen: true))
 				{
 					writer.Write(Header);
@@ -264,29 +264,39 @@ namespace Voxel2Pixel.Model
 			SizeY = sizeY;
 			SizeZ = sizeZ;
 		}
-		public void Write(Stream stream) => Root.Write(stream);
+		public void Write(Stream stream)
+		{
+			if (Root is not null && Root.Count() > 0)
+				Root.Write(stream);
+			else
+			{//Empty model
+				BinaryWriter writer = new(
+					output: stream,
+					encoding: System.Text.Encoding.UTF8,
+					leaveOpen: false);
+				writer.Write(new byte[15]);//Branch headers
+				writer.Write((byte)0x80);//Leaf header
+				writer.Write(new byte[8]);//Empty 2x2x2 voxel cube
+			}
+		}
 		public byte[] Bytes()
 		{
-			using (MemoryStream ms = new())
-			{
-				Write(ms);
-				return ms.ToArray();
-			}
+			using MemoryStream ms = new();
+			Write(ms);
+			return ms.ToArray();
 		}
 		public string Z85()
 		{
-			using (MemoryStream ms = new())
-			{
-				Write(ms);
-				if (ms.Position % 4 is long four && four > 0)
-					using (BinaryWriter writer = new BinaryWriter(
-						output: ms,
-						encoding: System.Text.Encoding.Default,
-						leaveOpen: true))
-						for (byte @byte = 0; @byte < 4 - four; @byte++)
-							writer.Write((byte)0);
-				return Cromulent.Encoding.Z85.ToZ85String(ms.ToArray());
-			}
+			using MemoryStream ms = new();
+			Write(ms);
+			if (ms.Position % 4 is long four && four > 0)
+				using (BinaryWriter writer = new(
+					output: ms,
+					encoding: System.Text.Encoding.UTF8,
+					leaveOpen: true))
+					for (byte @byte = 0; @byte < 4 - four; @byte++)
+						writer.Write((byte)0);
+			return Cromulent.Encoding.Z85.ToZ85String(ms.ToArray());
 		}
 		public uint NodeCount
 		{
