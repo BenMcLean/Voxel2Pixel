@@ -156,28 +156,18 @@ namespace Voxel2Pixel.Model
 		}
 		public class Leaf : Node, IEnumerable<Voxel>, IEnumerable
 		{
-			public override byte Header => (byte)(0b10000000 | Octant & 0b111);
-			public ulong Data = 0ul;
-			public override void Clear() => Data = 0ul;
+			public override byte Header => (byte)(0x80 | Octant & 7);
+			protected byte[] Data = new byte[8];
+			public override void Clear() => Data = new byte[8];
 			public byte this[byte octant]
 			{
-				get => (byte)(Data >> (octant << 3));
+				get => Data[octant];
 				set
 				{
-					Data = Data & ~(0xFFul << (octant << 3)) | (ulong)value << (octant << 3);
-					if (Data == 0ul && Parent is Branch parent)
+					Data[octant] = value;
+					if (!Data.Any(@byte => @byte != 0) && Parent is Branch parent)
 						parent[Octant] = null;
 				}
-			}
-			public byte this[bool x, bool y, bool z]
-			{
-				get => this[(byte)((z ? 4 : 0) + (y ? 2 : 0) + (x ? 1 : 0))];
-				set => this[(byte)((z ? 4 : 0) + (y ? 2 : 0) + (x ? 1 : 0))] = value;
-			}
-			public byte this[byte x, byte y, byte z]
-			{
-				get => this[(byte)((z > 0 ? 4 : 0) + (y > 0 ? 2 : 0) + (x > 0 ? 1 : 0))];
-				set => this[(byte)((z > 0 ? 4 : 0) + (y > 0 ? 2 : 0) + (x > 0 ? 1 : 0))] = value;
 			}
 			public override byte Depth => 16;
 			public override ushort Size => 1;
@@ -193,8 +183,8 @@ namespace Voxel2Pixel.Model
 					input: stream,
 					encoding: System.Text.Encoding.UTF8,
 					leaveOpen: true);
-				Octant = (byte)(reader.ReadByte() & 0b111);
-				Data = reader.ReadUInt64();
+				Octant = (byte)(reader.ReadByte() & 7);
+				Data = reader.ReadBytes(8);
 			}
 			public override void Write(Stream stream)
 			{
@@ -218,7 +208,7 @@ namespace Voxel2Pixel.Model
 			IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 			public IEnumerator<Voxel> GetEnumerator()
 			{
-				if (Data == 0u)
+				if (!Data.Any(@byte => @byte != 0))
 					yield break;
 				Position(out ushort x, out ushort y, out ushort z);
 				for (byte octant = 0; octant < 8; octant++)
