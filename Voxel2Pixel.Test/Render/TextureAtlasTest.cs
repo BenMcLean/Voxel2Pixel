@@ -15,15 +15,16 @@ namespace Voxel2Pixel.Test.Render
 	{
 		//private readonly Xunit.Abstractions.ITestOutputHelper output;
 		//public TextureAtlasTest(Xunit.Abstractions.ITestOutputHelper output) => this.output = output;
-		[Fact]
-		public void Test() => Assert.Equal(
-			expected: """
+		public const string TestData = """
 <?xml version="1.0" encoding="utf-8"?>
 <TextureAtlas imagePath="thin_double.png">
 	<SubTexture name="pattern_0000.png" x="1024" y="1024" width="512" height="512" />
 	<SubTexture name="pattern_0001.png" x="2048" y="2048" width="512" height="512" />
 </TextureAtlas>
-""",
+""";
+		[Fact]
+		public void Test() => Assert.Equal(
+			expected: TestData,
 			actual: new TextureAtlas()
 			{
 				ImagePath = "thin_double.png",
@@ -44,6 +45,11 @@ namespace Voxel2Pixel.Test.Render
 					},
 				],
 			}.XML());
+		[Fact]
+		public void Test2() => Assert.Equal(
+			expected: TestData,
+			actual: ((TextureAtlas)(new XmlSerializer(typeof(TextureAtlas)).Deserialize(new MemoryStream(Encoding.UTF8.GetBytes(TestData)))
+			?? throw new NullReferenceException())).XML());
 		[Fact]
 		public void SubTextureTest()
 		{
