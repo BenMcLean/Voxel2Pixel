@@ -1,13 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
+using System.Xml.Serialization;
 
 namespace Voxel2Pixel.Model.BenVoxel
 {
+	[DataContract]
+	[Serializable]
+	[XmlRoot("Metadata")]
 	public class BenVoxelMetadata
 	{
 		#region BenVoxelMetadata
+		[DataMember]
 		protected readonly Dictionary<string, string> Properties = [];
+		[DataMember]
 		protected readonly Dictionary<string, Point3D> Points = [];
+		[DataMember]
 		protected readonly Dictionary<string, uint[]> Palettes = [];
 		public BenVoxelMetadata() { }
 		public BenVoxelMetadata(BenVoxelMetadata other)
