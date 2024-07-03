@@ -17,11 +17,13 @@ namespace Voxel2Pixel.Test.Render
 		//public TextureAtlasTest(Xunit.Abstractions.ITestOutputHelper output) => this.output = output;
 		[Fact]
 		public void Test() => Assert.Equal(
-			expected: @"<?xml version=""1.0"" encoding=""utf-16""?>
-<TextureAtlas imagePath=""thin_double.png"">
-	<SubTexture name=""pattern_0000.png"" x=""1024"" y=""1024"" width=""512"" height=""512"" />
-	<SubTexture name=""pattern_0001.png"" x=""2048"" y=""2048"" width=""512"" height=""512"" />
-</TextureAtlas>",
+			expected: """
+<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="thin_double.png">
+	<SubTexture name="pattern_0000.png" x="1024" y="1024" width="512" height="512" />
+	<SubTexture name="pattern_0001.png" x="2048" y="2048" width="512" height="512" />
+</TextureAtlas>
+""",
 			actual: new TextureAtlas()
 			{
 				ImagePath = "thin_double.png",
