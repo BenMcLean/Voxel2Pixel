@@ -5,9 +5,9 @@ using System.Web;
 
 namespace Voxel2Pixel.Model.BenVoxel
 {
-	public class SanitizedKeyDictionary<T> : IDictionary<string, T>
+	public sealed class SanitizedKeyDictionary<T> : IDictionary<string, T>
 	{
-		protected Dictionary<string, T> Dictionary = [];
+		private readonly Dictionary<string, T> Dictionary = [];
 		public static string SanitizeKey(string key)
 		{
 			key = HttpUtility.UrlEncode(key.Trim());
@@ -26,12 +26,12 @@ namespace Voxel2Pixel.Model.BenVoxel
 		public void Add(string key, T value) => Dictionary.Add(SanitizeKey(key), value);
 		public void Add(KeyValuePair<string, T> item) => Add(item.Key, item.Value);
 		public void Clear() => Dictionary.Clear();
-		public bool Contains(KeyValuePair<string, T> item) => ((ICollection<KeyValuePair<string, T>>)Dictionary).Contains(item);
+		public bool Contains(KeyValuePair<string, T> item) => ((ICollection<KeyValuePair<string, T>>)Dictionary).Contains(new(SanitizeKey(item.Key), item.Value));
 		public bool ContainsKey(string key) => Dictionary.ContainsKey(SanitizeKey(key));
 		public void CopyTo(KeyValuePair<string, T>[] array, int arrayIndex) => ((ICollection<KeyValuePair<string, T>>)Dictionary).CopyTo(array, arrayIndex);
 		public IEnumerator<KeyValuePair<string, T>> GetEnumerator() => Dictionary.GetEnumerator();
 		public bool Remove(string key) => Dictionary.Remove(SanitizeKey(key));
-		public bool Remove(KeyValuePair<string, T> item) => ((ICollection<KeyValuePair<string, T>>)Dictionary).Remove(item);
+		public bool Remove(KeyValuePair<string, T> item) => ((ICollection<KeyValuePair<string, T>>)Dictionary).Remove(new(SanitizeKey(item.Key), item.Value));
 		public bool TryGetValue(string key, out T value) => Dictionary.TryGetValue(SanitizeKey(key), out value);
 		IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)Dictionary).GetEnumerator();
 		#endregion IDictionary
