@@ -8,12 +8,10 @@ namespace Voxel2Pixel.Render
 	/// <summary>
 	/// This is an expansion upon the XML texture atlas metadata format used by Kenney. https://kenney.nl/
 	/// </summary>
-	[XmlRoot("TextureAtlas")]
 	public class TextureAtlas
 	{
 		[XmlAttribute("imagePath")]
 		public string ImagePath { get; set; }
-		[XmlRoot("SubTexture")]
 		public class SubTexture
 		{
 			[XmlAttribute("name")]
@@ -27,7 +25,6 @@ namespace Voxel2Pixel.Render
 			[XmlAttribute("height")]
 			public int Height { get; set; } = 0;
 			#region Expansion beyond Kenney's format
-			[XmlRoot("Point")]
 			public class Point
 			{
 				[XmlAttribute("name")]
