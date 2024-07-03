@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Web;
 
 namespace Voxel2Pixel.Model.BenVoxel
 {
@@ -10,7 +9,7 @@ namespace Voxel2Pixel.Model.BenVoxel
 		private readonly Dictionary<string, T> Dictionary = [];
 		public static string SanitizeKey(string key)
 		{
-			key = HttpUtility.UrlEncode(key.Trim());
+			key = key.Trim();
 			return key[..Math.Min(key.Length, 255)];
 		}
 		#region IDictionary
