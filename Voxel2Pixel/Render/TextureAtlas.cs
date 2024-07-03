@@ -40,27 +40,5 @@ namespace Voxel2Pixel.Render
 		}
 		[XmlElement("SubTexture")]
 		public SubTexture[] SubTextures { get; set; }
-		#region Serialize
-		public string XML(bool indent = true)
-		{
-			Utf8StringWriter stringWriter = new();
-			new XmlSerializer(typeof(TextureAtlas)).Serialize(
-				xmlWriter: XmlWriter.Create(
-					output: stringWriter,
-					settings: new()
-					{
-						Encoding = Encoding.UTF8,
-						Indent = indent,
-						IndentChars = "\t",
-					}),
-				o: this,
-				namespaces: new([XmlQualifiedName.Empty]));
-			return stringWriter.ToString();
-		}
-		public class Utf8StringWriter : StringWriter
-		{
-			public override Encoding Encoding => Encoding.UTF8;
-		}
-		#endregion Serialize
 	}
 }

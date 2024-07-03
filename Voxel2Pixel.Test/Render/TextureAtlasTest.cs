@@ -25,7 +25,7 @@ namespace Voxel2Pixel.Test.Render
 		[Fact]
 		public void Test() => Assert.Equal(
 			expected: TestData,
-			actual: new TextureAtlas()
+			actual: ExtensionMethods.Utf8Xml(new TextureAtlas()
 			{
 				ImagePath = "thin_double.png",
 				SubTextures = [
@@ -44,12 +44,12 @@ namespace Voxel2Pixel.Test.Render
 						Height = 512,
 					},
 				],
-			}.XML());
+			}));
 		[Fact]
 		public void Test2() => Assert.Equal(
 			expected: TestData,
-			actual: ((TextureAtlas)(new XmlSerializer(typeof(TextureAtlas)).Deserialize(new MemoryStream(Encoding.UTF8.GetBytes(TestData)))
-			?? throw new NullReferenceException())).XML());
+			actual: ExtensionMethods.Utf8Xml((TextureAtlas)(new XmlSerializer(typeof(TextureAtlas)).Deserialize(new MemoryStream(Encoding.UTF8.GetBytes(TestData)))
+			?? throw new NullReferenceException())));
 		[Fact]
 		public void SubTextureTest()
 		{

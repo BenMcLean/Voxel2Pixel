@@ -6,10 +6,11 @@ using Voxel2Pixel.Model;
 using Voxel2Pixel.Model.BenVoxel;
 using Voxel2Pixel.Model.FileFormats;
 using Voxel2Pixel.Render;
+using Voxel2Pixel.Test;
 using static Voxel2Pixel.Model.BenVoxel.SvoModel;
 using static Voxel2Pixel.Web.ImageMaker;
 
-namespace Voxel2Pixel.Test.Model
+namespace Voxel2Pixel.Test.Model.BenVoxel
 {
 	public class SvoModelTest(Xunit.Abstractions.ITestOutputHelper output)
 	{
@@ -185,15 +186,15 @@ namespace Voxel2Pixel.Test.Model
 				return (ushort)(two[0] << 8 | two[1]);
 			}
 			ushort x = Next(), z = Next();
-			byte left(byte count) => (byte)(((z >> count) & 1) << 2 | (x >> count) & 1);
+			byte left(byte count) => (byte)((z >> count & 1) << 2 | x >> count & 1);
 			Stack<byte> octants = new();
 			while (octants.Count < 17)
 				octants.Push(left((byte)octants.Count));
 			ushort x2 = 0, z2 = 0;
 			while (octants.Count > 0 && octants.Pop() is byte @byte)
 			{
-				x2 = (ushort)((x2 << 1) | @byte & 1);
-				z2 = (ushort)((z2 << 1) | (@byte >> 2) & 1);
+				x2 = (ushort)(x2 << 1 | @byte & 1);
+				z2 = (ushort)(z2 << 1 | @byte >> 2 & 1);
 			}
 			output.WriteLine("X:");
 			CompareBinary(x, x2);

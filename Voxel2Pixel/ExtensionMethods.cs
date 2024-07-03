@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
+using System.Xml.Serialization;
+using System.Xml;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
@@ -45,6 +49,28 @@ namespace Voxel2Pixel
 			.Select(resultTuple => resultTuple.result)
 			.ToList();
 		#endregion PLINQ
+		#region XML
+		public static string Utf8Xml<T>(T o, bool indent = true)
+		{
+			Utf8StringWriter stringWriter = new();
+			new XmlSerializer(typeof(T)).Serialize(
+				xmlWriter: XmlWriter.Create(
+					output: stringWriter,
+					settings: new()
+					{
+						Encoding = Encoding.UTF8,
+						Indent = indent,
+						IndentChars = "\t",
+					}),
+				o: o,
+				namespaces: new([XmlQualifiedName.Empty]));
+			return stringWriter.ToString();
+		}
+		public class Utf8StringWriter : StringWriter
+		{
+			public override Encoding Encoding => Encoding.UTF8;
+		}
+		#endregion XML
 		#region Sprite
 		public static IEnumerable<Sprite> AddFrameNumbers(this IEnumerable<Sprite> frames, uint color = 0xFFFFFFFFu)
 		{
