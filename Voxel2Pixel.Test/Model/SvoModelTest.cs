@@ -1,16 +1,12 @@
 ﻿using SixLabors.ImageSharp;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using Voxel2Pixel;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
+using Voxel2Pixel.Model.BenVoxel;
 using Voxel2Pixel.Model.FileFormats;
 using Voxel2Pixel.Render;
-using static Voxel2Pixel.Model.SvoModel;
+using static Voxel2Pixel.Model.BenVoxel.SvoModel;
 using static Voxel2Pixel.Web.ImageMaker;
 
 namespace Voxel2Pixel.Test.Model
@@ -18,6 +14,15 @@ namespace Voxel2Pixel.Test.Model
 	public class SvoModelTest(Xunit.Abstractions.ITestOutputHelper output)
 	{
 		private readonly Xunit.Abstractions.ITestOutputHelper output = output;
+		private void PrintVoxels(IEnumerable<Voxel> voxels)
+		{
+			foreach (Voxel voxel in voxels)
+				output.WriteLine(string.Join(", ",
+					"X: " + voxel.X,
+					"Y: " + voxel.Y,
+					"Z: " + voxel.Z,
+					"Index: " + voxel.Index));
+		}
 		private void CompareBinary(ushort a, ushort b) => output.WriteLine(
 			Convert.ToString(a, 2)
 			+ Environment.NewLine
@@ -367,6 +372,41 @@ namespace Voxel2Pixel.Test.Model
 			output.WriteLine("Count = " + points.Count);
 			output.WriteLine(string.Join(",", points.Select(p => "(" + p.X + "," + p.Y + ")")));
 			Assert.Empty(points);
+		}
+		[Fact]
+		public void BenTest()
+		{
+			string path = @"..\..\..\SORA.BEN";
+			VoxFileModel vox = new(@"..\..\..\Sora.vox");
+			FileStream ofs = new(
+					path: path,
+					mode: FileMode.OpenOrCreate);
+			new SvoModel(vox)
+				.Write(ofs);
+			ofs.Close();
+			new SpriteMaker()
+			{
+				Model = new SvoModel(
+					stream: new FileStream(
+						path: path,
+						mode: FileMode.Open),
+					sizeX: vox.SizeX,
+					sizeY: vox.SizeY,
+					sizeZ: vox.SizeZ),
+				VoxelColor = new NaiveDimmer(vox.Palette),
+			}.Make()
+				.Png("BenTest.png");
+		}
+		[Fact]
+		public void OutTest()
+		{
+			SvoModel svo = new(2, 2, 2);
+			svo[1, 1, 1] = 1;
+			FileStream ofs = new(
+				path: @"..\..\..\OUT.BEN",
+				mode: FileMode.OpenOrCreate);
+			svo.Write(ofs);
+			PrintVoxels(svo);
 		}
 	}
 }

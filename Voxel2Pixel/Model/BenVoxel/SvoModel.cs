@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using Voxel2Pixel.Interfaces;
 
-namespace Voxel2Pixel.Model
+namespace Voxel2Pixel.Model.BenVoxel
 {
 	/// <summary>
 	/// SVO stands for "Sparse Voxel Octree"
@@ -27,8 +27,8 @@ namespace Voxel2Pixel.Model
 			public virtual byte Header { get; }
 			public byte Octant { get; set; }
 			public byte OctantX => (byte)(Octant & 1);
-			public byte OctantY => (byte)((Octant >> 1) & 1);
-			public byte OctantZ => (byte)((Octant >> 2) & 1);
+			public byte OctantY => (byte)(Octant >> 1 & 1);
+			public byte OctantZ => (byte)(Octant >> 2 & 1);
 			public Node Parent { get; set; } = null;
 			public virtual bool IsLeaf => (Header & 0b10000000) > 0;
 			public virtual void Position(out ushort x, out ushort y, out ushort z)
@@ -44,9 +44,9 @@ namespace Voxel2Pixel.Model
 				x = 0; y = 0; z = 0;
 				while (stack.Count > 0 && stack.Pop() is Node node)
 				{
-					x = (ushort)((x << 1) | node.OctantX);
-					y = (ushort)((y << 1) | node.OctantY);
-					z = (ushort)((z << 1) | node.OctantZ);
+					x = (ushort)(x << 1 | node.OctantX);
+					y = (ushort)(y << 1 | node.OctantY);
+					z = (ushort)(z << 1 | node.OctantZ);
 				}
 				x <<= count; y <<= count; z <<= count;
 			}
@@ -59,7 +59,7 @@ namespace Voxel2Pixel.Model
 					return depth;
 				}
 			}
-			public virtual ushort Size => (ushort)((1 << (17 - Depth)) - 1);
+			public virtual ushort Size => (ushort)((1 << 17 - Depth) - 1);
 			public virtual void Edge(out ushort x, out ushort y, out ushort z)
 			{
 				Position(out x, out y, out z);
@@ -71,8 +71,8 @@ namespace Voxel2Pixel.Model
 			{
 				Position(out x, out y, out z);
 				depth = Depth;
-				ushort outer = (ushort)(1 << (17 - depth)),
-					inner = (ushort)(1 << (16 - depth));
+				ushort outer = (ushort)(1 << 17 - depth),
+					inner = (ushort)(1 << 16 - depth);
 				x += (octant & 1) > 0 ? outer : inner;
 				y += (octant & 2) > 0 ? outer : inner;
 				z += (octant & 4) > 0 ? outer : inner;
@@ -82,8 +82,8 @@ namespace Voxel2Pixel.Model
 			{
 				Position(out x, out y, z: out ushort @ushort);
 				depth = Depth;
-				ushort outer = (ushort)(1 << (17 - depth)),
-					inner = (ushort)(1 << (16 - depth));
+				ushort outer = (ushort)(1 << 17 - depth),
+					inner = (ushort)(1 << 16 - depth);
 				x += (octant & 1) > 0 ? outer : inner;
 				y += (octant & 2) > 0 ? outer : inner;
 				z = @ushort + ((octant & 4) > 0 ? inner : 0) - 1;
@@ -93,7 +93,7 @@ namespace Voxel2Pixel.Model
 		}
 		public class Branch : Node, IEnumerable<Node>, IEnumerable
 		{
-			public override byte Header => (byte)((((Math.Max(Children.OfType<Node>().Count() - 1, 0)) & 0b111) << 3) | Octant & 0b111);
+			public override byte Header => (byte)((Math.Max(Children.OfType<Node>().Count() - 1, 0) & 0b111) << 3 | Octant & 0b111);
 			protected Node[] Children = new Node[8];
 			public override void Clear() => Children = new Node[8];
 			public Node this[byte octant]
@@ -125,10 +125,10 @@ namespace Voxel2Pixel.Model
 				Parent = parent;
 				using BinaryReader reader = new(
 					input: stream,
-					encoding: System.Text.Encoding.UTF8,
+					encoding: Encoding.UTF8,
 					leaveOpen: true);
 				byte header = reader.ReadByte(),
-					children = (byte)(((header >> 3) & 0b111) + 1);
+					children = (byte)((header >> 3 & 0b111) + 1);
 				Octant = (byte)(header & 0b111);
 				for (byte child = 0; child < children; child++)
 				{
@@ -143,7 +143,7 @@ namespace Voxel2Pixel.Model
 			{
 				using BinaryWriter writer = new(
 					output: stream,
-					encoding: System.Text.Encoding.UTF8,
+					encoding: Encoding.UTF8,
 					leaveOpen: true);
 				writer.Write(Header);
 				foreach (Node child in this)
@@ -181,7 +181,7 @@ namespace Voxel2Pixel.Model
 				Parent = parent;
 				using BinaryReader reader = new(
 					input: stream,
-					encoding: System.Text.Encoding.UTF8,
+					encoding: Encoding.UTF8,
 					leaveOpen: true);
 				Octant = (byte)(reader.ReadByte() & 7);
 				Data = reader.ReadBytes(8);
@@ -190,7 +190,7 @@ namespace Voxel2Pixel.Model
 			{
 				using BinaryWriter writer = new(
 					output: stream,
-					encoding: System.Text.Encoding.UTF8,
+					encoding: Encoding.UTF8,
 					leaveOpen: true);
 				writer.Write(Header);
 				writer.Write(Data);
@@ -199,9 +199,9 @@ namespace Voxel2Pixel.Model
 			{
 				Position(out ushort x, out ushort y, out ushort z);
 				return new Voxel(
-					X: (ushort)(x | (octant & 1)),
-					Y: (ushort)(y | ((octant >> 1) & 1)),
-					Z: (ushort)(z | ((octant >> 2) & 1)),
+					X: (ushort)(x | octant & 1),
+					Y: (ushort)(y | octant >> 1 & 1),
+					Z: (ushort)(z | octant >> 2 & 1),
 					Index: this[octant]);
 			}
 			#region IEnumerable<Voxel>
@@ -214,9 +214,9 @@ namespace Voxel2Pixel.Model
 				for (byte octant = 0; octant < 8; octant++)
 					if (this[octant] is byte index && index != 0)
 						yield return new Voxel(
-							X: (ushort)(x | (octant & 1)),
-							Y: (ushort)(y | ((octant >> 1) & 1)),
-							Z: (ushort)(z | ((octant >> 2) & 1)),
+							X: (ushort)(x | octant & 1),
+							Y: (ushort)(y | octant >> 1 & 1),
+							Z: (ushort)(z | octant >> 2 & 1),
 							Index: index);
 			}
 			#endregion IEnumerable<Voxel>
@@ -254,7 +254,7 @@ namespace Voxel2Pixel.Model
 			{//Empty model
 				BinaryWriter writer = new(
 					output: stream,
-					encoding: System.Text.Encoding.UTF8,
+					encoding: Encoding.UTF8,
 					leaveOpen: false);
 				writer.Write(new byte[15]);//Branch headers
 				writer.Write((byte)0x80);//Leaf header
@@ -274,7 +274,7 @@ namespace Voxel2Pixel.Model
 			if (ms.Position % 4 is long four && four > 0)
 				using (BinaryWriter writer = new(
 					output: ms,
-					encoding: System.Text.Encoding.UTF8,
+					encoding: Encoding.UTF8,
 					leaveOpen: true))
 					for (byte @byte = 0; @byte < 4 - four; @byte++)
 						writer.Write((byte)0);
@@ -405,7 +405,7 @@ namespace Voxel2Pixel.Model
 			if (this.IsOutside(x, 0, z))
 				throw new IndexOutOfRangeException("[" + string.Join(", ", x, 0, z) + "] is not within size [" + string.Join(", ", SizeX, SizeY, SizeZ) + "]!");
 			Stack<Branch> stack = new();
-			byte left(byte count) => (byte)(((z >> (16 - count)) & 1) << 2 | (x >> (16 - count)) & 1);
+			byte left(byte count) => (byte)((z >> 16 - count & 1) << 2 | x >> 16 - count & 1);
 			void push(Branch branch)
 			{
 				while (branch is not null)
