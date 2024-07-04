@@ -37,7 +37,7 @@ namespace Voxel2Pixel.Model.BenVoxel
 							uint argb = uint.Parse(
 								s: color
 									.Attributes()
-									.Where(a => a.Name.Equals("Hex"))
+									.Where(a => a.Name.Equals("Argb"))
 									.First()
 									.Value
 									.Replace("#", ""),
@@ -63,16 +63,31 @@ namespace Voxel2Pixel.Model.BenVoxel
 					new XElement(XName.Get("Palette"),
 						new XAttribute(XName.Get("Name"), palette.Key),
 						palette.Value.Take(256).Select(rgba => new XElement(XName.Get("Color"),
-							new XAttribute(XName.Get("ARGB"), "#" + (rgba << 24 | rgba >> 8).ToString("X")))))
+							new XAttribute(XName.Get("Argb"), "#" + (rgba << 24 | rgba >> 8).ToString("X")))))
 						.WriteTo(writer);
 			}
 			#endregion IXmlSerializable
 		}
 		public Metadata Global = null;
-		public class Model
+		public class Model : IXmlSerializable
 		{
 			public Metadata Metadata = new();
 			public SvoModel Geometry = new();
+			#region IXmlSerializable
+			public XmlSchema GetSchema() => null;
+			public void ReadXml(XmlReader reader)
+			{
+				throw new NotImplementedException();
+			}
+			public void WriteXml(XmlWriter writer)
+			{
+				Metadata.WriteXml(writer);
+				new XmlSerializer(typeof(SvoModel)).Serialize(
+					xmlWriter: writer,
+					o: Geometry,
+					namespaces: new([XmlQualifiedName.Empty]));
+			}
+			#endregion IXmlSerializable
 		}
 		public readonly SanitizedKeyDictionary<Model> Models = [];
 		#region IXmlSerializable
@@ -83,7 +98,21 @@ namespace Voxel2Pixel.Model.BenVoxel
 		}
 		public void WriteXml(XmlWriter writer)
 		{
-			throw new NotImplementedException();
+			Global?.WriteXml(writer);
+			foreach (KeyValuePair<string, Model> model in Models)
+			{
+				XDocument doc = new();
+				using (XmlWriter w = doc.CreateWriter())
+				{
+					new XmlSerializer(typeof(Model)).Serialize(
+						xmlWriter: w,
+						o: model.Value,
+						namespaces: new([XmlQualifiedName.Empty]));
+				}
+				XElement element = doc.Root;
+				element.Add(new XAttribute(XName.Get("Name"), model.Key));
+				element.WriteTo(writer);
+			}
 		}
 		#endregion IXmlSerializable
 	}
