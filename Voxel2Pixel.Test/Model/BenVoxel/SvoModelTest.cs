@@ -1,4 +1,6 @@
 ﻿using SixLabors.ImageSharp;
+using System.Text;
+using System.Xml.Serialization;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
@@ -243,7 +245,7 @@ namespace Voxel2Pixel.Test.Model.BenVoxel
 			VoxelDraw.Diagonal(svo, sprites[1]);
 			sprites
 				.AddFrameNumbers()
-				.Select(sprite => sprite.Upscale(16, 16))
+				.Parallelize(sprite => sprite.Upscale(16, 16))
 				.AnimatedGif(frameDelay: 100)
 				.SaveAsGif("SvoModelDiagonal.gif");
 		}
@@ -268,15 +270,15 @@ namespace Voxel2Pixel.Test.Model.BenVoxel
 			VoxelDraw.Above(svo, sprites[1]);
 			sprites
 				.AddFrameNumbers()
-				.Select(sprite => sprite.Upscale(16, 16))
+				.Parallelize(sprite => sprite.Upscale(16, 16))
 				.AnimatedGif(frameDelay: 100)
 				.SaveAsGif("SvoModelAbove.gif");
 		}
+		/*
 		[Fact]
 		public void PrintStuff() =>
 			output.WriteLine(new SvoModel(new VoxFileModel(@"..\..\..\NumberCube.vox"))
 				.PrintStuff(1, 1, 1));
-		/*
 		[Fact]
 		public void TurtleTest()
 		{
@@ -408,6 +410,14 @@ namespace Voxel2Pixel.Test.Model.BenVoxel
 				mode: FileMode.OpenOrCreate);
 			svo.Write(ofs);
 			PrintVoxels(svo);
+		}
+		[Fact]
+		public void XmlTest()
+		{
+			string s = ExtensionMethods.Utf8Xml(new SvoModel(new VoxFileModel(@"..\..\..\Sora.vox")));
+			Assert.Equal(
+				expected: s,
+				actual: ExtensionMethods.Utf8Xml((SvoModel)(new XmlSerializer(typeof(SvoModel)).Deserialize(new MemoryStream(Encoding.UTF8.GetBytes(s))) ?? throw new NullReferenceException())));
 		}
 	}
 }

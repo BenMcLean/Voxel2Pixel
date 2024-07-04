@@ -4,6 +4,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Xml;
+using System.Xml.Linq;
+using System.Xml.Schema;
+using System.Xml.Serialization;
 using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model.BenVoxel
@@ -11,7 +15,8 @@ namespace Voxel2Pixel.Model.BenVoxel
 	/// <summary>
 	/// SVO stands for "Sparse Voxel Octree"
 	/// </summary>
-	public class SvoModel : IEditableModel
+	[XmlRoot("Geometry")]
+	public class SvoModel : IEditableModel, IXmlSerializable
 	{
 		#region Nested classes
 		public abstract class Node
@@ -298,9 +303,9 @@ namespace Voxel2Pixel.Model.BenVoxel
 		}
 		#endregion SvoModel
 		#region IEditableModel
-		public ushort SizeX { get; set; }
-		public ushort SizeY { get; set; }
-		public ushort SizeZ { get; set; }
+		public ushort SizeX { get; set; } = ushort.MaxValue;
+		public ushort SizeY { get; set; } = ushort.MaxValue;
+		public ushort SizeZ { get; set; } = ushort.MaxValue;
 		public byte this[ushort x, ushort y, ushort z]
 		{
 			get => FindVoxel(
@@ -576,7 +581,20 @@ namespace Voxel2Pixel.Model.BenVoxel
 				}
 		}
 		#endregion VoxelDraw
+		#region IXmlSerializable
+		public XmlSchema GetSchema() => null;
+		public void ReadXml(XmlReader reader)
+		{
+			SizeX = ushort.MaxValue;
+			SizeY = ushort.MaxValue;
+			SizeZ = ushort.MaxValue;
+			foreach (Voxel voxel in new SvoModel(XElement.Load(reader).Value, ushort.MaxValue, ushort.MaxValue, ushort.MaxValue))
+				this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
+		}
+		public void WriteXml(XmlWriter writer) => writer.WriteString(Z85());
+		#endregion IXmlSerializable
 		#region Debug
+		/*
 		public string PrintStuff(ushort x, ushort y, ushort z)
 		{
 			if (this.IsOutside(x, y, z))
@@ -618,6 +636,7 @@ namespace Voxel2Pixel.Model.BenVoxel
 			}
 			return sb.ToString();
 		}
+		*/
 		#endregion Debug
 	}
 }
