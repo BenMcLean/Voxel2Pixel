@@ -8,7 +8,7 @@ namespace Voxel2Pixel.Test.Model.BenVoxel
 		[Fact]
 		public void Test()
 		{
-			BenVoxelMetadata metadata = new();
+			BenVoxelFile.Metadata metadata = new();
 			for (byte i = 1; i < 4; i++)
 			{
 				metadata.Properties["Property" + i] = "PropertyValue" + i;
