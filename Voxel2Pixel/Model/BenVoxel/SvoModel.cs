@@ -16,10 +16,10 @@ namespace Voxel2Pixel.Model.BenVoxel
 	/// SVO stands for "Sparse Voxel Octree"
 	/// </summary>
 	[XmlRoot("Geometry")]
-	public class SvoModel : IEditableModel, IXmlSerializable
+	public class SvoModel : IEditableModel, IBinaryWritable, IXmlSerializable
 	{
 		#region Nested classes
-		public abstract class Node
+		public abstract class Node : IBinaryWritable
 		{
 			/// <summary>
 			/// Header bit 7: 0 for Branch, 1 for Leaf.
@@ -94,10 +94,12 @@ namespace Voxel2Pixel.Model.BenVoxel
 				z = @ushort + ((octant & 4) > 0 ? inner : 0) - 1;
 			}
 			public abstract void Clear();
+			#region IBinaryWritable
 			public abstract void Write(Stream stream);
 			public abstract void Write(BinaryWriter writer);
+			#endregion IBinaryWritable
 		}
-		public class Branch : Node, IEnumerable<Node>, IEnumerable
+		public class Branch : Node, IBinaryWritable, IEnumerable<Node>, IEnumerable
 		{
 			public override byte Header => (byte)((Math.Max(Children.OfType<Node>().Count() - 1, 0) & 7) << 3 | Octant & 7);
 			protected Node[] Children = new Node[8];
@@ -142,6 +144,7 @@ namespace Voxel2Pixel.Model.BenVoxel
 						: new Branch(reader, this);
 				}
 			}
+			#region IBinaryWritable
 			public override void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
 			public override void Write(BinaryWriter writer)
 			{
@@ -149,12 +152,13 @@ namespace Voxel2Pixel.Model.BenVoxel
 				foreach (Node child in this)
 					child.Write(writer);
 			}
+			#endregion IBinaryWritable
 			#region IEnumerable<Node>
 			IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 			public IEnumerator<Node> GetEnumerator() => Children.OfType<Node>().GetEnumerator();
 			#endregion IEnumerable<Node>
 		}
-		public class Leaf : Node, IEnumerable<Voxel>, IEnumerable
+		public class Leaf : Node, IBinaryWritable, IEnumerable<Voxel>, IEnumerable
 		{
 			public override byte Header => (byte)(0x80 | Octant & 7);
 			protected byte[] Data = new byte[8];
@@ -183,12 +187,14 @@ namespace Voxel2Pixel.Model.BenVoxel
 				Octant = (byte)(reader.ReadByte() & 7);
 				Data = reader.ReadBytes(8);
 			}
+			#region IBinaryWritable
 			public override void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
 			public override void Write(BinaryWriter writer)
 			{
 				writer.Write(Header);
 				writer.Write(Data);
 			}
+			#endregion IBinaryWritable
 			public Voxel Voxel(byte octant)
 			{
 				Position(out ushort x, out ushort y, out ushort z);
@@ -241,6 +247,8 @@ namespace Voxel2Pixel.Model.BenVoxel
 			SizeY = sizeY;
 			SizeZ = sizeZ;
 		}
+		#endregion SvoModel
+		#region IBinaryWritable
 		public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
 		public void Write(BinaryWriter writer)
 		{
@@ -253,6 +261,8 @@ namespace Voxel2Pixel.Model.BenVoxel
 				writer.Write(new byte[8]);//Empty 2x2x2 voxel cube
 			}
 		}
+		#endregion IBinaryWritable
+		#region Utilities
 		public byte[] Bytes()
 		{
 			using MemoryStream ms = new();
@@ -288,7 +298,7 @@ namespace Voxel2Pixel.Model.BenVoxel
 				return nodes;
 			}
 		}
-		#endregion SvoModel
+		#endregion Utilities
 		#region IEditableModel
 		public ushort SizeX { get; set; } = ushort.MaxValue;
 		public ushort SizeY { get; set; } = ushort.MaxValue;

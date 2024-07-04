@@ -72,7 +72,7 @@ namespace Voxel2Pixel.Model.BenVoxel
 		public class Model
 		{
 			public Metadata Metadata = new();
-			public SvoModel Svo = new();
+			public SvoModel Geometry = new();
 		}
 		public readonly SanitizedKeyDictionary<Model> Models = [];
 		#region IXmlSerializable

@@ -92,8 +92,10 @@ namespace Voxel2Pixel.Model.FileFormats
 					Animation: animation,
 					Children: [.. children]);
 			}
+			#region IBinaryWritable
 			public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
 			public void Write(BinaryWriter writer) => throw new NotImplementedException();//TODO
+			#endregion IBinaryWritable
 		}
 		public readonly record struct Header(
 			string Name,
@@ -119,6 +121,7 @@ namespace Voxel2Pixel.Model.FileFormats
 				PivotX: reader.ReadSingle(),
 				PivotY: reader.ReadSingle(),
 				PivotZ: reader.ReadSingle());
+			#region IBinaryWritable
 			public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
 			public void Write(BinaryWriter writer)
 			{
@@ -133,6 +136,7 @@ namespace Voxel2Pixel.Model.FileFormats
 				writer.Write(PivotY);
 				writer.Write(PivotZ);
 			}
+			#endregion IBinaryWritable
 		}
 		public readonly record struct Prop(
 			KeyValuePair<string, string>[] Properties) : IBinaryWritable
@@ -145,6 +149,7 @@ namespace Voxel2Pixel.Model.FileFormats
 					properties[i] = new(ReadPascalString(reader), ReadPascalString(reader));
 				return new(properties);
 			}
+			#region IBinaryWritable
 			public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
 			public void Write(BinaryWriter writer)
 			{
@@ -155,6 +160,7 @@ namespace Voxel2Pixel.Model.FileFormats
 					WritePascalString(writer, property.Value);
 				}
 			}
+			#endregion IBinaryWritable
 		}
 		public readonly record struct Palc(
 			uint[] Colors,
@@ -181,6 +187,7 @@ namespace Voxel2Pixel.Model.FileFormats
 					Indices: indices,
 					Materials: materials);
 			}
+			#region IBinaryWritable
 			public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
 			public void Write(BinaryWriter writer)
 			{
@@ -193,6 +200,7 @@ namespace Voxel2Pixel.Model.FileFormats
 				foreach (Material material in Materials)
 					material.Write(writer);
 			}
+			#endregion IBinaryWritable
 			public uint[] Palette => [0u, .. Colors.Take(255).Select(BinaryPrimitives.ReverseEndianness)];
 		}
 		public readonly record struct Material(
@@ -210,6 +218,7 @@ namespace Voxel2Pixel.Model.FileFormats
 					Type: type,
 					Properties: properties);
 			}
+			#region IBinaryWritable
 			public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
 			public void Write(BinaryWriter writer)
 			{
@@ -221,6 +230,7 @@ namespace Voxel2Pixel.Model.FileFormats
 					writer.Write(property.Value);
 				}
 			}
+			#endregion IBinaryWritable
 		}
 		public readonly record struct Data(
 			int LowerX,
@@ -254,6 +264,7 @@ namespace Voxel2Pixel.Model.FileFormats
 					UpperZ: upperZ,
 					Voxels: [.. voxels]);
 			}
+			#region IBinaryWritable
 			public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
 			public void Write(BinaryWriter writer)
 			{
@@ -269,6 +280,7 @@ namespace Voxel2Pixel.Model.FileFormats
 						for (int z = LowerZ; z <= UpperZ; z++)
 							Voxels[index++].Write(writer);
 			}
+			#endregion IBinaryWritable
 			/// <summary>
 			/// In 3D space for voxels, I'm following the MagicaVoxel convention, which is Z+up, right-handed, so X+ means right/east, Y+ means forwards/north and Z+ means up.
 			/// Vengu is Y-up, right-handed, so X+ means right/east, Y+ means up and Z+ means forwards/north. 
@@ -302,6 +314,7 @@ namespace Voxel2Pixel.Model.FileFormats
 			public static Voxel Read(BinaryReader reader) => reader.ReadBoolean() ?
 				new Voxel(Air: true, Color: 0)
 				: new Voxel(Air: false, Color: reader.ReadByte());
+			#region IBinaryWritable
 			public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
 			public void Write(BinaryWriter writer)
 			{
@@ -309,6 +322,7 @@ namespace Voxel2Pixel.Model.FileFormats
 				if (!Air)
 					writer.Write(Color);
 			}
+			#endregion IBinaryWritable
 		}
 		public readonly record struct Anim(
 			string Name,
@@ -325,6 +339,7 @@ namespace Voxel2Pixel.Model.FileFormats
 					Name: name,
 					Keyframes: [.. keyframes]);
 			}
+			#region IBinaryWritable
 			public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
 			public void Write(BinaryWriter writer)
 			{
@@ -336,6 +351,7 @@ namespace Voxel2Pixel.Model.FileFormats
 				}
 				writer.Write(FourCC("ENDA"));
 			}
+			#endregion IBinaryWritable
 		}
 		public readonly record struct Keyf(
 			uint Index,
@@ -365,6 +381,7 @@ namespace Voxel2Pixel.Model.FileFormats
 					m42: reader.ReadSingle(),
 					m43: reader.ReadSingle(),
 					m44: reader.ReadSingle()));
+			#region IBinaryWritable
 			public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
 			public void Write(BinaryWriter writer)
 			{
@@ -388,6 +405,7 @@ namespace Voxel2Pixel.Model.FileFormats
 				writer.Write(LocalMatrix.M43);
 				writer.Write(LocalMatrix.M44);
 			}
+			#endregion IBinaryWritable
 		}
 		#endregion Chunks
 	}
