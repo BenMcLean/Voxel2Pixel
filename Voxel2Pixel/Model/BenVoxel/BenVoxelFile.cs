@@ -114,10 +114,13 @@ namespace Voxel2Pixel.Model.BenVoxel
 			foreach (KeyValuePair<string, Model> model in Models)
 			{
 				XDocument doc = new();
-				new XmlSerializer(typeof(Model)).Serialize(
-					xmlWriter: doc.CreateWriter(),
-					o: model.Value,
-					namespaces: new([XmlQualifiedName.Empty]));
+				using (XmlWriter docWriter = doc.CreateWriter())
+				{
+					new XmlSerializer(typeof(Model)).Serialize(
+						xmlWriter: docWriter,
+						o: model.Value,
+						namespaces: new([XmlQualifiedName.Empty]));
+				}
 				XElement element = doc.Root;
 				element.Add(new XAttribute(XName.Get("Name"), model.Key));
 				element.WriteTo(writer);
