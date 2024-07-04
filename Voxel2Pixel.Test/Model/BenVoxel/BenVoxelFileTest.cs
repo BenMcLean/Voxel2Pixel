@@ -1,4 +1,6 @@
-﻿using Voxel2Pixel.Model.BenVoxel;
+﻿using System.Text;
+using System.Xml.Serialization;
+using Voxel2Pixel.Model.BenVoxel;
 using Voxel2Pixel.Model.FileFormats;
 
 namespace Voxel2Pixel.Test.Model.BenVoxel
@@ -31,7 +33,11 @@ namespace Voxel2Pixel.Test.Model.BenVoxel
 				Metadata = metadata,
 				Geometry = model,
 			};
-			output.WriteLine(ExtensionMethods.Utf8Xml(file));
+			string s = ExtensionMethods.Utf8Xml(file);
+			output.WriteLine(s);
+			Assert.Equal(
+				expected: s,
+				actual: ExtensionMethods.Utf8Xml((BenVoxelFile)(new XmlSerializer(typeof(BenVoxelFile)).Deserialize(new MemoryStream(Encoding.UTF8.GetBytes(s))) ?? throw new NullReferenceException())));
 		}
 	}
 }

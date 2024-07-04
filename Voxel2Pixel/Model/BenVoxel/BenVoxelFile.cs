@@ -22,14 +22,14 @@ namespace Voxel2Pixel.Model.BenVoxel
 			{
 				XElement root = XElement.Load(reader);
 				foreach (XElement property in root.Elements("Property"))
-					Properties[property.Attributes().Where(a => a.Name.Equals("Name")).FirstOrDefault()?.Value ?? ""] = property.Value;
+					Properties[property.Attributes().Where(a => a.Name.ToString().Equals("Name")).FirstOrDefault()?.Value ?? ""] = property.Value;
 				foreach (XElement point in root.Elements("Point"))
-					Points[point.Attributes().Where(a => a.Name.Equals("Name")).FirstOrDefault()?.Value ?? ""] = new Point3D(
-						X: Convert.ToInt32(point.Attributes().Where(a => a.Name.Equals("X")).First().Value),
-						Y: Convert.ToInt32(point.Attributes().Where(a => a.Name.Equals("Y")).First().Value),
-						Z: Convert.ToInt32(point.Attributes().Where(a => a.Name.Equals("Z")).First().Value));
+					Points[point.Attributes().Where(a => a.Name.ToString().Equals("Name")).FirstOrDefault()?.Value ?? ""] = new Point3D(
+						X: Convert.ToInt32(point.Attributes().Where(a => a.Name.ToString().Equals("X")).First().Value),
+						Y: Convert.ToInt32(point.Attributes().Where(a => a.Name.ToString().Equals("Y")).First().Value),
+						Z: Convert.ToInt32(point.Attributes().Where(a => a.Name.ToString().Equals("Z")).First().Value));
 				foreach (XElement palette in root.Elements("Palette"))
-					Palettes[palette.Attributes().Where(a => a.Name.Equals("Name")).FirstOrDefault()?.Value ?? ""] = palette
+					Palettes[palette.Attributes().Where(a => a.Name.ToString().Equals("Name")).FirstOrDefault()?.Value ?? ""] = palette
 						.Elements("Color")
 						.Take(256)
 						.Select(color =>
@@ -37,7 +37,7 @@ namespace Voxel2Pixel.Model.BenVoxel
 							uint argb = uint.Parse(
 								s: color
 									.Attributes()
-									.Where(a => a.Name.Equals("Argb"))
+									.Where(a => a.Name.ToString().Equals("Argb"))
 									.First()
 									.Value
 									.Replace("#", ""),
@@ -77,7 +77,10 @@ namespace Voxel2Pixel.Model.BenVoxel
 			public XmlSchema GetSchema() => null;
 			public void ReadXml(XmlReader reader)
 			{
-				throw new NotImplementedException();
+				XElement root = XElement.Load(reader);
+				Metadata = new();
+				Metadata.ReadXml(root.CreateReader());
+				Geometry = (SvoModel)new XmlSerializer(typeof(SvoModel)).Deserialize(root.Elements("Geometry").First().CreateReader());
 			}
 			public void WriteXml(XmlWriter writer)
 			{
@@ -94,7 +97,16 @@ namespace Voxel2Pixel.Model.BenVoxel
 		public XmlSchema GetSchema() => null;
 		public void ReadXml(XmlReader reader)
 		{
-			throw new NotImplementedException();
+			XElement root = XElement.Load(reader);
+			if (root.Elements("Property").Any()
+				|| root.Elements("Point").Any()
+				|| root.Elements("Palette").Any())
+			{
+				Global = new Metadata();
+				Global.ReadXml(root.CreateReader());
+			}
+			foreach (XElement model in root.Elements("Model"))
+				Models[model.Attributes().Where(a => a.Name.ToString().Equals("Name")).FirstOrDefault()?.Value ?? ""] = (Model)new XmlSerializer(typeof(Model)).Deserialize(model.CreateReader());
 		}
 		public void WriteXml(XmlWriter writer)
 		{
@@ -102,13 +114,10 @@ namespace Voxel2Pixel.Model.BenVoxel
 			foreach (KeyValuePair<string, Model> model in Models)
 			{
 				XDocument doc = new();
-				using (XmlWriter w = doc.CreateWriter())
-				{
-					new XmlSerializer(typeof(Model)).Serialize(
-						xmlWriter: w,
-						o: model.Value,
-						namespaces: new([XmlQualifiedName.Empty]));
-				}
+				new XmlSerializer(typeof(Model)).Serialize(
+					xmlWriter: doc.CreateWriter(),
+					o: model.Value,
+					namespaces: new([XmlQualifiedName.Empty]));
 				XElement element = doc.Root;
 				element.Add(new XAttribute(XName.Get("Name"), model.Key));
 				element.WriteTo(writer);

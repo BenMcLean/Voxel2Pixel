@@ -70,6 +70,7 @@ namespace Voxel2Pixel
 		{
 			public override Encoding Encoding => Encoding.UTF8;
 		}
+		public static T FromXml<T>(this string value) => (T)new XmlSerializer(typeof(T)).Deserialize(new StringReader(value));
 		#endregion XML
 		#region Sprite
 		public static IEnumerable<Sprite> AddFrameNumbers(this IEnumerable<Sprite> frames, uint color = 0xFFFFFFFFu)
