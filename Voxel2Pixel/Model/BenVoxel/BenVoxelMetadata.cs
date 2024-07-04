@@ -15,19 +15,19 @@ namespace Voxel2Pixel.Model.BenVoxel
 		public readonly SanitizedKeyDictionary<Point3D> Points = [];
 		public readonly SanitizedKeyDictionary<uint[]> Palettes = [];
 		#region IXmlSerializable
-		public XmlSchema GetSchema() => throw new NotImplementedException();
+		public XmlSchema GetSchema() => null;
 		public void ReadXml(XmlReader reader)
 		{
 			XElement root = XElement.Load(reader);
 			foreach (XElement property in root.Elements("Property"))
-				Properties[property.Attributes().Where(a => a.Name.Equals("Name")).First().Value] = property.Value;
+				Properties[property.Attributes().Where(a => a.Name.Equals("Name")).FirstOrDefault()?.Value ?? ""] = property.Value;
 			foreach (XElement point in root.Elements("Point"))
-				Points[point.Attributes().Where(a => a.Name.Equals("Name")).First().Value] = new Point3D(
+				Points[point.Attributes().Where(a => a.Name.Equals("Name")).FirstOrDefault()?.Value ?? ""] = new Point3D(
 					X: Convert.ToInt32(point.Attributes().Where(a => a.Name.Equals("X")).First().Value),
 					Y: Convert.ToInt32(point.Attributes().Where(a => a.Name.Equals("Y")).First().Value),
 					Z: Convert.ToInt32(point.Attributes().Where(a => a.Name.Equals("Z")).First().Value));
 			foreach (XElement palette in root.Elements("Palette"))
-				Palettes[palette.Attributes().Where(a => a.Name.Equals("Name")).First().Value] = palette
+				Palettes[palette.Attributes().Where(a => a.Name.Equals("Name")).FirstOrDefault()?.Value ?? ""] = palette
 					.Elements("Color")
 					.Take(256)
 					.Select(color =>
