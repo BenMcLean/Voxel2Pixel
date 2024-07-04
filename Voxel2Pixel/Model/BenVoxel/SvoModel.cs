@@ -95,10 +95,11 @@ namespace Voxel2Pixel.Model.BenVoxel
 			}
 			public abstract void Clear();
 			public abstract void Write(Stream stream);
+			public abstract void Write(BinaryWriter writer);
 		}
 		public class Branch : Node, IEnumerable<Node>, IEnumerable
 		{
-			public override byte Header => (byte)((Math.Max(Children.OfType<Node>().Count() - 1, 0) & 0b111) << 3 | Octant & 0b111);
+			public override byte Header => (byte)((Math.Max(Children.OfType<Node>().Count() - 1, 0) & 7) << 3 | Octant & 7);
 			protected Node[] Children = new Node[8];
 			public override void Clear() => Children = new Node[8];
 			public Node this[byte octant]
@@ -125,13 +126,10 @@ namespace Voxel2Pixel.Model.BenVoxel
 				Parent = parent;
 				Octant = octant;
 			}
-			public Branch(Stream stream, Node parent = null)
+			public Branch(Stream stream, Node parent = null) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true), parent) { }
+			public Branch(BinaryReader reader, Node parent = null)
 			{
 				Parent = parent;
-				using BinaryReader reader = new(
-					input: stream,
-					encoding: Encoding.UTF8,
-					leaveOpen: true);
 				byte header = reader.ReadByte(),
 					children = (byte)((header >> 3 & 0b111) + 1);
 				Octant = (byte)(header & 0b111);
@@ -140,19 +138,16 @@ namespace Voxel2Pixel.Model.BenVoxel
 					header = reader.ReadByte();
 					reader.BaseStream.Position--;
 					this[(byte)(header & 0b111)] = (header & 0b10000000) > 0 ?
-						new Leaf(stream, this)
-						: new Branch(stream, this);
+						new Leaf(reader, this)
+						: new Branch(reader, this);
 				}
 			}
-			public override void Write(Stream stream)
+			public override void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public override void Write(BinaryWriter writer)
 			{
-				using BinaryWriter writer = new(
-					output: stream,
-					encoding: Encoding.UTF8,
-					leaveOpen: true);
 				writer.Write(Header);
 				foreach (Node child in this)
-					child.Write(stream);
+					child.Write(writer);
 			}
 			#region IEnumerable<Node>
 			IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -181,22 +176,16 @@ namespace Voxel2Pixel.Model.BenVoxel
 				Parent = parent;
 				Octant = octant;
 			}
-			public Leaf(Stream stream, Node parent = null)
+			public Leaf(Stream stream, Node parent = null) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true), parent) { }
+			public Leaf(BinaryReader reader, Node parent = null)
 			{
 				Parent = parent;
-				using BinaryReader reader = new(
-					input: stream,
-					encoding: Encoding.UTF8,
-					leaveOpen: true);
 				Octant = (byte)(reader.ReadByte() & 7);
 				Data = reader.ReadBytes(8);
 			}
-			public override void Write(Stream stream)
+			public override void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public override void Write(BinaryWriter writer)
 			{
-				using BinaryWriter writer = new(
-					output: stream,
-					encoding: Encoding.UTF8,
-					leaveOpen: true);
 				writer.Write(Header);
 				writer.Write(Data);
 			}
@@ -242,7 +231,8 @@ namespace Voxel2Pixel.Model.BenVoxel
 			foreach (Voxel voxel in voxels)
 				this.Set(voxel);
 		}
-		public SvoModel(Stream stream, ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this(sizeX, sizeY, sizeZ) => Root = new Branch(stream);
+		public SvoModel(Stream stream, ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true), sizeX, sizeY, sizeZ) { }
+		public SvoModel(BinaryReader reader, ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this(sizeX, sizeY, sizeZ) => Root = new Branch(reader);
 		public SvoModel(byte[] bytes, ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this(new MemoryStream(bytes), sizeX, sizeY, sizeZ) { }
 		public SvoModel(string z85, ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this(Cromulent.Encoding.Z85.FromZ85String(z85), sizeX, sizeY, sizeZ) { }
 		public SvoModel(ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this()
@@ -251,16 +241,13 @@ namespace Voxel2Pixel.Model.BenVoxel
 			SizeY = sizeY;
 			SizeZ = sizeZ;
 		}
-		public void Write(Stream stream)
+		public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+		public void Write(BinaryWriter writer)
 		{
 			if (Root is not null && Root.Count() > 0)
-				Root.Write(stream);
+				Root.Write(writer);
 			else
 			{//Empty model
-				BinaryWriter writer = new(
-					output: stream,
-					encoding: Encoding.UTF8,
-					leaveOpen: false);
 				writer.Write(new byte[15]);//Branch headers
 				writer.Write((byte)0x80);//Leaf header
 				writer.Write(new byte[8]);//Empty 2x2x2 voxel cube
