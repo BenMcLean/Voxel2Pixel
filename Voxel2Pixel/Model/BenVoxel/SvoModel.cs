@@ -237,15 +237,15 @@ namespace Voxel2Pixel.Model.BenVoxel
 			sizeY: model.SizeY,
 			sizeZ: model.SizeZ)
 		{ }
-		public SvoModel(IEnumerable<Voxel> voxels, ushort sizeX, ushort sizeY, ushort sizeZ) : this(sizeX, sizeY, sizeZ)
+		public SvoModel(IEnumerable<Voxel> voxels, ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this(sizeX, sizeY, sizeZ)
 		{
 			foreach (Voxel voxel in voxels)
 				this.Set(voxel);
 		}
-		public SvoModel(Stream stream, ushort sizeX, ushort sizeY, ushort sizeZ) : this(sizeX, sizeY, sizeZ) => Root = new Branch(stream);
-		public SvoModel(byte[] bytes, ushort sizeX, ushort sizeY, ushort sizeZ) : this(new MemoryStream(bytes), sizeX, sizeY, sizeZ) { }
-		public SvoModel(string z85, ushort sizeX, ushort sizeY, ushort sizeZ) : this(Cromulent.Encoding.Z85.FromZ85String(z85), sizeX, sizeY, sizeZ) { }
-		public SvoModel(ushort sizeX, ushort sizeY, ushort sizeZ) : this()
+		public SvoModel(Stream stream, ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this(sizeX, sizeY, sizeZ) => Root = new Branch(stream);
+		public SvoModel(byte[] bytes, ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this(new MemoryStream(bytes), sizeX, sizeY, sizeZ) { }
+		public SvoModel(string z85, ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this(Cromulent.Encoding.Z85.FromZ85String(z85), sizeX, sizeY, sizeZ) { }
+		public SvoModel(ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this()
 		{
 			SizeX = sizeX;
 			SizeY = sizeY;
@@ -585,10 +585,7 @@ namespace Voxel2Pixel.Model.BenVoxel
 		public XmlSchema GetSchema() => null;
 		public void ReadXml(XmlReader reader)
 		{
-			SizeX = ushort.MaxValue;
-			SizeY = ushort.MaxValue;
-			SizeZ = ushort.MaxValue;
-			foreach (Voxel voxel in new SvoModel(XElement.Load(reader).Value, ushort.MaxValue, ushort.MaxValue, ushort.MaxValue))
+			foreach (Voxel voxel in new SvoModel(XElement.Load(reader).Value))
 				this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
 		}
 		public void WriteXml(XmlWriter writer) => writer.WriteString(Z85());
