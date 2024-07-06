@@ -7,6 +7,7 @@ using System.Xml;
 using System.Xml.Serialization;
 using Voxel2Pixel.Interfaces;
 using System.IO;
+using System.Text;
 
 namespace Voxel2Pixel.Model.BenVoxel
 {
@@ -122,7 +123,7 @@ namespace Voxel2Pixel.Model.BenVoxel
 			#region IBinaryWritable
 			public void Write(Stream stream)
 			{
-				Metadata.RIFF("MDATA").CopyTo(stream);
+				Metadata.RIFF("DATA").CopyTo(stream);
 				Geometry.RIFF("SVOG").CopyTo(stream);
 			}
 			public void Write(BinaryWriter writer)
@@ -155,7 +156,27 @@ namespace Voxel2Pixel.Model.BenVoxel
 		public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
 		public void Write(BinaryWriter writer)
 		{
-			throw new NotImplementedException();
+			writer.Write(Encoding.UTF8.GetBytes("BENV"));
+			long sizePosition = writer.BaseStream.Position;
+			writer.BaseStream.Position += 4;
+
+			if (Global is not null)
+			{
+				writer.Flush();
+				Global.RIFF("DATA").CopyTo(writer.BaseStream);
+			}
+			foreach (KeyValuePair<string, Model> model in Models)
+			{
+				MemoryStream ms = new();
+				BinaryWriter msWriter = new(ms);
+				WriteKey(msWriter, model.Key);
+				model.Value.Write(msWriter);
+				writer.RIFF("MODL", ms.ToArray());
+			}
+			long position = writer.BaseStream.Position;
+			writer.BaseStream.Position = sizePosition;
+			writer.Write((uint)(position - sizePosition + 4));
+			writer.BaseStream.Position = position;
 		}
 		#endregion IBinaryWritable
 		#region IXmlSerializable
