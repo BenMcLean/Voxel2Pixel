@@ -26,7 +26,7 @@ namespace Voxel2Pixel.Model.BenVoxel
 				bool valid = true;
 				while (valid
 					&& reader.BaseStream.Position < reader.BaseStream.Length - 4
-					&& new string(reader.ReadChars(4)) is string fourCC)
+					&& FourCC(reader) is string fourCC)
 					switch (fourCC)
 					{
 						case "PROP":
@@ -190,6 +190,12 @@ namespace Voxel2Pixel.Model.BenVoxel
 			#endregion IXmlSerializable
 		}
 		public readonly SanitizedKeyDictionary<Model> Models = [];
+		public BenVoxelFile() { }
+		public BenVoxelFile(Stream stream) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true)) { }
+		public BenVoxelFile(BinaryReader reader)
+		{
+			throw new NotImplementedException();
+		}
 		#region IBinaryWritable
 		public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
 		public void Write(BinaryWriter writer)
@@ -252,6 +258,7 @@ namespace Voxel2Pixel.Model.BenVoxel
 		}
 		#endregion IXmlSerializable
 		#region Utilities
+		public static string FourCC(BinaryReader reader) => System.Text.Encoding.UTF8.GetString(reader.ReadBytes(4));
 		public static string ReadKey(BinaryReader reader) => System.Text.Encoding.UTF8.GetString(reader.ReadBytes(reader.ReadByte()));
 		public static void WriteKey(BinaryWriter writer, string s)
 		{
