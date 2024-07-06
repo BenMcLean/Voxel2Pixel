@@ -178,5 +178,29 @@ namespace Voxel2Pixel
 					sizeX: (ushort)(line.Width + (line.X < 0 ? line.X : 0)));
 		}
 		#endregion Geometry
+		#region IBinaryWritable
+		public static MemoryStream RIFF(this IBinaryWritable o, string fourCC)
+		{
+			MemoryStream ms = new();
+			BinaryWriter writer = new(ms);
+			writer.Write(Encoding.UTF8.GetBytes(fourCC[..4]), 0, 4);
+			writer.BaseStream.Position += 4;
+			o.Write(writer);
+			if (writer.BaseStream.Position % 2 != 0)
+				writer.Write((byte)0);
+			uint length = (uint)(writer.BaseStream.Position - 8);
+			writer.BaseStream.Position = 4;
+			writer.Write(length);
+			writer.BaseStream.Position = 0;
+			return ms;
+		}
+		public static BinaryWriter RIFF(this BinaryWriter writer, string fourCC, byte[] bytes)
+		{
+			writer.Write(Encoding.UTF8.GetBytes(fourCC[..4]), 0, 4);
+			writer.Write((uint)bytes.Length);
+			writer.Write(bytes);
+			return writer;
+		}
+		#endregion IBinaryWritable
 	}
 }

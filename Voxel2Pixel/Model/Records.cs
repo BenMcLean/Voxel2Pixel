@@ -1,9 +1,11 @@
 ﻿using System;
+using System.IO;
+using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model
 {
 	public readonly record struct Point(int X, int Y);
-	public readonly record struct Point3D(int X, int Y, int Z)
+	public readonly record struct Point3D(int X, int Y, int Z) : IBinaryWritable
 	{
 		public Point3D(params int[] coordinates) : this(coordinates[0], coordinates[1], coordinates[2]) { }
 		public int[] ToArray() => [X, Y, Z];
@@ -20,6 +22,15 @@ namespace Voxel2Pixel.Model
 			Y = voxel.Y,
 			Z = voxel.Z,
 		};
+		#region IBinaryWritable
+		public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+		public void Write(BinaryWriter writer)
+		{
+			writer.Write(X);
+			writer.Write(Y);
+			writer.Write(Z);
+		}
+		#endregion IBinaryWritable
 	}
 	public readonly record struct Voxel(ushort X, ushort Y, ushort Z, byte Index)
 	{

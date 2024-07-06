@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Xml.Serialization;
+using Voxel2Pixel.Model;
 using Voxel2Pixel.Model.BenVoxel;
 using Voxel2Pixel.Model.FileFormats;
 
@@ -39,5 +40,7 @@ namespace Voxel2Pixel.Test.Model.BenVoxel
 				expected: s,
 				actual: ExtensionMethods.Utf8Xml((BenVoxelFile)(new XmlSerializer(typeof(BenVoxelFile)).Deserialize(new MemoryStream(Encoding.UTF8.GetBytes(s))) ?? throw new NullReferenceException())));
 		}
+		[Fact]
+		public void RiffTest() => output.WriteLine(Convert.ToHexString(new Point3D(1, 2, 3).RIFF("PT3D").ToArray()));
 	}
 }

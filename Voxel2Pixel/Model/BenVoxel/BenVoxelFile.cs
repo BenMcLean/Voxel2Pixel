@@ -5,17 +5,63 @@ using System.Xml.Linq;
 using System.Xml.Schema;
 using System.Xml;
 using System.Xml.Serialization;
+using Voxel2Pixel.Interfaces;
+using System.IO;
 
 namespace Voxel2Pixel.Model.BenVoxel
 {
 	[XmlRoot("BenVoxel")]
-	public class BenVoxelFile : IXmlSerializable
+	public class BenVoxelFile : IBinaryWritable, IXmlSerializable
 	{
-		public class Metadata : IXmlSerializable
+		public class Metadata : IBinaryWritable, IXmlSerializable
 		{
 			public readonly SanitizedKeyDictionary<string> Properties = [];
 			public readonly SanitizedKeyDictionary<Point3D> Points = [];
 			public readonly SanitizedKeyDictionary<uint[]> Palettes = [];
+			#region IBinaryWritable
+			public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+			public void Write(BinaryWriter writer)
+			{
+				if (Properties.Any())
+				{
+					MemoryStream ms = new();
+					BinaryWriter msWriter = new(ms);
+					msWriter.Write((ushort)Properties.Count());
+					foreach (KeyValuePair<string, string> property in Properties)
+					{
+						WriteKey(msWriter, property.Key);
+						WriteString(msWriter, property.Value);
+					}
+					writer.RIFF("PROP", ms.ToArray());
+				}
+				if (Points.Any())
+				{
+					MemoryStream ms = new();
+					BinaryWriter msWriter = new(ms);
+					msWriter.Write((ushort)Points.Count());
+					foreach (KeyValuePair<string, Point3D> point in Points)
+					{
+						WriteKey(msWriter, point.Key);
+						point.Value.Write(msWriter);
+					}
+					writer.RIFF("PT3D", ms.ToArray());
+				}
+				if (Palettes.Any())
+				{
+					MemoryStream ms = new();
+					BinaryWriter msWriter = new(ms);
+					msWriter.Write((ushort)Palettes.Count());
+					foreach (KeyValuePair<string, uint[]> palette in Palettes)
+					{
+						WriteKey(msWriter, palette.Key);
+						writer.Write((byte)palette.Value.Length);
+						foreach (uint color in palette.Value)
+							writer.Write(color);
+					}
+					writer.RIFF("PALC", ms.ToArray());
+				}
+			}
+			#endregion IBinaryWritable
 			#region IXmlSerializable
 			public XmlSchema GetSchema() => null;
 			public void ReadXml(XmlReader reader)
@@ -69,10 +115,22 @@ namespace Voxel2Pixel.Model.BenVoxel
 			#endregion IXmlSerializable
 		}
 		public Metadata Global = null;
-		public class Model : IXmlSerializable
+		public class Model : IBinaryWritable, IXmlSerializable
 		{
 			public Metadata Metadata = new();
 			public SvoModel Geometry = new();
+			#region IBinaryWritable
+			public void Write(Stream stream)
+			{
+				Metadata.RIFF("MDATA").CopyTo(stream);
+				Geometry.RIFF("SVOG").CopyTo(stream);
+			}
+			public void Write(BinaryWriter writer)
+			{
+				writer.Flush();
+				Write(writer.BaseStream);
+			}
+			#endregion IBinaryWritable
 			#region IXmlSerializable
 			public XmlSchema GetSchema() => null;
 			public void ReadXml(XmlReader reader)
@@ -93,6 +151,13 @@ namespace Voxel2Pixel.Model.BenVoxel
 			#endregion IXmlSerializable
 		}
 		public readonly SanitizedKeyDictionary<Model> Models = [];
+		#region IBinaryWritable
+		public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+		public void Write(BinaryWriter writer)
+		{
+			throw new NotImplementedException();
+		}
+		#endregion IBinaryWritable
 		#region IXmlSerializable
 		public XmlSchema GetSchema() => null;
 		public void ReadXml(XmlReader reader)
@@ -127,5 +192,19 @@ namespace Voxel2Pixel.Model.BenVoxel
 			}
 		}
 		#endregion IXmlSerializable
+		#region Utilities
+		public static string ReadKey(BinaryReader reader) => System.Text.Encoding.UTF8.GetString(reader.ReadBytes(reader.ReadByte()));
+		public static void WriteKey(BinaryWriter writer, string s)
+		{
+			writer.Write((byte)s.Length);
+			writer.Write(System.Text.Encoding.UTF8.GetBytes(s));
+		}
+		public static string ReadString(BinaryReader reader) => System.Text.Encoding.UTF8.GetString(reader.ReadBytes((int)reader.ReadUInt32()));
+		public static void WriteString(BinaryWriter writer, string s)
+		{
+			writer.Write((uint)s.Length);
+			writer.Write(System.Text.Encoding.UTF8.GetBytes(s));
+		}
+		#endregion Utilities
 	}
 }
