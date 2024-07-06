@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model
@@ -22,6 +23,8 @@ namespace Voxel2Pixel.Model
 			Y = voxel.Y,
 			Z = voxel.Z,
 		};
+		public Point3D(Stream stream) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true)) { }
+		public Point3D(BinaryReader reader) : this(X: reader.ReadInt32(), Y: reader.ReadInt32(), Z: reader.ReadInt32()) { }
 		#region IBinaryWritable
 		public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
 		public void Write(BinaryWriter writer)

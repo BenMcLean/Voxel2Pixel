@@ -19,6 +19,44 @@ namespace Voxel2Pixel.Model.BenVoxel
 			public readonly SanitizedKeyDictionary<string> Properties = [];
 			public readonly SanitizedKeyDictionary<Point3D> Points = [];
 			public readonly SanitizedKeyDictionary<uint[]> Palettes = [];
+			public Metadata() { }
+			public Metadata(Stream stream) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true)) { }
+			public Metadata(BinaryReader reader)
+			{
+				bool valid = true;
+				while (valid
+					&& reader.BaseStream.Position < reader.BaseStream.Length - 4
+					&& new string(reader.ReadChars(4)) is string fourCC)
+					switch (fourCC)
+					{
+						case "PROP":
+							MemoryStream ms = new(reader.ReadBytes((int)reader.ReadUInt32()));
+							BinaryReader msReader = new(ms);
+							ushort count = msReader.ReadUInt16();
+							for (ushort i = 0; i < count; i++)
+								Properties[ReadKey(msReader)] = ReadString(msReader);
+							break;
+						case "PT3D":
+							ms = new(reader.ReadBytes((int)reader.ReadUInt32()));
+							msReader = new(ms);
+							count = msReader.ReadUInt16();
+							for (ushort i = 0; i < count; i++)
+								Points[ReadKey(msReader)] = new Point3D(msReader);
+							break;
+						case "PALC":
+							ms = new(reader.ReadBytes((int)reader.ReadUInt32()));
+							msReader = new(ms);
+							count = msReader.ReadUInt16();
+							for (ushort i = 0; i < count; i++)
+								Palettes[ReadKey(msReader)] = Enumerable.Range(0, msReader.ReadByte() + 1).Select(i => msReader.ReadUInt32()).ToArray();
+							break;
+						default:
+							valid = false;
+							break;
+					}
+				if (!valid)
+					reader.BaseStream.Position -= 4;
+			}
 			#region IBinaryWritable
 			public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
 			public void Write(BinaryWriter writer)
@@ -55,7 +93,7 @@ namespace Voxel2Pixel.Model.BenVoxel
 					foreach (KeyValuePair<string, uint[]> palette in Palettes)
 					{
 						WriteKey(msWriter, palette.Key);
-						writer.Write((byte)palette.Value.Length);
+						writer.Write((byte)palette.Value.Length - 1);
 						foreach (uint color in palette.Value)
 							writer.Write(color);
 					}
