@@ -14,8 +14,10 @@ namespace Voxel2Pixel.Model.BenVoxel
 	[XmlRoot("BenVoxel")]
 	public class BenVoxelFile : IBinaryWritable, IXmlSerializable
 	{
+		#region Nested classes
 		public class Metadata : IBinaryWritable, IXmlSerializable
 		{
+			#region Metadata
 			public readonly SanitizedKeyDictionary<string> Properties = [];
 			public readonly SanitizedKeyDictionary<Point3D> Points = [];
 			public readonly SanitizedKeyDictionary<uint[]> Palettes = [];
@@ -57,6 +59,7 @@ namespace Voxel2Pixel.Model.BenVoxel
 				if (!valid)
 					reader.BaseStream.Position -= 4;
 			}
+			#endregion Metadata
 			#region IBinaryWritable
 			public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
 			public void Write(BinaryWriter writer)
@@ -153,11 +156,23 @@ namespace Voxel2Pixel.Model.BenVoxel
 			}
 			#endregion IXmlSerializable
 		}
-		public Metadata Global = null;
 		public class Model : IBinaryWritable, IXmlSerializable
 		{
+			#region Model
 			public Metadata Metadata = new();
 			public SvoModel Geometry = new();
+			public Model() { }
+			public Model(Stream stream) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true)) { }
+			public Model(BinaryReader reader)
+			{
+				if (!FourCC(reader).Equals("DATA"))
+					throw new IOException("Couldn't parse model metadata!");
+				Metadata = new(new MemoryStream(reader.ReadBytes((int)reader.ReadUInt32())));
+				if (!FourCC(reader).Equals("SVOG"))
+					throw new IOException("Couldn't parse model geometry!");
+				Geometry = new(reader);
+			}
+			#endregion Model
 			#region IBinaryWritable
 			public void Write(Stream stream)
 			{
@@ -189,13 +204,34 @@ namespace Voxel2Pixel.Model.BenVoxel
 			}
 			#endregion IXmlSerializable
 		}
+		#endregion Nested classes
+		#region BenVoxelFile
+		public Metadata Global = null;
 		public readonly SanitizedKeyDictionary<Model> Models = [];
 		public BenVoxelFile() { }
 		public BenVoxelFile(Stream stream) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true)) { }
 		public BenVoxelFile(BinaryReader reader)
 		{
-			throw new NotImplementedException();
+			if (!FourCC(reader).Equals("BENV"))
+				throw new IOException("Expected \"BENV\"");
+			MemoryStream memoryStream = new(reader.ReadBytes((int)reader.ReadUInt32()));
+			BinaryReader msReader = new(memoryStream);
+			string fourCC = FourCC(msReader);
+			if (fourCC.Equals("DATA"))
+			{
+				Global = new(new MemoryStream(msReader.ReadBytes((int)msReader.ReadUInt32())));
+				fourCC = FourCC(msReader);
+			}
+			while (msReader.BaseStream.Position < msReader.BaseStream.Length - 4
+				&& fourCC.Equals("MODL"))
+			{
+				MemoryStream modelStream = new(msReader.ReadBytes((int)reader.ReadUInt32()));
+				BinaryReader modelReader = new(modelStream);
+				Models[ReadKey(modelReader)] = new(modelReader);
+				fourCC = FourCC(reader);
+			}
 		}
+		#endregion BenVoxelFile
 		#region IBinaryWritable
 		public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
 		public void Write(BinaryWriter writer)
