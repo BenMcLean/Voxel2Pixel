@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Render;
@@ -15,6 +17,7 @@ namespace Voxel2Pixel.Draw
 	/// </summary>
 	public static class VoxelDraw
 	{
+		public const ushort EverySoOften = 1000;//How many loop iterations before checking if it's time to yield in an asynchronous method.
 		#region Perspectives
 		public static void Draw(Perspective perspective, IModel model, IRenderer renderer, byte peakScaleX = 6, byte peakScaleY = 6, double radians = 0d)
 		{
@@ -128,27 +131,66 @@ namespace Voxel2Pixel.Draw
 			X = voxelX,
 			Y = sizeZ - 1 - voxelZ,
 		};
-		public static void Front(IModel model, IRectangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Front)
+		public static void Front(IModel model, IRectangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Front) => FrontAsync(model, renderer, visibleFace).Wait();
+		public static async Task FrontAsync(IModel model, IRectangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Front, Func<bool> shouldYield = null, IProgress<double> progress = null, CancellationToken? cancel = null)
 		{
 			ushort width = model.SizeX,
-				height = model.SizeZ;
+				height = model.SizeZ,
+				yieldCount = 0;
 			VoxelY[] grid = new VoxelY[width * height];
 			foreach (Voxel voxel in model
 				.Where(voxel => voxel.Index != 0))
+			{
 				if (width * (height - voxel.Z - 1) + voxel.X is int i
 					&& (!(grid[i] is VoxelY old)
 						|| old.Index == 0
 						|| old.Y > voxel.Y))
 					grid[i] = new VoxelY(voxel);
+				#region async
+				if (shouldYield is not null && yieldCount++ > EverySoOften)
+				{
+					cancel?.ThrowIfCancellationRequested();
+					yieldCount = 0;
+					if (shouldYield.Invoke())
+					{
+						progress?.Report(0d);
+						await Task.Yield();
+					}
+				}
+				#endregion async
+			}
+			#region async
+			cancel?.ThrowIfCancellationRequested();
+			if (shouldYield?.Invoke() ?? false)
+			{
+				yieldCount = 0;
+				progress?.Report(0.5d);
+				await Task.Yield();
+			}
+			#endregion async
 			uint index = 0;
 			for (ushort y = 0; y < height; y++)
 				for (ushort x = 0; x < width; x++)
+				{
 					if (grid[index++] is VoxelY voxelY && voxelY.Index != 0)
 						renderer.Rect(
 							x: x,
 							y: y,
 							index: voxelY.Index,
 							visibleFace: visibleFace);
+					#region async
+					if (shouldYield is not null && yieldCount++ > EverySoOften)
+					{
+						cancel?.ThrowIfCancellationRequested();
+						yieldCount = 0;
+						if (shouldYield.Invoke())
+						{
+							progress?.Report(0.5d + (y * width + x) / (2d * grid.Length));
+							await Task.Yield();
+						}
+					}
+					#endregion async
+				}
 		}
 		public static Point FrontPeakSize(IModel model, ushort peakScaleX = 6, ushort peakScaleY = 6) => new(model.SizeX * peakScaleX, model.SizeZ * peakScaleY);
 		public static void FrontPeak(IModel model, IRectangleRenderer renderer, byte scaleX = 6, byte scaleY = 6)
