@@ -10,7 +10,7 @@ namespace Voxel2Pixel.Test.Render
 		[Fact]
 		public void PngTest()
 		{
-			VoxFileModel model = new(@"..\..\..\Sora.vox");
+			VoxFileModel model = new(@"..\..\..\TestData\Models\Sora.vox");
 			new SpriteMaker
 			{
 				Model = model,

@@ -13,7 +13,7 @@ namespace Voxel2Pixel.Test.Model
 		[Fact]
 		public void KingKong()
 		{
-			VengiFile.Node root = VengiFile.Read(new FileStream(@"..\..\..\kingkong255colors.vengi", FileMode.Open));
+			VengiFile.Node root = VengiFile.Read(new FileStream(@"..\..\..\TestData\Models\kingkong255colors.vengi", FileMode.Open));
 			static VengiFile.Node? Model(VengiFile.Node parent)
 			{
 				if (parent.Header.Type.Equals("Model"))

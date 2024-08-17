@@ -14,7 +14,7 @@ namespace Voxel2Pixel.Test.Render
 		[Fact]
 		public void SoraGif()
 		{
-			VoxFileModel model = new(@"..\..\..\Sora.vox");
+			VoxFileModel model = new(@"..\..\..\TestData\Models\Sora.vox");
 			new SpriteMaker
 			{
 				Model = model,
@@ -33,7 +33,7 @@ namespace Voxel2Pixel.Test.Render
 		[Fact]
 		public void ShadowGif()
 		{
-			VoxFileModel model = new(@"..\..\..\Sora.vox");
+			VoxFileModel model = new(@"..\..\..\TestData\Models\Sora.vox");
 			new SpriteMaker
 			{
 				Model = model,
@@ -56,7 +56,7 @@ namespace Voxel2Pixel.Test.Render
 		[Fact]
 		public void CropTest()
 		{
-			VoxFileModel voxFileModel = new(@"..\..\..\Tree.vox");
+			VoxFileModel voxFileModel = new(@"..\..\..\TestData\Models\Tree.vox");
 			output.WriteLine(string.Join(", ", voxFileModel.SizeX, voxFileModel.SizeY, voxFileModel.SizeZ));
 			new SpriteMaker
 			{
@@ -87,7 +87,7 @@ namespace Voxel2Pixel.Test.Render
 		[Fact]
 		public void RotateTest()
 		{
-			VoxFileModel voxFileModel = new(@"..\..\..\NumberCube.vox");
+			VoxFileModel voxFileModel = new(@"..\..\..\TestData\Models\NumberCube.vox");
 			Sprite sprite = new(VoxelDraw.Size(Perspective.Iso, voxFileModel))
 			{
 				VoxelColor = new NaiveDimmer(voxFileModel.Palette),
@@ -107,7 +107,7 @@ namespace Voxel2Pixel.Test.Render
 		[Fact]
 		public void Stacked()
 		{
-			VoxFileModel voxFileModel = new(@"..\..\..\Tree.vox");
+			VoxFileModel voxFileModel = new(@"..\..\..\TestData\Models\Tree.vox");
 			IVoxelColor voxelColor = new FlatVoxelColor(voxFileModel.Palette);
 			new SpriteMaker
 			{

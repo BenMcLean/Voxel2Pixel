@@ -19,7 +19,7 @@ namespace Voxel2Pixel.Test.Model.BenVoxel
 				metadata.Points["Point" + i] = new Voxel2Pixel.Model.Point3D(i, i, i);
 				metadata.Palettes["Palette" + i] = [i, i, i];
 			}
-			SvoModel model = new(new VoxFileModel(@"..\..\..\Sora.vox"));
+			SvoModel model = new(new VoxFileModel(@"..\..\..\TestData\Models\Sora.vox"));
 			BenVoxelFile file = new()
 			{
 				Global = metadata

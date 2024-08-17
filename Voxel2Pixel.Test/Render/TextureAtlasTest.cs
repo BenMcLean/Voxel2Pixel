@@ -96,7 +96,7 @@ namespace Voxel2Pixel.Test.Render
 		[Fact]
 		public void Iso8()
 		{
-			VoxFileModel model = new(@"..\..\..\Husk_64.vox");
+			VoxFileModel model = new(@"..\..\..\TestData\Models\Husk_64.vox");
 			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
 			Sprite atlas = new SpriteMaker
 			{
@@ -121,7 +121,7 @@ namespace Voxel2Pixel.Test.Render
 		[Fact]
 		public void Stacks()
 		{
-			VoxFileModel model = new(@"..\..\..\Husk_64.vox");
+			VoxFileModel model = new(@"..\..\..\TestData\Models\Husk_64.vox");
 			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
 			Sprite atlas = new SpriteMaker
 			{

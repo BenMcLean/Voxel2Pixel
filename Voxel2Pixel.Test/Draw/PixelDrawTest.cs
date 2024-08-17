@@ -93,7 +93,7 @@ namespace Voxel2Pixel.Test.Draw
 		[Fact]
 		public void Texture2UInt2D()
 		{
-			VoxFileModel voxFileModel = new(@"..\..\..\Tree.vox");
+			VoxFileModel voxFileModel = new(@"..\..\..\TestData\Models\Tree.vox");
 			Sprite sprite = new SpriteMaker
 			{
 				Model = voxFileModel,

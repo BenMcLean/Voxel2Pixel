@@ -53,7 +53,7 @@ namespace Voxel2Pixel.Test.Model.BenVoxel
 		[Fact]
 		public void ModelTest()
 		{
-			VoxFileModel model = new(@"..\..\..\Sora.vox");
+			VoxFileModel model = new(@"..\..\..\TestData\Models\Sora.vox");
 			SvoModel svo = new(model);
 			foreach (Voxel voxel in model)
 			{
@@ -141,7 +141,7 @@ namespace Voxel2Pixel.Test.Model.BenVoxel
 		[Fact]
 		public void WriteReadTest()
 		{
-			VoxFileModel model = new(@"..\..\..\Sora.vox");
+			VoxFileModel model = new(@"..\..\..\TestData\Models\Sora.vox");
 			SvoModel svo = new(model),
 				svo2 = new(svo.Z85(), svo.SizeX, svo.SizeY, svo.SizeZ);
 			foreach (Voxel voxel in svo)
@@ -212,7 +212,7 @@ namespace Voxel2Pixel.Test.Model.BenVoxel
 		[Fact]
 		public void FrontDrawTest()
 		{
-			VoxFileModel model = new(@"..\..\..\Sora.vox");
+			VoxFileModel model = new(@"..\..\..\TestData\Models\Sora.vox");
 			SvoModel svo = new(model);
 			Sprite sprite = new(svo.SizeX, svo.SizeZ)
 			{
@@ -227,7 +227,7 @@ namespace Voxel2Pixel.Test.Model.BenVoxel
 		[Fact]
 		public void DiagonalDrawTest()
 		{
-			VoxFileModel model = new(@"..\..\..\Sora.vox");
+			VoxFileModel model = new(@"..\..\..\TestData\Models\Sora.vox");
 			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
 			SvoModel svo = new(model);
 			Sprite[] sprites =
@@ -252,7 +252,7 @@ namespace Voxel2Pixel.Test.Model.BenVoxel
 		[Fact]
 		public void AboveDrawTest()
 		{
-			VoxFileModel model = new(@"..\..\..\Sora.vox");
+			VoxFileModel model = new(@"..\..\..\TestData\Models\Sora.vox");
 			IVoxelColor voxelColor = new NaiveDimmer(model.Palette);
 			SvoModel svo = new(model);
 			Sprite[] sprites =
@@ -277,7 +277,7 @@ namespace Voxel2Pixel.Test.Model.BenVoxel
 		/*
 		[Fact]
 		public void PrintStuff() =>
-			output.WriteLine(new SvoModel(new VoxFileModel(@"..\..\..\NumberCube.vox"))
+			output.WriteLine(new SvoModel(new VoxFileModel(@"..\..\..\TestData\Models\NumberCube.vox"))
 				.PrintStuff(1, 1, 1));
 		[Fact]
 		public void TurtleTest()
@@ -380,7 +380,7 @@ namespace Voxel2Pixel.Test.Model.BenVoxel
 		public void BenTest()
 		{
 			string path = @"..\..\..\SORA.BEN";
-			VoxFileModel vox = new(@"..\..\..\Sora.vox");
+			VoxFileModel vox = new(@"..\..\..\TestData\Models\Sora.vox");
 			FileStream ofs = new(
 					path: path,
 					mode: FileMode.OpenOrCreate);
@@ -414,7 +414,7 @@ namespace Voxel2Pixel.Test.Model.BenVoxel
 		[Fact]
 		public void XmlTest()
 		{
-			string s = ExtensionMethods.Utf8Xml(new SvoModel(new VoxFileModel(@"..\..\..\Sora.vox")));
+			string s = ExtensionMethods.Utf8Xml(new SvoModel(new VoxFileModel(@"..\..\..\TestData\Models\Sora.vox")));
 			Assert.Equal(
 				expected: s,
 				actual: ExtensionMethods.Utf8Xml((SvoModel)(new XmlSerializer(typeof(SvoModel)).Deserialize(new MemoryStream(Encoding.UTF8.GetBytes(s))) ?? throw new NullReferenceException())));
