@@ -16,7 +16,7 @@ namespace Voxel2Pixel.Draw
 	public static class VoxelDraw
 	{
 		#region Perspectives
-		public static void Draw(Perspective perspective, IModel model, IRenderer renderer, byte peakScaleX = 6, byte peakScaleY = 6, double radians = 0d)
+		public static void Draw(this IModel model, IRenderer renderer, Perspective perspective, byte peakScaleX = 6, byte peakScaleY = 6, double radians = 0d)
 		{
 			switch (perspective)
 			{
@@ -56,7 +56,7 @@ namespace Voxel2Pixel.Draw
 					break;
 			}
 		}
-		public static Point Size(Perspective perspective, IModel model, byte peakScaleX = 6, byte peakScaleY = 6, double radians = 0d) => perspective switch
+		public static Point Size(this IModel model, Perspective perspective, byte peakScaleX = 6, byte peakScaleY = 6, double radians = 0d) => perspective switch
 		{
 			Perspective.FrontPeak => FrontPeakSize(model, peakScaleX, peakScaleY),
 			Perspective.Overhead => OverheadSize(model),
@@ -70,7 +70,7 @@ namespace Voxel2Pixel.Draw
 			Perspective.ZSlices => ZSlicesSize(model),
 			_ => FrontSize(model),
 		};
-		public static Point Locate(Perspective perspective, IModel model, Point3D point, byte peakScaleX = 6, byte peakScaleY = 6, double radians = 0d)
+		public static Point Locate(this IModel model, Perspective perspective, Point3D point, byte peakScaleX = 6, byte peakScaleY = 6, double radians = 0d)
 		{
 			Point result;
 			switch (perspective)

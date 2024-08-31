@@ -88,12 +88,12 @@ namespace Voxel2Pixel.Test.Render
 		public void RotateTest()
 		{
 			VoxFileModel voxFileModel = new(@"..\..\..\TestData\Models\NumberCube.vox");
-			Sprite sprite = new(VoxelDraw.Size(Perspective.Iso, voxFileModel))
+			Sprite sprite = new(voxFileModel.Size(Perspective.Iso))
 			{
 				VoxelColor = new NaiveDimmer(voxFileModel.Palette),
 			};
 			sprite.Rect(0, 0, 0xFFFFu, sprite.Width, sprite.Height);
-			VoxelDraw.Draw(Perspective.Iso, voxFileModel, sprite);
+			voxFileModel.Draw(sprite, Perspective.Iso);
 			sprite["dot"] = new Voxel2Pixel.Model.Point(sprite.Width / 4, 3 * sprite.Height / 4);
 			int numSprites = 64;
 			Enumerable.Range(0, numSprites)

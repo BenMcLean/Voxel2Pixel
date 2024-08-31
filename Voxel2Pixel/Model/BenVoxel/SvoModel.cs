@@ -8,7 +8,9 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Schema;
 using System.Xml.Serialization;
+using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
+using static Voxel2Pixel.Model.BenVoxel.BenVoxelFile;
 
 namespace Voxel2Pixel.Model.BenVoxel
 {
@@ -16,7 +18,7 @@ namespace Voxel2Pixel.Model.BenVoxel
 	/// SVO stands for "Sparse Voxel Octree"
 	/// </summary>
 	[XmlRoot("Geometry")]
-	public class SvoModel : IEditableModel, IBinaryWritable, IXmlSerializable
+	public class SvoModel : IEditableModel, ISpecializedModel, IBinaryWritable, IXmlSerializable
 	{
 		#region Nested classes
 		public abstract class Node : IBinaryWritable
@@ -390,7 +392,25 @@ namespace Voxel2Pixel.Model.BenVoxel
 			}
 		}
 		#endregion IEditableModel
-		#region VoxelDraw
+		#region ISpecializedModel
+		public void Draw(IRenderer renderer, Perspective perspective, byte peakScaleX = 6, byte peakScaleY = 6, double radians = 0d)
+		{
+			switch (perspective)
+			{
+				case Perspective.Front:
+					Front(renderer);
+					break;
+				case Perspective.Diagonal:
+					Diagonal(renderer);
+					break;
+				case Perspective.Above:
+					Above(renderer);
+					break;
+				default:
+					VoxelDraw.Draw(this, renderer, perspective, peakScaleX, peakScaleY, radians);
+					break;
+			}
+		}
 		public void Front(IRectangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Front)
 		{
 			for (ushort x = 0; x < SizeX; x++)
@@ -577,7 +597,7 @@ namespace Voxel2Pixel.Model.BenVoxel
 					}
 				}
 		}
-		#endregion VoxelDraw
+		#endregion ISpecializedModel
 		#region IXmlSerializable
 		public XmlSchema GetSchema() => null;
 		public void ReadXml(XmlReader reader)
