@@ -73,6 +73,7 @@ namespace Voxel2Pixel
 		public static T FromXml<T>(this string value) => (T)new XmlSerializer(typeof(T)).Deserialize(new StringReader(value));
 		#endregion XML
 		#region Sprite
+		public static Point Size(this ISprite sprite) => new(sprite.Width, sprite.Height);
 		public static IEnumerable<Sprite> AddFrameNumbers(this IEnumerable<Sprite> frames, uint color = 0xFFFFFFFFu)
 		{
 			int frame = 0;
@@ -122,60 +123,53 @@ namespace Voxel2Pixel
 				elementSelector: tuple => tuple.sprite);
 		#endregion SpriteMaker
 		#region Geometry
-		public readonly record struct HorizontalLine(int X, int Y, int Width);
-		public static IEnumerable<HorizontalLine> TriangleRows(params Point[] points)
+		public readonly record struct HorizontalLine(ushort X, ushort Width, ushort Y);
+		public static IEnumerable<HorizontalLine> TriangleRows(Point a, Point b, Point c, Point? bounds = null)
 		{
-			if (points is null)
-				throw new ArgumentNullException("points");
-			if (points.Length < 3)
-				throw new ArgumentException("points must contain at least 3 elements.");
-			points = [.. points
-				.Take(3)
-				.OrderBy(point => point.Y)
-				.ThenBy(point => point.X)];
-			Point[][] edges = [
-				[.. new Point[] { points[0], points[1] }.OrderBy(point => point.X)],
-				[.. new Point[] { points[0], points[2] }.OrderBy(point => point.X)],
-				[.. new Point[] { points[1], points[2] }.OrderBy(point => point.X)],
-			];
-			static double calculateSlope(Point a, Point b) => (double)(b.Y - a.Y) / (b.X - a.X);
-			bool[] hasInfiniteSlope = edges
-				.Select(edge => edge[0].X == edge[1].X || edge[0].Y == edge[0].Y)
-				.ToArray();
-			double[] slopes = Enumerable.Range(0, 3)
-				.Select(edge => hasInfiniteSlope[edge] ? 0 : calculateSlope(edges[edge][0], edges[edge][1]))
-				.ToArray();
-			double[] yIntercepts = [
-				-slopes[0] * points[0].X,
-				-slopes[1] * points[0].X,
-				-slopes[2] * points[1].X,
-			];
-			int solveForX(int y, byte edge) => hasInfiniteSlope[edge] ?
-				points[edge == 2 ? 1 : 0].X
-				: Convert.ToInt32((y - yIntercepts[edge]) / slopes[edge]);
-			for (int y = points[0].Y; y <= points[2].Y; y++)
+			ushort maxX = ushort.MaxValue;
+			ushort maxY = ushort.MaxValue;
+			if (bounds.HasValue)
 			{
-				bool isUp = y < points[1].Y;
-				int a = solveForX(y: y, edge: (byte)(0 + (isUp ? 1 : 0))),
-					b = solveForX(y: y, edge: (byte)(1 + (isUp ? 1 : 0))),
-					x = Math.Min(a, b);
-				yield return new HorizontalLine(
-					X: x,
-					Y: y,
-					Width: Math.Max(a, b) - x);
+				if (bounds.Value.X < 1 || bounds.Value.Y < 1)
+					throw new ArgumentException("Bounds must be at least 1x1", nameof(bounds));
+				maxX = (ushort)(bounds.Value.X - 1);
+				maxY = (ushort)(bounds.Value.Y - 1);
+			}
+			Point[] sortedPoints = [.. new[] { a, b, c }.OrderBy(point => point.Y)];
+			double[] slopes = [
+				CalculateSlope(sortedPoints[0], sortedPoints[2]),
+				CalculateSlope(sortedPoints[0], sortedPoints[1]),
+				CalculateSlope(sortedPoints[1], sortedPoints[2])];
+			foreach (HorizontalLine line in GenerateLines(sortedPoints[0], sortedPoints[1], slopes[0], slopes[1], maxX, maxY))
+				yield return line;
+			foreach (HorizontalLine line in GenerateLines(sortedPoints[1], sortedPoints[2], slopes[0], slopes[2], maxX, maxY))
+				yield return line;
+		}
+		public static double CalculateSlope(Point a, Point b) => a.X == b.X ?
+			double.PositiveInfinity
+			: (double)(b.Y - a.Y) / (b.X - a.X);
+		private static IEnumerable<HorizontalLine> GenerateLines(Point start, Point end, double slope1, double slope2, ushort maxX, ushort maxY)
+		{
+			for (int y = Math.Max(0, start.Y); y <= Math.Min(end.Y, maxY); y++)
+			{
+				double x1 = start.X + (y - start.Y) / slope1;
+				double x2 = start.X + (y - start.Y) / slope2;
+				int startX = (int)Math.Ceiling(Math.Min(x1, x2));
+				int endX = (int)Math.Floor(Math.Max(x1, x2));
+				startX = Math.Max(0, Math.Min(startX, maxX));
+				endX = Math.Max(0, Math.Min(endX, maxX));
+				if (startX <= endX)
+					yield return new HorizontalLine((ushort)startX, (ushort)(endX - startX + 1), (ushort)y);
 			}
 		}
-		public static void DrawTriangle(this IRectangleRenderer renderer, uint color, params Point[] points)
+		public static void DrawTriangle(this IRectangleRenderer renderer, uint color, Point a, Point b, Point c, Point? bounds = null)
 		{
-			foreach (HorizontalLine line in TriangleRows(points)
-				.Where(point => point.Y >= 0
-					&& point.X + point.Width >= 0
-					&& point.X + point.Width < ushort.MaxValue))
+			foreach (HorizontalLine line in TriangleRows(a, b, c, bounds))
 				renderer.Rect(
-					x: (ushort)Math.Max(0, line.X),
-					y: (ushort)line.Y,
+					x: line.X,
+					y: line.Y,
 					color: color,
-					sizeX: (ushort)(line.Width + (line.X < 0 ? line.X : 0)));
+					sizeX: (ushort)(line.Width + line.X));
 		}
 		#endregion Geometry
 		#region IBinaryWritable
