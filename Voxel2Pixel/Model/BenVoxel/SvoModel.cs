@@ -239,9 +239,12 @@ namespace Voxel2Pixel.Model.BenVoxel
 			foreach (Voxel voxel in voxels)
 				this.Set(voxel);
 		}
-		public SvoModel(Stream stream, ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true), sizeX, sizeY, sizeZ) { }
-		public SvoModel(BinaryReader reader, ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this(sizeX, sizeY, sizeZ) => Root = new Branch(reader);
-		public SvoModel(byte[] bytes, ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this(new MemoryStream(bytes), sizeX, sizeY, sizeZ) { }
+		public SvoModel(Stream stream, ushort sizeX, ushort sizeY, ushort sizeZ) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true), sizeX, sizeY, sizeZ) { }
+		public SvoModel(Stream stream) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true)) { }
+		public SvoModel(BinaryReader reader, ushort sizeX, ushort sizeY, ushort sizeZ) : this(sizeX, sizeY, sizeZ) => Root = new Branch(reader);
+		public SvoModel(BinaryReader reader) : this(reader, reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16()) { }
+		public SvoModel(byte[] bytes, ushort sizeX, ushort sizeY, ushort sizeZ) : this(new MemoryStream(bytes), sizeX, sizeY, sizeZ) { }
+		public SvoModel(byte[] bytes) : this(new MemoryStream(bytes)) { }
 		public SvoModel(string z85, ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this(Cromulent.Encoding.Z85.FromZ85String(z85), sizeX, sizeY, sizeZ) { }
 		public SvoModel(ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this()
 		{
@@ -252,15 +255,22 @@ namespace Voxel2Pixel.Model.BenVoxel
 		#endregion SvoModel
 		#region IBinaryWritable
 		public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
-		public void Write(BinaryWriter writer)
+		public void Write(BinaryWriter writer) => Write(writer, true);
+		public void Write(BinaryWriter writer, bool includeSizes)
 		{
+			if (includeSizes)
+			{
+				writer.Write(SizeX);
+				writer.Write(SizeY);
+				writer.Write(SizeZ);
+			}
 			if (Root is not null && Root.Count() > 0)
 				Root.Write(writer);
 			else
 			{//Empty model
 				writer.Write(new byte[15]);//Branch headers
-				writer.Write((byte)0x80);//Leaf header
-				writer.Write(new byte[8]);//Empty 2x2x2 voxel cube
+				writer.Write((byte)0x40);//Leaf header
+				writer.Write((byte)0);//Empty 2x2x2 voxel cube
 			}
 		}
 		#endregion IBinaryWritable
@@ -602,10 +612,25 @@ namespace Voxel2Pixel.Model.BenVoxel
 		public XmlSchema GetSchema() => null;
 		public void ReadXml(XmlReader reader)
 		{
-			foreach (Voxel voxel in new SvoModel(XElement.Load(reader).Value))
+			XElement root = XElement.Load(reader);
+			SvoModel read = new(
+				z85: root.Value,
+				sizeX: ushort.TryParse(root.Attribute("Width")?.Value, out ushort sizeX) ? sizeX : ushort.MaxValue,
+				sizeY: ushort.TryParse(root.Attribute("Depth")?.Value, out ushort sizeY) ? sizeY : ushort.MaxValue,
+				sizeZ: ushort.TryParse(root.Attribute("Height")?.Value, out ushort sizeZ) ? sizeZ : ushort.MaxValue);
+			Clear();
+			SizeX = read.SizeX;
+			SizeY = read.SizeY;
+			SizeZ = read.SizeZ;
+			foreach (Voxel voxel in read)
 				this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
 		}
-		public void WriteXml(XmlWriter writer) => writer.WriteString(Z85());
+		public void WriteXml(XmlWriter writer) => new XElement(XName.Get("Geometry"),
+				new XAttribute(XName.Get("Width"), SizeX),
+				new XAttribute(XName.Get("Depth"), SizeY),
+				new XAttribute(XName.Get("Height"), SizeZ),
+				Z85())
+			.WriteTo(writer);
 		#endregion IXmlSerializable
 		#region Debug
 		/*
