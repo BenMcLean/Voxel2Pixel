@@ -10,7 +10,6 @@ using System.Xml.Schema;
 using System.Xml.Serialization;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
-using static Voxel2Pixel.Model.BenVoxel.BenVoxelFile;
 
 namespace Voxel2Pixel.Model.BenVoxel
 {
@@ -135,13 +134,13 @@ namespace Voxel2Pixel.Model.BenVoxel
 			{
 				Parent = parent;
 				byte header = reader.ReadByte(),
-					children = (byte)((header >> 3 & 0b111) + 1);
+					children = (byte)((header >> 3 & 7) + 1);
 				Octant = (byte)(header & 0b111);
 				for (byte child = 0; child < children; child++)
 				{
 					header = reader.ReadByte();
 					reader.BaseStream.Position--;
-					this[(byte)(header & 0b111)] = (header & 0b10000000) > 0 ?
+					this[(byte)(header & 7)] = (header & 0b11000000) > 0 ?
 						new Leaf(reader, this)
 						: new Branch(reader, this);
 				}
@@ -162,7 +161,7 @@ namespace Voxel2Pixel.Model.BenVoxel
 		}
 		public class Leaf : Node, IBinaryWritable, IEnumerable<Voxel>, IEnumerable
 		{
-			public override byte Header => (byte)(0x80 | Octant & 7);
+			public override byte Header => (byte)(0b11000000 | Octant & 7);
 			protected byte[] Data = new byte[8];
 			public override void Clear() => Data = new byte[8];
 			public byte this[byte octant]
@@ -186,15 +185,48 @@ namespace Voxel2Pixel.Model.BenVoxel
 			public Leaf(BinaryReader reader, Node parent = null)
 			{
 				Parent = parent;
-				Octant = (byte)(reader.ReadByte() & 7);
-				Data = reader.ReadBytes(8);
+				byte header = reader.ReadByte();
+				Octant = (byte)(header & 7);
+				switch ((byte)(header >> 6 & 3))
+				{
+					case 0b01:
+						Data = [.. Enumerable.Repeat(reader.ReadByte(), 8)];
+						break;
+					case 0b10:
+						byte where = (byte)(header >> 3 & 7),
+							foreground = reader.ReadByte(),
+							background = reader.ReadByte();
+						Data = [.. Enumerable.Range(0, 8).Select(i => i == where ? foreground : background)];
+						break;
+					default: // 0b11
+						Data = reader.ReadBytes(8);
+						break;
+				}
 			}
 			#region IBinaryWritable
 			public override void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
 			public override void Write(BinaryWriter writer)
 			{
-				writer.Write(Header);
-				writer.Write(Data);
+				(byte, byte)[] occurrences = [.. Data
+					.GroupBy(b => b)
+					.Select(g => (g.Key, (byte)g.Count()))
+					.OrderBy(t => t.Item2)];
+				if (occurrences.Length == 1)
+				{
+					writer.Write((byte)(0b01000000 | Octant & 7)); // Header
+					writer.Write(Data[0]);
+				}
+				else if (occurrences.Length == 2 && occurrences[0].Item2 == 1)
+				{
+					writer.Write((byte)(0b10000000 | (Array.IndexOf(Data, occurrences[0].Item1) & 7) << 3 | Octant & 7)); // Header
+					writer.Write(occurrences[0].Item1); // Foreground
+					writer.Write(occurrences[1].Item1); // Background
+				}
+				else
+				{
+					writer.Write(Header);
+					writer.Write(Data);
+				}
 			}
 			#endregion IBinaryWritable
 			public Voxel Voxel(byte octant)
