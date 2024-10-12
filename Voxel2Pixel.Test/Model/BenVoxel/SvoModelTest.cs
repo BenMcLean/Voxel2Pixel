@@ -143,7 +143,7 @@ namespace Voxel2Pixel.Test.Model.BenVoxel
 		{
 			VoxFileModel model = new(@"..\..\..\TestData\Models\Sora.vox");
 			SvoModel svo = new(model),
-				svo2 = new(svo.Z85(), svo.SizeX, svo.SizeY, svo.SizeZ);
+				svo2 = new(svo.Z85(includeSizes: false), svo.SizeX, svo.SizeY, svo.SizeZ);
 			foreach (Voxel voxel in svo)
 			{
 				Assert.Equal(

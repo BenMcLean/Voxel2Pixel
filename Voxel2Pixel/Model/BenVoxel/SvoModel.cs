@@ -286,7 +286,8 @@ namespace Voxel2Pixel.Model.BenVoxel
 		}
 		#endregion SvoModel
 		#region IBinaryWritable
-		public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true));
+		public void Write(Stream stream) => Write(stream, true);
+		public void Write(Stream stream, bool includeSizes) => Write(writer: new BinaryWriter(output: stream, encoding: System.Text.Encoding.UTF8, leaveOpen: true), includeSizes: includeSizes);
 		public void Write(BinaryWriter writer) => Write(writer, true);
 		public void Write(BinaryWriter writer, bool includeSizes)
 		{
@@ -307,16 +308,16 @@ namespace Voxel2Pixel.Model.BenVoxel
 		}
 		#endregion IBinaryWritable
 		#region Utilities
-		public byte[] Bytes()
+		public byte[] Bytes(bool includeSizes = true)
 		{
 			using MemoryStream ms = new();
-			Write(ms);
+			Write(stream: ms, includeSizes: includeSizes);
 			return ms.ToArray();
 		}
-		public string Z85()
+		public string Z85(bool includeSizes = false)
 		{
 			using MemoryStream ms = new();
-			Write(ms);
+			Write(stream: ms, includeSizes: includeSizes);
 			if (ms.Position % 4 is long four && four > 0)
 				using (BinaryWriter writer = new(
 					output: ms,
@@ -661,7 +662,7 @@ namespace Voxel2Pixel.Model.BenVoxel
 				new XAttribute(XName.Get("Width"), SizeX),
 				new XAttribute(XName.Get("Depth"), SizeY),
 				new XAttribute(XName.Get("Height"), SizeZ),
-				Z85())
+				Z85(includeSizes: false))
 			.WriteTo(writer);
 		#endregion IXmlSerializable
 		#region Debug
