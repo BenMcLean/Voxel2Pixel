@@ -177,10 +177,13 @@ namespace Voxel2Pixel.Model.BenVoxel
 			public Model(Stream stream) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true)) { }
 			public Model(BinaryReader reader)
 			{
-				if (!FourCC(reader).Equals("DATA"))
-					throw new IOException("Couldn't parse model metadata!");
-				Metadata = new(new MemoryStream(reader.ReadBytes((int)reader.ReadUInt32())));
-				if (!FourCC(reader).Equals("SVOG"))
+				string fourCC = FourCC(reader);
+				if (fourCC.Equals("DATA"))
+				{
+					Metadata = new(new MemoryStream(reader.ReadBytes((int)reader.ReadUInt32())));
+					fourCC = FourCC(reader);
+				}
+				if (!fourCC.Equals("SVOG"))
 					throw new IOException("Couldn't parse model geometry!");
 				Geometry = new(reader);
 			}
@@ -188,7 +191,7 @@ namespace Voxel2Pixel.Model.BenVoxel
 			#region IBinaryWritable
 			public void Write(Stream stream)
 			{
-				Metadata.RIFF("DATA").CopyTo(stream);
+				Metadata?.RIFF("DATA").CopyTo(stream);
 				Geometry.RIFF("SVOG").CopyTo(stream);
 			}
 			public void Write(BinaryWriter writer)
@@ -251,7 +254,6 @@ namespace Voxel2Pixel.Model.BenVoxel
 			writer.Write(Encoding.UTF8.GetBytes("BENV"));
 			long sizePosition = writer.BaseStream.Position;
 			writer.BaseStream.Position += 4;
-
 			if (Global is not null)
 			{
 				writer.Flush();
@@ -276,13 +278,8 @@ namespace Voxel2Pixel.Model.BenVoxel
 		public void ReadXml(XmlReader reader)
 		{
 			XElement root = XElement.Load(reader);
-			if (root.Elements("Property").Any()
-				|| root.Elements("Point").Any()
-				|| root.Elements("Palette").Any())
-			{
-				Global = new Metadata();
-				Global.ReadXml(root.CreateReader());
-			}
+			if (root.Elements("Metadata").FirstOrDefault() is XElement global)
+				Global = (Metadata)new XmlSerializer(typeof(Metadata)).Deserialize(global.CreateReader());
 			foreach (XElement model in root.Elements("Model"))
 				Models[model.Attributes().Where(a => a.Name.ToString().Equals("Name")).FirstOrDefault()?.Value ?? ""] = (Model)new XmlSerializer(typeof(Model)).Deserialize(model.CreateReader());
 		}
