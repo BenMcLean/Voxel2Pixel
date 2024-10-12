@@ -20,7 +20,7 @@ namespace Voxel2Pixel.Model.BenVoxel
 			#region Metadata
 			public readonly SanitizedKeyDictionary<string> Properties = [];
 			public readonly SanitizedKeyDictionary<Point3D> Points = [];
-			public readonly SanitizedKeyDictionary<uint[]> Palettes = [];
+			public readonly SanitizedKeyDictionary<(uint, string)[]> Palettes = [];
 			public Metadata() { }
 			public Metadata(Stream stream) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true)) { }
 			public Metadata(BinaryReader reader)
@@ -50,7 +50,11 @@ namespace Voxel2Pixel.Model.BenVoxel
 							msReader = new(ms);
 							count = msReader.ReadUInt16();
 							for (ushort i = 0; i < count; i++)
-								Palettes[ReadKey(msReader)] = Enumerable.Range(0, msReader.ReadByte() + 1).Select(i => msReader.ReadUInt32()).ToArray();
+							{
+								string key = ReadKey(msReader);
+								uint[] colors = [.. Enumerable.Range(0, msReader.ReadByte() + 1).Select(i => msReader.ReadUInt32())];
+								Palettes[key] = [.. colors.Select(color => (color, ReadString(msReader)))];
+							}
 							break;
 						default:
 							valid = false;
@@ -93,12 +97,14 @@ namespace Voxel2Pixel.Model.BenVoxel
 					MemoryStream ms = new();
 					BinaryWriter msWriter = new(ms);
 					msWriter.Write((ushort)Palettes.Count());
-					foreach (KeyValuePair<string, uint[]> palette in Palettes)
+					foreach (KeyValuePair<string, (uint, string)[]> palette in Palettes)
 					{
 						WriteKey(msWriter, palette.Key);
 						writer.Write((byte)palette.Value.Length - 1);
-						foreach (uint color in palette.Value)
-							writer.Write(color);
+						foreach ((uint, string) color in palette.Value)
+							writer.Write(color.Item1);
+						foreach ((uint, string) color in palette.Value)
+							writer.Write(color.Item2);
 					}
 					writer.RIFF("PALC", ms.ToArray());
 				}
@@ -117,7 +123,7 @@ namespace Voxel2Pixel.Model.BenVoxel
 						Y: Convert.ToInt32(point.Attributes().Where(a => a.Name.ToString().Equals("Y")).First().Value),
 						Z: Convert.ToInt32(point.Attributes().Where(a => a.Name.ToString().Equals("Z")).First().Value));
 				foreach (XElement palette in root.Elements("Palette"))
-					Palettes[palette.Attributes().Where(a => a.Name.ToString().Equals("Name")).FirstOrDefault()?.Value ?? ""] = palette
+					Palettes[palette.Attributes().Where(a => a.Name.ToString().Equals("Name")).FirstOrDefault()?.Value ?? ""] = [.. palette
 						.Elements("Color")
 						.Take(256)
 						.Select(color =>
@@ -130,9 +136,8 @@ namespace Voxel2Pixel.Model.BenVoxel
 									.Value
 									.Replace("#", ""),
 								style: System.Globalization.NumberStyles.HexNumber);
-							return argb << 8 | argb >> 24;
-						})
-						.ToArray();
+							return (argb << 8 | argb >> 24, color.Attribute("Description")?.Value ?? "");
+						})];
 			}
 			public void WriteXml(XmlWriter writer)
 			{
@@ -147,11 +152,18 @@ namespace Voxel2Pixel.Model.BenVoxel
 						new XAttribute(XName.Get("Y"), point.Value.Y),
 						new XAttribute(XName.Get("Z"), point.Value.Z))
 						.WriteTo(writer);
-				foreach (KeyValuePair<string, uint[]> palette in Palettes)
+				foreach (KeyValuePair<string, (uint, string)[]> palette in Palettes)
 					new XElement(XName.Get("Palette"),
 						new XAttribute(XName.Get("Name"), palette.Key),
-						palette.Value.Take(256).Select(rgba => new XElement(XName.Get("Color"),
-							new XAttribute(XName.Get("Argb"), "#" + (rgba << 24 | rgba >> 8).ToString("X")))))
+						palette.Value.Take(256).Select(color =>
+						{
+							uint rgba = color.Item1;
+							XElement xColor = new(XName.Get("Color"),
+								new XAttribute(XName.Get("Argb"), "#" + (rgba << 24 | rgba >> 8).ToString("X")));
+							if (color.Item2 is string description && !string.IsNullOrWhiteSpace(description))
+								xColor.Add(new XAttribute(XName.Get("Description"), description));
+							return xColor;
+						}))
 						.WriteTo(writer);
 			}
 			#endregion IXmlSerializable
