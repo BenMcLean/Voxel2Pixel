@@ -281,7 +281,7 @@ namespace Voxel2Pixel.Model.BenVoxel
 			if (root.Elements("Metadata").FirstOrDefault() is XElement global)
 				Global = (Metadata)new XmlSerializer(typeof(Metadata)).Deserialize(global.CreateReader());
 			foreach (XElement model in root.Elements("Model"))
-				Models[model.Attributes().Where(a => a.Name.ToString().Equals("Name")).FirstOrDefault()?.Value ?? ""] = (Model)new XmlSerializer(typeof(Model)).Deserialize(model.CreateReader());
+				Models[model.Attributes("Name").FirstOrDefault()?.Value ?? ""] = (Model)new XmlSerializer(typeof(Model)).Deserialize(model.CreateReader());
 		}
 		public void WriteXml(XmlWriter writer)
 		{
