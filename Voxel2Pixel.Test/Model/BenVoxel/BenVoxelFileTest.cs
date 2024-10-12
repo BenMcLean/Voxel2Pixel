@@ -17,7 +17,7 @@ namespace Voxel2Pixel.Test.Model.BenVoxel
 			{
 				metadata.Properties["Property" + i] = "PropertyValue" + i;
 				metadata.Points["Point" + i] = new Voxel2Pixel.Model.Point3D(i, i, i);
-				metadata.Palettes["Palette" + i] = [i, i, i];
+				metadata.Palettes["Palette" + i] = [.. Enumerable.Range(0, 3).Select(j => (i, ""))];
 			}
 			SvoModel model = new(new VoxFileModel(@"..\..\..\TestData\Models\Sora.vox"));
 			BenVoxelFile file = new()
