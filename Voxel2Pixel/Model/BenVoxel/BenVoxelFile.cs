@@ -159,7 +159,7 @@ namespace Voxel2Pixel.Model.BenVoxel
 						{
 							uint rgba = color.Item1;
 							XElement xColor = new(XName.Get("Color"),
-								new XAttribute(XName.Get("Argb"), "#" + (rgba << 24 | rgba >> 8).ToString("X")));
+								new XAttribute(XName.Get("Argb"), (rgba << 24 | rgba >> 8).ToString("X")));
 							if (color.Item2 is string description && !string.IsNullOrWhiteSpace(description))
 								xColor.Add(new XAttribute(XName.Get("Description"), description));
 							return xColor;
