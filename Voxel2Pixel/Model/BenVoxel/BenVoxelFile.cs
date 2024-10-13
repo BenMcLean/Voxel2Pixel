@@ -53,7 +53,8 @@ namespace Voxel2Pixel.Model.BenVoxel
 							{
 								string key = ReadKey(msReader);
 								uint[] colors = [.. Enumerable.Range(0, msReader.ReadByte() + 1).Select(i => msReader.ReadUInt32())];
-								Palettes[key] = [.. colors.Select(color => (color, ReadString(msReader)))];
+								bool hasDescriptions = msReader.ReadByte() != 0;
+								Palettes[key] = [.. colors.Select(color => (color, hasDescriptions ? ReadString(msReader) : null))];
 							}
 							break;
 						default:
@@ -103,8 +104,14 @@ namespace Voxel2Pixel.Model.BenVoxel
 						writer.Write((byte)palette.Value.Length - 1);
 						foreach ((uint, string) color in palette.Value)
 							writer.Write(color.Item1);
-						foreach ((uint, string) color in palette.Value)
-							writer.Write(color.Item2);
+						if (palette.Value.Any(color => !string.IsNullOrWhiteSpace(color.Item2)))
+						{
+							writer.Write((byte)1);
+							foreach ((uint, string) color in palette.Value)
+								WriteString(writer, color.Item2);
+						}
+						else
+							writer.Write((byte)0);
 					}
 					writer.RIFF("PALC", ms.ToArray());
 				}
