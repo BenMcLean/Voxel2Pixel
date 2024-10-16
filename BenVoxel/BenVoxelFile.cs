@@ -8,6 +8,7 @@ using System.Xml.Serialization;
 using System.IO;
 using System.Text;
 using BenVoxel.Interfaces;
+using K4os.Compression.LZ4.Streams;
 
 namespace BenVoxel;
 
@@ -237,21 +238,23 @@ public class BenVoxelFile : IBinaryWritable, IXmlSerializable
 	{
 		if (!FourCC(reader).Equals("BENV"))
 			throw new IOException("Expected \"BENV\"");
-		MemoryStream memoryStream = new(reader.ReadBytes((int)reader.ReadUInt32()));
-		BinaryReader msReader = new(memoryStream);
-		string fourCC = FourCC(msReader);
+		reader.ReadUInt32();
+		using LZ4DecoderStream decodingStream = LZ4Stream.Decode(
+			stream: reader.BaseStream,
+			leaveOpen: true);
+		using BinaryReader decodingReader = new(decodingStream);
+		string fourCC = FourCC(decodingReader);
 		if (fourCC.Equals("DATA"))
+			Global = new(new MemoryStream(decodingReader.ReadBytes((int)decodingReader.ReadUInt32())));
+		else
+			decodingStream.Position -= 4;
+		ushort count = decodingReader.ReadUInt16();
+		for (ushort i = 0; i < count; i++)
 		{
-			Global = new(new MemoryStream(msReader.ReadBytes((int)msReader.ReadUInt32())));
-			fourCC = FourCC(msReader);
-		}
-		while (msReader.BaseStream.Position < msReader.BaseStream.Length - 4
-			&& fourCC.Equals("MODL"))
-		{
-			MemoryStream modelStream = new(msReader.ReadBytes((int)reader.ReadUInt32()));
-			BinaryReader modelReader = new(modelStream);
-			Models[ReadKey(modelReader)] = new(modelReader);
-			fourCC = FourCC(reader);
+			string name = ReadKey(decodingReader);
+			if (!"MODL".Equals(FourCC(reader)))
+				throw new InvalidDataException($"Unexpected chunk type. Expected: \"MODL\", Actual: \"{fourCC}\".");
+			Models[name] = new(new MemoryStream(decodingReader.ReadBytes((int)decodingReader.ReadUInt32())));
 		}
 	}
 	#endregion BenVoxelFile
@@ -263,24 +266,23 @@ public class BenVoxelFile : IBinaryWritable, IXmlSerializable
 		long sizePosition = writer.BaseStream.Position;
 		writer.BaseStream.Position += 4;
 		WriteKey(writer, Version);
-		using (MemoryStream uncompressedStream = new())
-		using (BinaryWriter uncompressedWriter = new(uncompressedStream))
+		writer.Flush();
+		using (LZ4EncoderStream encoderStream = LZ4Stream.Encode(
+			stream: writer.BaseStream,
+			level: K4os.Compression.LZ4.LZ4Level.L12_MAX,
+			leaveOpen: true))
 		{
-			Global?.RIFF("DATA").CopyTo(uncompressedStream);
-			uncompressedWriter.Write((ushort)Models.Count());
+			using BinaryWriter encoderWriter = new(encoderStream);
+			Global?.RIFF("DATA").CopyTo(encoderStream);
+			encoderWriter.Write((ushort)Models.Count());
 			foreach (KeyValuePair<string, Model> model in Models)
 			{
-				WriteKey(uncompressedWriter, model.Key);
-				model.Value.RIFF("MODL").CopyTo(uncompressedStream);
+				WriteKey(encoderWriter, model.Key);
+				model.Value.RIFF("MODL").CopyTo(encoderStream);
 			}
-			uncompressedWriter.Flush();
-			uncompressedStream.Position = 0;
-			writer.Write(ZlibStream.CompressBuffer(uncompressedStream.ToArray()));
 		}
-		writer.Flush();
 		if (writer.BaseStream.Position % 2 != 0)
 			writer.Write((byte)0);
-		writer.Flush();
 		long position = writer.BaseStream.Position;
 		writer.BaseStream.Position = sizePosition;
 		writer.Write((uint)(position - sizePosition + 4));
