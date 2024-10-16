@@ -8,12 +8,15 @@ using System.Xml.Serialization;
 using Voxel2Pixel.Interfaces;
 using System.IO;
 using System.Text;
+using System.IO.Compression;
+using Ionic.Zlib;
 
 namespace Voxel2Pixel.Model.BenVoxel
 {
 	[XmlRoot("BenVoxel")]
 	public class BenVoxelFile : IBinaryWritable, IXmlSerializable
 	{
+		public const string Version = "0.1";
 		#region Nested classes
 		public class Metadata : IBinaryWritable, IXmlSerializable
 		{
@@ -261,19 +264,25 @@ namespace Voxel2Pixel.Model.BenVoxel
 			writer.Write(Encoding.UTF8.GetBytes("BENV"));
 			long sizePosition = writer.BaseStream.Position;
 			writer.BaseStream.Position += 4;
-			if (Global is not null)
+			WriteKey(writer, Version);
+			using (MemoryStream uncompressedStream = new())
+			using (BinaryWriter uncompressedWriter = new(uncompressedStream))
 			{
-				writer.Flush();
-				Global.RIFF("DATA").CopyTo(writer.BaseStream);
+				Global?.RIFF("DATA").CopyTo(uncompressedStream);
+				uncompressedWriter.Write((ushort)Models.Count());
+				foreach (KeyValuePair<string, Model> model in Models)
+				{
+					WriteKey(uncompressedWriter, model.Key);
+					model.Value.RIFF("MODL").CopyTo(uncompressedStream);
+				}
+				uncompressedWriter.Flush();
+				uncompressedStream.Position = 0;
+				writer.Write(ZlibStream.CompressBuffer(uncompressedStream.ToArray()));
 			}
-			foreach (KeyValuePair<string, Model> model in Models)
-			{
-				MemoryStream ms = new();
-				BinaryWriter msWriter = new(ms);
-				WriteKey(msWriter, model.Key);
-				model.Value.Write(msWriter);
-				writer.RIFF("MODL", ms.ToArray());
-			}
+			writer.Flush();
+			if (writer.BaseStream.Position % 2 != 0)
+				writer.Write((byte)0);
+			writer.Flush();
 			long position = writer.BaseStream.Position;
 			writer.BaseStream.Position = sizePosition;
 			writer.Write((uint)(position - sizePosition + 4));
