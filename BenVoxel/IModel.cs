@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 
-namespace BenVoxel.Interfaces;
+namespace BenVoxel;
 
 public interface IModel : IEnumerable<Voxel>, IEnumerable
 {

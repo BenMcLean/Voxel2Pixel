@@ -7,7 +7,6 @@ using System.Xml;
 using System.Xml.Serialization;
 using System.IO;
 using System.Text;
-using BenVoxel.Interfaces;
 using K4os.Compression.LZ4.Streams;
 
 namespace BenVoxel;

@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.7.34202.233
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Voxel2Pixel", "Voxel2Pixel\Voxel2Pixel.csproj", "{F0AD51BA-C906-43B0-AC33-81E5690740BB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{41CCCF39-5215-4FA5-8323-3F9612C8FCC9} = {41CCCF39-5215-4FA5-8323-3F9612C8FCC9}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6D083844-ED6D-4EB5-822F-E01AA866DD6E}"
 	ProjectSection(SolutionItems) = preProject

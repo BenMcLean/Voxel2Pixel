@@ -25,6 +25,7 @@
 		</ItemGroup>
 
 		<ItemGroup>
+				<ProjectReference Include="..\BenVoxel\BenVoxel.csproj" />
 				<ProjectReference Include="..\Voxel2Pixel.Web\Voxel2Pixel.Web.csproj" />
 				<ProjectReference Include="..\Voxel2Pixel\Voxel2Pixel.csproj" />
 		</ItemGroup>
