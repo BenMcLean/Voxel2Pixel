@@ -132,14 +132,14 @@ public class BenVoxelFile : IBinaryWritable, IXmlSerializable
 		{
 			XElement root = XElement.Load(reader);
 			foreach (XElement property in root.Elements("Property"))
-				Properties[property.Attributes().Where(a => a.Name.ToString().Equals("Name")).FirstOrDefault()?.Value ?? ""] = property.Value;
+				Properties[property.Attribute("Name").Value] = property.Value;
 			foreach (XElement point in root.Elements("Point"))
-				Points[point.Attributes().Where(a => a.Name.ToString().Equals("Name")).FirstOrDefault()?.Value ?? ""] = new Point3D(
-					X: Convert.ToInt32(point.Attributes().Where(a => a.Name.ToString().Equals("X")).First().Value),
-					Y: Convert.ToInt32(point.Attributes().Where(a => a.Name.ToString().Equals("Y")).First().Value),
-					Z: Convert.ToInt32(point.Attributes().Where(a => a.Name.ToString().Equals("Z")).First().Value));
+				Points[point.Attribute("Name").Value] = new Point3D(
+					X: Convert.ToInt32(point.Attribute("X").Value),
+					Y: Convert.ToInt32(point.Attribute("Y").Value),
+					Z: Convert.ToInt32(point.Attribute("Z").Value));
 			foreach (XElement palette in root.Elements("Palette"))
-				Palettes[palette.Attributes().Where(a => a.Name.ToString().Equals("Name")).FirstOrDefault()?.Value ?? ""] = [.. palette.Elements("Color").Take(256).Select(e =>
+				Palettes[palette.Attribute("Name").Value] = [.. palette.Elements("Color").Take(256).Select(e =>
 				{
 					Color color = new();
 					color.ReadXml(e.CreateReader());
@@ -149,7 +149,8 @@ public class BenVoxelFile : IBinaryWritable, IXmlSerializable
 		public void WriteXml(XmlWriter writer) => new XElement(XName.Get("Metadata"),
 			Properties.Select(property =>
 				new XElement(XName.Get("Property"),
-					new XAttribute(XName.Get("Name"), property.Key), property.Value)),
+					new XAttribute(XName.Get("Name"), property.Key),
+					property.Value)),
 			Points.Select(point =>
 				new XElement(XName.Get("Point"),
 					new XAttribute(XName.Get("Name"), point.Key),
