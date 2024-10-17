@@ -451,6 +451,7 @@ public class SvoModel : IEditableModel, IBinaryWritable, IXmlSerializable
 			this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
 	}
 	public void WriteXml(XmlWriter writer) => ToXElement().WriteContentTo(writer);
+	public static explicit operator XElement(SvoModel source) => source.ToXElement();
 	public XElement ToXElement() => new(XName.Get("Geometry"),
 		new XAttribute(XName.Get("Width"), SizeX),
 		new XAttribute(XName.Get("Depth"), SizeY),
