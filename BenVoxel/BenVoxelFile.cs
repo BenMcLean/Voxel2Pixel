@@ -63,7 +63,11 @@ public class BenVoxelFile : IBinaryWritable, IXmlSerializable
 							string key = ReadKey(msReader);
 							uint[] colors = [.. Enumerable.Range(0, msReader.ReadByte() + 1).Select(i => msReader.ReadUInt32())];
 							bool hasDescriptions = msReader.ReadByte() != 0;
-							Palettes[key] = [.. colors.Select(color => new Color(color, hasDescriptions ? ReadString(msReader) : null))];
+							Palettes[key] = [.. colors.Select(argb => new Color
+							{
+								Argb = argb,
+								Description = hasDescriptions ? ReadString(msReader) : null,
+							})];
 						}
 						break;
 					default:
@@ -170,7 +174,7 @@ public class BenVoxelFile : IBinaryWritable, IXmlSerializable
 		public uint Argb { get; set; } = 0u;
 		public string Description { get; set; } = null;
 		public Color() { }
-		public static IEnumerable<Color> Colors(IEnumerable<uint> colors) => colors.Select(color => new Color(color));
+		public static IEnumerable<Color> Colors(IEnumerable<uint> colors) => colors.Select(argb => new Color { Argb = argb, });
 		#endregion Color
 		#region IXmlSerializable
 		public XmlSchema GetSchema() => null;

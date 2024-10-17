@@ -17,7 +17,11 @@ public class BenVoxelFileTest(Xunit.Abstractions.ITestOutputHelper output)
 		{
 			metadata.Properties["Property" + i] = "PropertyValue" + i;
 			metadata.Points["Point" + i] = new Point3D(i, i, i);
-			metadata.Palettes["Palette" + i] = [.. Enumerable.Range(0, 3).Select(j => (i, ""))];
+			metadata.Palettes["Palette" + i] = [.. Enumerable.Range(0, 3).Select(j => new BenVoxelFile.Color
+			{
+				Argb = i,
+				Description = "",
+			})];
 		}
 		SvoModel model = new(new VoxFileModel(@"..\..\..\TestData\Models\Sora.vox"));
 		BenVoxelFile file = new()
