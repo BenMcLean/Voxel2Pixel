@@ -5,6 +5,7 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Collections.Generic;
 using System.Linq;
+using static BenVoxel.SvoModel;
 
 namespace BenVoxel;
 
@@ -46,7 +47,6 @@ public static class ExtensionMethods
 	public static T FromXml<T>(this string value) => (T)new XmlSerializer(typeof(T)).Deserialize(new StringReader(value));
 	private static readonly XmlWriterSettings ToXElementXmlSettings = new()
 	{
-		ConformanceLevel = ConformanceLevel.Fragment,
 		Encoding = Encoding.UTF8,
 		OmitXmlDeclaration = true,
 		Indent = false,
@@ -80,6 +80,31 @@ public static class ExtensionMethods
 				namespaces: EmptyNamespaces);
 			yield return XElement.Parse(stringWriter.ToString());
 		}
+	}
+	/// <summary>
+	/// This is part of my attempt to make IXmlSerializable not suck.
+	/// </summary>
+	public static void WriteContentTo(this XElement element, XmlWriter writer)
+	{
+		foreach (XAttribute attribute in element.Attributes().Where(a => a.IsNamespaceDeclaration))
+			writer.WriteAttributeString(attribute.Name.LocalName, XNamespace.Xmlns.NamespaceName, attribute.Value);
+		foreach (XAttribute attribute in element.Attributes().Where(a => !a.IsNamespaceDeclaration))
+			if (string.IsNullOrEmpty(attribute.Name.NamespaceName))
+				writer.WriteAttributeString(attribute.Name.LocalName, attribute.Value);
+			else
+				writer.WriteAttributeString(attribute.Name.LocalName, attribute.Name.NamespaceName, attribute.Value);
+		foreach (XNode node in element.Nodes())
+			node.WriteTo(writer);
+	}
+	/// <summary>
+	/// This is part of my attempt to make IXmlSerializable not suck.
+	/// </summary>
+	public static XElement ReadCurrentElement(this XmlReader reader)
+	{
+		reader.MoveToContent();
+		if (reader.NodeType != XmlNodeType.Element)
+			throw new XmlException("The XmlReader is not positioned on an element.");
+		return XElement.Load(reader.ReadSubtree());
 	}
 	#endregion XML
 	#region IBinaryWritable

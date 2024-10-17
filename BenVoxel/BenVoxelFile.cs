@@ -134,7 +134,7 @@ public class BenVoxelFile : IBinaryWritable, IXmlSerializable
 		public XmlSchema GetSchema() => null;
 		public void ReadXml(XmlReader reader)
 		{
-			XElement root = XElement.Load(reader);
+			XElement root = reader.ReadCurrentElement();
 			foreach (XElement property in root.Elements("Property"))
 				Properties[property.Attribute("Name").Value] = property.Value;
 			foreach (XElement point in root.Elements("Point"))
@@ -150,7 +150,8 @@ public class BenVoxelFile : IBinaryWritable, IXmlSerializable
 					return color;
 				})];
 		}
-		public void WriteXml(XmlWriter writer) => new XElement(XName.Get("Metadata"),
+		public void WriteXml(XmlWriter writer) => ToXElement().WriteContentTo(writer);
+		public XElement ToXElement() => new(XName.Get("Metadata"),
 			Properties.Select(property =>
 				new XElement(XName.Get("Property"),
 					new XAttribute(XName.Get("Name"), property.Key),
@@ -164,8 +165,8 @@ public class BenVoxelFile : IBinaryWritable, IXmlSerializable
 			Palettes.Select(palette =>
 				new XElement(XName.Get("Palette"),
 					new XAttribute(XName.Get("Name"), palette.Key),
-					palette.Value.Take(256)))
-			).WriteTo(writer);
+					palette.Value.Take(256).ToXElements()))
+			);
 		#endregion IXmlSerializable
 	}
 	public class Color : IXmlSerializable
@@ -180,16 +181,17 @@ public class BenVoxelFile : IBinaryWritable, IXmlSerializable
 		public XmlSchema GetSchema() => null;
 		public void ReadXml(XmlReader reader)
 		{
-			XElement root = XElement.Load(reader);
+			XElement root = reader.ReadCurrentElement();
 			Argb = uint.Parse(
 				s: root.Attribute("Argb").Value.Replace("#", ""),
 				style: System.Globalization.NumberStyles.HexNumber);
 			Description = root.Attribute("Description")?.Value;
 		}
-		public void WriteXml(XmlWriter writer) => new XElement(XName.Get("Color"),
-			new XAttribute(XName.Get("Argb"), Argb.ToString("X")),
-			string.IsNullOrWhiteSpace(Description) ? null : new XAttribute(XName.Get("Description"), Description)
-			).WriteTo(writer);
+		public void WriteXml(XmlWriter writer) => ToXElement().WriteContentTo(writer);
+		public XElement ToXElement() => new(XName.Get("Color"),
+				new XAttribute(XName.Get("Argb"), Argb.ToString("X8")),
+				string.IsNullOrWhiteSpace(Description) ? null : new XAttribute(XName.Get("Description"), Description)
+			);
 		#endregion IXmlSerializable
 	}
 	public class Model : IBinaryWritable, IXmlSerializable
@@ -228,12 +230,13 @@ public class BenVoxelFile : IBinaryWritable, IXmlSerializable
 		public XmlSchema GetSchema() => null;
 		public void ReadXml(XmlReader reader)
 		{
-			XElement root = XElement.Load(reader);
+			XElement root = reader.ReadCurrentElement();
 			if (root.Element("Metadata") is XElement metadata)
 				Metadata = (Metadata)new XmlSerializer(typeof(Metadata)).Deserialize(metadata.CreateReader());
 			Geometry = (SvoModel)new XmlSerializer(typeof(SvoModel)).Deserialize(root.Element("Geometry").CreateReader());
 		}
-		public void WriteXml(XmlWriter writer) => new XElement(XName.Get("Model"), Metadata, Geometry).WriteTo(writer);
+		public void WriteXml(XmlWriter writer) => ToXElement().WriteContentTo(writer);
+		public XElement ToXElement() => new(XName.Get("Model"), Metadata?.ToXElement(), Geometry.ToXElement());
 		#endregion IXmlSerializable
 	}
 	#endregion Nested classes
@@ -301,21 +304,22 @@ public class BenVoxelFile : IBinaryWritable, IXmlSerializable
 	public XmlSchema GetSchema() => null;
 	public void ReadXml(XmlReader reader)
 	{
-		XElement root = XElement.Load(reader);
+		XElement root = reader.ReadCurrentElement();
 		if (root.Elements("Metadata").FirstOrDefault() is XElement global)
 			Global = (Metadata)new XmlSerializer(typeof(Metadata)).Deserialize(global.CreateReader());
 		foreach (XElement model in root.Elements("Model"))
 			Models[model.Attributes("Name").FirstOrDefault()?.Value ?? ""] = (Model)new XmlSerializer(typeof(Model)).Deserialize(model.CreateReader());
 	}
-	public void WriteXml(XmlWriter writer) => new XElement(XName.Get("BenVoxel"),
+	public void WriteXml(XmlWriter writer) => ToXElement().WriteContentTo(writer);
+	public XElement ToXElement() => new(XName.Get("BenVoxel"),
 		new XAttribute(XName.Get("Version"), Version),
-		Global,
+		Global.ToXElement(),
 		Models.Select(model =>
 		{
 			XElement xModel = model.Value.ToXElement();
 			xModel.Add(new XAttribute(XName.Get("Name"), model.Key));
 			return xModel;
-		})).WriteTo(writer);
+		}));
 	#endregion IXmlSerializable
 	#region Utilities
 	public static string FourCC(BinaryReader reader) => Encoding.UTF8.GetString(reader.ReadBytes(4));

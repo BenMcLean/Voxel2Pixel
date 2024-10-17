@@ -437,7 +437,7 @@ public class SvoModel : IEditableModel, IBinaryWritable, IXmlSerializable
 	public XmlSchema GetSchema() => null;
 	public void ReadXml(XmlReader reader)
 	{
-		XElement root = XElement.Load(reader);
+		XElement root = reader.ReadCurrentElement();
 		SvoModel read = new(
 			z85: root.Value,
 			sizeX: ushort.TryParse(root.Attribute("Width")?.Value, out ushort sizeX) ? sizeX : ushort.MaxValue,
@@ -450,12 +450,12 @@ public class SvoModel : IEditableModel, IBinaryWritable, IXmlSerializable
 		foreach (Voxel voxel in read)
 			this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
 	}
-	public void WriteXml(XmlWriter writer) => new XElement(XName.Get("Geometry"),
-			new XAttribute(XName.Get("Width"), SizeX),
-			new XAttribute(XName.Get("Depth"), SizeY),
-			new XAttribute(XName.Get("Height"), SizeZ),
-			Z85(includeSizes: false))
-		.WriteTo(writer);
+	public void WriteXml(XmlWriter writer) => ToXElement().WriteContentTo(writer);
+	public XElement ToXElement() => new(XName.Get("Geometry"),
+		new XAttribute(XName.Get("Width"), SizeX),
+		new XAttribute(XName.Get("Depth"), SizeY),
+		new XAttribute(XName.Get("Height"), SizeZ),
+		Z85(includeSizes: false));
 	#endregion IXmlSerializable
 	#region Debug
 #if DEBUG
