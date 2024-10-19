@@ -133,11 +133,11 @@ public static class VoxelDraw
 	{
 		ushort width = model.SizeX,
 			height = model.SizeZ;
-		VoxelY[] grid = new VoxelY[width * height];
+		VoxelY?[] grid = new VoxelY?[width * height];
 		foreach (Voxel voxel in model
 			.Where(voxel => voxel.Index != 0))
 			if (width * (height - voxel.Z - 1) + voxel.X is int i
-				&& (!(grid[i] is VoxelY old)
+				&& (grid[i] is not VoxelY old
 					|| old.Index == 0
 					|| old.Y > voxel.Y))
 				grid[i] = new VoxelY(voxel);
@@ -156,11 +156,11 @@ public static class VoxelDraw
 	{
 		ushort voxelWidth = model.SizeX,
 			voxelHeight = model.SizeZ;
-		Voxel[] grid = new Voxel[voxelWidth * voxelHeight];
+		Voxel?[] grid = new Voxel?[voxelWidth * voxelHeight];
 		foreach (Voxel voxel in model
 			.Where(voxel => voxel.Index != 0))
 			if (voxelWidth * (voxelHeight - voxel.Z - 1) + voxel.X is int i
-				&& (!(grid[i] is Voxel old)
+				&& (grid[i] is not Voxel old
 					|| old.Index == 0
 					|| old.Y > voxel.Y))
 				grid[i] = voxel;
@@ -202,11 +202,11 @@ public static class VoxelDraw
 	{
 		ushort width = model.SizeX,
 			height = model.SizeY;
-		VoxelZ[] grid = new VoxelZ[width * height];
+		VoxelZ?[] grid = new VoxelZ?[width * height];
 		foreach (Voxel voxel in model
 			.Where(voxel => voxel.Index != 0))
 			if (width * (height - voxel.Y - 1) + voxel.X is int i
-				&& (!(grid[i] is VoxelZ old)
+				&& (grid[i] is not VoxelZ old
 					|| old.Index == 0
 					|| old.Z < voxel.Z))
 				grid[i] = new VoxelZ(voxel);
@@ -225,11 +225,11 @@ public static class VoxelDraw
 	{
 		ushort width = model.SizeX,
 			height = model.SizeY;
-		VoxelZ[] grid = new VoxelZ[width * height];
+		VoxelZ?[] grid = new VoxelZ?[width * height];
 		foreach (Voxel voxel in model
 			.Where(voxel => voxel.Index != 0))
 			if (width * (height - voxel.Y - 1) + voxel.X is int i
-				&& (!(grid[i] is VoxelZ old)
+				&& (grid[i] is not VoxelZ old
 					|| old.Index == 0
 					|| old.Z > voxel.Z))
 				grid[i] = new VoxelZ(voxel);
@@ -259,13 +259,13 @@ public static class VoxelDraw
 			voxelHeight = model.SizeZ,
 			pixelWidth = (ushort)(voxelWidth + voxelDepth);
 		uint index;
-		DistantShape[] grid = new DistantShape[pixelWidth * voxelHeight];
+		DistantShape?[] grid = new DistantShape?[pixelWidth * voxelHeight];
 		foreach (Voxel voxel in model
 			.Where(voxel => voxel.Index != 0))
 		{
 			index = (uint)(pixelWidth * (voxelHeight - voxel.Z - 1) + voxelDepth - voxel.Y - 1 + voxel.X);
 			uint distance = (uint)voxel.X + voxel.Y;
-			if (!(grid[index] is DistantShape left)
+			if (grid[index] is not DistantShape left
 				|| left.Index == 0
 				|| left.Distance > distance)
 				grid[index] = new DistantShape
@@ -274,7 +274,7 @@ public static class VoxelDraw
 					Index = voxel.Index,
 					VisibleFace = VisibleFace.Left,
 				};
-			if (!(grid[++index] is DistantShape right)
+			if (grid[++index] is not DistantShape right
 				|| right.Index == 0
 				|| right.Distance > distance)
 				grid[index] = new DistantShape
@@ -304,13 +304,13 @@ public static class VoxelDraw
 			voxelHeight = model.SizeZ,
 			pixelWidth = (ushort)(voxelWidth + voxelDepth);
 		uint index;
-		VoxelFace[] grid = new VoxelFace[pixelWidth * voxelHeight];
+		VoxelFace?[] grid = new VoxelFace?[pixelWidth * voxelHeight];
 		foreach (Voxel voxel in model
 			.Where(voxel => voxel.Index != 0))
 		{
 			index = (uint)(pixelWidth * (voxelHeight - voxel.Z - 1) + voxelDepth - voxel.Y - 1 + voxel.X);
 			uint distance = (uint)voxel.X + voxel.Y;
-			if (!(grid[index] is VoxelFace left)
+			if (grid[index] is not VoxelFace left
 				|| left.Voxel.Index == 0
 				|| left.Distance > distance)
 				grid[index] = new VoxelFace
@@ -318,7 +318,7 @@ public static class VoxelDraw
 					Voxel = voxel,
 					VisibleFace = VisibleFace.Left,
 				};
-			if (!(grid[++index] is VoxelFace right)
+			if (grid[++index] is not VoxelFace right
 				|| right.Voxel.Index == 0
 				|| right.Distance > distance)
 				grid[index] = new VoxelFace
@@ -375,13 +375,13 @@ public static class VoxelDraw
 			depth = model.SizeY,
 			height = model.SizeZ;
 		uint pixelHeight = (uint)(depth + height), index;
-		DistantShape[] grid = new DistantShape[width * pixelHeight];
+		DistantShape?[] grid = new DistantShape?[width * pixelHeight];
 		foreach (Voxel voxel in model
 			.Where(voxel => voxel.Index != 0))
 		{
 			index = width * (pixelHeight - 2 - voxel.Y - voxel.Z) + voxel.X;
 			uint distance = (uint)(height + voxel.Y - voxel.Z - 1);
-			if (!(grid[index] is DistantShape top)
+			if (grid[index] is not DistantShape top
 				|| top.Index == 0
 				|| top.Distance > distance)
 				grid[index] = new DistantShape
@@ -391,7 +391,7 @@ public static class VoxelDraw
 					VisibleFace = VisibleFace.Top,
 				};
 			index += width;
-			if (!(grid[index] is DistantShape front)
+			if (grid[index] is not DistantShape front
 				|| front.Index == 0
 				|| front.Distance > distance)
 				grid[index] = new DistantShape
@@ -517,11 +517,11 @@ public static class VoxelDraw
 	{
 		ushort width = model.SizeX,
 			height = model.SizeY;
-		VoxelZ[] grid = new VoxelZ[width * height];
+		VoxelZ?[] grid = new VoxelZ?[width * height];
 		foreach (Voxel voxel in model
 			.Where(voxel => voxel.Index != 0))
 			if (width * (height - voxel.Y - 1) + voxel.X is int i
-				&& (!(grid[i] is VoxelZ old)
+				&& (grid[i] is not VoxelZ old
 					|| old.Index == 0
 					|| old.Z > voxel.Z))
 				grid[i] = new VoxelZ(voxel);
