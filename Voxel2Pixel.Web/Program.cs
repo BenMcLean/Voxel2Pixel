@@ -17,17 +17,4 @@ public class Program
 		builder.Services.AddMudServices();
 		await builder.Build().RunAsync();
 	}
-	public static BenVoxelFile FromMagicaVoxel(Stream stream)
-	{
-		VoxFileModel[] models = VoxFileModel.Models(stream, out uint[] palette);
-		BenVoxelFile.Metadata global = new();
-		global[""] = palette;
-		BenVoxelFile file = new()
-		{
-			Global = global,
-		};
-		for (int i = 0; i < models.Length; i++)
-			file.Models[i == 0 ? "" : i.ToString()] = new BenVoxelFile.Model { Geometry = new SvoModel(models[i]) };
-		return file;
-	}
 }

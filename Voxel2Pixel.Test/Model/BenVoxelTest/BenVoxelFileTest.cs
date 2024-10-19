@@ -38,11 +38,11 @@ public class BenVoxelFileTest(Xunit.Abstractions.ITestOutputHelper output)
 			Metadata = metadata,
 			Geometry = model,
 		};
-		string s = Utf8Xml(file);
+		string s = file.Utf8Xml();
 		output.WriteLine(s);
 		Assert.Equal(
 			expected: s,
-			actual: Utf8Xml((BenVoxelFile)(new XmlSerializer(typeof(BenVoxelFile)).Deserialize(new MemoryStream(Encoding.UTF8.GetBytes(s))) ?? throw new NullReferenceException())));
+			actual: ((BenVoxelFile)(new XmlSerializer(typeof(BenVoxelFile)).Deserialize(new MemoryStream(Encoding.UTF8.GetBytes(s))) ?? throw new NullReferenceException())).Utf8Xml());
 	}
 	[Fact]
 	public void RiffTest() => output.WriteLine(Convert.ToHexString(new Point3D(1, 2, 3).RIFF("PT3D").ToArray()));

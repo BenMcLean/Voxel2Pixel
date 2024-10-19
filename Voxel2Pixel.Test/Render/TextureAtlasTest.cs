@@ -27,7 +27,7 @@ public class TextureAtlasTest
 	[Fact]
 	public void Test() => Assert.Equal(
 		expected: TestData,
-		actual: Utf8Xml(new TextureAtlas()
+		actual: new TextureAtlas()
 		{
 			ImagePath = "thin_double.png",
 			SubTextures = [
@@ -46,12 +46,12 @@ public class TextureAtlasTest
 					Height = 512,
 				},
 			],
-		}));
+		}.Utf8Xml());
 	[Fact]
 	public void Test2() => Assert.Equal(
 		expected: TestData,
-		actual: Utf8Xml((TextureAtlas)(new XmlSerializer(typeof(TextureAtlas)).Deserialize(new MemoryStream(Encoding.UTF8.GetBytes(TestData)))
-		?? throw new NullReferenceException())));
+		actual: ((TextureAtlas)(new XmlSerializer(typeof(TextureAtlas)).Deserialize(new MemoryStream(Encoding.UTF8.GetBytes(TestData)))
+		?? throw new NullReferenceException())).Utf8Xml());
 	[Fact]
 	public void SubTextureTest()
 	{

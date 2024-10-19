@@ -65,7 +65,7 @@
 			switch (Path.GetExtension(file.Name).ToLowerInvariant())
 			{
 				case ".vox":
-					File = Program.FromMagicaVoxel(memoryStream);
+					File = Voxel2Pixel.Model.SvoModel.FromMagicaVoxel(memoryStream);
 					break;
 				case ".xml":
 					File = (BenVoxelFile)(new XmlSerializer(typeof(BenVoxelFile)).Deserialize(memoryStream)

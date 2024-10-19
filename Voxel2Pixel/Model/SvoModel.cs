@@ -1,13 +1,29 @@
-﻿using System;
+﻿using BenVoxel;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
+using Voxel2Pixel.Model.FileFormats;
 using static BenVoxel.ExtensionMethods;
 
 namespace Voxel2Pixel.Model;
 
 public class SvoModel : BenVoxel.SvoModel, ISpecializedModel
 {//TODO: actually construct this class
+	public static BenVoxelFile FromMagicaVoxel(Stream stream)
+	{
+		VoxFileModel[] models = VoxFileModel.Models(stream, out uint[] palette);
+		BenVoxelFile.Metadata global = new();
+		global[""] = palette;
+		BenVoxelFile file = new()
+		{
+			Global = global,
+		};
+		for (int i = 0; i < models.Length; i++)
+			file.Models[i == 0 ? "" : i.ToString()] = new BenVoxelFile.Model { Geometry = new BenVoxel.SvoModel(models[i]) };
+		return file;
+	}
 	#region ISpecializedModel
 	public void Draw(IRenderer renderer, Perspective perspective, byte peakScaleX = 6, byte peakScaleY = 6, double radians = 0d)
 	{
