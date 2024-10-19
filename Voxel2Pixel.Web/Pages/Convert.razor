@@ -11,18 +11,15 @@
 
 <MudFileUpload T="IBrowserFile" FilesChanged="LoadFile" Accept=".vox">
 	<ActivatorContent>
-		<MudButton HtmlTag="label"
-				   Variant="Variant.Filled"
-				   Color="MudBlazor.Color.Primary"
-				   StartIcon="@Icons.Material.Filled.CloudUpload">
-			Upload .vox File
+		<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" StartIcon="@Icons.Material.Filled.CloudUpload">
+			Upload File
 		</MudButton>
 	</ActivatorContent>
 </MudFileUpload>
-<br />
 @if (!string.IsNullOrWhiteSpace(Xml))
 {
-	<code>@Xml</code>
+	<br />
+	<MudTextField T="string" Value=@Xml Label="XML" Variant="Variant.Outlined" Lines="10" ReadOnly="true" Style="font-family: monospace; white-space: pre;" />
 }
 @if (!string.IsNullOrWhiteSpace(ExceptionMessage.ToString()))
 {
