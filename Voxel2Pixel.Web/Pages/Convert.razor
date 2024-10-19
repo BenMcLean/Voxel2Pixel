@@ -19,6 +19,11 @@
 		</MudButton>
 	</ActivatorContent>
 </MudFileUpload>
+<br />
+@if (!string.IsNullOrWhiteSpace(Xml))
+{
+	<code>@Xml</code>
+}
 @if (!string.IsNullOrWhiteSpace(ExceptionMessage.ToString()))
 {
 	<br />
@@ -28,7 +33,8 @@
 	#region Data
 	public bool IsLoading { get; set; } = false;
 	public MarkupString ExceptionMessage { get; set; }
-	BenVoxelFile? File { get; set; } = null;
+	public BenVoxelFile? File { get; set; } = null;
+	public string? Xml { get; set; } = null;
 	#endregion Data
 	private async void LoadFile(IBrowserFile file)
 	{
@@ -59,6 +65,7 @@
 					File = new BenVoxelFile(memoryStream);
 					break;
 			}
+			Xml = File.Utf8Xml();
 		}
 		catch (Exception ex)
 		{
