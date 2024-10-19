@@ -23,7 +23,7 @@ public static class ExtensionMethods
 	#endregion IModel
 	#region XML
 	public static readonly XmlSerializerNamespaces EmptyNamespaces = new([XmlQualifiedName.Empty]);
-	public static string Utf8Xml<T>(T o, bool indent = true)
+	public static string Utf8Xml<T>(this T o, bool indent = true) where T : IXmlSerializable
 	{
 		Utf8StringWriter stringWriter = new();
 		new XmlSerializer(typeof(T)).Serialize(
