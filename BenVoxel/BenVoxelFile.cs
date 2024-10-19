@@ -214,7 +214,7 @@ public class BenVoxelFile : IBinaryWritable, IXmlSerializable
 			}
 			if (!fourCC.Equals("SVOG"))
 				throw new IOException("Couldn't parse model geometry!");
-			Geometry = new(reader);
+			Geometry = new(new MemoryStream(reader.ReadBytes((int)reader.ReadUInt32())));
 		}
 		#endregion Model
 		#region IBinaryWritable
@@ -296,8 +296,6 @@ public class BenVoxelFile : IBinaryWritable, IXmlSerializable
 				model.Value.RIFF("MODL").CopyTo(encoderStream);
 			}
 		}
-		if (writer.BaseStream.Position % 2 != 0)
-			writer.Write((byte)0);
 		long position = writer.BaseStream.Position;
 		writer.BaseStream.Position = sizePosition;
 		writer.Write((uint)(position - sizePosition + 4));

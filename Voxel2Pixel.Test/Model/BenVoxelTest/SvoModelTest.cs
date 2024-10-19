@@ -373,39 +373,28 @@ public class SvoModelTest(Xunit.Abstractions.ITestOutputHelper output)
 	}
 	*/
 	[Fact]
-	public void BenTest()
+	public void FileStreamTest()
 	{
-		string path = @"..\..\..\SORA.BEN";
+		string path = @"..\..\..\SORA.SVO";
 		VoxFileModel vox = new(@"..\..\..\TestData\Models\Sora.vox");
-		FileStream ofs = new(
-				path: path,
-				mode: FileMode.OpenOrCreate);
+		using FileStream ofs = new(
+			path: path,
+			mode: FileMode.OpenOrCreate);
 		new SvoModel(vox)
 			.Write(ofs);
 		ofs.Close();
+		using FileStream ifs = new(
+			path: path,
+			mode: FileMode.Open);
 		new SpriteMaker()
 		{
 			Model = new SvoModel(
-				stream: new FileStream(
-					path: path,
-					mode: FileMode.Open),
-				sizeX: vox.SizeX,
-				sizeY: vox.SizeY,
-				sizeZ: vox.SizeZ),
+				stream: ifs),
 			VoxelColor = new NaiveDimmer(vox.Palette),
 		}.Make()
 			.Png("BenTest.png");
-	}
-	[Fact]
-	public void OutTest()
-	{
-		SvoModel svo = new(2, 2, 2);
-		svo[1, 1, 1] = 1;
-		FileStream ofs = new(
-			path: @"..\..\..\OUT.BEN",
-			mode: FileMode.OpenOrCreate);
-		svo.Write(ofs);
-		PrintVoxels(svo);
+		ifs.Close();
+		File.Delete(path);
 	}
 	[Fact]
 	public void XmlTest()
