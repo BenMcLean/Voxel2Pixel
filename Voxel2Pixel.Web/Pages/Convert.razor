@@ -1,23 +1,32 @@
 ﻿@page "/Convert"
 @using BenVoxel
 @using System.Xml.Serialization
+@using System.Text
 @using Voxel2Pixel.Model.FileFormats
+@inject IJSRuntime JS
 
 <PageTitle>BenVoxel Converter</PageTitle>
 
-<h3>Convert</h3>
+<h1>BenVoxel Converter</h1>
 
-<p>This is the Convert page.</p>
+<p>Upload a BenVoxel or MagicaVoxel file to convert BenVoxel formats.</p>
 
 <MudFileUpload T="IBrowserFile" FilesChanged="LoadFile" Accept=".vox">
 	<ActivatorContent>
-		<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" StartIcon="@Icons.Material.Filled.CloudUpload">
+		<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" StartIcon="@Icons.Material.Filled.UploadFile">
 			Upload File
 		</MudButton>
 	</ActivatorContent>
 </MudFileUpload>
 @if (!string.IsNullOrWhiteSpace(Xml))
 {
+	<br />
+	<MudButton OnClick="DownloadBenFile" Variant="Variant.Filled" Color="MudBlazor.Color.Primary" StartIcon="@Icons.Material.Filled.FileDownload">
+		Download .BEN
+	</MudButton>
+	<MudButton OnClick="DownloadXmlFile" Variant="Variant.Filled" Color="MudBlazor.Color.Primary" StartIcon="@Icons.Material.Filled.FileDownload">
+		Download .XML
+	</MudButton>
 	<br />
 	<MudTextField T="string" Value=@Xml Label="XML" Variant="Variant.Outlined" Lines="10" ReadOnly="true" Style="font-family: monospace; white-space: pre;" />
 }
@@ -26,6 +35,19 @@
 	<br />
 	<div>@ExceptionMessage</div>
 }
+<script>
+	window.downloadFileFromStream = async (fileName, contentStreamReference) => {
+		const arrayBuffer = await contentStreamReference.arrayBuffer();
+		const blob = new Blob([arrayBuffer]);
+		const url = URL.createObjectURL(blob);
+		const anchorElement = document.createElement('a');
+		anchorElement.href = url;
+		anchorElement.download = fileName ?? '';
+		anchorElement.click();
+		anchorElement.remove();
+		URL.revokeObjectURL(url);
+	}
+</script>
 @code {
 	#region Data
 	public bool IsLoading { get; set; } = false;
@@ -52,7 +74,7 @@
 							Global = global,
 						};
 					for (int i = 0; i < models.Length; i++)
-						File.Models[i.ToString()] = new BenVoxelFile.Model { Geometry = new SvoModel(models[i]) };
+						File.Models[i == 0 ? "" : i.ToString()] = new BenVoxelFile.Model { Geometry = new SvoModel(models[i]) };
 					break;
 				case ".xml":
 					File = (BenVoxelFile)(new XmlSerializer(typeof(BenVoxelFile)).Deserialize(memoryStream)
@@ -70,5 +92,37 @@
 		}
 		IsLoading = false;
 		StateHasChanged();
+	}
+	private async Task DownloadBenFile()
+	{
+		try
+		{
+			using MemoryStream memoryStream = new();
+			File?.Write(memoryStream);
+			memoryStream.Position = 0;
+			using DotNetStreamReference streamRef = new(stream: memoryStream);
+			await JS.InvokeVoidAsync(identifier: "downloadFileFromStream", ".BEN", streamRef);
+		}
+		catch (Exception ex)
+		{
+			ExceptionMessage = new MarkupString(ex.GetType().Name + ": \"" + ex.Message + "\"<br />" + ex.StackTrace);
+			StateHasChanged();
+		}
+	}
+	private async Task DownloadXmlFile()
+	{
+		try
+		{
+			using MemoryStream memoryStream = new();
+			memoryStream.Write(Encoding.UTF8.GetBytes(File.Utf8Xml()));
+			memoryStream.Position = 0;
+			using DotNetStreamReference streamRef = new(stream: memoryStream);
+			await JS.InvokeVoidAsync(identifier: "downloadFileFromStream", ".BEN.xml", streamRef);
+		}
+		catch (Exception ex)
+		{
+			ExceptionMessage = new MarkupString(ex.GetType().Name + ": \"" + ex.Message + "\"<br />" + ex.StackTrace);
+			StateHasChanged();
+		}
 	}
 }

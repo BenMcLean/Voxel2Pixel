@@ -200,8 +200,8 @@ public class BenVoxelFile : IBinaryWritable, IXmlSerializable
 	public class Model : IBinaryWritable, IXmlSerializable
 	{
 		#region Model
-		public Metadata Metadata = new();
-		public SvoModel Geometry = new();
+		public Metadata Metadata = null;
+		public SvoModel Geometry = null;
 		public Model() { }
 		public Model(Stream stream) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true)) { }
 		public Model(BinaryReader reader)
