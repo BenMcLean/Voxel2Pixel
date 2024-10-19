@@ -2,7 +2,6 @@
 @using BenVoxel
 @using System.Xml.Serialization
 @using System.Text
-@using Voxel2Pixel.Model.FileFormats
 @inject IJSRuntime JS
 
 <PageTitle>BenVoxel Converter</PageTitle>
@@ -66,15 +65,7 @@
 			switch (Path.GetExtension(file.Name).ToLowerInvariant())
 			{
 				case ".vox":
-					VoxFileModel[] models = VoxFileModel.Models(memoryStream, out uint[] palette);
-					BenVoxelFile.Metadata global = new();
-					global[""] = palette;
-					File = new BenVoxelFile
-						{
-							Global = global,
-						};
-					for (int i = 0; i < models.Length; i++)
-						File.Models[i == 0 ? "" : i.ToString()] = new BenVoxelFile.Model { Geometry = new SvoModel(models[i]) };
+					File = Program.FromMagicaVoxel(memoryStream);
 					break;
 				case ".xml":
 					File = (BenVoxelFile)(new XmlSerializer(typeof(BenVoxelFile)).Deserialize(memoryStream)

@@ -23,7 +23,7 @@ public static class ExtensionMethods
 	#endregion IModel
 	#region XML
 	public static readonly XmlSerializerNamespaces EmptyNamespaces = new([XmlQualifiedName.Empty]);
-	public static string Utf8Xml<T>(this T o, bool indent = true) where T : IXmlSerializable
+	public static string Utf8Xml<T>(this T o, bool indent = true)
 	{
 		Utf8StringWriter stringWriter = new();
 		new XmlSerializer(typeof(T)).Serialize(
@@ -44,7 +44,7 @@ public static class ExtensionMethods
 	{
 		public override Encoding Encoding => Encoding.UTF8;
 	}
-	public static T FromXml<T>(this string value) where T : IXmlSerializable => (T)new XmlSerializer(typeof(T)).Deserialize(new StringReader(value));
+	public static T FromXml<T>(this string value) => (T)new XmlSerializer(typeof(T)).Deserialize(new StringReader(value));
 	private static readonly XmlWriterSettings ToXElementXmlSettings = new()
 	{
 		Encoding = Encoding.UTF8,
