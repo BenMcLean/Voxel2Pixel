@@ -10,16 +10,19 @@ namespace Voxel2Pixel.Model.FileFormats;
 public class VoxFileModel : DictionaryModel
 {
 	#region Read
-	public VoxFileModel(FileToVoxCore.Vox.VoxModel model, int frame = 0)
+	public VoxFileModel(FileToVoxCore.Vox.VoxModel model, int frame = 0, bool incluePalette = true)
 	{
-		Palette = new uint[256];
-		uint[] palette = model.Palette.Take(Palette.Length).Select(Color).ToArray();
-		Array.Copy(
-			sourceArray: palette,
-			sourceIndex: 0,
-			destinationArray: Palette,
-			destinationIndex: 1,
-			length: Math.Min(palette.Length, Palette.Length) - 1);
+		if (incluePalette)
+		{
+			Palette = new uint[256];
+			uint[] palette = model.Palette.Take(Palette.Length).Select(Color).ToArray();
+			Array.Copy(
+				sourceArray: palette,
+				sourceIndex: 0,
+				destinationArray: Palette,
+				destinationIndex: 1,
+				length: Math.Min(palette.Length, Palette.Length) - 1);
+		}
 		FileToVoxCore.Vox.VoxelData voxelData = model.VoxelFrames[frame];
 		SizeX = (ushort)(voxelData.VoxelsWide - 1);
 		SizeY = (ushort)(voxelData.VoxelsTall - 1);
@@ -32,6 +35,24 @@ public class VoxFileModel : DictionaryModel
 	}
 	public VoxFileModel(string filePath, int frame = 0) : this(new FileToVoxCore.Vox.VoxReader().LoadModel(filePath), frame) { }
 	public VoxFileModel(Stream stream, int frame = 0) : this(new FileToVoxCore.Vox.VoxReader().LoadModel(stream), frame) { }
+	public static VoxFileModel[] Models(Stream stream)
+	{
+		FileToVoxCore.Vox.VoxModel model = new FileToVoxCore.Vox.VoxReader().LoadModel(stream);
+		return [.. Enumerable.Range(0, model.VoxelFrames.Count()).Select(i => new VoxFileModel(model, i))];
+	}
+	public static VoxFileModel[] Models(Stream stream, out uint[] palette)
+	{
+		FileToVoxCore.Vox.VoxModel model = new FileToVoxCore.Vox.VoxReader().LoadModel(stream);
+		palette = new uint[256];
+		uint[] sourceArray = [.. model.Palette.Take(palette.Length).Select(Color)];
+		Array.Copy(
+			sourceArray: sourceArray,
+			sourceIndex: 0,
+			destinationArray: palette,
+			destinationIndex: 1,
+			length: Math.Min(palette.Length, sourceArray.Length) - 1);
+		return [.. Enumerable.Range(0, model.VoxelFrames.Count()).Select(i => new VoxFileModel(model, i, false))];
+	}
 	public uint[] Palette { get; set; }
 	public static uint Color(FileToVoxCore.Drawing.Color color) => ((uint)color.ToArgb()).Argb2rgba();
 	#endregion Read

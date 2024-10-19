@@ -18,6 +18,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Voxel2Pixel.Test", "Voxel2Pixel.Test\Voxel2Pixel.Test.csproj", "{66179810-638E-4ECA-898D-56B1D0F5C048}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Voxel2Pixel.Web", "Voxel2Pixel.Web\Voxel2Pixel.Web.csproj", "{FB1124CE-D530-4BAF-AE34-7B8143D376BB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{41CCCF39-5215-4FA5-8323-3F9612C8FCC9} = {41CCCF39-5215-4FA5-8323-3F9612C8FCC9}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BenVoxel", "BenVoxel\BenVoxel.csproj", "{41CCCF39-5215-4FA5-8323-3F9612C8FCC9}"
 EndProject

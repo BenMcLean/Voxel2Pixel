@@ -1,0 +1,70 @@
+﻿@page "/Convert"
+@using BenVoxel
+@using System.Xml.Serialization
+@using Voxel2Pixel.Model.FileFormats
+
+<PageTitle>BenVoxel Converter</PageTitle>
+
+<h3>Convert</h3>
+
+<p>This is the Convert page.</p>
+
+<MudFileUpload T="IBrowserFile" FilesChanged="LoadFile" Accept=".vox">
+	<ActivatorContent>
+		<MudButton HtmlTag="label"
+				   Variant="Variant.Filled"
+				   Color="MudBlazor.Color.Primary"
+				   StartIcon="@Icons.Material.Filled.CloudUpload">
+			Upload .vox File
+		</MudButton>
+	</ActivatorContent>
+</MudFileUpload>
+@if (!string.IsNullOrWhiteSpace(ExceptionMessage.ToString()))
+{
+	<br />
+	<div>@ExceptionMessage</div>
+}
+@code {
+	#region Data
+	public bool IsLoading { get; set; } = false;
+	public MarkupString ExceptionMessage { get; set; }
+	BenVoxelFile? File { get; set; } = null;
+	#endregion Data
+	private async void LoadFile(IBrowserFile file)
+	{
+		IsLoading = true;
+		using MemoryStream memoryStream = new();
+		await file.OpenReadStream().CopyToAsync(memoryStream);
+		memoryStream.Position = 0;
+		try
+		{
+			switch (Path.GetExtension(file.Name).ToLowerInvariant())
+			{
+				case ".vox":
+					VoxFileModel[] models = VoxFileModel.Models(memoryStream, out uint[] palette);
+					BenVoxelFile.Metadata global = new();
+					global[""] = palette;
+					File = new BenVoxelFile
+						{
+							Global = global,
+						};
+					for (int i = 0; i < models.Length; i++)
+						File.Models[i.ToString()] = new BenVoxelFile.Model { Geometry = new SvoModel(models[i]) };
+					break;
+				case ".xml":
+					File = (BenVoxelFile)(new XmlSerializer(typeof(BenVoxelFile)).Deserialize(memoryStream)
+						?? throw new NullReferenceException($"Couldn't deserialize \"{file.Name}\"."));
+					break;
+				default:
+					File = new BenVoxelFile(memoryStream);
+					break;
+			}
+		}
+		catch (Exception ex)
+		{
+			ExceptionMessage = new MarkupString(ex.GetType().Name + ": \"" + ex.Message + "\"<br />" + ex.StackTrace);
+		}
+		IsLoading = false;
+		StateHasChanged();
+	}
+}
