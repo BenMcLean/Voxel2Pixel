@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.IO;
 
 namespace BenVoxel;
 
@@ -76,6 +77,14 @@ public static class Safe85
 			lengthChunkCount = CalculateLengthChunkCount(decodedLength);
 		return groupCount * ChunksPerGroup + chunkCount + lengthChunkCount;
 	}
+	public static long GetDecodedLength(long encodedLength)
+	{
+		if (encodedLength < 0)
+			return (long)Safe85Status.ErrorInvalidLength;
+		long groupCount = encodedLength / ChunksPerGroup;
+		int byteCount = ChunkToByteCount[(int)(encodedLength % ChunksPerGroup)];
+		return groupCount * BytesPerGroup + byteCount;
+	}
 	public static Safe85Status EncodeFeed(ref int srcIndex, byte[] srcBuffer, long srcLength, ref int dstIndex, byte[] dstBuffer, long dstLength, bool isEndOfData)
 	{
 		if (srcLength < 0 || dstLength < 0)
@@ -110,6 +119,21 @@ public static class Safe85
 		}
 		else if (currentGroupByteCount > 0)
 			srcIndex -= currentGroupByteCount;
+		return Safe85Status.Ok;
+	}
+	public static Safe85Status EncodeStream(Stream input, Stream output, bool isEndOfData)
+	{
+		byte[] buffer = new byte[BytesPerGroup];
+		int bytesRead;
+		while ((bytesRead = input.Read(buffer, 0, buffer.Length)) > 0)
+		{
+			byte[] encodeBuffer = new byte[ChunksPerGroup];
+			int encodeIndex = 0;
+			Safe85Status status = EncodeFeed(ref encodeIndex, buffer, bytesRead, ref encodeIndex, encodeBuffer, ChunksPerGroup, bytesRead < BytesPerGroup && isEndOfData);
+			if (status != Safe85Status.Ok)
+				return status;
+			output.Write(encodeBuffer, 0, encodeIndex);
+		}
 		return Safe85Status.Ok;
 	}
 	private static bool WriteChunks(ref int dstIndex, byte[] dstBuffer, long dstLength, long accumulator, int byteCount)
@@ -228,6 +252,22 @@ public static class Safe85
 					Safe85Status.Ok
 					: Safe85Status.ErrorNotEnoughRoom
 			: Safe85Status.PartiallyComplete;
+	}
+	public static Safe85Status DecodeStream(Stream input, Stream output, Safe85StreamState streamState)
+	{
+		byte[] buffer = new byte[ChunksPerGroup];
+		int bytesRead;
+		while ((bytesRead = input.Read(buffer, 0, buffer.Length)) > 0)
+		{
+			byte[] decodeBuffer = new byte[BytesPerGroup];
+			int decodeIndex = 0,
+				inputIndex = 0;
+			Safe85Status status = DecodeFeed(ref inputIndex, buffer, bytesRead, ref decodeIndex, decodeBuffer, BytesPerGroup, streamState);
+			if (status != Safe85Status.Ok && status != Safe85Status.PartiallyComplete)
+				return status;
+			output.Write(decodeBuffer, 0, decodeIndex);
+		}
+		return Safe85Status.Ok;
 	}
 	public static long ReadLengthField(byte[] buffer, long bufferLength, out long length)
 	{

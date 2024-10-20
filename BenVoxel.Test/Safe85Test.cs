@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace BenVoxel.Test;
 
 public class Safe85Test
@@ -318,4 +320,53 @@ public class Safe85Test
 	public void TestSpecificationExampleWithLength(string encoded, byte[] decoded) =>
 		AssertEncodeDecodeWithLength(encoded, decoded);
 	#endregion Specification Examples
+	#region Streams
+	[Fact]
+	public void TestEncodeStream()
+	{
+		byte[] input = [0x39, 0x12, 0x82, 0xe1, 0x81, 0x39, 0xd9, 0x8b, 0x39, 0x4c, 0x63, 0x9d, 0x04, 0x8c];
+		string expected = "9F3{+RVCLI9LDzZ!4e";
+		using MemoryStream inputStream = new(input);
+		using MemoryStream outputStream = new();
+		Safe85.EncodeStream(inputStream, outputStream, true);
+		string result = Encoding.ASCII.GetString(outputStream.ToArray());
+		Assert.Equal(expected, result);
+	}
+	[Fact]
+	public void TestDecodeStream()
+	{
+		string input = "9F3{+RVCLI9LDzZ!4e";
+		byte[] expected = [0x39, 0x12, 0x82, 0xe1, 0x81, 0x39, 0xd9, 0x8b, 0x39, 0x4c, 0x63, 0x9d, 0x04, 0x8c];
+		using MemoryStream inputStream = new(Encoding.ASCII.GetBytes(input));
+		using MemoryStream outputStream = new();
+		Safe85.DecodeStream(inputStream, outputStream, Safe85.Safe85StreamState.SrcIsAtEndOfStream);
+		byte[] result = outputStream.ToArray();
+		Assert.Equal(expected, result);
+	}
+	[Fact]
+	public void TestEncodeDecodeStreamWithChunks()
+	{
+		byte[] originalData = new byte[1000];
+		new Random().NextBytes(originalData);
+		using MemoryStream encodedStream = new();
+		// Encode in chunks
+		for (int i = 0; i < originalData.Length; i += 100)
+		{
+			int chunkSize = Math.Min(100, originalData.Length - i);
+			using MemoryStream inputChunk = new(originalData, i, chunkSize);
+			Safe85.EncodeStream(inputChunk, encodedStream, i + chunkSize >= originalData.Length);
+		}
+		// Decode in chunks
+		using MemoryStream decodedStream = new();
+		encodedStream.Position = 0;
+		byte[] buffer = new byte[120];
+		int bytesRead;
+		while ((bytesRead = encodedStream.Read(buffer, 0, buffer.Length)) > 0)
+		{
+			using MemoryStream inputChunk = new(buffer, 0, bytesRead);
+			Safe85.DecodeStream(inputChunk, decodedStream, encodedStream.Position == encodedStream.Length ? Safe85.Safe85StreamState.SrcIsAtEndOfStream : Safe85.Safe85StreamState.None);
+		}
+		Assert.Equal(originalData, decodedStream.ToArray());
+	}
+	#endregion Streams
 }
