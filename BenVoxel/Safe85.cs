@@ -3,9 +3,16 @@ using System.Collections.ObjectModel;
 
 namespace BenVoxel;
 
+/// <summary>
+/// Implements Safe85 Encoding.
+/// This class was translated to C# by Claude (the LLM) from the reference implementation in C and then cleaned up by Ben McLean.
+/// Specification: https://github.com/kstenerud/safe-encoding/blob/master/safe85-specification.md
+/// Reference implementation: https://github.com/kstenerud/safe-encoding/tree/master/reference-implementation/safe85
+/// </summary>
 public static class Safe85
 {
 	public const string Version = "1.0.0";
+	public static string GetVersion() => Version;
 	private const byte ChunkCodeError = 0xff,
 		ChunkCodeWhitespace = 0xfe;
 	private const int BytesPerGroup = 4,

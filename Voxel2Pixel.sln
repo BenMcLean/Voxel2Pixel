@@ -24,6 +24,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Voxel2Pixel.Web", "Voxel2Pi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BenVoxel", "BenVoxel\BenVoxel.csproj", "{41CCCF39-5215-4FA5-8323-3F9612C8FCC9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BenVoxel.Test", "BenVoxel.Test\BenVoxel.Test.csproj", "{DC4184BC-E4C9-4CA4-988F-4BB239C4913A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -46,6 +48,10 @@ Global
 		{41CCCF39-5215-4FA5-8323-3F9612C8FCC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{41CCCF39-5215-4FA5-8323-3F9612C8FCC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{41CCCF39-5215-4FA5-8323-3F9612C8FCC9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DC4184BC-E4C9-4CA4-988F-4BB239C4913A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC4184BC-E4C9-4CA4-988F-4BB239C4913A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DC4184BC-E4C9-4CA4-988F-4BB239C4913A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DC4184BC-E4C9-4CA4-988F-4BB239C4913A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
