@@ -321,52 +321,87 @@ public class Safe85Test
 		AssertEncodeDecodeWithLength(encoded, decoded);
 	#endregion Specification Examples
 	#region Streams
-	[Fact]
-	public void TestEncodeStream()
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public void TestEncodeToStreamDecodeFromStream(bool includeLengthField)
 	{
-		byte[] input = [0x39, 0x12, 0x82, 0xe1, 0x81, 0x39, 0xd9, 0x8b, 0x39, 0x4c, 0x63, 0x9d, 0x04, 0x8c];
-		string expected = "9F3{+RVCLI9LDzZ!4e";
-		using MemoryStream inputStream = new(input);
-		using MemoryStream outputStream = new();
-		Safe85.EncodeStream(inputStream, outputStream, true);
-		string result = Encoding.ASCII.GetString(outputStream.ToArray());
-		Assert.Equal(expected, result);
-	}
-	[Fact]
-	public void TestDecodeStream()
-	{
-		string input = "9F3{+RVCLI9LDzZ!4e";
-		byte[] expected = [0x39, 0x12, 0x82, 0xe1, 0x81, 0x39, 0xd9, 0x8b, 0x39, 0x4c, 0x63, 0x9d, 0x04, 0x8c];
-		using MemoryStream inputStream = new(Encoding.ASCII.GetBytes(input));
-		using MemoryStream outputStream = new();
-		Safe85.DecodeStream(inputStream, outputStream, Safe85.Safe85StreamState.SrcIsAtEndOfStream);
-		byte[] result = outputStream.ToArray();
-		Assert.Equal(expected, result);
-	}
-	[Fact]
-	public void TestEncodeDecodeStreamWithChunks()
-	{
-		byte[] originalData = new byte[1000];
-		new Random().NextBytes(originalData);
+		byte[] original = [0x39, 0x12, 0x82, 0xe1, 0x81, 0x39, 0xd9, 0x8b, 0x39, 0x4c, 0x63, 0x9d, 0x04, 0x8c];
 		using MemoryStream encodedStream = new();
-		// Encode in chunks
-		for (int i = 0; i < originalData.Length; i += 100)
-		{
-			int chunkSize = Math.Min(100, originalData.Length - i);
-			using MemoryStream inputChunk = new(originalData, i, chunkSize);
-			Safe85.EncodeStream(inputChunk, encodedStream, i + chunkSize >= originalData.Length);
-		}
-		// Decode in chunks
-		using MemoryStream decodedStream = new();
+		long encodedLength = Safe85.EncodeToStream(original, encodedStream, includeLengthField: includeLengthField);
+		Assert.True(encodedLength > 0);
 		encodedStream.Position = 0;
-		byte[] buffer = new byte[120];
-		int bytesRead;
-		while ((bytesRead = encodedStream.Read(buffer, 0, buffer.Length)) > 0)
-		{
-			using MemoryStream inputChunk = new(buffer, 0, bytesRead);
-			Safe85.DecodeStream(inputChunk, decodedStream, encodedStream.Position == encodedStream.Length ? Safe85.Safe85StreamState.SrcIsAtEndOfStream : Safe85.Safe85StreamState.None);
-		}
-		Assert.Equal(originalData, decodedStream.ToArray());
+		byte[] decoded = Safe85.DecodeFromStream(encodedStream, includeLengthField);
+		Assert.Equal(original, decoded);
 	}
+	[Fact]
+	public void TestEncodeToStreamWithOffset()
+	{
+		byte[] original = [0x00, 0x00, 0x39, 0x12, 0x82, 0xe1, 0x81, 0x39, 0xd9, 0x8b, 0x39, 0x4c, 0x63, 0x9d, 0x04, 0x8c];
+		string expected = "9F3{+RVCLI9LDzZ!4e";
+		using MemoryStream encodedStream = new();
+		long encodedLength = Safe85.EncodeToStream(original, encodedStream, inputOffset: 2, inputLength: original.Length - 2, includeLengthField: false);
+		Assert.Equal(expected.Length, encodedLength);
+		encodedStream.Position = 0;
+		string result = Encoding.ASCII.GetString(encodedStream.ToArray());
+		Assert.Equal(expected, result);
+	}
+	[Fact]
+	public void TestDecodeFromStreamWithInvalidLengthField()
+	{
+		using MemoryStream inputStream = new(Encoding.ASCII.GetBytes("InvalidLengthField9F3{+RVCLI9LDzZ!4e"));
+		Assert.Throws<InvalidDataException>(() => Safe85.DecodeFromStream(inputStream, true));
+	}
+	[Fact]
+	public void TestEncodeToStreamDecodeFromStreamLargeData()
+	{
+		byte[] original = new byte[10000];
+		new Random(42).NextBytes(original);
+		using MemoryStream encodedStream = new();
+		long encodedLength = Safe85.EncodeToStream(original, encodedStream, includeLengthField: true);
+		Assert.True(encodedLength > 0);
+		encodedStream.Position = 0;
+		byte[] decoded = Safe85.DecodeFromStream(encodedStream, true);
+		Assert.Equal(original, decoded);
+	}
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public void TestEncodeToStringDecodeFromString(bool includeLengthField)
+	{
+		byte[] original = [0x39, 0x12, 0x82, 0xe1, 0x81, 0x39, 0xd9, 0x8b, 0x39, 0x4c, 0x63, 0x9d, 0x04, 0x8c];
+		string encoded = Safe85.EncodeToString(original, includeLengthField);
+		Assert.NotEmpty(encoded);
+		byte[] decoded = Safe85.DecodeFromString(encoded, includeLengthField);
+		Assert.Equal(original, decoded);
+	}
+	[Fact]
+	public void TestEncodeToStringWithoutLengthField() => Assert.Equal(
+		expected: "9F3{+RVCLI9LDzZ!4e",
+		actual: Safe85.EncodeToString([0x39, 0x12, 0x82, 0xe1, 0x81, 0x39, 0xd9, 0x8b, 0x39, 0x4c, 0x63, 0x9d, 0x04, 0x8c], false));
+	[Fact]
+	public void TestEncodeToStringWithLengthField() => Assert.Equal(
+		expected: "59F3{+RVCLI9LDzZ!4e",
+		actual: Safe85.EncodeToString([0x39, 0x12, 0x82, 0xe1, 0x81, 0x39, 0xd9, 0x8b, 0x39, 0x4c, 0x63, 0x9d, 0x04, 0x8c], true));
+	[Fact]
+	public void TestDecodeFromStringWithoutLengthField() => Assert.Equal(
+		expected: [0x39, 0x12, 0x82, 0xe1, 0x81, 0x39, 0xd9, 0x8b, 0x39, 0x4c, 0x63, 0x9d, 0x04, 0x8c],
+		actual: Safe85.DecodeFromString("9F3{+RVCLI9LDzZ!4e", false));
+	[Fact]
+	public void TestDecodeFromStringWithLengthField() => Assert.Equal(
+		expected: [0x39, 0x12, 0x82, 0xe1, 0x81, 0x39, 0xd9, 0x8b, 0x39, 0x4c, 0x63, 0x9d, 0x04, 0x8c],
+		actual: Safe85.DecodeFromString("59F3{+RVCLI9LDzZ!4e", true));
+	[Fact]
+	public void TestEncodeToStringDecodeFromStringLargeData()
+	{
+		byte[] original = new byte[10000];
+		new Random(42).NextBytes(original);
+		string encoded = Safe85.EncodeToString(original, true);
+		Assert.NotEmpty(encoded);
+		byte[] decoded = Safe85.DecodeFromString(encoded, true);
+		Assert.Equal(original, decoded);
+	}
+	[Fact]
+	public void TestDecodeFromStringWithInvalidInput() => Assert.Throws<InvalidDataException>(() => Safe85.DecodeFromString("This is not a valid Safe85 encoded string!"));
 	#endregion Streams
 }

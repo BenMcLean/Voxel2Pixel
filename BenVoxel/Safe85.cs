@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Text;
 
 namespace BenVoxel;
 
@@ -337,4 +338,103 @@ public static class Safe85
 		return decodedByteCount;
 	}
 	private static long AccumulateChunk(long accumulator, byte nextChunk) => (accumulator * FactorPerChunk) + nextChunk;
+	public static long EncodeToStream(byte[] input, Stream output, int inputOffset = 0, int inputLength = 0, bool includeLengthField = true)
+	{
+		if (inputLength < 1)
+			inputLength = input.Length - inputOffset;
+		if (includeLengthField)
+		{
+			byte[] lengthField = new byte[10]; // Max length field size
+			long lengthFieldSize = WriteLengthField(inputLength, lengthField, lengthField.Length);
+			output.Write(lengthField, 0, (int)lengthFieldSize);
+		}
+		long totalBytesWritten = 0;
+		int srcIndex = inputOffset;
+		byte[] encodeBuffer = new byte[ChunksPerGroup];
+		while (srcIndex < inputOffset + inputLength)
+		{
+			int remainingBytes = inputOffset + inputLength - srcIndex,
+				dstIndex = 0;
+			bool isLastChunk = remainingBytes <= BytesPerGroup;
+			Safe85Status status = EncodeFeed(ref srcIndex, input, remainingBytes, ref dstIndex, encodeBuffer, encodeBuffer.Length, isLastChunk);
+			if (status != Safe85Status.Ok)
+				return (long)status;
+			output.Write(encodeBuffer, 0, dstIndex);
+			totalBytesWritten += dstIndex;
+		}
+		return totalBytesWritten;
+	}
+	public static byte[] DecodeFromStream(Stream input, bool hasLengthField = false)
+	{
+		if (hasLengthField)
+		{
+			byte[] lengthField = new byte[10]; // Max length field size
+			int bytesRead = input.Read(lengthField, 0, lengthField.Length);
+			long lengthFieldSize = ReadLengthField(lengthField, bytesRead, out long length);
+			if (lengthFieldSize < 0)
+				throw new InvalidDataException("Invalid length field");
+			byte[] result = new byte[length],
+				decodeBuffer = new byte[BytesPerGroup];
+			int resultIndex = 0;
+			while (resultIndex < length)
+			{
+				byte[] encodeBuffer = new byte[ChunksPerGroup];
+				bytesRead = input.Read(encodeBuffer, 0, encodeBuffer.Length);
+				if (bytesRead == 0) break;
+				int srcIndex = 0,
+					dstIndex = 0;
+				Safe85Status status = DecodeFeed(ref srcIndex, encodeBuffer, bytesRead, ref dstIndex, decodeBuffer, decodeBuffer.Length,
+					resultIndex + dstIndex >= length ? Safe85StreamState.SrcIsAtEndOfStream : Safe85StreamState.None);
+				if (status != Safe85Status.Ok && status != Safe85Status.PartiallyComplete)
+					throw new InvalidDataException($"Decoding failed with status: {status}");
+				Array.Copy(decodeBuffer, 0, result, resultIndex, dstIndex);
+				resultIndex += dstIndex;
+			}
+			if (resultIndex != length)
+				throw new InvalidDataException("Decoded data length does not match expected length");
+			return result;
+		}
+		else
+		{
+			using MemoryStream ms = new();
+			byte[] buffer = new byte[1024];
+			int bytesRead;
+			while ((bytesRead = input.Read(buffer, 0, buffer.Length)) > 0)
+				ms.Write(buffer, 0, bytesRead);
+			ms.Position = 0;
+			long decodedLength = GetDecodedLength(ms.Length);
+			byte[] result = new byte[decodedLength],
+				decodeBuffer = new byte[BytesPerGroup];
+			int resultIndex = 0;
+			ms.Position = 0;
+			while (resultIndex < decodedLength)
+			{
+				byte[] encodeBuffer = new byte[ChunksPerGroup];
+				bytesRead = ms.Read(encodeBuffer, 0, encodeBuffer.Length);
+				if (bytesRead == 0) break;
+				int srcIndex = 0,
+					dstIndex = 0;
+				Safe85Status status = DecodeFeed(ref srcIndex, encodeBuffer, bytesRead, ref dstIndex, decodeBuffer, decodeBuffer.Length,
+					ms.Position == ms.Length ? Safe85StreamState.SrcIsAtEndOfStream : Safe85StreamState.None);
+				if (status != Safe85Status.Ok && status != Safe85Status.PartiallyComplete)
+					throw new InvalidDataException($"Decoding failed with status: {status}");
+				Array.Copy(decodeBuffer, 0, result, resultIndex, dstIndex);
+				resultIndex += dstIndex;
+			}
+			return result;
+		}
+	}
+	public static string EncodeToString(byte[] input, bool includeLengthField = false)
+	{
+		using MemoryStream ms = new();
+		EncodeToStream(
+			input: input,
+			output: ms, 0, input.Length, includeLengthField);
+		return Encoding.ASCII.GetString(ms.ToArray());
+	}
+	public static byte[] DecodeFromString(string input, bool hasLengthField = false)
+	{
+		using MemoryStream ms = new(Encoding.ASCII.GetBytes(input));
+		return DecodeFromStream(ms, hasLengthField);
+	}
 }
