@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
@@ -40,14 +41,17 @@ public static class Safe85
 			long length = inputBinaryData.Length;
 			if (length > MaxEncodableLength)
 				throw new ArgumentException($"Input data length exceeds maximum encodable length of {MaxEncodableLength}.");
+			Stack<byte> lengthChunks = [];
 			do
 			{
 				int chunk = (int)length & LengthChunkDataMask;
 				length >>= BitsPerLengthChunk;
 				if (length > 0)
 					chunk |= LengthChunkContinueBit;
-				outputUtf8.WriteByte(EncodingTable[chunk]);
+				lengthChunks.Push(EncodingTable[chunk]);
 			} while (length > 0);
+			while (lengthChunks.Count > 0)
+				outputUtf8.WriteByte(lengthChunks.Pop());
 		}
 		byte[] buffer = new byte[BytesPerGroup];
 		int bytesRead;
@@ -56,10 +60,10 @@ public static class Safe85
 			ulong accumulator = 0;
 			for (int i = 0; i < bytesRead; i++)
 				accumulator = (accumulator << 8) | buffer[i];
-			for (int i = ChunksPerGroup - 1; i >= ChunksPerGroup - bytesRead - 1; i--)
+			int chunksToWrite = bytesRead + 1;
+			for (int i = chunksToWrite - 1; i >= 0; i--)
 			{
-				int chunk = (int)(accumulator % 85);
-				accumulator /= 85;
+				int chunk = (int)(accumulator / Math.Pow(85, i)) % 85;
 				outputUtf8.WriteByte(EncodingTable[chunk]);
 			}
 		}
@@ -79,7 +83,7 @@ public static class Safe85
 	}
 	public static void DecodeSafe85(this Stream inputUtf8, Stream outputBinaryData, bool lengthField = false)
 	{
-		int expectedLength = 0, nextByte;
+		int length = 0, nextByte;
 		if (lengthField)
 		{
 			int shift = 0, chunk, chunkCount = 0;
@@ -91,14 +95,14 @@ public static class Safe85
 				chunk = EncodingTable.IndexOf((byte)nextByte);
 				if (chunk == -1 || chunk >= 64)
 					throw new InvalidDataException($"Invalid character in length field: \"{(char)nextByte}\".");
-				expectedLength |= (chunk & LengthChunkDataMask) << shift;
+				length |= (chunk & LengthChunkDataMask) << shift;
 				shift += BitsPerLengthChunk;
 				if (++chunkCount > MaxLengthFieldChunks)
 					throw new InvalidDataException("Length field is too long.");
 			} while ((chunk & LengthChunkContinueBit) != 0);
 		}
 		ulong accumulator = 0;
-		int accumulatedChunks = 0, groupSize = 0, i = 0;
+		int accumulatedChunks = 0;
 		while ((nextByte = inputUtf8.ReadByte()) != -1)
 		{
 			if (char.IsWhiteSpace((char)nextByte))
@@ -107,24 +111,21 @@ public static class Safe85
 			if (chunk == -1)
 				throw new InvalidDataException($"Invalid character in input: \"{(char)nextByte}\".");
 			accumulator = accumulator * 85 + (ulong)chunk;
-			if (++accumulatedChunks == ChunksPerGroup || ++i == ChunksPerGroup)
+			if (++accumulatedChunks == ChunksPerGroup)
 			{
-				groupSize = accumulatedChunks;
-				int bytesToWrite = groupSize == ChunksPerGroup ? BytesPerGroup : groupSize - 1;
-				for (int j = bytesToWrite - 1; j >= 0; j--)
-					outputBinaryData.WriteByte((byte)(accumulator >> (j * 8)));
+				for (int i = 3; i >= 0; i--)
+					outputBinaryData.WriteByte((byte)(accumulator >> (i * 8)));
 				accumulator = 0;
 				accumulatedChunks = 0;
-				i = 0;
 			}
 		}
 		if (accumulatedChunks > 0)
 		{
 			int bytesToWrite = accumulatedChunks - 1;
-			for (int j = bytesToWrite - 1; j >= 0; j--)
-				outputBinaryData.WriteByte((byte)(accumulator >> (j * 8)));
+			for (int i = bytesToWrite - 1; i >= 0; i--)
+				outputBinaryData.WriteByte((byte)(accumulator >> (i * 8)));
 		}
-		if (lengthField && outputBinaryData.Length != expectedLength)
+		if (lengthField && outputBinaryData.Length != length)
 			throw new InvalidDataException("Decoded data length does not match the length field.");
 	}
 	#endregion Decoding
