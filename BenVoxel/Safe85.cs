@@ -59,6 +59,8 @@ public static class Safe85
 			for (int i = 4; i >= ChunksPerGroup - length; i--)
 			{
 				int chunk = (int)(accumulator % 85);
+				if (i == 4 && chunk > 82)
+					throw new InvalidDataException("First chunk cannot be larger than 82.");
 				accumulator /= 85;
 				outputUtf8.WriteByte(EncodingTable[chunk]);
 			}
