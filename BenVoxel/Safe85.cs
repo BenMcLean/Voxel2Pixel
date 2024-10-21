@@ -17,7 +17,8 @@ public static class Safe85
 		BitsPerLengthChunk = 5,
 		LengthChunkContinueBit = 0x20,
 		LengthChunkDataMask = 0x1F,
-		MaxEncodableLength = (1 << 30) - 1; // Maximum length that can be encoded in 6 chunks
+		MaxLengthFieldChunks = 6,
+		MaxEncodableLength = (1 << 30) - 1; // Maximum length that can be encoded in MaxLengthFieldChunks
 	private static readonly ReadOnlyCollection<byte> EncodingTable = Array.AsReadOnly([.. "!$()*+,-.0123456789:;=>@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{|}~"u8]);
 	#endregion Read Only Data
 	#region Encoding
@@ -84,7 +85,7 @@ public static class Safe85
 		int length = 0;
 		if (lengthField)
 		{
-			int shift = 0, chunk;
+			int shift = 0, chunk, chunkCount = 0;
 			do
 			{
 				int nextByte = inputUtf8.ReadByte();
@@ -95,6 +96,8 @@ public static class Safe85
 					throw new InvalidDataException($"Invalid character in length field: \"{(char)nextByte}\".");
 				length |= (chunk & LengthChunkDataMask) << shift;
 				shift += 5;
+				if (++chunkCount > MaxLengthFieldChunks)
+					throw new InvalidDataException("Length field is too long.");
 			} while ((chunk & LengthChunkContinueBit) != 0);
 		}
 		byte[] buffer = new byte[5];
