@@ -82,9 +82,12 @@ public static class Safe85
 			int shift = 0, chunk, chunkCount = 0;
 			do
 			{
-				nextByte = inputUtf8.ReadByte();
-				if (nextByte == -1)
-					throw new InvalidDataException("Unexpected end of stream while reading length field.");
+				do
+				{
+					nextByte = inputUtf8.ReadByte();
+					if (nextByte == -1)
+						throw new InvalidDataException("Unexpected end of stream while reading length field.");
+				} while (char.IsWhiteSpace((char)nextByte));
 				chunk = EncodingTable.IndexOf((byte)nextByte);
 				if (chunk == -1 || chunk >= 64)
 					throw new InvalidDataException($"Invalid character in length field: \"{(char)nextByte}\".");
