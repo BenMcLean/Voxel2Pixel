@@ -35,9 +35,9 @@ public static class Safe85
 	}
 	public static void EncodeSafe85(this Stream inputBinaryData, Stream outputUtf8, bool lengthField = false)
 	{
+		long length = inputBinaryData.Length;
 		if (lengthField)
 		{
-			long length = inputBinaryData.Length;
 			if (length > MaxEncodableLength)
 				throw new ArgumentException($"Input data length exceeds maximum encodable length of {MaxEncodableLength}.");
 			int chunkCount = 1;
@@ -47,16 +47,20 @@ public static class Safe85
 				chunkCount++;
 				tempLength /= 32;
 			}
-			byte[] lengthBuffer = new byte[chunkCount];
 			for (int i = chunkCount - 1; i >= 0; i--)
 			{
 				int chunk = (int)(length & LengthChunkDataMask);
 				if (i > 0) // Set continuation bit for all but the last chunk
 					chunk |= LengthChunkContinueBit;
-				lengthBuffer[chunkCount - 1 - i] = EncodingTable[chunk];
+				outputUtf8.WriteByte(EncodingTable[chunk]);
 				length >>= BitsPerLengthChunk;
 			}
-			outputUtf8.Write(lengthBuffer, 0, chunkCount);
+		}
+		if (inputBinaryData.Length == 0)
+		{
+			if (!lengthField)
+				outputUtf8.WriteByte(EncodingTable[0]); // Write "!" for empty input without length field
+			return;
 		}
 		byte[] inputBuffer = new byte[BytesPerGroup],
 			encodedBuffer = new byte[ChunksPerGroup];
