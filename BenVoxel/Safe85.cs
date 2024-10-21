@@ -22,18 +22,18 @@ public static class Safe85
 	private static readonly ReadOnlyCollection<byte> EncodingTable = Array.AsReadOnly([.. "!$()*+,-.0123456789:;=>@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{|}~"u8]);
 	#endregion Read Only Data
 	#region Encoding
-	public static string Encode(Stream binaryData, bool lengthField = false)
+	public static string EncodeSafe85(this Stream inputBinaryData, bool lengthField = false)
 	{
-		using MemoryStream output = new();
-		Encode(binaryData, output, lengthField);
-		return Encoding.UTF8.GetString(output.ToArray());
+		using MemoryStream outputUtf8 = new();
+		inputBinaryData.EncodeSafe85(outputUtf8, lengthField);
+		return Encoding.UTF8.GetString(outputUtf8.ToArray());
 	}
-	public static string Encode(byte[] binaryData, bool lengthField = false)
+	public static string EncodeSafe85(this byte[] binaryData, bool lengthField = false)
 	{
-		using MemoryStream input = new(binaryData);
-		return Encode(input, lengthField);
+		using MemoryStream inputBinaryData = new(binaryData);
+		return inputBinaryData.EncodeSafe85(lengthField);
 	}
-	public static void Encode(Stream inputBinaryData, Stream outputUtf8, bool lengthField = false)
+	public static void EncodeSafe85(this Stream inputBinaryData, Stream outputUtf8, bool lengthField = false)
 	{
 		if (lengthField)
 		{
@@ -69,18 +69,18 @@ public static class Safe85
 	}
 	#endregion Encoding
 	#region Decoding
-	public static byte[] Decode(Stream utf8, bool lengthField = false)
+	public static byte[] DecodeSafe85(this Stream inputUtf8, bool lengthField = false)
 	{
-		using MemoryStream output = new();
-		Decode(utf8, output, lengthField);
-		return output.ToArray();
+		using MemoryStream outputBinaryData = new();
+		inputUtf8.DecodeSafe85(outputBinaryData, lengthField);
+		return outputBinaryData.ToArray();
 	}
-	public static byte[] Decode(string utf8, bool lengthField = false)
+	public static byte[] DecodeSafe85(this string utf8, bool lengthField = false)
 	{
-		using MemoryStream input = new(Encoding.UTF8.GetBytes(utf8));
-		return Decode(input, lengthField);
+		using MemoryStream inputUtf8 = new(Encoding.UTF8.GetBytes(utf8));
+		return inputUtf8.DecodeSafe85(lengthField);
 	}
-	public static void Decode(Stream inputUtf8, Stream outputBinaryData, bool lengthField = false)
+	public static void DecodeSafe85(this Stream inputUtf8, Stream outputBinaryData, bool lengthField = false)
 	{
 		int length = 0;
 		if (lengthField)
