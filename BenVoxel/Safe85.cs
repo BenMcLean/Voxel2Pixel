@@ -11,7 +11,15 @@ namespace BenVoxel;
 /// </summary>
 public static class Safe85
 {
+	#region Read Only Data
+	private const int BytesPerGroup = 4,
+		ChunksPerGroup = 5,
+		BitsPerLengthChunk = 5,
+		LengthChunkContinueBit = 0x20,
+		LengthChunkDataMask = 0x1F,
+		MaxEncodableLength = (1 << 30) - 1; // Maximum length that can be encoded in 6 chunks
 	private static readonly ReadOnlyCollection<byte> EncodingTable = Array.AsReadOnly([.. "!$()*+,-.0123456789:;=>@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{|}~"u8]);
+	#endregion Read Only Data
 	#region Encoding
 	public static string Encode(Stream binaryData, bool lengthField = false)
 	{
@@ -28,25 +36,27 @@ public static class Safe85
 	{
 		if (lengthField)
 		{
-			int length = (int)inputBinaryData.Length;
+			long length = inputBinaryData.Length;
+			if (length > MaxEncodableLength)
+				throw new ArgumentException($"Input data length exceeds maximum encodable length of {MaxEncodableLength}.");
 			do
 			{
-				int chunk = length & 0x1F;
-				length >>= 5;
+				int chunk = (int)length & LengthChunkDataMask;
+				length >>= BitsPerLengthChunk;
 				if (length > 0)
-					chunk |= 0x20;
+					chunk |= LengthChunkContinueBit;
 				outputUtf8.WriteByte(EncodingTable[chunk]);
 			} while (length > 0);
 		}
 		byte[] buffer = new byte[4];
 		int bytesRead;
-		while ((bytesRead = inputBinaryData.Read(buffer, 0, 4)) > 0)
+		while ((bytesRead = inputBinaryData.Read(buffer, 0, BytesPerGroup)) > 0)
 		{
 			int length = bytesRead;
 			ulong accumulator = 0;
 			for (int i = 0; i < length; i++)
 				accumulator = (accumulator << 8) | buffer[i];
-			for (int i = 4; i >= 5 - length; i--)
+			for (int i = 4; i >= ChunksPerGroup - length; i--)
 			{
 				int chunk = (int)(accumulator % 85);
 				accumulator /= 85;
@@ -81,9 +91,9 @@ public static class Safe85
 				chunk = EncodingTable.IndexOf((byte)nextByte);
 				if (chunk == -1 || chunk >= 64)
 					throw new InvalidDataException($"Invalid character in length field: \"{(char)nextByte}\".");
-				length |= (chunk & 0x1F) << shift;
+				length |= (chunk & LengthChunkDataMask) << shift;
 				shift += 5;
-			} while ((chunk & 0x20) != 0);
+			} while ((chunk & LengthChunkContinueBit) != 0);
 		}
 		byte[] buffer = new byte[5];
 		int bytesRead;
