@@ -41,17 +41,14 @@ public static class Safe85
 			long length = inputBinaryData.Length;
 			if (length > MaxEncodableLength)
 				throw new ArgumentException($"Input data length exceeds maximum encodable length of {MaxEncodableLength}.");
-			Stack<byte> lengthChunks = [];
-			do
+			int chunkCount = length == 0 ? 1 : (int)Math.Ceiling(Math.Log(length + 1, 32));
+			for (int i = chunkCount - 1; i >= 0; i--)
 			{
-				int chunk = (int)length & LengthChunkDataMask;
-				length >>= BitsPerLengthChunk;
-				if (length > 0)
+				int chunk = (int)((length >> (i * BitsPerLengthChunk)) & LengthChunkDataMask);
+				if (i > 0) // Set continuation bit for all but the last chunk
 					chunk |= LengthChunkContinueBit;
-				lengthChunks.Push(EncodingTable[chunk]);
-			} while (length > 0);
-			while (lengthChunks.Count > 0)
-				outputUtf8.WriteByte(lengthChunks.Pop());
+				outputUtf8.WriteByte(EncodingTable[chunk]);
+			}
 		}
 		byte[] buffer = new byte[BytesPerGroup];
 		int bytesRead;
