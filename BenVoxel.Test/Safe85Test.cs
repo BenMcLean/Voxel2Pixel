@@ -268,7 +268,10 @@ public class Safe85Test
 					streamState = Safe85.Safe85StreamState.SrcIsAtEndOfStream;
 					isEnd = true;
 				}
-				status = Safe85.EncodeFeed(ref eSrcIndex, data, encodeByteCount, ref eDstIndex, encodeBuffer, encodeBuffer.Length, isEnd);
+				int prevESrcIndex = eSrcIndex;
+				status = Safe85.EncodeFeed(ref eSrcIndex, data, data.Length, ref eDstIndex, encodeBuffer, packetSize, isEnd);
+				if (eSrcIndex == prevESrcIndex)
+					break;
 				Assert.Equal(Safe85.Safe85Status.Ok, status);
 				status = Safe85.DecodeFeed(ref dSrcIndex, encodeBuffer, eDstIndex, ref dDstIndex, decodeBuffer, decodeBuffer.Length, streamState);
 				Assert.True(status == Safe85.Safe85Status.Ok || status == Safe85.Safe85Status.PartiallyComplete);
@@ -294,7 +297,10 @@ public class Safe85Test
 				Safe85.Safe85StreamState streamState = Safe85.Safe85StreamState.None;
 				if (dSrcEnd >= encodedLength)
 					streamState = Safe85.Safe85StreamState.ExpectDstStreamToEnd | Safe85.Safe85StreamState.DstIsAtEndOfStream;
+				int prevDSrcIndex = dSrcIndex;
 				Safe85.Safe85Status status = Safe85.DecodeFeed(ref dSrcIndex, encodeBuffer, dSrcEnd, ref dDstIndex, decodeBuffer, decodeBuffer.Length, streamState);
+				if (dSrcIndex == prevDSrcIndex)
+					break;
 				Assert.True(status == Safe85.Safe85Status.Ok || status == Safe85.Safe85Status.PartiallyComplete);
 			}
 			Assert.Equal(data, decodeBuffer.Take(length).ToArray());
