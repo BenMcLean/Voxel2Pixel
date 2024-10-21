@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
@@ -59,10 +58,7 @@ public static class Safe85
 				accumulator = (accumulator << 8) | buffer[i];
 			int chunkCount = bytesRead == BytesPerGroup ? ChunksPerGroup : bytesRead + 1;
 			for (int i = chunkCount - 1; i >= 0; i--)
-			{
-				int chunk = (int)(accumulator / Math.Pow(85, i) % 85);
-				outputUtf8.WriteByte(EncodingTable[chunk]);
-			}
+				outputUtf8.WriteByte(EncodingTable[(int)(accumulator / Math.Pow(85, i) % 85)]);
 		}
 	}
 	#endregion Encoding
