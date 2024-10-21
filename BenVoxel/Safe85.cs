@@ -26,7 +26,7 @@ public static class Safe85
 	{
 		using MemoryStream outputUtf8 = new();
 		inputBinaryData.EncodeSafe85(outputUtf8, lengthField);
-		return Encoding.UTF8.GetString(outputUtf8.GetBuffer(), 0, (int)outputUtf8.Length);
+		return Encoding.UTF8.GetString(outputUtf8.ToArray());
 	}
 	public static string EncodeSafe85(this byte[] binaryData, bool lengthField = false)
 	{
