@@ -120,8 +120,11 @@ public static class Safe85
 					throw new InvalidDataException($"Invalid character in input: \"{(char)buffer[i]}\".");
 				accumulator = accumulator * 85 + (ulong)chunk;
 			}
-			int bytesToWrite = bytesRead - 1;
-			for (int i = bytesToWrite - 1; i >= 0; i--)
+			if (bytesRead == 0)
+				throw new InvalidDataException("Unexpected end of input.");
+			if (bytesRead > 5)
+				throw new InvalidDataException("Invalid group size.");
+			for (int i = bytesRead - 1; i >= 0; i--)
 				outputBinaryData.WriteByte((byte)(accumulator >> (i * 8)));
 		}
 		if (lengthField && outputBinaryData.Length != length)
