@@ -57,12 +57,12 @@ public static class Safe85
 			ulong accumulator = 0;
 			for (int i = 0; i < length; i++)
 				accumulator = (accumulator << 8) | buffer[i];
-			for (int i = 4; i >= ChunksPerGroup - length; i--)
+			for (int i = ChunksPerGroup - 1; i >= ChunksPerGroup - length; i--)
 			{
 				int chunk = (int)(accumulator % 85);
-				if (i == 4 && chunk > 82)
-					throw new InvalidDataException("First chunk cannot be larger than 82.");
 				accumulator /= 85;
+				if (i == ChunksPerGroup - 1 && chunk > 82)
+					throw new InvalidDataException("First chunk of a group cannot be larger than 82.");
 				outputUtf8.WriteByte(EncodingTable[chunk]);
 			}
 		}
