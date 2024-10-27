@@ -1,0 +1,132 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"definitions": {
+		"keyedObject": {
+			"propertyNames": {
+				"$ref": "#/definitions/keyType"
+			}
+		},
+		"keyType": {
+			"description": "Identifier limited to 255 characters.",
+			"maxLength": 255,
+			"type": "string"
+		},
+		"metadata": {
+			"properties": {
+				"palettes": {
+					"allOf": [
+						{ "$ref": "#/definitions/keyedObject" },
+						{
+							"additionalProperties": {
+								"items": {
+									"properties": {
+										"description": {
+											"description": "Optional description of the color's purpose and/or material properties. The first line should be a short, human-readable message suitable for display as a tooltip in an editor. Additional lines can contain extra data such as material settings, which editors should preserve even if they don't use it.",
+											"type": "string"
+										},
+										"rgba": {
+											"description": "9-character string starting with # followed by eight hex characters specifying red, green, blue and alpha channels in that order for a 32-bit color.",
+											"pattern": "^#[0-9A-Fa-f]{8}$",
+											"type": "string"
+										}
+									},
+									"required": [ "rgba" ],
+									"type": "object"
+								},
+								"maxItems": 256,
+								"minItems": 1,
+								"type": "array"
+							}
+						}
+					],
+					"description": "Named color palettes. Empty string key indicates the default palette.",
+					"type": "object"
+				},
+				"points": {
+					"allOf": [
+						{ "$ref": "#/definitions/keyedObject" },
+						{
+							"additionalProperties": {
+								"type": "array",
+								"items": {
+									"type": "integer"
+								},
+								"minItems": 3,
+								"maxItems": 3,
+								"description": "32-bit signed integer [x, y, z] arrays."
+							}
+						}
+					],
+					"description": "Named 3D points in space as [x, y, z] arrays. Uses 32-bit signed integers to allow points to be placed outside model bounds (including negative coordinates) for purposes like specifying offsets. Empty string key specifies the origin of the model. If empty string key is specified in neither the model nor global metadata then the origin should be assumed to be at the bottom center of the model calculated as [width >> 1, depth >> 1, 0].",
+					"type": "object"
+				},
+				"properties": {
+					"allOf": [
+						{ "$ref": "#/definitions/keyedObject" },
+						{
+							"additionalProperties": {
+								"type": "string"
+							}
+						}
+					],
+					"description": "Key-value pairs for arbitrary metadata. Empty string key, if present, specifies the scale in meters of each voxel. This can be either a single decimal number applied to all dimensions (e.g. \"1\" for Minecraft-style 1m^3 voxels) or three comma-separated decimal numbers for width, depth, and height respectively (e.g. \"2.4384,2.4384,2.92608\" for Wolfenstein 3-D walls which are 8ft x 8ft x 9.6ft). Values must be positive decimal numbers in C# decimal format. If no empty string key is present then the scale is unspecified.",
+					"type": "object"
+				}
+			},
+			"type": "object"
+		}
+	},
+	"description": "JSON Schema for BenVoxel file format. Uses MagicaVoxel's right-handed coordinate system where: X+ is right/east (width), Y+ is forward/north (depth), and Z+ is up (height).",
+	"properties": {
+		"metadata": {
+			"$ref": "#/definitions/metadata",
+			"description": "Global metadata that applies to all models unless overridden by model-specific metadata."
+		},
+		"models": {
+			"allOf": [
+				{ "$ref": "#/definitions/keyedObject" },
+				{
+					"additionalProperties": {
+						"properties": {
+							"metadata": {
+								"$ref": "#/definitions/metadata"
+							},
+							"geometry": {
+								"properties": {
+									"size": {
+										"description": "16-bit unsigned integer array defining model extents on X, Y, and Z axes. Valid voxel coordinates range from 0 to size-1 for each axis. Any geometry data present at coordinates equal to or greater than the corresponding size value is invalid and may be retained or safely discarded without warning as an implementation detail. For example, in a model of size [5,5,5], coordinates [4,4,4] are valid while coordinates [5,4,4] are out of bounds. Selectively discarding out-of-bounds voxels when deserializing is recommended but not required. However, it is also strongly recommended that files containing such out-of-bounds voxels which are otherwise valid should still be readable.",
+										"items": {
+											"maximum": 65535,
+											"minimum": 1,
+											"type": "integer"
+										},
+										"maxItems": 3,
+										"minItems": 3,
+										"type": "array"
+									},
+									"z85": {
+										"description": "Sparse voxel octree geometry data encoded using Z85 (ZeroMQ Base-85) encoding.",
+										"type": "string"
+									}
+								},
+								"required": [ "size", "z85" ],
+								"type": "object"
+							}
+						},
+						"required": [ "geometry" ],
+						"type": "object"
+					}
+				}
+			],
+			"description": "Named voxel models. Empty string key indicates the default model.",
+			"type": "object"
+		},
+		"version": {
+			"$ref": "#/definitions/keyType",
+			"description": "Version information. Higher alphanumeric comparison indicates higher version."
+		}
+	},
+	"required": [ "version", "models" ],
+	"title": "BenVoxel",
+	"type": "object"
+}
