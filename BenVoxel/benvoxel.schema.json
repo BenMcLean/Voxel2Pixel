@@ -2,6 +2,7 @@
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"definitions": {
 		"keyedObject": {
+			"minProperties": 1,
 			"propertyNames": {
 				"$ref": "#/definitions/keyType"
 			}
@@ -12,6 +13,7 @@
 			"type": "string"
 		},
 		"metadata": {
+			"minProperties": 1,
 			"properties": {
 				"palettes": {
 					"allOf": [
@@ -47,13 +49,13 @@
 						{ "$ref": "#/definitions/keyedObject" },
 						{
 							"additionalProperties": {
-								"type": "array",
+								"description": "32-bit signed integer [x, y, z] arrays.",
 								"items": {
 									"type": "integer"
 								},
-								"minItems": 3,
 								"maxItems": 3,
-								"description": "32-bit signed integer [x, y, z] arrays."
+								"minItems": 3,
+								"type": "array"
 							}
 						}
 					],
@@ -88,9 +90,6 @@
 				{
 					"additionalProperties": {
 						"properties": {
-							"metadata": {
-								"$ref": "#/definitions/metadata"
-							},
 							"geometry": {
 								"properties": {
 									"size": {
@@ -111,6 +110,9 @@
 								},
 								"required": [ "size", "z85" ],
 								"type": "object"
+							},
+							"metadata": {
+								"$ref": "#/definitions/metadata"
 							}
 						},
 						"required": [ "geometry" ],
