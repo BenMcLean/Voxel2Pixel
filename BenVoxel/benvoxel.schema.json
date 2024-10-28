@@ -3,6 +3,7 @@
 	"definitions": {
 		"keyedObject": {
 			"minProperties": 1,
+			"maxProperties": 65535,
 			"propertyNames": {
 				"$ref": "#/definitions/keyType"
 			}
