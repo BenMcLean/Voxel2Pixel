@@ -41,7 +41,7 @@
 							}
 						}
 					],
-					"description": "Named color palettes. Empty string key indicates the default palette.",
+					"description": "Named color palettes. The first color of each palette is a background color used to show transparency while the remaining color palette indices correspond to the payload byte values of 1-255 in the voxel data. Empty string key indicates the default palette.",
 					"type": "object"
 				},
 				"points": {
