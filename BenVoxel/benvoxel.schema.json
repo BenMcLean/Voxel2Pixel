@@ -42,7 +42,7 @@
 							}
 						}
 					],
-					"description": "Named color palettes. The first color of each palette is a background color used to show transparency while the remaining color palette indices correspond to the payload byte values of 1-255 in the voxel data. Empty string key indicates the default palette. In binary format, corresponds to PALC chunks.",
+					"description": "Named color palettes. The first color of each palette is a background color used to show transparency while the remaining color palette indices correspond to the payload byte values of 1-255 in the voxel data. Empty string key indicates the default palette. Corresponds to PALC chunks in the binary format.",
 					"type": "object"
 				},
 				"points": {
@@ -60,7 +60,7 @@
 							}
 						}
 					],
-					"description": "Named 3D points in space as [x, y, z] arrays. Uses 32-bit signed integers to allow points to be placed outside model bounds (including negative coordinates) for purposes like specifying offsets. Empty string key specifies the origin of the model. If empty string key is specified in neither the model nor global metadata then the origin should be assumed to be at the bottom center of the model calculated as [width >> 1, depth >> 1, 0]. In binary format, corresponds to PT3D chunks.",
+					"description": "Named 3D points in space as [x, y, z] arrays. Uses 32-bit signed integers to allow points to be placed outside model bounds (including negative coordinates) for purposes like specifying offsets. Empty string key specifies the origin of the model. If empty string key is specified in neither the model nor global metadata then the origin should be assumed to be at the bottom center of the model calculated as [width >> 1, depth >> 1, 0]. Corresponds to PT3D chunks in the binary format.",
 					"type": "object"
 				},
 				"properties": {
@@ -72,7 +72,7 @@
 							}
 						}
 					],
-					"description": "Key-value pairs for arbitrary metadata. Empty string key, if present, specifies the scale in meters of each voxel. This can be either a single decimal number applied to all dimensions (e.g. \"1\" for Minecraft-style 1m^3 voxels) or three comma-separated decimal numbers for width, depth, and height respectively (e.g. \"2.4384,2.4384,2.92608\" for Wolfenstein 3-D walls which are 8ft x 8ft x 9.6ft). Values must be positive decimal numbers in C# decimal format. If no empty string key is present then the scale is unspecified. In binary format, corresponds to PROP chunks.",
+					"description": "Key-value pairs for arbitrary metadata. Empty string key, if present, specifies the scale in meters of each voxel. This can be either a single decimal number applied to all dimensions (e.g. \"1\" for Minecraft-style 1m^3 voxels) or three comma-separated decimal numbers for width, depth, and height respectively (e.g. \"2.4384,2.4384,2.92608\" for Wolfenstein 3-D walls which are 8ft x 8ft x 9.6ft). Values must be positive decimal numbers in C# decimal format. If no empty string key is present then the scale is unspecified. Corresponds to PROP chunks in the binary format.",
 					"type": "object"
 				}
 			},
@@ -83,7 +83,7 @@
 	"properties": {
 		"metadata": {
 			"$ref": "#/definitions/metadata",
-			"description": "Global metadata that applies to all models unless overridden by model-specific metadata. In binary format, corresponds to DATA chunks."
+			"description": "Global metadata that applies to all models unless overridden by model-specific metadata. Corresponds to DATA chunks in the binary format."
 		},
 		"models": {
 			"allOf": [
@@ -121,7 +121,7 @@
 					}
 				}
 			],
-			"description": "Named voxel models. Empty string key indicates the default model. In binary format, corresponds to MODL chunks.",
+			"description": "Named voxel models. Empty string key indicates the default model. Corresponds to MODL chunks in the binary format.",
 			"type": "object"
 		},
 		"version": {
