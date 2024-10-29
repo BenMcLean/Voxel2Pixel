@@ -8,7 +8,7 @@ There will be no license requirements restricting usage, but this format is desi
 ## File Format Overview
 The BenVoxel standard describes two inter-related file formats. One is a binary format with the extension `.BEN` and the other is a JSON format (recommended extension `.ben.json`) designed to contain all of the same information as the binary format but with the metadata kept human-readable. The JSON format uses Z85 encoding for the geometry data. A game developer might keep their voxel models in the JSON format during development but automatically convert to the binary format (potentially stripping out metadata) as part of their release pipeline.
 
-## Common Elements
+## Definitions
 
 ### Coordinates
 BenVoxel format adopts the MagicaVoxel Z+up right-handed 3D coordinate system where: X+ is right/east (width), Y+ is forward/north (depth), and Z+ is up (height).
@@ -45,7 +45,7 @@ When converting between JSON and binary formats:
 
 ## JSON Format
 ### Schema
-A JSON schema for documentation purposes only (not providing validation for security) is included in the file `benvoxel.schema.json`. All the elements and attributes in the JSON format correspond directly to chunks or fields in the binary format.
+A JSON schema for documentation purposes only (not providing validation for security) is included in the file `benvoxel.schema.json`. All the objects and properties in the JSON format correspond directly to chunks or fields in the binary format.
 
 ### Structure
 The JSON format maps to binary chunks as follows:
@@ -60,7 +60,7 @@ The JSON format maps to binary chunks as follows:
 ### Versioning
 Both the binary and JSON formats include version information. In the binary format, this is a field in the `BENV` chunk. In the JSON format, it's in a root key called "version". The version should be compared alphanumerically as a string, with higher values indicating newer versions.
 
-Implementations should rely on the Version attribute/field within the file for determining BenVoxel format feature support, not the schema version.
+Implementations should rely on the `version` property/field within the file for determining BenVoxel format feature support, not the schema version.
 
 ## Binary Format
 ### Type Definitions
@@ -81,7 +81,7 @@ All chunks have:
 This applies to ***all*** chunks, so this information won't be repeated in the individual chunk type descriptions.
 
 #### `BENV` chunk (Root)
-BenVoxel binary files start with a `BENV` chunk which contains the entire file and corresponds to the root element in the JSON format. It contains:
+BenVoxel binary files start with a `BENV` chunk which contains the entire file and corresponds to the root object in the JSON format. It contains:
 - `Version`: One `KeyString` for version information. Higher alphanumeric comparison indicates higher version.
 - Compressed with L4Z:
   - `Global`: One `DATA` chunk for global metadata. (optional)
