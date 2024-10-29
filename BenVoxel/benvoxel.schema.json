@@ -42,7 +42,7 @@
 							}
 						}
 					],
-					"description": "Named color palettes. The first color of each palette is a background color used to show transparency while the remaining color palette indices correspond to the payload byte values of 1-255 in the voxel data. Empty string key indicates the default palette.",
+					"description": "Named color palettes. The first color of each palette is a background color used to show transparency while the remaining color palette indices correspond to the payload byte values of 1-255 in the voxel data. Empty string key indicates the default palette. In binary format, corresponds to PALC chunks.",
 					"type": "object"
 				},
 				"points": {
@@ -60,7 +60,7 @@
 							}
 						}
 					],
-					"description": "Named 3D points in space as [x, y, z] arrays. Uses 32-bit signed integers to allow points to be placed outside model bounds (including negative coordinates) for purposes like specifying offsets. Empty string key specifies the origin of the model. If empty string key is specified in neither the model nor global metadata then the origin should be assumed to be at the bottom center of the model calculated as [width >> 1, depth >> 1, 0].",
+					"description": "Named 3D points in space as [x, y, z] arrays. Uses 32-bit signed integers to allow points to be placed outside model bounds (including negative coordinates) for purposes like specifying offsets. Empty string key specifies the origin of the model. If empty string key is specified in neither the model nor global metadata then the origin should be assumed to be at the bottom center of the model calculated as [width >> 1, depth >> 1, 0]. In binary format, corresponds to PT3D chunks.",
 					"type": "object"
 				},
 				"properties": {
@@ -72,18 +72,18 @@
 							}
 						}
 					],
-					"description": "Key-value pairs for arbitrary metadata. Empty string key, if present, specifies the scale in meters of each voxel. This can be either a single decimal number applied to all dimensions (e.g. \"1\" for Minecraft-style 1m^3 voxels) or three comma-separated decimal numbers for width, depth, and height respectively (e.g. \"2.4384,2.4384,2.92608\" for Wolfenstein 3-D walls which are 8ft x 8ft x 9.6ft). Values must be positive decimal numbers in C# decimal format. If no empty string key is present then the scale is unspecified.",
+					"description": "Key-value pairs for arbitrary metadata. Empty string key, if present, specifies the scale in meters of each voxel. This can be either a single decimal number applied to all dimensions (e.g. \"1\" for Minecraft-style 1m^3 voxels) or three comma-separated decimal numbers for width, depth, and height respectively (e.g. \"2.4384,2.4384,2.92608\" for Wolfenstein 3-D walls which are 8ft x 8ft x 9.6ft). Values must be positive decimal numbers in C# decimal format. If no empty string key is present then the scale is unspecified. In binary format, corresponds to PROP chunks.",
 					"type": "object"
 				}
 			},
 			"type": "object"
 		}
 	},
-	"description": "JSON Schema for BenVoxel file format. Uses MagicaVoxel's right-handed coordinate system where: X+ is right/east (width), Y+ is forward/north (depth), and Z+ is up (height).",
+	"description": "JSON Schema for BenVoxel file format. Adopts the MagicaVoxel Z+up right-handed 3D coordinate system where: X+ is right/east (width), Y+ is forward/north (depth), and Z+ is up (height).",
 	"properties": {
 		"metadata": {
 			"$ref": "#/definitions/metadata",
-			"description": "Global metadata that applies to all models unless overridden by model-specific metadata."
+			"description": "Global metadata that applies to all models unless overridden by model-specific metadata. In binary format, corresponds to DATA chunks."
 		},
 		"models": {
 			"allOf": [
@@ -121,12 +121,12 @@
 					}
 				}
 			],
-			"description": "Named voxel models. Empty string key indicates the default model.",
+			"description": "Named voxel models. Empty string key indicates the default model. In binary format, corresponds to MODL chunks.",
 			"type": "object"
 		},
 		"version": {
 			"$ref": "#/definitions/keyType",
-			"description": "Version information. Higher alphanumeric comparison indicates higher version."
+			"description": "Version information. Higher alphanumeric comparison indicates higher version. Implementations should rely on this version property for determining BenVoxel format feature support, not the schema version."
 		}
 	},
 	"required": [ "version", "models" ],
