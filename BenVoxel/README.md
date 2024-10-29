@@ -4,33 +4,82 @@ BenVoxel files use sparse voxel octrees to compress voxel model geometry for fil
 The idea is to sacrifice processing speed to get a very small memory storage size for the actual geometry while keeping the implementation relatively simple and also allowing for extensive metadata to be optionally included.
 
 There will be no license requirements restricting usage, but this format is designed for small voxel models intended for video games, animations or other entertainment, artistic or aesthetic use cases, so its design might not be ideal for unrelated academic, scientific, medical, industrial or military applications. Also, be aware that none of this has been engineered to provide security features (such as anti-cheat, checksums or length constraints for overflow protection) so use at your own risk.
-## JSON format
-The BenVoxel standard describes two inter-related file formats. One is a binary format with the extension `.ben` and the other is a JSON format (recommended extension `.ben.json`) designed to contain all of the same information as the binary format but with the metadata kept human-readable. The JSON format uses Z85 encoding for the geometry data. A game developer might keep their voxel models in the JSON format during development but automatically convert to the binary format (potentially stripping out metadata) as part of their release pipeline.
+
+## File Format Overview
+The BenVoxel standard describes two inter-related file formats. One is a binary format with the extension `.BEN` and the other is a JSON format (recommended extension `.ben.json`) designed to contain all of the same information as the binary format but with the metadata kept human-readable. The JSON format uses Z85 encoding for the geometry data. A game developer might keep their voxel models in the JSON format during development but automatically convert to the binary format (potentially stripping out metadata) as part of their release pipeline.
+
+## Common Elements
+
+### Coordinates
+BenVoxel format adopts the MagicaVoxel Z+up right-handed 3D coordinate system where: X+ is right/east (width), Y+ is forward/north (depth), and Z+ is up (height).
+
+### Special Keys
+The empty string key has special meaning in several contexts:
+- In models: Indicates the default model
+- In palettes: Indicates the default palette
+- In points: Specifies the model origin
+- In properties: Specifies the voxel scale
+
+### Format Conversion
+When converting between JSON and binary formats:
+
+1. Keys
+   - JSON keys map directly to KeyString fields in binary format
+   - Empty string keys retain their special meanings across formats
+
+2. Geometry Data
+   - Binary: Direct octree bytes
+   - JSON: Z85-encoded octree bytes
+
+## Implementation Requirements
+
+1. Format Conversion
+   - Implementations must preserve all data during binary-JSON conversion
+   - Missing optional fields should be omitted rather than included as null
+   - Empty string keys must retain their special meaning
+
+2. Validation
+   - Size constraints are mandatory for compatibility
+   - Out-of-bounds voxels may be discarded during reading as an implementation detail
+   - Files containing out-of-bounds voxels should still be readable if otherwise valid
+
+## JSON Format
 ### Schema
 A JSON schema for documentation purposes only (not providing validation for security) is included in the file `benvoxel.schema.json`. All the elements and attributes in the JSON format correspond directly to chunks or fields in the binary format.
+
+### Structure
+The JSON format maps to binary chunks as follows:
+- Root object -> BENV chunk
+- metadata objects -> DATA chunk
+- models objects -> MODL chunks
+- properties objects -> PROP chunk
+- points objects -> PT3D chunk
+- palettes objects -> PALC chunk
+- geometry objects -> SVOG chunk
+
 ### Versioning
 Both the binary and JSON formats include version information. In the binary format, this is a field in the `BENV` chunk. In the JSON format, it's in a root key called "version". The version should be compared alphanumerically as a string, with higher values indicating newer versions.
 
 Implementations should rely on the Version attribute/field within the file for determining BenVoxel format feature support, not the schema version.
-## Binary format
-The BenVoxel binary format is based in concept on the Resource Interchange File Format (RIFF) introduced by Microsoft and IBM in 1991. This type of file is divided into chunks.
-### Type definitions
+
+## Binary Format
+### Type Definitions
 All types are little-endian.
-### Coordinates
-BenVoxel format adopts the MagicaVoxel Z+up right-handed 3D coordinate system where: X+ is right/east (width), Y+ is forward/north (depth), and Z+ is up (height).
+
 ### Strings
 Three string types are used:
 - `FourCC`: 4 byte ASCII chunk identifiers.
 - `KeyString`: Starts with one unsigned byte for length, followed by a UTF-8 string of that length.
 - `ValueString`: Starts with an unsigned 32-bit integer for length, followed by a UTF-8 string of that length.
+
 ### Chunks
 All chunks have:
 - 4 bytes: an ASCII identifier for this chunk (examples are "`FMT `" and "`DATA`"; note the space in "`FMT `").
 - 4 bytes: an unsigned 32-bit integer with the length of this chunk (except this field itself and the chunk identifier).
 - variable-sized field: the chunk data itself, of the size given in the previous field.
-- a pad byte, if the chunk's length is not even. This maintains 16-bit alignment, following the convention established by the RIFF format. While less crucial for modern systems, this is maintained for historical reasons and potential performance benefits on some architectures.
 
 This applies to ***all*** chunks, so this information won't be repeated in the individual chunk type descriptions.
+
 #### `BENV` chunk (Root)
 BenVoxel binary files start with a `BENV` chunk which contains the entire file and corresponds to the root element in the JSON format. It contains:
 - `Version`: One `KeyString` for version information. Higher alphanumeric comparison indicates higher version.
@@ -38,66 +87,80 @@ BenVoxel binary files start with a `BENV` chunk which contains the entire file a
   - `Global`: One `DATA` chunk for global metadata. (optional)
   - `Count`: One unsigned 16-bit integer for the number of models.
   - For each model:
-    - `Name`: One `KeyString` for the model name, expected to be unique among models within the file. Empty string indicates the default model.
+    - `Key`: One `KeyString` for the model key, expected to be unique among models within the file. Empty string indicates the default model.
     - `Model`: One `MODL` chunk.
 
-The size of the compressed data can be determined by subtracting the size of the Version field (the content of its 1-byte length field plus 1) from the `BENV` chunk size.
+The size of the compressed data can be determined by subtracting the size of the Version field (the content of its unsigned 1-byte length field plus 1) from the `BENV` chunk size.
+
 #### `DATA` chunk (Metadata)
 Corresponds to the `metadata` key in the JSON format. It contains:
 - `Properties`: One `PROP` chunk. (optional)
 - `Points`: One `PT3D` chunk. (optional)
 - `Palettes`: One `PALC` chunk. (optional)
+
 #### `MODL` chunk (Model)
 Corresponds to one of the `models` objects in the JSON format. It contains:
 - `Metadata`: One `DATA` chunk. (optional)
 - `Geometry`: One `SVOG` chunk.
+
 #### `PROP` chunk (Properties)
 Key-value pairs for arbitrary metadata.
 
 Corresponds to one or more of the `properties` objects in the JSON format. It contains:
 - `Count`: One unsigned 16-bit integer for the number of properties.
 - For each property:
-  - `Name`: One `KeyString` for the property name, expected to be unique within this chunk. Empty string, if present, specifies the scale in meters of each voxel. This can be either a single decimal number applied to all dimensions (e.g. `1` for Minecraft-style 1m^3 voxels) or three comma-separated decimal numbers for width, depth, and height respectively (e.g. `2.4384,2.4384,2.92608` for Wolfenstein 3-D walls which are 8ft x 8ft x 9.6ft). Scale values must be positive decimal numbers in C# decimal format. If no empty string key is present then the scale is unspecified.
+  - `Key`: One `KeyString` for the property key, expected to be unique within this chunk. Empty string, if present, specifies the scale in meters of each voxel. This can be either a single decimal number applied to all dimensions (e.g. `1` for Minecraft-style 1m^3 voxels) or three comma-separated decimal numbers for width, depth, and height respectively (e.g. `2.4384,2.4384,2.92608` for Wolfenstein 3-D walls which are 8ft x 8ft x 9.6ft). Scale values must be positive decimal numbers in C# decimal format. If no empty string key is present then the scale is unspecified.
   - `Value`: One `ValueString` for the property value.
+
 #### `PT3D` chunk (Points)
 Named 3D points in space as [x, y, z] arrays. Uses 32-bit signed integers to allow points to be placed outside model bounds (including negative coordinates) for purposes like specifying offsets.
 
 Corresponds to one or more of the `points` objects in the JSON format. It contains:
 - `Count`: One unsigned 16-bit integer for the number of points.
 - For each point:
-  - `Name`: One `KeyString` for the point name, expected to be unique within this chunk. Empty string specifies the origin of the model. If empty string is specified in neither the model nor global metadata then the origin should be assumed to be at the bottom center of the model calculated as `[width >> 1, depth >> 1, 0]`.
+  - `Key`: One `KeyString` for the point key, expected to be unique within this chunk. Empty string specifies the origin of the model. If empty string is specified in neither the model nor global metadata then the origin should be assumed to be at the bottom center of the model calculated as `[width >> 1, depth >> 1, 0]`.
   - `Coordinates`: Three signed 32-bit integers for the X, Y and Z coordinates.
+
 #### `PALC` chunk (Palettes)
 Named color palettes.
 
 Corresponds to one or more `palettes` objects in the JSON format. It contains:
 - `Count`: One unsigned 16-bit integer for the number of palettes.
 - For each palette:
-  - `Name`: One `KeyString` for the palette name, expected to be unique within this chunk. Empty string indicates the default palette.
+  - `Key`: One `KeyString` for the palette key, expected to be unique within this chunk. Empty string indicates the default palette.
   - `Length`: One unsigned byte representing the number of colors minus one, with a range of 0-255 representing 1-256 colors. A value of `0` indicates `1` colors, and a value of `255` indicates `256` colors. This range includes the background color at index zero while the rest of the indices correspond to the voxel payload bytes.
   - `Colors`: A series of `Length` 32-bit unsigned integers representing colors in RGBA format. The first color of each palette is a background color used to show transparency while the remaining color palette indices correspond to the payload byte values of 1-255 in the voxel data.
   - `HasDescriptions`: One unsigned byte with value `0` to indicate no descriptions xor any other value to include descriptions.
   - `Descriptions`: A series of `Length` `ValueString`s describing the colors. Only included if `HasDescriptions` is not `0`. A description should stay associated with the color it describes even when the colors or their order changes. The first line should be a short, human-readable message suitable for display as a tooltip in an editor. Additional lines can contain extra data such as material settings, which editors should preserve even if they don't use it.
+
 #### `SVOG` chunk (Geometry)
 Stands for "**S**parse **V**oxel **O**ctree **G**eometry". Corresponds to a `geometry` object in the JSON format. It contains:
 - `Size`: Three unsigned 16-bit integers for the (X) width, (Y) depth and (Z) height of the model. The size coordinates are outside the model and geometry data outside these bounds may be discarded. Dimensions of 0 are invalid. Setting one of the dimensions to the maximum extent of 65,535 will result in assignable coordinates for that axis maxing out at 65,534 to keep the implementation simple.
 - `Geometry`: A variable length series of bytes which encodes the voxels according to the "Geometry" section of this document.
+
 ## Geometry
 Both the JSON and binary formats use this sparse voxel octree format. The JSON format specifically uses Z85 encoding for the geometry data to ensure valid JSON characters, while the binary format does not use Z85 encoding. The binary format prefixes the model size to this geometry data while the JSON format includes the model size in a separate `size` key instead.
+
 ### Voxels
 An individual voxel is defined as having four data elements.
+
 #### Coordinates
 The first three data elements of a voxel are 16-bit unsigned integers for the X, Y and Z coordinates. Negative coordinates and coordinates larger than 65,534 are unsupported.
+
 #### Payload
 The fourth data element of a voxel is the payload of one byte for the index to reference a color or material, where 0 is reserved for an empty or absent voxel, leaving 255 usable colors or materials.
+
 ### Models
 Models (sets of voxels) are limited by 16-bit unsigned integer bounds, so valid geometry can range from coordinates of 0 to 65,534. Model contents are expected to be following the MagicaVoxel convention, which is Z+up, right-handed, so X+ means right/east in width, Y+ means forwards/north in depth and Z+ means up in height. Models are expected to be aligned so that their lowest edge occupies coordinate 0 on all three axes.
+
 #### Octree
 To serialize a model, geometry is structured as a sparse voxel octree for compression, so that the coordinates of the voxels are implied from their positions in the octree and empty spaces are not stored.
 
 The octree has a fixed depth of 16 levels, corresponding to the 16 bits of addressable space in the unsigned 16-bit integer spatial coordinates. The first 15 levels consist of only Branch nodes, while the 16th and final level contains only Leaf nodes.
+
 ### Nodes
 There are four node types, which include one type of branch and three types of leaves.
+
 #### Header
 All nodes start with a 1-byte header, composed of bits from left to right:
 - Header bits 7-6: Node type indicator
@@ -116,23 +179,28 @@ All nodes start with a 1-byte header, composed of bits from left to right:
     - `000`: (-X, -Y, -Z) octant
     - `111`: (+X, +Y, +Z) octant
     - `101`: (+X, -Y, +Z) octant
+
 #### Branch nodes
 In Branch nodes, the header byte is followed by the child nodes. On the 16th (last) level of the octree, all of the children will be Leaf nodes, but the children will all be Branch nodes on every other level.
+
 #### Leaf nodes
 ##### 1-byte payload Leaf nodes
 These represent a 2x2x2 voxel cube of all the same color or material. The header byte is followed by one payload byte, which should fill in all eight voxels.
+
 ##### 2-byte payload Leaf nodes
 These represent a 2x2x2 voxel cube in which all the voxels are the same except one, called the foreground voxel. The header byte is followed by two payload bytes: the first for the foreground voxel and then the second for the background voxels.
 
 The octant/position of the foreground voxel is indicated by coordinates in header bits 5-3, using the same ZYX octant encoding scheme as described in the Header section above.
 
 The background voxel value should be repeated in all octants/positions except for the foreground voxel.
+
 ##### 8-byte payload Leaf nodes
 These represent a 2x2x2 voxel cube of any arbitrary values. In 8-byte Leaf nodes, the header byte is followed by the eight payload bytes of a 2x2x2 voxel cube in ascending Z, Y, X order from left to right, with 0 representing empty voxels.
+
 ### Empty models
 An empty model would be represented by the hexadecimal string `0000000000000000000000000000004000` which is structured as follows:
 - 15 bytes for branch node headers which are all `0`.
 - 1 byte for a leaf node header with hexadecimal value `0x40`
 - 1 byte for the payload of the leaf node
 
-The 15 branch node headers correspond to the 15 levels of the octree needed to address a space with 16-bit integer coordinates (2^16 = 65,536). The 16th level is represented by the leaf node.
+The 15 branch node headers correspond to the 15 levels of the octree needed to address a space with 16-bit integer coordinates (2^16 = 65,536). The 16th level corresponds to the leaf node.
