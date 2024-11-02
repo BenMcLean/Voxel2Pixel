@@ -232,17 +232,13 @@ public class BenVoxelFile : IBinaryWritable
 				json.Add("description", JsonValue.Create(Description));
 			return json;
 		}
-		public static Color FromJson(JsonObject json)
+		public Color(JsonObject json)
 		{
-			string rgba = json["rgba"].GetValue<string>();
-			uint value = uint.Parse(rgba[1..], System.Globalization.NumberStyles.HexNumber);
-			return new Color
-			{
-				Rgba = value,
-				Description = json.TryGetPropertyValue("description", out JsonNode description) ?
-					description.GetValue<string>() : null
-			};
+			Rgba = uint.Parse(json["rgba"].GetValue<string>()[1..], System.Globalization.NumberStyles.HexNumber);
+			if (json.TryGetPropertyValue("description", out JsonNode description))
+				Description = description.GetValue<string>();
 		}
+		public static Color FromJson(JsonObject json) => new(json);
 		#endregion JSON Serialization
 	}
 	public class Model : IBinaryWritable
