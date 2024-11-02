@@ -1,29 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml.Linq;
-using System.Xml.Schema;
-using System.Xml;
-using System.Xml.Serialization;
 using System.IO;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using K4os.Compression.LZ4.Streams;
 
 namespace BenVoxel;
 
-[XmlRoot("BenVoxel")]
-public class BenVoxelFile : IBinaryWritable, IXmlSerializable
+public class BenVoxelFile : IBinaryWritable
 {
 	public const string Version = "0.1";
 	#region Nested classes
-	public class Metadata : IBinaryWritable, IXmlSerializable
+	public class Metadata : IBinaryWritable
 	{
 		#region Metadata
 		public readonly SanitizedKeyDictionary<string> Properties = [];
 		public readonly SanitizedKeyDictionary<Point3D> Points = [];
 		public readonly SanitizedKeyDictionary<Color[]> Palettes = [];
 		/// <summary>
-		/// Gets and sets palletes without descriptions
+		/// Gets and sets palettes without descriptions
 		/// </summary>
 		public uint[] this[string paletteName]
 		{
@@ -130,47 +127,93 @@ public class BenVoxelFile : IBinaryWritable, IXmlSerializable
 			}
 		}
 		#endregion IBinaryWritable
-		#region IXmlSerializable
-		public XmlSchema GetSchema() => null;
-		public void ReadXml(XmlReader reader)
+		#region JSON Serialization
+		public JsonObject ToJson()
 		{
-			XElement root = reader.ReadCurrentElement();
-			foreach (XElement property in root.Elements("Property"))
-				Properties[property.Attribute("Name").Value] = property.Value;
-			foreach (XElement point in root.Elements("Point"))
-				Points[point.Attribute("Name").Value] = new Point3D(
-					X: Convert.ToInt32(point.Attribute("X").Value),
-					Y: Convert.ToInt32(point.Attribute("Y").Value),
-					Z: Convert.ToInt32(point.Attribute("Z").Value));
-			foreach (XElement palette in root.Elements("Palette"))
-				Palettes[palette.Attribute("Name").Value] = [.. palette.Elements("Color").Take(256).Select(e =>
+			JsonObject metadata = new();
+			if (Properties.Any())
+			{
+				JsonObject properties = new();
+				foreach (KeyValuePair<string, string> property in Properties)
+					properties.Add(property.Key, JsonValue.Create(property.Value));
+				metadata.Add("properties", properties);
+			}
+			if (Points.Any())
+			{
+				JsonObject points = new();
+				foreach (KeyValuePair<string, Point3D> point in Points)
 				{
-					Color color = new();
-					color.ReadXml(e.CreateReader());
-					return color;
-				})];
+					int[] coordinates = [point.Value.X, point.Value.Y, point.Value.Z];
+					points.Add(point.Key, JsonSerializer.SerializeToNode(coordinates));
+				}
+				metadata.Add("points", points);
+			}
+			if (Palettes.Any())
+			{
+				JsonObject palettes = new();
+				foreach (KeyValuePair<string, Color[]> palette in Palettes)
+				{
+					JsonArray colors = new();
+					foreach (Color color in palette.Value)
+					{
+						JsonObject colorObject = new()
+						{
+							{ "rgba", JsonValue.Create($"#{color.Argb:X8}") }
+						};
+						if (!string.IsNullOrWhiteSpace(color.Description))
+							colorObject.Add("description", JsonValue.Create(color.Description));
+						colors.Add(colorObject);
+					}
+					palettes.Add(palette.Key, colors);
+				}
+				metadata.Add("palettes", palettes);
+			}
+			return metadata;
 		}
-		public void WriteXml(XmlWriter writer) => ToXElement().WriteContentTo(writer);
-		public static explicit operator XElement(Metadata source) => source.ToXElement();
-		public XElement ToXElement() => new(XName.Get("Metadata"),
-			Properties.Select(property =>
-				new XElement(XName.Get("Property"),
-					new XAttribute(XName.Get("Name"), property.Key),
-					property.Value)),
-			Points.Select(point =>
-				new XElement(XName.Get("Point"),
-					new XAttribute(XName.Get("Name"), point.Key),
-					new XAttribute(XName.Get("X"), point.Value.X),
-					new XAttribute(XName.Get("Y"), point.Value.Y),
-					new XAttribute(XName.Get("Z"), point.Value.Z))),
-			Palettes.Select(palette =>
-				new XElement(XName.Get("Palette"),
-					new XAttribute(XName.Get("Name"), palette.Key),
-					palette.Value.Take(256).ToXElements()))
-			);
-		#endregion IXmlSerializable
+		public static Metadata FromJson(JsonObject json)
+		{
+			Metadata metadata = new();
+			if (json.TryGetPropertyValue("properties", out JsonNode propertiesNode))
+			{
+				JsonObject properties = propertiesNode.AsObject();
+				foreach (KeyValuePair<string, JsonNode> property in properties)
+					metadata.Properties[property.Key] = property.Value.GetValue<string>();
+			}
+			if (json.TryGetPropertyValue("points", out JsonNode pointsNode))
+			{
+				JsonObject points = pointsNode.AsObject();
+				foreach (KeyValuePair<string, JsonNode> point in points)
+				{
+					int[] coordinates = JsonSerializer.Deserialize<int[]>(point.Value);
+					metadata.Points[point.Key] = new Point3D(coordinates[0], coordinates[1], coordinates[2]);
+				}
+			}
+			if (json.TryGetPropertyValue("palettes", out JsonNode palettesNode))
+			{
+				JsonObject palettes = palettesNode.AsObject();
+				foreach (KeyValuePair<string, JsonNode> palette in palettes)
+				{
+					JsonArray colors = palette.Value.AsArray();
+					metadata.Palettes[palette.Key] = new Color[colors.Count];
+					for (int i = 0; i < colors.Count; i++)
+					{
+						JsonObject colorObject = colors[i].AsObject();
+						string rgba = colorObject["rgba"].GetValue<string>();
+						uint argb = uint.Parse(rgba[1..], System.Globalization.NumberStyles.HexNumber);
+						metadata.Palettes[palette.Key][i] = new Color
+						{
+							Argb = argb,
+							Description = colorObject.TryGetPropertyValue("description", out JsonNode description) ?
+								description.GetValue<string>() : null
+						};
+					}
+				}
+			}
+			return metadata;
+		}
+		#endregion JSON Serialization
 	}
-	public class Color : IXmlSerializable
+	public class Color
 	{
 		#region Color
 		public uint Argb { get; set; } = 0u;
@@ -178,26 +221,8 @@ public class BenVoxelFile : IBinaryWritable, IXmlSerializable
 		public Color() { }
 		public static IEnumerable<Color> Colors(IEnumerable<uint> colors) => colors.Select(argb => new Color { Argb = argb, });
 		#endregion Color
-		#region IXmlSerializable
-		public XmlSchema GetSchema() => null;
-		public void ReadXml(XmlReader reader)
-		{
-			XElement root = reader.ReadCurrentElement();
-			Argb = uint.Parse(
-				s: root.Attribute("Argb").Value,
-				style: System.Globalization.NumberStyles.HexNumber);
-			if (root.Attribute("Description") is XAttribute description)
-				Description = description.Value;
-		}
-		public void WriteXml(XmlWriter writer) => ToXElement().WriteContentTo(writer);
-		public static explicit operator XElement(Color source) => source.ToXElement();
-		public XElement ToXElement() => new(XName.Get("Color"),
-				new XAttribute(XName.Get("Argb"), Argb.ToString("X8")),
-				string.IsNullOrWhiteSpace(Description) ? null : new XAttribute(XName.Get("Description"), Description)
-			);
-		#endregion IXmlSerializable
 	}
-	public class Model : IBinaryWritable, IXmlSerializable
+	public class Model : IBinaryWritable
 	{
 		#region Model
 		public Metadata Metadata = null;
@@ -229,19 +254,43 @@ public class BenVoxelFile : IBinaryWritable, IXmlSerializable
 			Write(writer.BaseStream);
 		}
 		#endregion IBinaryWritable
-		#region IXmlSerializable
-		public XmlSchema GetSchema() => null;
-		public void ReadXml(XmlReader reader)
+		#region JSON Serialization
+		public JsonObject ToJson()
 		{
-			XElement root = reader.ReadCurrentElement();
-			if (root.Element("Metadata") is XElement metadata)
-				Metadata = (Metadata)new XmlSerializer(typeof(Metadata)).Deserialize(metadata.CreateReader());
-			Geometry = (SvoModel)new XmlSerializer(typeof(SvoModel)).Deserialize(root.Element("Geometry").CreateReader());
+			JsonObject model = new();
+			if (Metadata != null)
+				model.Add("metadata", Metadata.ToJson());
+			if (Geometry != null)
+			{
+				JsonObject geometry = new()
+				{
+					{ "size", JsonSerializer.SerializeToNode(new[] { Geometry.SizeX, Geometry.SizeY, Geometry.SizeZ }) },
+					{ "z85", JsonValue.Create(Geometry.Z85()) }
+				};
+				model.Add("geometry", geometry);
+			}
+			return model;
 		}
-		public void WriteXml(XmlWriter writer) => ToXElement().WriteContentTo(writer);
-		public static explicit operator XElement(Model source) => source.ToXElement();
-		public XElement ToXElement() => new(XName.Get("Model"), Metadata?.ToXElement(), (XElement)Geometry);
-		#endregion IXmlSerializable
+		public static Model FromJson(JsonObject json)
+		{
+			Model model = new();
+			if (json.TryGetPropertyValue("metadata", out JsonNode metadataNode))
+				model.Metadata = Metadata.FromJson(metadataNode.AsObject());
+			if (json.TryGetPropertyValue("geometry", out JsonNode geometryNode))
+			{
+				JsonObject geometry = geometryNode.AsObject();
+				int[] size = JsonSerializer.Deserialize<int[]>(geometry["size"]);
+				string z85 = geometry["z85"].GetValue<string>();
+				model.Geometry = new SvoModel(
+					z85: z85,
+					sizeX: (ushort)size[0],
+					sizeY: (ushort)size[1],
+					sizeZ: (ushort)size[2]
+				);
+			}
+			return model;
+		}
+		#endregion JSON Serialization
 	}
 	#endregion Nested classes
 	#region BenVoxelFile
@@ -302,29 +351,44 @@ public class BenVoxelFile : IBinaryWritable, IXmlSerializable
 		writer.BaseStream.Position = position;
 	}
 	#endregion IBinaryWritable
-	#region IXmlSerializable
-	public XmlSchema GetSchema() => null;
-	public void ReadXml(XmlReader reader)
+	#region JSON Serialization
+	public string ToJson()
 	{
-		XElement root = reader.ReadCurrentElement();
-		if (root.Element("Metadata") is XElement global)
-			Global = (Metadata)new XmlSerializer(typeof(Metadata)).Deserialize(global.CreateReader());
-		XmlSerializer modelSerializer = new(typeof(Model));
-		foreach (XElement model in root.Elements("Model"))
-			Models[model.Attribute("Name").Value] = (Model)modelSerializer.Deserialize(model.CreateReader());
-	}
-	public void WriteXml(XmlWriter writer) => ToXElement().WriteContentTo(writer);
-	public static explicit operator XElement(BenVoxelFile source) => source.ToXElement();
-	public XElement ToXElement() => new(XName.Get("BenVoxel"),
-		new XAttribute(XName.Get("Version"), Version),
-		(XElement)Global,
-		Models.Select(model =>
+		JsonObject root = new()
 		{
-			XElement xModel = (XElement)model.Value;
-			xModel.Add(new XAttribute(XName.Get("Name"), model.Key));
-			return xModel;
-		}));
-	#endregion IXmlSerializable
+			{ "version", JsonValue.Create(Version) }
+		};
+		if (Global != null)
+			root.Add("metadata", Global.ToJson());
+		if (Models.Any())
+		{
+			JsonObject models = new();
+			foreach (KeyValuePair<string, Model> model in Models)
+				models.Add(model.Key, model.Value.ToJson());
+			root.Add("models", models);
+		}
+		return JsonSerializer.Serialize(root, new JsonSerializerOptions
+		{
+			WriteIndented = true
+		});
+	}
+	public static BenVoxelFile FromJson(string json)
+	{
+		JsonObject root = JsonSerializer.Deserialize<JsonObject>(json);
+		BenVoxelFile file = new();
+		// Version is required by schema
+		string version = root["version"].GetValue<string>();
+		if (version != Version)
+			throw new InvalidDataException($"Unsupported version: {version}. Expected: {Version}");
+		if (root.TryGetPropertyValue("metadata", out JsonNode metadataNode))
+			file.Global = Metadata.FromJson(metadataNode.AsObject());
+		// Models are required by schema
+		JsonObject models = root["models"].AsObject();
+		foreach (KeyValuePair<string, JsonNode> model in models)
+			file.Models[model.Key] = Model.FromJson(model.Value.AsObject());
+		return file;
+	}
+	#endregion JSON Serialization
 	#region Utilities
 	public static string FourCC(BinaryReader reader) => Encoding.UTF8.GetString(reader.ReadBytes(4));
 	public static string ReadKey(BinaryReader reader) => Encoding.UTF8.GetString(reader.ReadBytes(reader.ReadByte()));
