@@ -4,8 +4,8 @@ using System.Linq;
 using System.IO;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using K4os.Compression.LZ4.Streams;
+using System.Text.Json.Nodes;
 
 namespace BenVoxel;
 
@@ -74,6 +74,7 @@ public class BenVoxelFile : IBinaryWritable
 			if (!valid)
 				reader.BaseStream.Position -= 4;
 		}
+		public bool Any() => Properties.Any() || Points.Any() || Palettes.Any();
 		#endregion Metadata
 		#region IBinaryWritable
 		public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: Encoding.UTF8, leaveOpen: true));
@@ -130,17 +131,17 @@ public class BenVoxelFile : IBinaryWritable
 		#region JSON Serialization
 		public JsonObject ToJson()
 		{
-			JsonObject metadata = new();
+			JsonObject metadata = [];
 			if (Properties.Any())
 			{
-				JsonObject properties = new();
+				JsonObject properties = [];
 				foreach (KeyValuePair<string, string> property in Properties)
 					properties.Add(property.Key, JsonValue.Create(property.Value));
 				metadata.Add("properties", properties);
 			}
 			if (Points.Any())
 			{
-				JsonObject points = new();
+				JsonObject points = [];
 				foreach (KeyValuePair<string, Point3D> point in Points)
 				{
 					int[] coordinates = [point.Value.X, point.Value.Y, point.Value.Z];
@@ -150,10 +151,10 @@ public class BenVoxelFile : IBinaryWritable
 			}
 			if (Palettes.Any())
 			{
-				JsonObject palettes = new();
+				JsonObject palettes = [];
 				foreach (KeyValuePair<string, Color[]> palette in Palettes)
 				{
-					JsonArray colors = new();
+					JsonArray colors = [];
 					foreach (Color color in palette.Value)
 					{
 						JsonObject colorObject = new()
@@ -257,7 +258,7 @@ public class BenVoxelFile : IBinaryWritable
 		#region JSON Serialization
 		public JsonObject ToJson()
 		{
-			JsonObject model = new();
+			JsonObject model = [];
 			if (Metadata != null)
 				model.Add("metadata", Metadata.ToJson());
 			if (Geometry != null)
@@ -362,7 +363,7 @@ public class BenVoxelFile : IBinaryWritable
 			root.Add("metadata", Global.ToJson());
 		if (Models.Any())
 		{
-			JsonObject models = new();
+			JsonObject models = [];
 			foreach (KeyValuePair<string, Model> model in Models)
 				models.Add(model.Key, model.Value.ToJson());
 			root.Add("models", models);
