@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using K4os.Compression.LZ4.Streams;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 
 namespace BenVoxel;
 
@@ -24,7 +25,7 @@ public class BenVoxelFile : IBinaryWritable
 		/// </summary>
 		public uint[] this[string paletteName]
 		{
-			get => [.. Palettes[paletteName].Select(color => color.Argb)];
+			get => [.. Palettes[paletteName].Select(color => color.Rgba)];
 			set => Palettes[paletteName] = [.. Color.Colors(value.Take(256))];
 		}
 		public Metadata() { }
@@ -60,9 +61,9 @@ public class BenVoxelFile : IBinaryWritable
 							string key = ReadKey(msReader);
 							uint[] colors = [.. Enumerable.Range(0, msReader.ReadByte() + 1).Select(i => msReader.ReadUInt32())];
 							bool hasDescriptions = msReader.ReadByte() != 0;
-							Palettes[key] = [.. colors.Select(argb => new Color
+							Palettes[key] = [.. colors.Select(rgba => new Color
 							{
-								Argb = argb,
+								Rgba = rgba,
 								Description = hasDescriptions ? ReadString(msReader) : null,
 							})];
 						}
@@ -114,7 +115,7 @@ public class BenVoxelFile : IBinaryWritable
 					WriteKey(msWriter, palette.Key);
 					writer.Write((byte)palette.Value.Length - 1);
 					foreach (Color color in palette.Value)
-						writer.Write(color.Argb);
+						writer.Write(color.Rgba);
 					if (palette.Value.Any(color => !string.IsNullOrWhiteSpace(color.Description)))
 					{
 						writer.Write((byte)1);
@@ -159,7 +160,7 @@ public class BenVoxelFile : IBinaryWritable
 					{
 						JsonObject colorObject = new()
 						{
-							{ "rgba", JsonValue.Create($"#{color.Argb:X8}") }
+							{ "rgba", JsonValue.Create($"#{color.Rgba:X8}") }
 						};
 						if (!string.IsNullOrWhiteSpace(color.Description))
 							colorObject.Add("description", JsonValue.Create(color.Description));
@@ -199,13 +200,12 @@ public class BenVoxelFile : IBinaryWritable
 					for (int i = 0; i < colors.Count; i++)
 					{
 						JsonObject colorObject = colors[i].AsObject();
-						string rgba = colorObject["rgba"].GetValue<string>();
-						uint argb = uint.Parse(rgba[1..], System.Globalization.NumberStyles.HexNumber);
 						metadata.Palettes[palette.Key][i] = new Color
 						{
-							Argb = argb,
+							Rgba = uint.Parse(colorObject["rgba"].GetValue<string>()[1..], System.Globalization.NumberStyles.HexNumber),
 							Description = colorObject.TryGetPropertyValue("description", out JsonNode description) ?
-								description.GetValue<string>() : null
+								description.GetValue<string>()
+								: null,
 						};
 					}
 				}
@@ -216,12 +216,34 @@ public class BenVoxelFile : IBinaryWritable
 	}
 	public class Color
 	{
-		#region Color
-		public uint Argb { get; set; } = 0u;
+		#region Data
+		public uint Rgba { get; set; } = 0u;
 		public string Description { get; set; } = null;
+		#endregion Data
+		#region Color
 		public Color() { }
-		public static IEnumerable<Color> Colors(IEnumerable<uint> colors) => colors.Select(argb => new Color { Argb = argb, });
+		public static IEnumerable<Color> Colors(IEnumerable<uint> colors) => colors.Select(rgba => new Color { Rgba = rgba, });
 		#endregion Color
+		#region JSON Serialization
+		public JsonObject ToJson()
+		{
+			JsonObject json = new() { { "rgba", JsonValue.Create($"#{Rgba:X8}") } };
+			if (!string.IsNullOrWhiteSpace(Description))
+				json.Add("description", JsonValue.Create(Description));
+			return json;
+		}
+		public static Color FromJson(JsonObject json)
+		{
+			string rgba = json["rgba"].GetValue<string>();
+			uint value = uint.Parse(rgba[1..], System.Globalization.NumberStyles.HexNumber);
+			return new Color
+			{
+				Rgba = value,
+				Description = json.TryGetPropertyValue("description", out JsonNode description) ?
+					description.GetValue<string>() : null
+			};
+		}
+		#endregion JSON Serialization
 	}
 	public class Model : IBinaryWritable
 	{
