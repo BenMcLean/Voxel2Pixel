@@ -6,7 +6,6 @@ using System.Text;
 using System.Text.Json;
 using K4os.Compression.LZ4.Streams;
 using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
 
 namespace BenVoxel;
 
@@ -16,16 +15,18 @@ public class BenVoxelFile : IBinaryWritable
 	#region Nested classes
 	public class Metadata : IBinaryWritable
 	{
-		#region Metadata
+		#region Data
 		public readonly SanitizedKeyDictionary<string> Properties = [];
 		public readonly SanitizedKeyDictionary<Point3D> Points = [];
 		public readonly SanitizedKeyDictionary<Color[]> Palettes = [];
+		#endregion Data
+		#region Metadata
 		/// <summary>
 		/// Gets and sets palettes without descriptions
 		/// </summary>
 		public uint[] this[string paletteName]
 		{
-			get => [.. Palettes[paletteName].Select(color => color.Rgba)];
+			get => [.. Palettes[paletteName].Take(256).Select(color => color.Rgba)];
 			set => Palettes[paletteName] = [.. Color.Colors(value.Take(256))];
 		}
 		public Metadata() { }
@@ -74,6 +75,18 @@ public class BenVoxelFile : IBinaryWritable
 				}
 			if (!valid)
 				reader.BaseStream.Position -= 4;
+		}
+		public Metadata(JsonObject json)
+		{
+			if (json.TryGetPropertyValue("properties", out JsonNode properties))
+				foreach (KeyValuePair<string, JsonNode> property in properties.AsObject())
+					Properties[property.Key] = property.Value.GetValue<string>();
+			if (json.TryGetPropertyValue("points", out JsonNode points))
+				foreach (KeyValuePair<string, JsonNode> point in points.AsObject())
+					Points[point.Key] = new Point3D(JsonSerializer.Deserialize<int[]>(point.Value));
+			if (json.TryGetPropertyValue("palettes", out JsonNode palettes))
+				foreach (KeyValuePair<string, JsonNode> palette in palettes.AsObject())
+					Palettes[palette.Key] = [.. palette.Value.AsArray().Take(256).Select(color => new Color(color.AsObject()))];
 		}
 		public bool Any() => Properties.Any() || Points.Any() || Palettes.Any();
 		#endregion Metadata
@@ -129,90 +142,21 @@ public class BenVoxelFile : IBinaryWritable
 			}
 		}
 		#endregion IBinaryWritable
-		#region JSON Serialization
+		#region JSON
 		public JsonObject ToJson()
 		{
+			if (!Any()) return null;
 			JsonObject metadata = [];
 			if (Properties.Any())
-			{
-				JsonObject properties = [];
-				foreach (KeyValuePair<string, string> property in Properties)
-					properties.Add(property.Key, JsonValue.Create(property.Value));
-				metadata.Add("properties", properties);
-			}
+				metadata.Add("properties", new JsonObject(Properties.Select(property => new KeyValuePair<string, JsonNode>(property.Key, JsonValue.Create(property.Value)))));
 			if (Points.Any())
-			{
-				JsonObject points = [];
-				foreach (KeyValuePair<string, Point3D> point in Points)
-				{
-					int[] coordinates = [point.Value.X, point.Value.Y, point.Value.Z];
-					points.Add(point.Key, JsonSerializer.SerializeToNode(coordinates));
-				}
-				metadata.Add("points", points);
-			}
+				metadata.Add("points", new JsonObject(Points.Select(point => new KeyValuePair<string, JsonNode>(point.Key, JsonSerializer.SerializeToNode(point.Value.ToArray())))));
 			if (Palettes.Any())
-			{
-				JsonObject palettes = [];
-				foreach (KeyValuePair<string, Color[]> palette in Palettes)
-				{
-					JsonArray colors = [];
-					foreach (Color color in palette.Value)
-					{
-						JsonObject colorObject = new()
-						{
-							{ "rgba", JsonValue.Create($"#{color.Rgba:X8}") }
-						};
-						if (!string.IsNullOrWhiteSpace(color.Description))
-							colorObject.Add("description", JsonValue.Create(color.Description));
-						colors.Add(colorObject);
-					}
-					palettes.Add(palette.Key, colors);
-				}
-				metadata.Add("palettes", palettes);
-			}
+				metadata.Add("palettes", new JsonObject(Palettes.Select(palette => new KeyValuePair<string, JsonNode>(palette.Key, new JsonArray([.. palette.Value.Take(256).Select(color => (JsonNode)color.ToJson())])))));
 			return metadata;
 		}
-		public static Metadata FromJson(JsonObject json)
-		{
-			Metadata metadata = new();
-			if (json.TryGetPropertyValue("properties", out JsonNode propertiesNode))
-			{
-				JsonObject properties = propertiesNode.AsObject();
-				foreach (KeyValuePair<string, JsonNode> property in properties)
-					metadata.Properties[property.Key] = property.Value.GetValue<string>();
-			}
-			if (json.TryGetPropertyValue("points", out JsonNode pointsNode))
-			{
-				JsonObject points = pointsNode.AsObject();
-				foreach (KeyValuePair<string, JsonNode> point in points)
-				{
-					int[] coordinates = JsonSerializer.Deserialize<int[]>(point.Value);
-					metadata.Points[point.Key] = new Point3D(coordinates[0], coordinates[1], coordinates[2]);
-				}
-			}
-			if (json.TryGetPropertyValue("palettes", out JsonNode palettesNode))
-			{
-				JsonObject palettes = palettesNode.AsObject();
-				foreach (KeyValuePair<string, JsonNode> palette in palettes)
-				{
-					JsonArray colors = palette.Value.AsArray();
-					metadata.Palettes[palette.Key] = new Color[colors.Count];
-					for (int i = 0; i < colors.Count; i++)
-					{
-						JsonObject colorObject = colors[i].AsObject();
-						metadata.Palettes[palette.Key][i] = new Color
-						{
-							Rgba = uint.Parse(colorObject["rgba"].GetValue<string>()[1..], System.Globalization.NumberStyles.HexNumber),
-							Description = colorObject.TryGetPropertyValue("description", out JsonNode description) ?
-								description.GetValue<string>()
-								: null,
-						};
-					}
-				}
-			}
-			return metadata;
-		}
-		#endregion JSON Serialization
+		public static Metadata FromJson(JsonObject json) => new Metadata(json) is Metadata metadata && metadata.Any() ? metadata : null;
+		#endregion JSON
 	}
 	public class Color
 	{
@@ -222,9 +166,15 @@ public class BenVoxelFile : IBinaryWritable
 		#endregion Data
 		#region Color
 		public Color() { }
+		public Color(JsonObject json)
+		{
+			Rgba = uint.Parse(json["rgba"].GetValue<string>()[1..], System.Globalization.NumberStyles.HexNumber);
+			if (json.TryGetPropertyValue("description", out JsonNode description))
+				Description = description.GetValue<string>();
+		}
 		public static IEnumerable<Color> Colors(IEnumerable<uint> colors) => colors.Select(rgba => new Color { Rgba = rgba, });
 		#endregion Color
-		#region JSON Serialization
+		#region JSON
 		public JsonObject ToJson()
 		{
 			JsonObject json = new() { { "rgba", JsonValue.Create($"#{Rgba:X8}") } };
@@ -232,20 +182,16 @@ public class BenVoxelFile : IBinaryWritable
 				json.Add("description", JsonValue.Create(Description));
 			return json;
 		}
-		public Color(JsonObject json)
-		{
-			Rgba = uint.Parse(json["rgba"].GetValue<string>()[1..], System.Globalization.NumberStyles.HexNumber);
-			if (json.TryGetPropertyValue("description", out JsonNode description))
-				Description = description.GetValue<string>();
-		}
 		public static Color FromJson(JsonObject json) => new(json);
-		#endregion JSON Serialization
+		#endregion JSON
 	}
 	public class Model : IBinaryWritable
 	{
-		#region Model
+		#region Data
 		public Metadata Metadata = null;
 		public SvoModel Geometry = null;
+		#endregion Data
+		#region Model
 		public Model() { }
 		public Model(Stream stream) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true)) { }
 		public Model(BinaryReader reader)
@@ -260,6 +206,21 @@ public class BenVoxelFile : IBinaryWritable
 				throw new IOException("Couldn't parse model geometry!");
 			Geometry = new(new MemoryStream(reader.ReadBytes((int)reader.ReadUInt32())));
 		}
+		public Model(JsonObject json)
+		{
+			if (json.TryGetPropertyValue("metadata", out JsonNode metadataNode))
+				Metadata = new Metadata(metadataNode.AsObject());
+			if (!json.TryGetPropertyValue("geometry", out JsonNode geometryNode))
+				throw new InvalidDataException("Missing geometry data.");
+			JsonObject geometry = geometryNode.AsObject();
+			int[] size = JsonSerializer.Deserialize<int[]>(geometry["size"]);
+			Geometry = new SvoModel(
+				z85: geometry["z85"].GetValue<string>(),
+				sizeX: (ushort)size[0],
+				sizeY: (ushort)size[1],
+				sizeZ: (ushort)size[2]
+			);
+		}
 		#endregion Model
 		#region IBinaryWritable
 		public void Write(Stream stream)
@@ -273,48 +234,30 @@ public class BenVoxelFile : IBinaryWritable
 			Write(writer.BaseStream);
 		}
 		#endregion IBinaryWritable
-		#region JSON Serialization
+		#region JSON
 		public JsonObject ToJson()
 		{
 			JsonObject model = [];
-			if (Metadata != null)
-				model.Add("metadata", Metadata.ToJson());
-			if (Geometry != null)
+			if (Metadata?.ToJson() is JsonObject metadata)
+				model.Add("metadata", metadata);
+			if (Geometry is null)
+				throw new NullReferenceException("Missing geometry data.");
+			model.Add("geometry", new JsonObject
 			{
-				JsonObject geometry = new()
-				{
-					{ "size", JsonSerializer.SerializeToNode(new[] { Geometry.SizeX, Geometry.SizeY, Geometry.SizeZ }) },
-					{ "z85", JsonValue.Create(Geometry.Z85()) }
-				};
-				model.Add("geometry", geometry);
-			}
+				{ "size", JsonSerializer.SerializeToNode(new[] { Geometry.SizeX, Geometry.SizeY, Geometry.SizeZ }) },
+				{ "z85", JsonValue.Create(Geometry.Z85()) },
+			});
 			return model;
 		}
-		public static Model FromJson(JsonObject json)
-		{
-			Model model = new();
-			if (json.TryGetPropertyValue("metadata", out JsonNode metadataNode))
-				model.Metadata = Metadata.FromJson(metadataNode.AsObject());
-			if (json.TryGetPropertyValue("geometry", out JsonNode geometryNode))
-			{
-				JsonObject geometry = geometryNode.AsObject();
-				int[] size = JsonSerializer.Deserialize<int[]>(geometry["size"]);
-				string z85 = geometry["z85"].GetValue<string>();
-				model.Geometry = new SvoModel(
-					z85: z85,
-					sizeX: (ushort)size[0],
-					sizeY: (ushort)size[1],
-					sizeZ: (ushort)size[2]
-				);
-			}
-			return model;
-		}
-		#endregion JSON Serialization
+		public static Model FromJson(JsonObject json) => new(json);
+		#endregion JSON
 	}
 	#endregion Nested classes
-	#region BenVoxelFile
+	#region Data
 	public Metadata Global = null;
 	public readonly SanitizedKeyDictionary<Model> Models = [];
+	#endregion Data
+	#region BenVoxelFile
 	public BenVoxelFile() { }
 	public BenVoxelFile(Stream stream) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true)) { }
 	public BenVoxelFile(BinaryReader reader)
@@ -339,6 +282,13 @@ public class BenVoxelFile : IBinaryWritable
 				throw new InvalidDataException($"Unexpected chunk type. Expected: \"MODL\", Actual: \"{fourCC}\".");
 			Models[name] = new(new MemoryStream(decodingReader.ReadBytes((int)decodingReader.ReadUInt32())));
 		}
+	}
+	public BenVoxelFile(JsonObject json)
+	{
+		if (json.TryGetPropertyValue("metadata", out JsonNode metadata))
+			Global = Metadata.FromJson(metadata.AsObject());
+		foreach (KeyValuePair<string, JsonNode> model in json["models"].AsObject())
+			Models[model.Key] = new(model.Value.AsObject());
 	}
 	#endregion BenVoxelFile
 	#region IBinaryWritable
@@ -370,44 +320,18 @@ public class BenVoxelFile : IBinaryWritable
 		writer.BaseStream.Position = position;
 	}
 	#endregion IBinaryWritable
-	#region JSON Serialization
-	public string ToJson()
+	#region JSON
+	public JsonObject ToJson()
 	{
-		JsonObject root = new()
-		{
-			{ "version", JsonValue.Create(Version) }
-		};
-		if (Global != null)
-			root.Add("metadata", Global.ToJson());
+		JsonObject root = new() { { "version", JsonValue.Create(Version) } };
+		if (Global?.ToJson() is JsonObject global)
+			root.Add("metadata", global);
 		if (Models.Any())
-		{
-			JsonObject models = [];
-			foreach (KeyValuePair<string, Model> model in Models)
-				models.Add(model.Key, model.Value.ToJson());
-			root.Add("models", models);
-		}
-		return JsonSerializer.Serialize(root, new JsonSerializerOptions
-		{
-			WriteIndented = true
-		});
+			root.Add("models", new JsonObject(Models.Select(model => new KeyValuePair<string, JsonNode>(model.Key, model.Value.ToJson()))));
+		return root;
 	}
-	public static BenVoxelFile FromJson(string json)
-	{
-		JsonObject root = JsonSerializer.Deserialize<JsonObject>(json);
-		BenVoxelFile file = new();
-		// Version is required by schema
-		string version = root["version"].GetValue<string>();
-		if (version != Version)
-			throw new InvalidDataException($"Unsupported version: {version}. Expected: {Version}");
-		if (root.TryGetPropertyValue("metadata", out JsonNode metadataNode))
-			file.Global = Metadata.FromJson(metadataNode.AsObject());
-		// Models are required by schema
-		JsonObject models = root["models"].AsObject();
-		foreach (KeyValuePair<string, JsonNode> model in models)
-			file.Models[model.Key] = Model.FromJson(model.Value.AsObject());
-		return file;
-	}
-	#endregion JSON Serialization
+	public static BenVoxelFile FromJson(JsonObject json) => new(json);
+	#endregion JSON
 	#region Utilities
 	public static string FourCC(BinaryReader reader) => Encoding.UTF8.GetString(reader.ReadBytes(4));
 	public static string ReadKey(BinaryReader reader) => Encoding.UTF8.GetString(reader.ReadBytes(reader.ReadByte()));
