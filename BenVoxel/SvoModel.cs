@@ -320,22 +320,6 @@ public class SvoModel : IEditableModel, IBinaryWritable
 					writer.Write((byte)0);
 		return Cromulent.Encoding.Z85.ToZ85String(ms.ToArray());
 	}
-	public uint NodeCount
-	{
-		get
-		{
-			uint nodes = 0;
-			void Recurse(Node node)
-			{
-				nodes++;
-				if (node is Branch branch)
-					foreach (Node child in branch)
-						Recurse(child);
-			}
-			Recurse(Root);
-			return nodes;
-		}
-	}
 	#endregion Utilities
 	#region IEditableModel
 	public ushort SizeX { get; set; } = ushort.MaxValue;
@@ -430,6 +414,22 @@ public class SvoModel : IEditableModel, IBinaryWritable
 	#endregion IEditableModel
 	#region Debug
 #if DEBUG
+	public uint NodeCount
+	{
+		get
+		{
+			uint nodes = 0;
+			void Recurse(Node node)
+			{
+				nodes++;
+				if (node is Branch branch)
+					foreach (Node child in branch)
+						Recurse(child);
+			}
+			Recurse(Root);
+			return nodes;
+		}
+	}
 	public string PrintStuff(ushort x, ushort y, ushort z)
 	{
 		if (this.IsOutside(x, y, z))
