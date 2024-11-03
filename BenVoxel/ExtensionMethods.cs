@@ -173,6 +173,7 @@ public static class ExtensionMethods
 			contentMemoryStream.Position = 0;
 			contentMemoryStream.CopyTo(memoryStream);
 		}
+		memoryStream.Position = 0;
 		return memoryStream;
 	}
 	public static byte[] ArrayRIFF(this IBinaryWritable o, string fourCC)

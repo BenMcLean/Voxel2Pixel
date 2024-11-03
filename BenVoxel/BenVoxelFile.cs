@@ -278,11 +278,17 @@ public class BenVoxelFile : IBinaryWritable
 			throw new IOException("Expected \"BENV\"");
 		uint length = reader.ReadUInt32();
 		string version = ReadKey(reader);
-		using MemoryStream compressedStream = new();
-		reader.BaseStream.CopyTo(compressedStream, (int)(length - version.Length - 1));
-		compressedStream.Position = 0;
+		long compressedLength = length - version.Length - 1;
+		byte[] compressedData = new byte[compressedLength];
+		int bytesRead = reader.Read(compressedData, 0, (int)compressedLength);
+		if (bytesRead != compressedLength)
+			throw new IOException($"Expected {compressedLength} compressed bytes but read {bytesRead}");
+		using MemoryStream compressedStream = new(compressedData);
 		using LZ4DecoderStream decodingStream = LZ4Stream.Decode(compressedStream);
-		using BinaryReader decodingReader = new(decodingStream);
+		using MemoryStream decompressedStream = new();
+		decodingStream.CopyTo(decompressedStream);
+		decompressedStream.Position = 0;
+		using BinaryReader decodingReader = new(decompressedStream);
 		string fourCC = FourCC(decodingReader);
 		if (fourCC.Equals("DATA"))
 		{
@@ -316,8 +322,8 @@ public class BenVoxelFile : IBinaryWritable
 	{
 		using MemoryStream contentStream = new();
 		using (LZ4EncoderStream encoderStream = LZ4Stream.Encode(contentStream, leaveOpen: true))
-		using (BinaryWriter encoderWriter = new(encoderStream, Encoding.UTF8, leaveOpen: true))
 		{
+			using BinaryWriter encoderWriter = new(encoderStream, Encoding.UTF8, leaveOpen: true);
 			if (Global is not null)
 				using (MemoryStream global = Global.RIFF("DATA"))
 					global.CopyTo(encoderStream);
@@ -325,9 +331,10 @@ public class BenVoxelFile : IBinaryWritable
 			foreach (KeyValuePair<string, Model> model in Models)
 			{
 				WriteKey(encoderWriter, model.Key);
-				using MemoryStream modelMemoryStream = model.Value.RIFF("MODL");
-				modelMemoryStream.CopyTo(encoderStream);
+				using MemoryStream modelStream = model.Value.RIFF("MODL");
+				modelStream.CopyTo(encoderStream);
 			}
+			encoderWriter.Flush();
 		}
 		writer.Write(Encoding.UTF8.GetBytes("BENV"));
 		writer.Write((uint)(Version.Length + 1 + contentStream.Length));
