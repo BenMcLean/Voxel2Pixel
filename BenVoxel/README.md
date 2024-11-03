@@ -58,7 +58,7 @@ All types are little-endian.
 #### Strings
 Three string types are used:
 - `FourCC`: 4 byte ASCII chunk identifiers.
-- `KeyString`: Starts with one unsigned byte for length, followed by a UTF-8 string of that length. Empty string is valid, but `KeyString`s that begin or end with whitespace are invalid.
+- `KeyString`: Starts with one unsigned byte for length, followed by a UTF-8 string of that length. Empty string is valid, but `KeyString`s that begin or end with whitespace are invalid. Duplicate (identical / non-unique) keys within the same sequence are invalid. It is recommended that implementations handle duplicate keys with last-in-wins dictionary behavior.
 - `ValueString`: Starts with an unsigned 32-bit integer for length, followed by a UTF-8 string of that length.
 ### Chunks
 All chunks have:
@@ -74,7 +74,7 @@ BenVoxel binary files start with a `BENV` chunk which contains the entire file a
   - `Global`: One `DATA` chunk for global metadata. (optional)
   - `Count`: One unsigned 16-bit integer for the number of models.
   - For each model:
-    - `Key`: One `KeyString` for the model key, expected to be unique among models within the file. Empty string key indicates the default model.
+    - `Key`: One `KeyString` for the model key. Empty string key indicates the default model.
     - `Model`: One `MODL` chunk.
 
 The size of the compressed data can be determined by subtracting the size of the Version field (the content of its unsigned 1-byte length field plus 1) from the `BENV` chunk size.
@@ -93,7 +93,7 @@ Key-value pairs for arbitrary metadata.
 Corresponds to one or more of the `properties` objects in the JSON format. It contains:
 - `Count`: One unsigned 16-bit integer for the number of properties.
 - For each property:
-  - `Key`: One `KeyString` for the property key, expected to be unique within this chunk. Empty string key, if present, specifies the scale in meters of each voxel. This can be either a single decimal number applied to all dimensions (e.g. `1` for Minecraft-style 1m^3 voxels) or three comma-separated decimal numbers for width, depth, and height respectively (e.g. `2.4384,2.4384,2.92608` for Wolfenstein 3-D walls which are 8ft x 8ft x 9.6ft). Scale values must be positive decimal numbers in C# decimal format. If no empty string key is present then the scale is unspecified.
+  - `Key`: One `KeyString` for the property key. Empty string key, if present, specifies the scale in meters of each voxel. This can be either a single decimal number applied to all dimensions (e.g. `1` for Minecraft-style 1m^3 voxels) or three comma-separated decimal numbers for width, depth, and height respectively (e.g. `2.4384,2.4384,2.92608` for Wolfenstein 3-D walls which are 8ft x 8ft x 9.6ft). Scale values must be positive decimal numbers in C# decimal format. If no empty string key is present then the scale is unspecified.
   - `Value`: One `ValueString` for the property value.
 #### `PT3D` chunk (Points)
 Named 3D points in space as [x, y, z] arrays. Uses 32-bit signed integers to allow points to be placed outside model bounds (including negative coordinates) for purposes like specifying offsets.
@@ -101,7 +101,7 @@ Named 3D points in space as [x, y, z] arrays. Uses 32-bit signed integers to all
 Corresponds to one or more of the `points` objects in the JSON format. It contains:
 - `Count`: One unsigned 16-bit integer for the number of points.
 - For each point:
-  - `Key`: One `KeyString` for the point key, expected to be unique within this chunk. Empty string key specifies the origin of the model. If empty string key is specified in neither the model nor global metadata then the origin should be assumed to be at the bottom center of the model calculated as `[width >> 1, depth >> 1, 0]`.
+  - `Key`: One `KeyString` for the point key. Empty string key specifies the origin of the model. If empty string key is specified in neither the model nor global metadata then the origin should be assumed to be at the bottom center of the model calculated as `[width >> 1, depth >> 1, 0]`.
   - `Coordinates`: Three signed 32-bit integers for the X, Y and Z coordinates.
 #### `PALC` chunk (Palettes)
 Named color palettes.
@@ -109,7 +109,7 @@ Named color palettes.
 Corresponds to one or more `palettes` objects in the JSON format. It contains:
 - `Count`: One unsigned 16-bit integer for the number of palettes.
 - For each palette:
-  - `Key`: One `KeyString` for the palette key, expected to be unique within this chunk. Empty string key indicates the default palette.
+  - `Key`: One `KeyString` for the palette key. Empty string key indicates the default palette.
   - `Length`: One unsigned byte representing the number of colors minus one, with a range of 0-255 representing 1-256 colors. A value of `0` indicates 1 color, and a value of `255` indicates 256 colors. This range always includes the background color at index zero while the rest of the indices correspond to the voxel payload bytes which is the reason for the 256 color limit.
   - `Colors`: A series of `Length` 32-bit unsigned integers representing colors in RGBA format.
   - `HasDescriptions`: One unsigned byte with value `0` to indicate no descriptions xor any other value to include descriptions.

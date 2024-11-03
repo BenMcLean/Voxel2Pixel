@@ -2,6 +2,7 @@
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"definitions": {
 		"keyedObject": {
+			"description": "Object with unique keys. Duplicate keys within the same object are invalid. It is recommended that implementations handle duplicate keys with last-in-wins dictionary behavior.",
 			"maxProperties": 65535,
 			"minProperties": 1,
 			"propertyNames": {
