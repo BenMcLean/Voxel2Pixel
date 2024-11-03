@@ -2,15 +2,16 @@
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"definitions": {
 		"keyedObject": {
-			"minProperties": 1,
 			"maxProperties": 65535,
+			"minProperties": 1,
 			"propertyNames": {
 				"$ref": "#/definitions/keyType"
 			}
 		},
 		"keyType": {
-			"description": "Identifier limited to 255 characters.",
+			"description": "Identifier limited to 255 characters with empty string allowed but no whitespace at start or end.",
 			"maxLength": 255,
+			"pattern": "^$|^\\S[\\s\\S]*\\S$|^\\S$",
 			"type": "string"
 		},
 		"metadata": {
@@ -79,7 +80,7 @@
 			"type": "object"
 		}
 	},
-	"description": "JSON Schema for BenVoxel file format. Adopts the MagicaVoxel Z+up right-handed 3D coordinate system where: X+ is right/east (width), Y+ is forward/north (depth), and Z+ is up (height).",
+	"description": "JSON Schema for BenVoxel file format. Adopts the MagicaVoxel Z+up right-handed 3D coordinate system where: X+ is right/east (width), Y+ is forward/north (depth), and Z+ is up (height). Negative coordinates cannot contain voxels. Models are expected to be aligned so that their lowest edge is on 0 of each axis.",
 	"properties": {
 		"metadata": {
 			"$ref": "#/definitions/metadata",

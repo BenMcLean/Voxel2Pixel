@@ -58,7 +58,7 @@ All types are little-endian.
 #### Strings
 Three string types are used:
 - `FourCC`: 4 byte ASCII chunk identifiers.
-- `KeyString`: Starts with one unsigned byte for length, followed by a UTF-8 string of that length. `KeyString`s that begin or end with whitespace are invalid.
+- `KeyString`: Starts with one unsigned byte for length, followed by a UTF-8 string of that length. Empty string is valid, but `KeyString`s that begin or end with whitespace are invalid.
 - `ValueString`: Starts with an unsigned 32-bit integer for length, followed by a UTF-8 string of that length.
 ### Chunks
 All chunks have:
