@@ -123,7 +123,7 @@ public static class ExtensionMethods
 						element: property.Value,
 						output: output,
 						depth: (byte)(depth + 1));
-					if (++propertyIndex < propertyCount - 1)
+					if (++propertyIndex < propertyCount)
 						output.AppendLine(",");
 					else
 						output.AppendLine();
@@ -140,7 +140,7 @@ public static class ExtensionMethods
 						node: element,
 						output: output,
 						depth: (byte)(depth + 1));
-					if (++elementIndex < elementCount - 1)
+					if (++elementIndex < elementCount)
 						output.AppendLine(",");
 					else
 						output.AppendLine();
