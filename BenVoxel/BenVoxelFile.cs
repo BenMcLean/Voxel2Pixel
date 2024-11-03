@@ -91,7 +91,11 @@ public class BenVoxelFile : IBinaryWritable
 		public bool Any() => Properties.Any() || Points.Any() || Palettes.Any();
 		#endregion Metadata
 		#region IBinaryWritable
-		public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: Encoding.UTF8, leaveOpen: true));
+		public void Write(Stream stream)
+		{
+			using BinaryWriter writer = new(output: stream, encoding: Encoding.UTF8, leaveOpen: true);
+			Write(writer);
+		}
 		public void Write(BinaryWriter writer)
 		{
 			if (Properties.Any())
@@ -262,26 +266,34 @@ public class BenVoxelFile : IBinaryWritable
 	#endregion Data
 	#region BenVoxelFile
 	public BenVoxelFile() { }
-	public BenVoxelFile(Stream stream) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true)) { }
-	public BenVoxelFile(BinaryReader reader)
+	public BenVoxelFile(Stream stream)
+	{
+		using BinaryReader reader = new(input: stream, encoding: Encoding.UTF8, leaveOpen: true);
+		FromReader(reader);
+	}
+	public BenVoxelFile(BinaryReader reader) => FromReader(reader);
+	private void FromReader(BinaryReader reader)
 	{
 		if (!FourCC(reader).Equals("BENV"))
 			throw new IOException("Expected \"BENV\"");
-		reader.ReadUInt32();
-		using LZ4DecoderStream decodingStream = LZ4Stream.Decode(
-			stream: reader.BaseStream,
-			leaveOpen: true);
+		uint length = reader.ReadUInt32();
+		string version = ReadKey(reader);
+		using MemoryStream compressedStream = new();
+		reader.BaseStream.CopyTo(compressedStream, (int)(length - version.Length - 1));
+		compressedStream.Position = 0;
+		using LZ4DecoderStream decodingStream = LZ4Stream.Decode(compressedStream);
 		using BinaryReader decodingReader = new(decodingStream);
 		string fourCC = FourCC(decodingReader);
 		if (fourCC.Equals("DATA"))
+		{
 			Global = new(new MemoryStream(decodingReader.ReadBytes((int)decodingReader.ReadUInt32())));
-		else
-			decodingStream.Position -= 4;
+			fourCC = FourCC(decodingReader);
+		}
 		ushort count = decodingReader.ReadUInt16();
 		for (ushort i = 0; i < count; i++)
 		{
 			string name = ReadKey(decodingReader);
-			if (!"MODL".Equals(FourCC(reader)))
+			if (!"MODL".Equals(FourCC(decodingReader)))
 				throw new InvalidDataException($"Unexpected chunk type. Expected: \"MODL\", Actual: \"{fourCC}\".");
 			Models[name] = new(new MemoryStream(decodingReader.ReadBytes((int)decodingReader.ReadUInt32())));
 		}
@@ -295,17 +307,18 @@ public class BenVoxelFile : IBinaryWritable
 	}
 	#endregion BenVoxelFile
 	#region IBinaryWritable
-	public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: Encoding.UTF8, leaveOpen: true));
+	public void Write(Stream stream)
+	{
+		using BinaryWriter writer = new(output: stream, encoding: Encoding.UTF8, leaveOpen: true);
+		Write(writer);
+	}
 	public void Write(BinaryWriter writer)
 	{
-		using MemoryStream memoryStream = new();
-		using (LZ4EncoderStream encoderStream = LZ4Stream.Encode(
-			stream: memoryStream,
-			level: K4os.Compression.LZ4.LZ4Level.L12_MAX,
-			leaveOpen: true))
+		using MemoryStream contentStream = new();
+		using (LZ4EncoderStream encoderStream = LZ4Stream.Encode(contentStream, leaveOpen: true))
+		using (BinaryWriter encoderWriter = new(encoderStream, Encoding.UTF8, leaveOpen: true))
 		{
-			using BinaryWriter encoderWriter = new(encoderStream);
-			if (Global != null)
+			if (Global is not null)
 				using (MemoryStream global = Global.RIFF("DATA"))
 					global.CopyTo(encoderStream);
 			encoderWriter.Write((ushort)Models.Count());
@@ -317,10 +330,10 @@ public class BenVoxelFile : IBinaryWritable
 			}
 		}
 		writer.Write(Encoding.UTF8.GetBytes("BENV"));
-		writer.Write((uint)(memoryStream.Length + Version.Length + 1));
+		writer.Write((uint)(Version.Length + 1 + contentStream.Length));
 		WriteKey(writer, Version);
-		memoryStream.Position = 0;
-		memoryStream.CopyTo(writer.BaseStream);
+		contentStream.Position = 0;
+		contentStream.CopyTo(writer.BaseStream);
 	}
 	#endregion IBinaryWritable
 	#region JSON
