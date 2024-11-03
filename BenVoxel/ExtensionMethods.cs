@@ -187,6 +187,11 @@ public static class ExtensionMethods
 		using MemoryStream memoryStream = o.RIFF(fourCC);
 		return memoryStream.ToArray();
 	}
+	public static void CopyRIFF(this IBinaryWritable o, string fourCC, Stream output)
+	{
+		using MemoryStream memoryStream = o.RIFF(fourCC);
+		memoryStream.CopyTo(output);
+	}
 	/// <summary>
 	/// Writes data as a RIFF chunk to a BinaryWriter
 	/// </summary>

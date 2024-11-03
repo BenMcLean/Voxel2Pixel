@@ -268,7 +268,10 @@ public class BenVoxelFile : IBinaryWritable
 	public BenVoxelFile() { }
 	public BenVoxelFile(Stream stream)
 	{
-		using BinaryReader reader = new(input: stream, encoding: Encoding.UTF8, leaveOpen: true);
+		using BinaryReader reader = new(
+			input: stream,
+			encoding: Encoding.UTF8,
+			leaveOpen: true);
 		FromReader(reader);
 	}
 	public BenVoxelFile(BinaryReader reader) => FromReader(reader);
@@ -276,29 +279,25 @@ public class BenVoxelFile : IBinaryWritable
 	{
 		if (!FourCC(reader).Equals("BENV"))
 			throw new IOException("Expected \"BENV\"");
-		reader.ReadUInt32();
-		ReadKey(reader);
-		using MemoryStream decompressedStream = new();
-		using (DeflateStream deflateStream = new(
-			stream: reader.BaseStream,
-			mode: CompressionMode.Decompress,
-			leaveOpen: true))
-			deflateStream.CopyTo(decompressedStream);
-		decompressedStream.Position = 0;
-		using BinaryReader decodingReader = new(decompressedStream);
-		string fourCC = FourCC(decodingReader);
+		uint totalLength = reader.ReadUInt32();
+		string version = ReadKey(reader);
+		string fourCC = FourCC(reader);
 		if (fourCC.Equals("DATA"))
 		{
-			Global = new(new MemoryStream(decodingReader.ReadBytes((int)decodingReader.ReadUInt32())));
-			fourCC = FourCC(decodingReader);
+			reader.ReadUInt32();
+			Global = new(reader);
 		}
-		ushort count = decodingReader.ReadUInt16();
+		else
+			reader.BaseStream.Position -= 4;
+		ushort count = reader.ReadUInt16();
 		for (ushort i = 0; i < count; i++)
 		{
-			string name = ReadKey(decodingReader);
-			if (!"MODL".Equals(FourCC(decodingReader)))
+			string name = ReadKey(reader);
+			fourCC = FourCC(reader);
+			if (!"MODL".Equals(fourCC))
 				throw new InvalidDataException($"Unexpected chunk type. Expected: \"MODL\", Actual: \"{fourCC}\".");
-			Models[name] = new(new MemoryStream(decodingReader.ReadBytes((int)decodingReader.ReadUInt32())));
+			reader.ReadUInt32();
+			Models[name] = new(reader);
 		}
 	}
 	public BenVoxelFile(JsonObject json)
@@ -312,38 +311,31 @@ public class BenVoxelFile : IBinaryWritable
 	#region IBinaryWritable
 	public void Write(Stream stream)
 	{
-		using BinaryWriter writer = new(output: stream, encoding: Encoding.UTF8, leaveOpen: true);
+		using BinaryWriter writer = new(
+			output: stream,
+			encoding: Encoding.UTF8,
+			leaveOpen: true);
 		Write(writer);
 	}
 	public void Write(BinaryWriter writer)
 	{
-		using MemoryStream contentStream = new();
-		using (DeflateStream deflateStream = new(
-			stream: contentStream,
-			mode: CompressionMode.Compress,
-			leaveOpen: true))
+		byte[] uncompressedBytes;
+		using (MemoryStream uncompressedStream = new())
 		{
-			using BinaryWriter deflateWriter = new(
-				output: deflateStream,
-				encoding: Encoding.UTF8,
-				leaveOpen: true);
-			if (Global is not null)
-				using (MemoryStream global = Global.RIFF("DATA"))
-					global.CopyTo(deflateStream);
-			deflateWriter.Write((ushort)Models.Count);
+			using BinaryWriter contentWriter = new(uncompressedStream, Encoding.UTF8, leaveOpen: true);
+			Global?.CopyRIFF("DATA", uncompressedStream);
+			contentWriter.Write((ushort)Models.Count);
 			foreach (KeyValuePair<string, Model> model in Models)
 			{
-				WriteKey(deflateWriter, model.Key);
-				using MemoryStream modelStream = model.Value.RIFF("MODL");
-				modelStream.CopyTo(deflateStream);
+				WriteKey(contentWriter, model.Key);
+				model.Value.CopyRIFF("MODL", uncompressedStream);
 			}
-			deflateWriter.Flush();
+			uncompressedBytes = uncompressedStream.ToArray();
 		}
 		writer.Write(Encoding.UTF8.GetBytes("BENV"));
-		writer.Write((uint)(Version.Length + 1 + contentStream.Length));
+		writer.Write((uint)(Version.Length + 1 + uncompressedBytes.Length));
 		WriteKey(writer, Version);
-		contentStream.Position = 0;
-		contentStream.CopyTo(writer.BaseStream);
+		writer.Write(uncompressedBytes);
 	}
 	#endregion IBinaryWritable
 	#region JSON
