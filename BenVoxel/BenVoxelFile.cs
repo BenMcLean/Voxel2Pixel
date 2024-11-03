@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
-using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -30,8 +29,16 @@ public class BenVoxelFile : IBinaryWritable
 			set => Palettes[paletteName] = [.. Color.Colors(value.Take(256))];
 		}
 		public Metadata() { }
-		public Metadata(Stream stream) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true)) { }
-		public Metadata(BinaryReader reader)
+		public Metadata(Stream stream)
+		{
+			using BinaryReader reader = new(
+				input: stream,
+				encoding: Encoding.UTF8,
+				leaveOpen: true);
+			FromReader(reader);
+		}
+		public Metadata(BinaryReader reader) => FromReader(reader);
+		private void FromReader(BinaryReader reader)
 		{
 			bool valid = true;
 			while (valid
@@ -197,8 +204,16 @@ public class BenVoxelFile : IBinaryWritable
 		#endregion Data
 		#region Model
 		public Model() { }
-		public Model(Stream stream) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true)) { }
-		public Model(BinaryReader reader)
+		public Model(Stream stream)
+		{
+			using BinaryReader reader = new(
+				input: stream,
+				encoding: Encoding.UTF8,
+				leaveOpen: true);
+			FromReader(reader);
+		}
+		public Model(BinaryReader reader) => FromReader(reader);
+		private void FromReader(BinaryReader reader)
 		{
 			string fourCC = FourCC(reader);
 			if (fourCC.Equals("DATA"))
