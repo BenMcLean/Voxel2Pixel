@@ -225,8 +225,11 @@ public class BenVoxelFile : IBinaryWritable
 		#region IBinaryWritable
 		public void Write(Stream stream)
 		{
-			Metadata?.RIFF("DATA").CopyTo(stream);
-			Geometry.RIFF("SVOG").CopyTo(stream);
+			if (Metadata is not null)
+				using (MemoryStream metadata = Metadata.RIFF("DATA"))
+					metadata.CopyTo(stream);
+			using MemoryStream geometry = Geometry.RIFF("SVOG");
+			geometry.CopyTo(stream);
 		}
 		public void Write(BinaryWriter writer)
 		{
@@ -307,12 +310,15 @@ public class BenVoxelFile : IBinaryWritable
 			leaveOpen: true))
 		{
 			using BinaryWriter encoderWriter = new(encoderStream);
-			Global?.RIFF("DATA").CopyTo(encoderStream);
+			if (Global != null)
+				using (MemoryStream globalMs = Global.RIFF("DATA"))
+					globalMs.CopyTo(encoderStream);
 			encoderWriter.Write((ushort)Models.Count());
 			foreach (KeyValuePair<string, Model> model in Models)
 			{
 				WriteKey(encoderWriter, model.Key);
-				model.Value.RIFF("MODL").CopyTo(encoderStream);
+				using MemoryStream modelMs = model.Value.RIFF("MODL");
+				modelMs.CopyTo(encoderStream);
 			}
 		}
 		byte[] compressedData = ms.ToArray();
