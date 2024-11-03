@@ -75,7 +75,7 @@
 					File = new BenVoxelFile(memoryStream);
 					break;
 			}
-			Xml = File.Utf8Xml();
+			// Xml = File.Utf8Xml(); TODO fix
 		}
 		catch (Exception ex)
 		{
@@ -102,18 +102,18 @@
 	}
 	private async Task DownloadXmlFile()
 	{
-		try
-		{
-			using MemoryStream memoryStream = new();
-			memoryStream.Write(Encoding.UTF8.GetBytes(File.Utf8Xml()));
-			memoryStream.Position = 0;
-			using DotNetStreamReference streamRef = new(stream: memoryStream);
-			await JS.InvokeVoidAsync(identifier: "downloadFileFromStream", ".BEN.xml", streamRef);
-		}
-		catch (Exception ex)
-		{
-			ExceptionMessage = new MarkupString(ex.GetType().Name + ": \"" + ex.Message + "\"<br />" + ex.StackTrace);
-			StateHasChanged();
-		}
+		// try
+		// {
+		// 	using MemoryStream memoryStream = new();
+		// 	memoryStream.Write(Encoding.UTF8.GetBytes(File.Utf8Xml()));
+		// 	memoryStream.Position = 0;
+		// 	using DotNetStreamReference streamRef = new(stream: memoryStream);
+		// 	await JS.InvokeVoidAsync(identifier: "downloadFileFromStream", ".BEN.xml", streamRef);
+		// }
+		// catch (Exception ex)
+		// {
+		// 	ExceptionMessage = new MarkupString(ex.GetType().Name + ": \"" + ex.Message + "\"<br />" + ex.StackTrace);
+		// 	StateHasChanged();
+		// }
 	}
 }

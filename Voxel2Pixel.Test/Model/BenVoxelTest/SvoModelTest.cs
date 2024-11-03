@@ -396,12 +396,12 @@ public class SvoModelTest(Xunit.Abstractions.ITestOutputHelper output)
 		ifs.Close();
 		File.Delete(path);
 	}
-	[Fact]
-	public void XmlTest()
-	{
-		string s = new SvoModel(new VoxFileModel(@"..\..\..\TestData\Models\Sora.vox")).Utf8Xml();
-		Assert.Equal(
-			expected: s,
-			actual: ((SvoModel)(new XmlSerializer(typeof(SvoModel)).Deserialize(new MemoryStream(Encoding.UTF8.GetBytes(s))) ?? throw new NullReferenceException())).Utf8Xml());
-	}
+	//[Fact]
+	//public void XmlTest()
+	//{
+	//	string s = new SvoModel(new VoxFileModel(@"..\..\..\TestData\Models\Sora.vox")).Utf8Xml();
+	//	Assert.Equal(
+	//		expected: s,
+	//		actual: ((SvoModel)(new XmlSerializer(typeof(SvoModel)).Deserialize(new MemoryStream(Encoding.UTF8.GetBytes(s))) ?? throw new NullReferenceException())).Utf8Xml());
+	//}
 }

@@ -19,7 +19,7 @@ public class BenVoxelFileTest(Xunit.Abstractions.ITestOutputHelper output)
 			metadata.Points["Point" + i] = new Point3D(i, i, i);
 			metadata.Palettes["Palette" + i] = [.. Enumerable.Range(0, 3).Select(j => new BenVoxelFile.Color
 			{
-				Argb = i,
+				Rgba = i,
 				Description = "",
 			})];
 		}
@@ -38,11 +38,11 @@ public class BenVoxelFileTest(Xunit.Abstractions.ITestOutputHelper output)
 			Metadata = metadata,
 			Geometry = model,
 		};
-		string s = file.Utf8Xml();
+		string s = file.ToJson().Tabs();
 		output.WriteLine(s);
 		Assert.Equal(
 			expected: s,
-			actual: ((BenVoxelFile)(new XmlSerializer(typeof(BenVoxelFile)).Deserialize(new MemoryStream(Encoding.UTF8.GetBytes(s))) ?? throw new NullReferenceException())).Utf8Xml());
+			actual: ((BenVoxelFile)(new XmlSerializer(typeof(BenVoxelFile)).Deserialize(new MemoryStream(Encoding.UTF8.GetBytes(s))) ?? throw new NullReferenceException())).ToJson().Tabs());
 	}
 	[Fact]
 	public void RiffTest() => output.WriteLine(Convert.ToHexString(new Point3D(1, 2, 3).RIFF("PT3D").ToArray()));

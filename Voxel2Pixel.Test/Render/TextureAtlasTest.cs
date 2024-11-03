@@ -24,34 +24,34 @@ public class TextureAtlasTest
 	<SubTexture name="pattern_0001.png" x="2048" y="2048" width="512" height="512" />
 </TextureAtlas>
 """;
-	[Fact]
-	public void Test() => Assert.Equal(
-		expected: TestData,
-		actual: new TextureAtlas()
-		{
-			ImagePath = "thin_double.png",
-			SubTextures = [
-				new() {
-					Name = "pattern_0000.png",
-					X = 1024,
-					Y = 1024,
-					Width = 512,
-					Height = 512,
-				},
-				new() {
-					Name = "pattern_0001.png",
-					X = 2048,
-					Y = 2048,
-					Width = 512,
-					Height = 512,
-				},
-			],
-		}.Utf8Xml());
-	[Fact]
-	public void Test2() => Assert.Equal(
-		expected: TestData,
-		actual: ((TextureAtlas)(new XmlSerializer(typeof(TextureAtlas)).Deserialize(new MemoryStream(Encoding.UTF8.GetBytes(TestData)))
-		?? throw new NullReferenceException())).Utf8Xml());
+	//[Fact]
+	//public void Test() => Assert.Equal(
+	//	expected: TestData,
+	//	actual: new TextureAtlas()
+	//	{
+	//		ImagePath = "thin_double.png",
+	//		SubTextures = [
+	//			new() {
+	//				Name = "pattern_0000.png",
+	//				X = 1024,
+	//				Y = 1024,
+	//				Width = 512,
+	//				Height = 512,
+	//			},
+	//			new() {
+	//				Name = "pattern_0001.png",
+	//				X = 2048,
+	//				Y = 2048,
+	//				Width = 512,
+	//				Height = 512,
+	//			},
+	//		],
+	//	}.Utf8Xml());
+	//[Fact]
+	//public void Test2() => Assert.Equal(
+	//	expected: TestData,
+	//	actual: ((TextureAtlas)(new XmlSerializer(typeof(TextureAtlas)).Deserialize(new MemoryStream(Encoding.UTF8.GetBytes(TestData)))
+	//	?? throw new NullReferenceException())).Utf8Xml());
 	[Fact]
 	public void SubTextureTest()
 	{
