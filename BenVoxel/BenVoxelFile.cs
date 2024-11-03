@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
-using K4os.Compression.LZ4.Streams;
 using System.Text.Json.Nodes;
 
 namespace BenVoxel;
@@ -276,17 +276,14 @@ public class BenVoxelFile : IBinaryWritable
 	{
 		if (!FourCC(reader).Equals("BENV"))
 			throw new IOException("Expected \"BENV\"");
-		uint length = reader.ReadUInt32();
-		string version = ReadKey(reader);
-		long compressedLength = length - version.Length - 1;
-		byte[] compressedData = new byte[compressedLength];
-		int bytesRead = reader.Read(compressedData, 0, (int)compressedLength);
-		if (bytesRead != compressedLength)
-			throw new IOException($"Expected {compressedLength} compressed bytes but read {bytesRead}");
-		using MemoryStream compressedStream = new(compressedData);
-		using LZ4DecoderStream decodingStream = LZ4Stream.Decode(compressedStream);
+		reader.ReadUInt32();
+		ReadKey(reader);
 		using MemoryStream decompressedStream = new();
-		decodingStream.CopyTo(decompressedStream);
+		using (DeflateStream deflateStream = new(
+			stream: reader.BaseStream,
+			mode: CompressionMode.Decompress,
+			leaveOpen: true))
+			deflateStream.CopyTo(decompressedStream);
 		decompressedStream.Position = 0;
 		using BinaryReader decodingReader = new(decompressedStream);
 		string fourCC = FourCC(decodingReader);
@@ -321,20 +318,26 @@ public class BenVoxelFile : IBinaryWritable
 	public void Write(BinaryWriter writer)
 	{
 		using MemoryStream contentStream = new();
-		using (LZ4EncoderStream encoderStream = LZ4Stream.Encode(contentStream, leaveOpen: true))
+		using (DeflateStream deflateStream = new(
+			stream: contentStream,
+			mode: CompressionMode.Compress,
+			leaveOpen: true))
 		{
-			using BinaryWriter encoderWriter = new(encoderStream, Encoding.UTF8, leaveOpen: true);
+			using BinaryWriter deflateWriter = new(
+				output: deflateStream,
+				encoding: Encoding.UTF8,
+				leaveOpen: true);
 			if (Global is not null)
 				using (MemoryStream global = Global.RIFF("DATA"))
-					global.CopyTo(encoderStream);
-			encoderWriter.Write((ushort)Models.Count());
+					global.CopyTo(deflateStream);
+			deflateWriter.Write((ushort)Models.Count);
 			foreach (KeyValuePair<string, Model> model in Models)
 			{
-				WriteKey(encoderWriter, model.Key);
+				WriteKey(deflateWriter, model.Key);
 				using MemoryStream modelStream = model.Value.RIFF("MODL");
-				modelStream.CopyTo(encoderStream);
+				modelStream.CopyTo(deflateStream);
 			}
-			encoderWriter.Flush();
+			deflateWriter.Flush();
 		}
 		writer.Write(Encoding.UTF8.GetBytes("BENV"));
 		writer.Write((uint)(Version.Length + 1 + contentStream.Length));
