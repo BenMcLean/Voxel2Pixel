@@ -2,6 +2,8 @@
 @using BenVoxel
 @using System.Xml.Serialization
 @using System.Text
+@using System.Text.Json
+@using System.Text.Json.Nodes
 @inject IJSRuntime JS
 
 <PageTitle>BenVoxel Converter</PageTitle>
@@ -17,17 +19,17 @@
 		</MudButton>
 	</ActivatorContent>
 </MudFileUpload>
-@if (!string.IsNullOrWhiteSpace(Xml))
+@if (!string.IsNullOrWhiteSpace(Json))
 {
 	<br />
 	<MudButton OnClick="DownloadBenFile" Variant="Variant.Filled" Color="MudBlazor.Color.Primary" StartIcon="@Icons.Material.Filled.FileDownload">
-		Download .BEN
+		Download .ben
 	</MudButton>
-	<MudButton OnClick="DownloadXmlFile" Variant="Variant.Filled" Color="MudBlazor.Color.Primary" StartIcon="@Icons.Material.Filled.FileDownload">
-		Download .XML
+	<MudButton OnClick="DownloadJsonFile" Variant="Variant.Filled" Color="MudBlazor.Color.Primary" StartIcon="@Icons.Material.Filled.FileDownload">
+		Download .ben.json
 	</MudButton>
 	<br />
-	<MudTextField T="string" Value=@Xml Label="XML" Variant="Variant.Outlined" Lines="10" ReadOnly="true" Style="font-family: monospace; white-space: pre;" />
+	<MudTextField T="string" Value=@Json Label="JSON" Variant="Variant.Outlined" Lines="10" ReadOnly="true" Style="font-family: monospace; white-space: pre;" />
 }
 @if (!string.IsNullOrWhiteSpace(ExceptionMessage.ToString()))
 {
@@ -52,7 +54,7 @@
 	public bool IsLoading { get; set; } = false;
 	public MarkupString ExceptionMessage { get; set; }
 	public BenVoxelFile? File { get; set; } = null;
-	public string? Xml { get; set; } = null;
+	public string? Json { get; set; } = null;
 	#endregion Data
 	private async void LoadFile(IBrowserFile file)
 	{
@@ -67,15 +69,14 @@
 				case ".vox":
 					File = Voxel2Pixel.Model.SvoModel.FromMagicaVoxel(memoryStream);
 					break;
-				case ".xml":
-					File = (BenVoxelFile)(new XmlSerializer(typeof(BenVoxelFile)).Deserialize(memoryStream)
-						?? throw new NullReferenceException($"Couldn't deserialize \"{file.Name}\"."));
+				case ".json":
+					File = new BenVoxelFile(JsonSerializer.Deserialize<JsonObject>(memoryStream));
 					break;
 				default:
 					File = new BenVoxelFile(memoryStream);
 					break;
 			}
-			// Xml = File.Utf8Xml(); TODO fix
+			Json = File.ToJson().Tabs();
 		}
 		catch (Exception ex)
 		{
@@ -92,7 +93,7 @@
 			File?.Write(memoryStream);
 			memoryStream.Position = 0;
 			using DotNetStreamReference streamRef = new(stream: memoryStream);
-			await JS.InvokeVoidAsync(identifier: "downloadFileFromStream", ".BEN", streamRef);
+			await JS.InvokeVoidAsync(identifier: "downloadFileFromStream", ".ben", streamRef);
 		}
 		catch (Exception ex)
 		{
@@ -100,20 +101,22 @@
 			StateHasChanged();
 		}
 	}
-	private async Task DownloadXmlFile()
+	private async Task DownloadJsonFile()
 	{
-		// try
-		// {
-		// 	using MemoryStream memoryStream = new();
-		// 	memoryStream.Write(Encoding.UTF8.GetBytes(File.Utf8Xml()));
-		// 	memoryStream.Position = 0;
-		// 	using DotNetStreamReference streamRef = new(stream: memoryStream);
-		// 	await JS.InvokeVoidAsync(identifier: "downloadFileFromStream", ".BEN.xml", streamRef);
-		// }
-		// catch (Exception ex)
-		// {
-		// 	ExceptionMessage = new MarkupString(ex.GetType().Name + ": \"" + ex.Message + "\"<br />" + ex.StackTrace);
-		// 	StateHasChanged();
-		// }
+		try
+		{
+			if (File is null)
+				throw new NullReferenceException("No file!");
+			using MemoryStream memoryStream = new();
+			memoryStream.Write(Encoding.UTF8.GetBytes(File.ToJson().Tabs()));
+			memoryStream.Position = 0;
+			using DotNetStreamReference streamRef = new(stream: memoryStream);
+			await JS.InvokeVoidAsync(identifier: "downloadFileFromStream", ".ben.json", streamRef);
+		}
+		catch (Exception ex)
+		{
+			ExceptionMessage = new MarkupString(ex.GetType().Name + ": \"" + ex.Message + "\"<br />" + ex.StackTrace);
+			StateHasChanged();
+		}
 	}
 }
