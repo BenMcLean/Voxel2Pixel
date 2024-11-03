@@ -164,44 +164,33 @@ public static class ExtensionMethods
 	#endregion JSON
 	#region IBinaryWritable
 	/// <summary>
-	/// Creates a RIFF-formatted chunk from an IBinaryWritable object
+	/// Writes a RIFF chunk with content provided by a delegate
 	/// </summary>
-	public static MemoryStream RIFF(this IBinaryWritable o, string fourCC)
+	/// <param name="writer">The BinaryWriter to write to</param>
+	/// <param name="fourCC">4-character ASCII identifier for the chunk</param>
+	/// <param name="writeContent">Action that writes the chunk content</param>
+	/// <returns>The writer for method chaining</returns>
+	public static BinaryWriter RIFF(this BinaryWriter writer, string fourCC, Action<BinaryWriter> writeContent)
 	{
-		using MemoryStream contentMemoryStream = new();
-		using (BinaryWriter contentWriter = new(contentMemoryStream, Encoding.UTF8, leaveOpen: true))
-			o.Write(contentWriter);
-		MemoryStream memoryStream = new();
-		using (BinaryWriter writer = new(memoryStream, Encoding.UTF8, leaveOpen: true))
-		{
-			writer.Write(Encoding.UTF8.GetBytes(fourCC[..4]), 0, 4);
-			writer.Write((uint)contentMemoryStream.Length);
-			contentMemoryStream.Position = 0;
-			contentMemoryStream.CopyTo(memoryStream);
-		}
-		memoryStream.Position = 0;
-		return memoryStream;
-	}
-	public static byte[] ArrayRIFF(this IBinaryWritable o, string fourCC)
-	{
-		using MemoryStream memoryStream = o.RIFF(fourCC);
-		return memoryStream.ToArray();
-	}
-	public static void CopyRIFF(this IBinaryWritable o, string fourCC, Stream output)
-	{
-		using MemoryStream memoryStream = o.RIFF(fourCC);
-		memoryStream.CopyTo(output);
-	}
-	/// <summary>
-	/// Writes data as a RIFF chunk to a BinaryWriter
-	/// </summary>
-	public static BinaryWriter RIFF(this BinaryWriter writer, string fourCC, byte[] bytes)
-	{
-		writer.Write(Encoding.UTF8.GetBytes(fourCC[..4]), 0, 4);
-		writer.Write((uint)bytes.Length);
-		writer.Write(bytes);
+		if (fourCC.Length != 4)
+			throw new ArgumentException("RIFF chunk identifier must be exactly 4 characters", nameof(fourCC));
+		using MemoryStream contentStream = new();
+		using (BinaryWriter contentWriter = new(contentStream, Encoding.UTF8, leaveOpen: true))
+			writeContent(contentWriter);
+		byte[] content = contentStream.ToArray();
+		writer.Write(Encoding.ASCII.GetBytes(fourCC), 0, 4);
+		writer.Write((uint)content.Length);
+		writer.Write(content);
 		writer.Flush();
 		return writer;
 	}
+	/// <summary>
+	/// Writes an IBinaryWritable object as a RIFF chunk
+	/// </summary>
+	/// <param name="writer">The BinaryWriter to write to</param>
+	/// <param name="fourCC">4-character ASCII identifier for the chunk</param> 
+	/// <param name="writable">The object to write as chunk content</param>
+	/// <returns>The writer for method chaining</returns>
+	public static BinaryWriter RIFF(this IBinaryWritable writable, string fourCC, BinaryWriter writer) => writer.RIFF(fourCC, writable.Write);
 	#endregion IBinaryWritable
 }

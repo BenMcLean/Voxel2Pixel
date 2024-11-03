@@ -47,33 +47,39 @@ public class BenVoxelFile : IBinaryWritable
 				switch (fourCC)
 				{
 					case "PROP":
-						MemoryStream ms = new(reader.ReadBytes((int)reader.ReadUInt32()));
-						BinaryReader msReader = new(ms);
-						ushort count = msReader.ReadUInt16();
-						for (ushort i = 0; i < count; i++)
-							Properties[ReadKey(msReader)] = ReadString(msReader);
+						using (MemoryStream ms = new(reader.ReadBytes((int)reader.ReadUInt32())))
+						{
+							using BinaryReader msReader = new(ms);
+							ushort count = msReader.ReadUInt16();
+							for (ushort i = 0; i < count; i++)
+								Properties[ReadKey(msReader)] = ReadString(msReader);
+						}
 						break;
 					case "PT3D":
-						ms = new(reader.ReadBytes((int)reader.ReadUInt32()));
-						msReader = new(ms);
-						count = msReader.ReadUInt16();
-						for (ushort i = 0; i < count; i++)
-							Points[ReadKey(msReader)] = new Point3D(msReader);
+						using (MemoryStream ms = new(reader.ReadBytes((int)reader.ReadUInt32())))
+						{
+							using BinaryReader msReader = new(ms);
+							ushort count = msReader.ReadUInt16();
+							for (ushort i = 0; i < count; i++)
+								Points[ReadKey(msReader)] = new Point3D(msReader);
+						}
 						break;
 					case "PALC":
-						ms = new(reader.ReadBytes((int)reader.ReadUInt32()));
-						msReader = new(ms);
-						count = msReader.ReadUInt16();
-						for (ushort i = 0; i < count; i++)
+						using (MemoryStream ms = new(reader.ReadBytes((int)reader.ReadUInt32())))
 						{
-							string key = ReadKey(msReader);
-							uint[] colors = [.. Enumerable.Range(0, msReader.ReadByte() + 1).Select(i => msReader.ReadUInt32())];
-							bool hasDescriptions = msReader.ReadByte() != 0;
-							Palettes[key] = [.. colors.Select(rgba => new Color
+							using BinaryReader msReader = new(ms);
+							ushort count = msReader.ReadUInt16();
+							for (ushort i = 0; i < count; i++)
 							{
-								Rgba = rgba,
-								Description = hasDescriptions ? ReadString(msReader) : null,
-							})];
+								string key = ReadKey(msReader);
+								uint[] colors = [.. Enumerable.Range(0, msReader.ReadByte() + 1).Select(i => msReader.ReadUInt32())];
+								bool hasDescriptions = msReader.ReadByte() != 0;
+								Palettes[key] = [.. colors.Select(rgba => new Color
+								{
+									Rgba = rgba,
+									Description = hasDescriptions ? ReadString(msReader) : null,
+								})];
+							}
 						}
 						break;
 					default:
@@ -100,15 +106,18 @@ public class BenVoxelFile : IBinaryWritable
 		#region IBinaryWritable
 		public void Write(Stream stream)
 		{
-			using BinaryWriter writer = new(output: stream, encoding: Encoding.UTF8, leaveOpen: true);
+			using BinaryWriter writer = new(
+				output: stream,
+				encoding: Encoding.UTF8,
+				leaveOpen: true);
 			Write(writer);
 		}
 		public void Write(BinaryWriter writer)
 		{
 			if (Properties.Any())
 			{
-				MemoryStream ms = new();
-				BinaryWriter msWriter = new(ms);
+				using MemoryStream ms = new();
+				using BinaryWriter msWriter = new(ms);
 				msWriter.Write((ushort)Properties.Count());
 				foreach (KeyValuePair<string, string> property in Properties)
 				{
