@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -49,6 +50,11 @@ public static class ExtensionMethods
 			throw new JsonException("Input JSON must be an object");
 		return jsonObject.Tabs(depth);
 	}
+	private static readonly JsonSerializerOptions MinimalEscapingOptions = new()
+	{
+		Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+		WriteIndented = false,
+	};
 	private static void FormatJsonElement(JsonElement element, StringBuilder output, byte depth = 0)
 	{
 		string indent = new('\t', depth);
@@ -89,7 +95,7 @@ public static class ExtensionMethods
 				output.Append(indent + "]");
 				break;
 			case JsonValueKind.String:
-				output.Append(JsonSerializer.Serialize(element.GetString()));
+				output.Append(JsonSerializer.Serialize(element.GetString(), MinimalEscapingOptions));
 				break;
 			case JsonValueKind.Number:
 				if (element.TryGetInt64(out long longValue))
