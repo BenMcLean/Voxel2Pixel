@@ -162,20 +162,23 @@ public static class ExtensionMethods
 	/// </summary>
 	public static MemoryStream RIFF(this IBinaryWritable o, string fourCC)
 	{
-		MemoryStream ms = new();
-		using (BinaryWriter writer = new(ms, Encoding.UTF8, leaveOpen: true))
+		using MemoryStream contentMemoryStream = new();
+		using (BinaryWriter contentWriter = new(contentMemoryStream, Encoding.UTF8, leaveOpen: true))
+			o.Write(contentWriter);
+		MemoryStream memoryStream = new();
+		using (BinaryWriter writer = new(memoryStream, Encoding.UTF8, leaveOpen: true))
 		{
 			writer.Write(Encoding.UTF8.GetBytes(fourCC[..4]), 0, 4);
-			writer.BaseStream.Position += 4; // Reserve space for length
-			long startPosition = writer.BaseStream.Position;
-			o.Write(writer);
-			writer.Flush();
-			uint length = (uint)(writer.BaseStream.Position - startPosition);
-			writer.BaseStream.Position = 4;
-			writer.Write(length);
+			writer.Write((uint)contentMemoryStream.Length);
+			contentMemoryStream.Position = 0;
+			contentMemoryStream.CopyTo(memoryStream);
 		}
-		ms.Position = 0; // Reset position for reading
-		return ms;
+		return memoryStream;
+	}
+	public static byte[] ArrayRIFF(this IBinaryWritable o, string fourCC)
+	{
+		using MemoryStream memoryStream = o.RIFF(fourCC);
+		return memoryStream.ToArray();
 	}
 	/// <summary>
 	/// Writes data as a RIFF chunk to a BinaryWriter

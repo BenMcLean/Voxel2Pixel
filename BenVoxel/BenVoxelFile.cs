@@ -298,34 +298,29 @@ public class BenVoxelFile : IBinaryWritable
 	public void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: Encoding.UTF8, leaveOpen: true));
 	public void Write(BinaryWriter writer)
 	{
-		writer.Write(Encoding.UTF8.GetBytes("BENV"));
-		long sizePosition = writer.BaseStream.Position;
-		writer.BaseStream.Position += 4;
-		WriteKey(writer, Version);
-		writer.Flush();
-		using MemoryStream ms = new();
+		using MemoryStream memoryStream = new();
 		using (LZ4EncoderStream encoderStream = LZ4Stream.Encode(
-			stream: ms,
+			stream: memoryStream,
 			level: K4os.Compression.LZ4.LZ4Level.L12_MAX,
 			leaveOpen: true))
 		{
 			using BinaryWriter encoderWriter = new(encoderStream);
 			if (Global != null)
-				using (MemoryStream globalMs = Global.RIFF("DATA"))
-					globalMs.CopyTo(encoderStream);
+				using (MemoryStream global = Global.RIFF("DATA"))
+					global.CopyTo(encoderStream);
 			encoderWriter.Write((ushort)Models.Count());
 			foreach (KeyValuePair<string, Model> model in Models)
 			{
 				WriteKey(encoderWriter, model.Key);
-				using MemoryStream modelMs = model.Value.RIFF("MODL");
-				modelMs.CopyTo(encoderStream);
+				using MemoryStream modelMemoryStream = model.Value.RIFF("MODL");
+				modelMemoryStream.CopyTo(encoderStream);
 			}
 		}
-		byte[] compressedData = ms.ToArray();
-		writer.BaseStream.Position = sizePosition;
-		writer.Write((uint)compressedData.Length);
-		writer.BaseStream.Position = sizePosition + 4;
-		writer.Write(compressedData);
+		writer.Write(Encoding.UTF8.GetBytes("BENV"));
+		writer.Write((uint)(memoryStream.Length + Version.Length + 1));
+		WriteKey(writer, Version);
+		memoryStream.Position = 0;
+		memoryStream.CopyTo(writer.BaseStream);
 	}
 	#endregion IBinaryWritable
 	#region JSON
