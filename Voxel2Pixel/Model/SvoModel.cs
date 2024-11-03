@@ -10,7 +10,7 @@ using static BenVoxel.ExtensionMethods;
 namespace Voxel2Pixel.Model;
 
 public class SvoModel : BenVoxel.SvoModel, ISpecializedModel
-{//TODO: actually construct this class
+{
 	public static BenVoxelFile FromMagicaVoxel(Stream stream)
 	{
 		VoxFileModel[] models = VoxFileModel.Models(stream, out uint[] palette);
@@ -24,6 +24,19 @@ public class SvoModel : BenVoxel.SvoModel, ISpecializedModel
 			file.Models[i == 0 ? "" : i.ToString()] = new BenVoxelFile.Model { Geometry = new BenVoxel.SvoModel(models[i]) };
 		return file;
 	}
+	#region SvoModel
+	public SvoModel() : base() { }
+	public SvoModel(IModel model) : base(model) { }
+	public SvoModel(IEnumerable<Voxel> voxels, ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : base(voxels, sizeX, sizeY, sizeZ) { }
+	public SvoModel(Stream stream, ushort sizeX, ushort sizeY, ushort sizeZ) : base(stream, sizeX, sizeY, sizeZ) { }
+	public SvoModel(Stream stream) : base(stream) { }
+	public SvoModel(BinaryReader reader, ushort sizeX, ushort sizeY, ushort sizeZ) : base(reader, sizeX, sizeY, sizeZ) { }
+	public SvoModel(BinaryReader reader) : base(reader) { }
+	public SvoModel(byte[] bytes, ushort sizeX, ushort sizeY, ushort sizeZ) : base(bytes, sizeX, sizeY, sizeZ) { }
+	public SvoModel(byte[] bytes) : base(bytes) { }
+	public SvoModel(string z85, ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : base(z85, sizeX, sizeY, sizeZ) { }
+	public SvoModel(ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : base(sizeX, sizeY, sizeZ) { }
+	#endregion SvoModel
 	#region ISpecializedModel
 	public void Draw(IRenderer renderer, Perspective perspective, byte peakScaleX = 6, byte peakScaleY = 6, double radians = 0d)
 	{

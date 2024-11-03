@@ -170,7 +170,7 @@ public static class ExtensionMethods
 		writer.BaseStream.Position = 0;
 		return ms;
 	}
-	public static BinaryWriter RIFF(this BinaryWriter writer, string fourCC, byte[] bytes)
+	public static BinaryWriter RIFF(this BinaryWriter writer, string fourCC, params byte[] bytes)
 	{
 		writer.Write(Encoding.UTF8.GetBytes(fourCC[..4]), 0, 4);
 		writer.Write((uint)bytes.Length);
