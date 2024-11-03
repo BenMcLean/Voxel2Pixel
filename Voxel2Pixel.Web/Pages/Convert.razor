@@ -12,7 +12,7 @@
 
 <p>Upload a BenVoxel or MagicaVoxel file to convert BenVoxel formats.</p>
 
-<MudFileUpload T="IBrowserFile" FilesChanged="LoadFile" Accept=".vox">
+<MudFileUpload T="IBrowserFile" FilesChanged="LoadFile" Accept=".vox,.ben,.json">
 	<ActivatorContent>
 		<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" StartIcon="@Icons.Material.Filled.UploadFile">
 			Upload File
@@ -87,12 +87,15 @@
 	}
 	private async Task DownloadBenFile()
 	{
+		MemoryStream? memoryStream = null;
 		try
 		{
-			using MemoryStream memoryStream = new();
-			File?.Write(memoryStream);
+			if (File is null)
+				throw new NullReferenceException("No file!");
+			memoryStream = new MemoryStream();
+			File.Write(memoryStream);
 			memoryStream.Position = 0;
-			using DotNetStreamReference streamRef = new(stream: memoryStream);
+			using DotNetStreamReference streamRef = new(stream: memoryStream, leaveOpen: true);
 			await JS.InvokeVoidAsync(identifier: "downloadFileFromStream", ".ben", streamRef);
 		}
 		catch (Exception ex)
@@ -100,23 +103,32 @@
 			ExceptionMessage = new MarkupString(ex.GetType().Name + ": \"" + ex.Message + "\"<br />" + ex.StackTrace);
 			StateHasChanged();
 		}
+		finally
+		{
+			memoryStream?.Dispose();
+		}
 	}
 	private async Task DownloadJsonFile()
 	{
+		MemoryStream? memoryStream = null;
 		try
 		{
 			if (File is null)
 				throw new NullReferenceException("No file!");
-			using MemoryStream memoryStream = new();
+			memoryStream = new MemoryStream();
 			memoryStream.Write(Encoding.UTF8.GetBytes(File.ToJson().Tabs()));
 			memoryStream.Position = 0;
-			using DotNetStreamReference streamRef = new(stream: memoryStream);
+			using DotNetStreamReference streamRef = new(stream: memoryStream, leaveOpen: true);
 			await JS.InvokeVoidAsync(identifier: "downloadFileFromStream", ".ben.json", streamRef);
 		}
 		catch (Exception ex)
 		{
 			ExceptionMessage = new MarkupString(ex.GetType().Name + ": \"" + ex.Message + "\"<br />" + ex.StackTrace);
 			StateHasChanged();
+		}
+		finally
+		{
+			memoryStream?.Dispose();
 		}
 	}
 }

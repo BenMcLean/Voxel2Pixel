@@ -157,24 +157,35 @@ public static class ExtensionMethods
 	}
 	#endregion JSON
 	#region IBinaryWritable
+	/// <summary>
+	/// Creates a RIFF-formatted chunk from an IBinaryWritable object
+	/// </summary>
 	public static MemoryStream RIFF(this IBinaryWritable o, string fourCC)
 	{
 		MemoryStream ms = new();
-		using BinaryWriter writer = new(ms);
-		writer.Write(Encoding.UTF8.GetBytes(fourCC[..4]), 0, 4);
-		writer.BaseStream.Position += 4;
-		o.Write(writer);
-		uint length = (uint)(writer.BaseStream.Position - 8);
-		writer.BaseStream.Position = 4;
-		writer.Write(length);
-		writer.BaseStream.Position = 0;
+		using (BinaryWriter writer = new(ms, Encoding.UTF8, leaveOpen: true))
+		{
+			writer.Write(Encoding.UTF8.GetBytes(fourCC[..4]), 0, 4);
+			writer.BaseStream.Position += 4; // Reserve space for length
+			long startPosition = writer.BaseStream.Position;
+			o.Write(writer);
+			writer.Flush();
+			uint length = (uint)(writer.BaseStream.Position - startPosition);
+			writer.BaseStream.Position = 4;
+			writer.Write(length);
+		}
+		ms.Position = 0; // Reset position for reading
 		return ms;
 	}
-	public static BinaryWriter RIFF(this BinaryWriter writer, string fourCC, params byte[] bytes)
+	/// <summary>
+	/// Writes data as a RIFF chunk to a BinaryWriter
+	/// </summary>
+	public static BinaryWriter RIFF(this BinaryWriter writer, string fourCC, byte[] bytes)
 	{
 		writer.Write(Encoding.UTF8.GetBytes(fourCC[..4]), 0, 4);
 		writer.Write((uint)bytes.Length);
 		writer.Write(bytes);
+		writer.Flush();
 		return writer;
 	}
 	#endregion IBinaryWritable

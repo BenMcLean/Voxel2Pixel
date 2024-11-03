@@ -300,8 +300,9 @@ public class BenVoxelFile : IBinaryWritable
 		writer.BaseStream.Position += 4;
 		WriteKey(writer, Version);
 		writer.Flush();
+		using MemoryStream ms = new();
 		using (LZ4EncoderStream encoderStream = LZ4Stream.Encode(
-			stream: writer.BaseStream,
+			stream: ms,
 			level: K4os.Compression.LZ4.LZ4Level.L12_MAX,
 			leaveOpen: true))
 		{
@@ -314,10 +315,11 @@ public class BenVoxelFile : IBinaryWritable
 				model.Value.RIFF("MODL").CopyTo(encoderStream);
 			}
 		}
-		long position = writer.BaseStream.Position;
+		byte[] compressedData = ms.ToArray();
 		writer.BaseStream.Position = sizePosition;
-		writer.Write((uint)(position - sizePosition + 4));
-		writer.BaseStream.Position = position;
+		writer.Write((uint)compressedData.Length);
+		writer.BaseStream.Position = sizePosition + 4;
+		writer.Write(compressedData);
 	}
 	#endregion IBinaryWritable
 	#region JSON
