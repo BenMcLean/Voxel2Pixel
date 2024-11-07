@@ -157,7 +157,7 @@ public class BenVoxelFile : IBinaryWritable
 		public static Metadata FromJson(JsonObject json) => new Metadata(json) is Metadata metadata && metadata.Any() ? metadata : null;
 		#endregion JSON
 	}
-	public class Color
+	public record struct Color
 	{
 		#region Data
 		public uint Rgba { get; set; } = 0u;

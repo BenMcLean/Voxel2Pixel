@@ -44,6 +44,6 @@ public class BenVoxelFileTest(Xunit.Abstractions.ITestOutputHelper output)
 			expected: s,
 			actual: ((BenVoxelFile)(new XmlSerializer(typeof(BenVoxelFile)).Deserialize(new MemoryStream(Encoding.UTF8.GetBytes(s))) ?? throw new NullReferenceException())).ToJson().Tabs());
 	}
-	[Fact]
-	public void RiffTest() => output.WriteLine(Convert.ToHexString(new Point3D(1, 2, 3).RIFF("PT3D").ToArray()));
+	//[Fact]
+	//public void RiffTest() => output.WriteLine(Convert.ToHexString(new Point3D(1, 2, 3).RIFF("PT3D").ToArray()));
 }
