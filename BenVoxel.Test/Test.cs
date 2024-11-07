@@ -10,35 +10,34 @@ public class Test
 	[Fact]
 	public void Json2Binary2Json()
 	{
-		BenVoxelFile jsonModel;
+		BenVoxelFile model;
 		using (FileStream jsonInputStream = new(
 			path: SourceFile,
 			mode: FileMode.Open,
 			access: FileAccess.Read))
 		{
-			jsonModel = new(JsonSerializer.Deserialize<JsonObject>(jsonInputStream));
+			model = new(JsonSerializer.Deserialize<JsonObject>(jsonInputStream));
 		}
 		using (FileStream binaryOutputStream = new(
 			path: "test.ben",
 			mode: FileMode.OpenOrCreate,
 			access: FileAccess.Write))
 		{
-			jsonModel.Write(binaryOutputStream);
+			model.Write(binaryOutputStream);
 		}
-		BenVoxelFile binaryModel;
 		using (FileStream binaryInputStream = new(
 			path: "test.ben",
 			mode: FileMode.Open,
 			access: FileAccess.Read))
 		{
-			binaryModel = new(binaryInputStream);
+			model = new(binaryInputStream);
 		}
 		using (FileStream jsonOutputStream = new(
 			path: "test.ben.json",
 			mode: FileMode.OpenOrCreate,
 			access: FileAccess.Write))
 		{
-			jsonOutputStream.Write(Encoding.UTF8.GetBytes(binaryModel.ToJson().Tabs()));
+			jsonOutputStream.Write(Encoding.UTF8.GetBytes(model.ToJson().Tabs()));
 		}
 		Assert.Equal(
 			expected: File.ReadAllText(SourceFile),
