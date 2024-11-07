@@ -9,7 +9,6 @@ using Voxel2Pixel.Model.FileFormats;
 using Voxel2Pixel.Render;
 using static Voxel2Pixel.Render.TextureAtlas;
 using static Voxel2Pixel.Web.ImageMaker;
-using static BenVoxel.ExtensionMethods;
 
 namespace Voxel2Pixel.Test.Render;
 
