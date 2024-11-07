@@ -1,6 +1,22 @@
 {
 	"version": "0.1",
 	"metadata": {
+		"properties": {
+			"property1": "value1",
+			"property2": "value2"
+		},
+		"points": {
+			"zero": [
+				0,
+				0,
+				0
+			],
+			"one": [
+				1,
+				1,
+				1
+			]
+		},
 		"palettes": {
 			"": [
 				{
