@@ -40,8 +40,8 @@ public class Test
 			jsonOutputStream.Write(Encoding.UTF8.GetBytes(model.ToJson().Tabs()));
 		}
 		Assert.Equal(
-			expected: File.ReadAllText(SourceFile),
-			actual: File.ReadAllText("test.ben.json"));
+			expected: File.ReadAllText(SourceFile).Replace("\r\n", "\n"),
+			actual: File.ReadAllText("test.ben.json").Replace("\r\n", "\n"));
 		File.Delete("test.ben");
 		File.Delete("test.ben.json");
 	}
