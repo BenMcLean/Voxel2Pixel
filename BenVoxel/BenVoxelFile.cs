@@ -40,54 +40,39 @@ public class BenVoxelFile : IBinaryWritable
 		public Metadata(BinaryReader reader) => FromReader(reader);
 		private void FromReader(BinaryReader reader)
 		{
-			bool valid = true;
-			while (valid
-				&& reader.BaseStream.Position < reader.BaseStream.Length - 4
-				&& FourCC(reader) is string fourCC)
-				switch (fourCC)
+			while (reader.BaseStream.Position < reader.BaseStream.Length - 4
+				&& reader.TryRIFF((reader, fourCC) =>
 				{
-					case "PROP":
-						using (MemoryStream ms = new(reader.ReadBytes((int)reader.ReadUInt32())))
-						{
-							using BinaryReader msReader = new(ms);
-							ushort count = msReader.ReadUInt16();
+					switch (fourCC)
+					{
+						case "PROP":
+							ushort count = reader.ReadUInt16();
 							for (ushort i = 0; i < count; i++)
-								Properties[ReadKey(msReader)] = ReadString(msReader);
-						}
-						break;
-					case "PT3D":
-						using (MemoryStream ms = new(reader.ReadBytes((int)reader.ReadUInt32())))
-						{
-							using BinaryReader msReader = new(ms);
-							ushort count = msReader.ReadUInt16();
+								Properties[ReadKey(reader)] = ReadString(reader);
+							return true;
+						case "PT3D":
+							count = reader.ReadUInt16();
 							for (ushort i = 0; i < count; i++)
-								Points[ReadKey(msReader)] = new Point3D(msReader);
-						}
-						break;
-					case "PALC":
-						using (MemoryStream ms = new(reader.ReadBytes((int)reader.ReadUInt32())))
-						{
-							using BinaryReader msReader = new(ms);
-							ushort count = msReader.ReadUInt16();
+								Points[ReadKey(reader)] = new Point3D(reader);
+							return true;
+						case "PALC":
+							count = reader.ReadUInt16();
 							for (ushort i = 0; i < count; i++)
 							{
-								string key = ReadKey(msReader);
-								uint[] colors = [.. Enumerable.Range(0, msReader.ReadByte() + 1).Select(i => msReader.ReadUInt32())];
-								bool hasDescriptions = msReader.ReadByte() != 0;
+								string key = ReadKey(reader);
+								uint[] colors = [.. Enumerable.Range(0, reader.ReadByte() + 1).Select(i => reader.ReadUInt32())];
+								bool hasDescriptions = reader.ReadByte() != 0;
 								Palettes[key] = [.. colors.Select(rgba => new Color
 								{
 									Rgba = rgba,
-									Description = hasDescriptions ? ReadString(msReader) : null,
+									Description = hasDescriptions ? ReadString(reader) : null,
 								})];
 							}
-						}
-						break;
-					default:
-						valid = false;
-						break;
-				}
-			if (!valid)
-				reader.BaseStream.Position -= 4;
+							return true;
+						default:
+							return false;
+					}
+				})) { }
 		}
 		public Metadata(JsonObject json)
 		{
@@ -115,51 +100,45 @@ public class BenVoxelFile : IBinaryWritable
 		public void Write(BinaryWriter writer)
 		{
 			if (Properties.Any())
-			{
-				using MemoryStream ms = new();
-				using BinaryWriter msWriter = new(ms);
-				msWriter.Write((ushort)Properties.Count());
-				foreach (KeyValuePair<string, string> property in Properties)
+				writer.RIFF("PROP", (writer) =>
 				{
-					WriteKey(msWriter, property.Key);
-					WriteString(msWriter, property.Value);
-				}
-				writer.RIFF("PROP", ms.ToArray());
-			}
-			if (Points.Any())
-			{
-				MemoryStream ms = new();
-				BinaryWriter msWriter = new(ms);
-				msWriter.Write((ushort)Points.Count());
-				foreach (KeyValuePair<string, Point3D> point in Points)
-				{
-					WriteKey(msWriter, point.Key);
-					point.Value.Write(msWriter);
-				}
-				writer.RIFF("PT3D", ms.ToArray());
-			}
-			if (Palettes.Any())
-			{
-				MemoryStream ms = new();
-				BinaryWriter msWriter = new(ms);
-				msWriter.Write((ushort)Palettes.Count());
-				foreach (KeyValuePair<string, Color[]> palette in Palettes)
-				{
-					WriteKey(msWriter, palette.Key);
-					writer.Write((byte)palette.Value.Length - 1);
-					foreach (Color color in palette.Value)
-						writer.Write(color.Rgba);
-					if (palette.Value.Any(color => !string.IsNullOrWhiteSpace(color.Description)))
+					writer.Write((ushort)Properties.Count());
+					foreach (KeyValuePair<string, string> property in Properties)
 					{
-						writer.Write((byte)1);
-						foreach (Color color in palette.Value)
-							WriteString(writer, color.Description ?? "");
+						WriteKey(writer, property.Key);
+						WriteString(writer, property.Value);
 					}
-					else
-						writer.Write((byte)0);
-				}
-				writer.RIFF("PALC", ms.ToArray());
-			}
+				});
+			if (Points.Any())
+				writer.RIFF("PT3D", (writer) =>
+				{
+					writer.Write((ushort)Points.Count());
+					foreach (KeyValuePair<string, Point3D> point in Points)
+					{
+						WriteKey(writer, point.Key);
+						point.Value.Write(writer);
+					}
+				});
+			if (Palettes.Any())
+				writer.RIFF("PALC", (writer) =>
+				{
+					writer.Write((ushort)Palettes.Count());
+					foreach (KeyValuePair<string, Color[]> palette in Palettes)
+					{
+						WriteKey(writer, palette.Key);
+						writer.Write((byte)palette.Value.Length - 1);
+						foreach (Color color in palette.Value)
+							writer.Write(color.Rgba);
+						if (palette.Value.Any(color => !string.IsNullOrWhiteSpace(color.Description)))
+						{
+							writer.Write((byte)1);
+							foreach (Color color in palette.Value)
+								WriteString(writer, color.Description ?? "");
+						}
+						else
+							writer.Write((byte)0);
+					}
+				});
 		}
 		#endregion IBinaryWritable
 		#region JSON
@@ -224,15 +203,21 @@ public class BenVoxelFile : IBinaryWritable
 		public Model(BinaryReader reader) => FromReader(reader);
 		private void FromReader(BinaryReader reader)
 		{
-			string fourCC = FourCC(reader);
-			if (fourCC.Equals("DATA"))
-			{
-				Metadata = new(new MemoryStream(reader.ReadBytes((int)reader.ReadUInt32())));
-				fourCC = FourCC(reader);
-			}
-			if (!fourCC.Equals("SVOG"))
-				throw new IOException("Couldn't parse model geometry!");
-			Geometry = new(new MemoryStream(reader.ReadBytes((int)reader.ReadUInt32())));
+			reader.TryRIFF((reader, fourCC) =>
+				{
+					if (!"DATA".Equals(fourCC))
+						return false;
+					Metadata = new(reader);
+					return true;
+				});
+			if (!reader.TryRIFF((reader, fourCC) =>
+				{
+					if (!"SVOG".Equals(fourCC))
+						return false;
+					Geometry = new(reader);
+					return true;
+				}))
+				throw new IOException("Expected \"SVOG\"");
 		}
 		public Model(JsonObject json)
 		{
@@ -253,16 +238,16 @@ public class BenVoxelFile : IBinaryWritable
 		#region IBinaryWritable
 		public void Write(Stream stream)
 		{
-			if (Metadata is not null)
-				using (MemoryStream metadata = Metadata.RIFF("DATA"))
-					metadata.CopyTo(stream);
-			using MemoryStream geometry = Geometry.RIFF("SVOG");
-			geometry.CopyTo(stream);
+			using BinaryWriter writer = new(
+				output: stream,
+				encoding: Encoding.UTF8,
+				leaveOpen: true);
+			Write(writer);
 		}
 		public void Write(BinaryWriter writer)
 		{
-			writer.Flush();
-			Write(writer.BaseStream);
+			Metadata?.RIFF("DATA", writer);
+			Geometry.RIFF("SVOG", writer);
 		}
 		#endregion IBinaryWritable
 		#region JSON
@@ -303,25 +288,27 @@ public class BenVoxelFile : IBinaryWritable
 	{
 		if (!FourCC(reader).Equals("BENV"))
 			throw new IOException("Expected \"BENV\"");
-		uint totalLength = reader.ReadUInt32();
-		string version = ReadKey(reader);
-		string fourCC = FourCC(reader);
-		if (fourCC.Equals("DATA"))
+		reader.ReadUInt32(); // total length
+		ReadKey(reader); // version
+		reader.TryRIFF((reader, fourCC) =>
 		{
-			reader.ReadUInt32();
+			if (!"DATA".Equals(fourCC))
+				return false;
 			Global = new(reader);
-		}
-		else
-			reader.BaseStream.Position -= 4;
+			return true;
+		});
 		ushort count = reader.ReadUInt16();
 		for (ushort i = 0; i < count; i++)
 		{
 			string name = ReadKey(reader);
-			fourCC = FourCC(reader);
-			if (!"MODL".Equals(fourCC))
-				throw new InvalidDataException($"Unexpected chunk type. Expected: \"MODL\", Actual: \"{fourCC}\".");
-			reader.ReadUInt32();
-			Models[name] = new(reader);
+			if (!reader.TryRIFF((reader, fourCC) =>
+			{
+				if (!"MODL".Equals(fourCC))
+					return false;
+				Models[name] = new(reader);
+				return true;
+			}))
+				throw new IOException("Expected \"MODL\"");
 		}
 	}
 	public BenVoxelFile(JsonObject json)
@@ -341,26 +328,16 @@ public class BenVoxelFile : IBinaryWritable
 			leaveOpen: true);
 		Write(writer);
 	}
-	public void Write(BinaryWriter writer)
+	public void Write(BinaryWriter writer) => writer.RIFF("BENV", (writer) =>
 	{
-		byte[] uncompressedBytes;
-		using (MemoryStream uncompressedStream = new())
+		Global?.RIFF("DATA", writer);
+		writer.Write((ushort)Models.Count);
+		foreach (KeyValuePair<string, Model> model in Models)
 		{
-			using BinaryWriter contentWriter = new(uncompressedStream, Encoding.UTF8, leaveOpen: true);
-			Global?.CopyRIFF("DATA", uncompressedStream);
-			contentWriter.Write((ushort)Models.Count);
-			foreach (KeyValuePair<string, Model> model in Models)
-			{
-				WriteKey(contentWriter, model.Key);
-				model.Value.CopyRIFF("MODL", uncompressedStream);
-			}
-			uncompressedBytes = uncompressedStream.ToArray();
+			WriteKey(writer, model.Key);
+			model.Value.RIFF("MODL", writer);
 		}
-		writer.Write(Encoding.UTF8.GetBytes("BENV"));
-		writer.Write((uint)(Version.Length + 1 + uncompressedBytes.Length));
-		WriteKey(writer, Version);
-		writer.Write(uncompressedBytes);
-	}
+	});
 	#endregion IBinaryWritable
 	#region JSON
 	public JsonObject ToJson()

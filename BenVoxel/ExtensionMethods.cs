@@ -198,48 +198,26 @@ public static class ExtensionMethods
 	/// <param name="reader">The source reader</param>
 	/// <param name="readContent">Delegate that receives a length-limited reader for the chunk content</param>
 	/// <returns>The FourCC identifier of the chunk that was read</returns>
-	public static string RIFF(this BinaryReader reader, Action<BinaryReader> readContent)
+	public static string RIFF(this BinaryReader reader, Action<BinaryReader, string> readContent)
 	{
 		string fourCC = Encoding.ASCII.GetString(reader.ReadBytes(4));
 		uint length = reader.ReadUInt32();
 		using MemoryStream limitedStream = new(reader.ReadBytes((int)length));
 		using BinaryReader limitedReader = new(limitedStream, Encoding.UTF8, leaveOpen: true);
-		readContent(limitedReader);
+		readContent(limitedReader, fourCC);
 		return fourCC;
 	}
-	/// <summary>
-	/// Reads a RIFF chunk, verifying its FourCC matches the expected value
-	/// </summary>
-	/// <param name="reader">The source reader</param>
-	/// <param name="expectedFourCC">The expected FourCC identifier</param>
-	/// <param name="readContent">Delegate that receives a length-limited reader for the chunk content</param>
-	/// <exception cref="InvalidDataException">Thrown if the chunk's FourCC doesn't match the expected value</exception>
-	public static void RIFF(this BinaryReader reader, string expectedFourCC, Action<BinaryReader> readContent)
+	public static bool TryRIFF(this BinaryReader reader, Func<BinaryReader, string, bool> readContent)
 	{
-		string actualFourCC = reader.RIFF(readContent);
-		if (actualFourCC != expectedFourCC)
-			throw new InvalidDataException($"Unexpected chunk type. Expected: \"{expectedFourCC}\", Actual: \"{actualFourCC}\".");
-	}
-	/// <summary>
-	/// Attempts to read a RIFF chunk if it matches the expected FourCC
-	/// </summary>
-	/// <param name="reader">The source reader</param>
-	/// <param name="expectedFourCC">The expected FourCC identifier</param>
-	/// <param name="readContent">Delegate that receives a length-limited reader for the chunk content</param>
-	/// <returns>True if the chunk was found and read, false if a different chunk type was encountered</returns>
-	public static bool TryReadRiffChunk(this BinaryReader reader, string expectedFourCC, Action<BinaryReader> readContent)
-	{
+		long startPosition = reader.BaseStream.Position;
 		string fourCC = Encoding.ASCII.GetString(reader.ReadBytes(4));
-		if (fourCC != expectedFourCC)
-		{
-			reader.BaseStream.Position -= 4;
-			return false;
-		}
 		uint length = reader.ReadUInt32();
 		using MemoryStream limitedStream = new(reader.ReadBytes((int)length));
 		using BinaryReader limitedReader = new(limitedStream, Encoding.UTF8, leaveOpen: true);
-		readContent(limitedReader);
-		return true;
+		if (readContent(limitedReader, fourCC))
+			return true;
+		reader.BaseStream.Position = startPosition;
+		return false;
 	}
 	#endregion IBinaryWritable
 }
