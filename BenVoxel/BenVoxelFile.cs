@@ -325,6 +325,7 @@ public class BenVoxelFile : IBinaryWritable
 	}
 	public void Write(BinaryWriter writer) => writer.RIFF("BENV", (writer) =>
 	{
+		WriteKey(writer, Version);
 		Global?.RIFF("DATA", writer);
 		writer.Write((ushort)Models.Count);
 		foreach (KeyValuePair<string, Model> model in Models)
