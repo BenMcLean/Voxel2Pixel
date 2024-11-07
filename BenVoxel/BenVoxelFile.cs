@@ -157,20 +157,15 @@ public class BenVoxelFile : IBinaryWritable
 		public static Metadata FromJson(JsonObject json) => new Metadata(json) is Metadata metadata && metadata.Any() ? metadata : null;
 		#endregion JSON
 	}
-	public record struct Color
+	public readonly record struct Color(uint Rgba = 0u, string Description = null)
 	{
-		#region Data
-		public uint Rgba { get; set; } = 0u;
-		public string Description { get; set; } = null;
-		#endregion Data
 		#region Color
-		public Color() { }
-		public Color(JsonObject json)
-		{
-			Rgba = uint.Parse(json["rgba"].GetValue<string>()[1..], System.Globalization.NumberStyles.HexNumber);
-			if (json.TryGetPropertyValue("description", out JsonNode description))
-				Description = description.GetValue<string>();
-		}
+		public Color(JsonObject json) : this(
+			Rgba: uint.Parse(json["rgba"].GetValue<string>()[1..], System.Globalization.NumberStyles.HexNumber),
+			Description: json.TryGetPropertyValue("description", out JsonNode description) ?
+				description.GetValue<string>()
+				: null)
+		{ }
 		public static IEnumerable<Color> Colors(IEnumerable<uint> colors) => colors.Select(rgba => new Color { Rgba = rgba, });
 		#endregion Color
 		#region JSON
