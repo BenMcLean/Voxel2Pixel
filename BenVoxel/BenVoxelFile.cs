@@ -126,7 +126,7 @@ public class BenVoxelFile : IBinaryWritable
 					foreach (KeyValuePair<string, Color[]> palette in Palettes)
 					{
 						WriteKey(writer, palette.Key);
-						writer.Write((byte)palette.Value.Length - 1);
+						writer.Write((byte)(palette.Value.Length - 1));
 						foreach (Color color in palette.Value)
 							writer.Write(color.Rgba);
 						if (palette.Value.Any(color => !string.IsNullOrWhiteSpace(color.Description)))
