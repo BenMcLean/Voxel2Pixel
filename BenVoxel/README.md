@@ -8,7 +8,7 @@ There will be no license requirements restricting usage, but this format is desi
 The BenVoxel standard describes two inter-related file formats. One is a binary format with the extension `.ben` and the other is a JSON format (recommended extension `.ben.json`) designed to contain all of the same information as the binary format but with the metadata kept human-readable. The JSON format uses Z85 encoding for the geometry data. A game developer might keep their voxel models in the JSON format during development but automatically convert to the binary format (potentially stripping out metadata) as part of their release pipeline.
 ## Definitions
 ### Coordinates
-The BenVoxel standard adopts the MagicaVoxel Z+up right-handed 3D coordinate system where: X+ is right/east (width), Y+ is forward/north (depth), and Z+ is up (height). Negative coordinates cannot contain voxels. Models are expected to be aligned so that their lowest edge is on 0 of each axis.
+The BenVoxel standard adopts the MagicaVoxel Z+up right-handed 3D coordinate system where: X+ is right/east (width), Y+ is forward/north (depth), and Z+ is up (height). Negative coordinates cannot contain voxels. Models are expected to be aligned so that their lowest edge occupies coordinate value 0 on all three axes.
 ### Special Keys
 The empty string key has special meaning in several contexts:
 - In models: Indicates the default model.
@@ -99,7 +99,7 @@ Corresponds to one or more of the `properties` objects in the JSON format. It co
   - `Key`: One `KeyString` for the property key. Empty string key, if present, specifies the scale in meters of each voxel. This can be either a single decimal number applied to all dimensions (e.g. `1` for Minecraft-style 1m^3 voxels) or three comma-separated decimal numbers for width, depth, and height respectively (e.g. `2.4384,2.4384,2.92608` for Wolfenstein 3-D walls which are 8ft x 8ft x 9.6ft). Scale values must be positive decimal numbers in C# decimal format. If no empty string key is present then the scale is unspecified.
   - `Value`: One `ValueString` for the property value.
 #### `PT3D` chunk (Points)
-Named 3D points in space as [x, y, z] arrays. Uses 32-bit signed integers to allow points to be placed outside model bounds (including negative coordinates) for purposes like specifying offsets.
+Named 3D points in space as `[x, y, z]` arrays. Uses 32-bit signed integers to allow points to be placed outside model bounds (including negative coordinates) for purposes like specifying offsets.
 
 Corresponds to one or more of the `points` objects in the JSON format. It contains:
 - `Count`: One unsigned 16-bit integer for the number of points.
@@ -119,7 +119,7 @@ Corresponds to one or more `palettes` objects in the JSON format. It contains:
   - `Descriptions`: A series of `Length` `ValueString`s describing the colors. Only included if `HasDescriptions` is not `0`. A description should stay associated with the color it describes even when the colors or their order changes. The first line should be a short, human-readable message suitable for display as a tooltip in an editor. Additional lines can contain extra data such as material settings, which editors should preserve even if they don't use it.
 #### `SVOG` chunk (Geometry)
 Stands for "**S**parse **V**oxel **O**ctree **G**eometry". Corresponds to a `geometry` object in the JSON format. It contains:
-- `Size`: Three 16-bit unsigned integers defining model extents on X, Y, and Z axes. Valid voxel coordinates range from 0 to size-1 for each axis. Any geometry data present at coordinates equal to or greater than the corresponding size value is invalid and may be retained or safely discarded without warning as an implementation detail. For example, in a model of size `[5,5,5]`, coordinates `[4,4,4]` are valid while coordinates `[5,4,4]` are out of bounds. Selectively discarding out-of-bounds voxels when deserializing is recommended but not required. However, it is also strongly recommended that files containing such out-of-bounds voxels which are otherwise valid should still be readable.
+- `Size`: Three 16-bit unsigned integers defining model extents on X, Y, and Z axes. Valid voxel coordinates range from `0` to `size - 1` for each axis. Any geometry data present at coordinates equal to or greater than the corresponding size value is invalid and may be retained or safely discarded without warning as an implementation detail. For example, in a model of size `[5,5,5]`, coordinates `[4,4,4]` are valid while coordinates `[5,4,4]` are out of bounds. Selectively discarding out-of-bounds voxels when deserializing is recommended but not required. However, it is also strongly recommended that files containing such out-of-bounds voxels which are otherwise valid should still be readable.
 - `Geometry`: A variable length series of bytes which encodes the voxels according to the "Geometry" section of this document.
 ## Geometry
 Both the JSON and binary formats use the same sparse voxel octree data format, except that only for the JSON format, serializing the geometry data requires the following additional processing steps:
@@ -134,7 +134,7 @@ Deserializing from the JSON format reverses the process:
 
 This ensures that the non-human-readable section of the JSON files is compressed to a minimum length while only using JSON-safe characters. Due to typical DEFLATE implementations being pseudo-non-deterministic, the compressed and encoded string is not guaranteed to match between two runs with the same uncompressed and unencoded input data. However, the decoded and decompressed output data will be binary identical to the (padded) input data because DEFLATE data compression is lossless.
 
-The binary format uses the raw octree data directly without any additional compression or encoding applied to it. The binary format prefixes the model size to the geometry data in the `SVOG` chunk while the JSON format includes the model size in a separate `size` property instead, omitting the sizes from the compressed and encoded `z85` property.
+The binary format uses the raw octree data directly without any additional compression or encoding applied to it. The binary format prefixes the model size to the geometry data in the `SVOG` chunk while the JSON format includes the model size in a separate `size` property instead, omitting the model size from the compressed and encoded `z85` property.
 ### Voxels
 An individual voxel is defined as having four data elements.
 #### Coordinates
@@ -142,7 +142,7 @@ The first three data elements of a voxel are 16-bit unsigned integers for the X,
 #### Payload
 The fourth data element of a voxel is the payload of one byte for the index to reference a color or material, where 0 is reserved for an empty or absent voxel, leaving 255 usable colors or materials.
 ### Models
-Models (sets of voxels) are limited by 16-bit unsigned integer bounds, so valid geometry can range from coordinates of 0 to 65,534. Model contents are expected to be following the MagicaVoxel convention, which is Z+up, right-handed, so X+ means right/east in width, Y+ means forwards/north in depth and Z+ means up in height. Models are expected to be aligned so that their lowest edge occupies coordinate 0 on all three axes.
+Models (sets of voxels of unique coordinates) are limited by 16-bit unsigned integer bounds, so valid geometry can range from coordinate values of 0 to 65,534 inclusive. Model contents are expected to be following the MagicaVoxel convention, which is Z+up, right-handed, so X+ means right/east in width, Y+ means forwards/north in depth and Z+ means up in height. Models are expected to be aligned so that their lowest edge occupies coordinate value 0 on all three axes.
 ### Octree
 To serialize a model, geometry is structured as a sparse voxel octree for compression, so that the coordinates of the voxels are implied from their positions in the octree and empty spaces are not stored.
 
