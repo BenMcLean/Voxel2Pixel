@@ -70,7 +70,7 @@ This applies to ***all*** chunks, so this information won't be repeated in the i
 #### `BENV` chunk (Root)
 BenVoxel binary files start with a `BENV` chunk which contains the entire file and corresponds to the root object in the JSON format. It contains:
 - `Version`: One `KeyString` for version information. Higher alphanumeric comparison indicates higher version.
-- Compressed with L4Z:
+- The remaining data is compressed using raw DEFLATE (RFC 1951) and contains:
   - `Global`: One `DATA` chunk for global metadata. (optional)
   - `Count`: One unsigned 16-bit integer for the number of models.
   - For each model:
@@ -128,13 +128,13 @@ The first three data elements of a voxel are 16-bit unsigned integers for the X,
 The fourth data element of a voxel is the payload of one byte for the index to reference a color or material, where 0 is reserved for an empty or absent voxel, leaving 255 usable colors or materials.
 ### Models
 Models (sets of voxels) are limited by 16-bit unsigned integer bounds, so valid geometry can range from coordinates of 0 to 65,534. Model contents are expected to be following the MagicaVoxel convention, which is Z+up, right-handed, so X+ means right/east in width, Y+ means forwards/north in depth and Z+ means up in height. Models are expected to be aligned so that their lowest edge occupies coordinate 0 on all three axes.
-#### Octree
+### Octree
 To serialize a model, geometry is structured as a sparse voxel octree for compression, so that the coordinates of the voxels are implied from their positions in the octree and empty spaces are not stored.
 
 The octree has a fixed depth of 16 levels, corresponding to the 16 bits of addressable space in the unsigned 16-bit integer spatial coordinates. The first 15 levels consist of only Branch nodes, while the 16th and final level contains only Leaf nodes.
-### Nodes
+#### Nodes
 There are four node types, which include one type of branch and three types of leaves.
-#### Header
+##### Node Headers
 All nodes start with a 1-byte header, composed of bits from left to right:
 - Header bits 7-6: Node type indicator
   - `00`: Branch
@@ -152,20 +152,21 @@ All nodes start with a 1-byte header, composed of bits from left to right:
     - `000`: (-Z, -Y, -X) octant
     - `111`: (+Z, +Y, +X) octant
     - `001`: (-Z, -Y, +X) octant
-#### Branch nodes
+##### Branch nodes
 In Branch nodes, the header byte is followed by the child nodes. On the 16th (last) level of the octree, all of the children will be Leaf nodes, but the children will all be Branch nodes on every other level.
-#### Leaf nodes
-##### 1-byte payload Leaf nodes
-These represent a 2x2x2 voxel cube of all the same color or material. The header byte is followed by one payload byte, which should fill in all eight voxels.
-##### 2-byte payload Leaf nodes
-These represent a 2x2x2 voxel cube in which all the voxels are the same except one, called the foreground voxel. The header byte is followed by two payload bytes: the first for the foreground voxel and then the second for the background voxels.
+##### Leaf nodes
+Each leaf node represents the contents of a 2x2x2 voxel cube. There are three types of leaf nodes.
+###### 1-byte payload Leaf nodes
+These represent cubes of all the same color or material. The header byte is followed by one payload byte, which should fill in all eight voxels.
+###### 2-byte payload Leaf nodes
+These represent cubes in which all the voxels are the same except one, called the foreground voxel. The header byte is followed by two payload bytes: the first for the foreground voxel and then the second for the background voxels.
 
-The octant/position of the foreground voxel is indicated by coordinates in header bits 5-3, using the same ZYX octant encoding scheme as described in the Header section above.
+The octant/position of the foreground voxel is indicated by coordinates in header bits 5-3, using the same ZYX octant encoding scheme as described in the Node Headers section above.
 
 The background voxel value should be repeated in all octants/positions except for the foreground voxel.
-##### 8-byte payload Leaf nodes
-These represent a 2x2x2 voxel cube of any arbitrary values. In 8-byte Leaf nodes, the header byte is followed by the eight payload bytes of a 2x2x2 voxel cube in ascending Z, Y, X order from left to right, with 0 representing empty voxels.
-### Empty models
+###### 8-byte payload Leaf nodes
+These represent cubes of any arbitrary values. In 8-byte Leaf nodes, the header byte is followed by the eight payload bytes of a 2x2x2 voxel cube in ascending Z, Y, X order from left to right, with 0 representing empty voxels.
+#### Empty models
 An empty model would be represented by the hexadecimal string `0000000000000000000000000000004000` which is structured as follows:
 - 15 bytes for branch node headers which are all `0`.
 - 1 byte for a leaf node header with hexadecimal value `0x40`

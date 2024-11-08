@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.IO;
+using System.IO.Compression;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -283,20 +284,32 @@ public class BenVoxelFile : IBinaryWritable
 	{
 		if (!FourCC(reader).Equals("BENV"))
 			throw new IOException("Expected \"BENV\"");
-		reader.ReadUInt32(); // total length
-		ReadKey(reader); // version
-		reader.TryRIFF((reader, fourCC) =>
+		uint totalLength = reader.ReadUInt32();
+		string version = ReadKey(reader);
+		using MemoryStream decompressedStream = new();
+		using (MemoryStream compressedStream = new(reader.ReadBytes((int)(totalLength - version.Length - 1))))
+		using (DeflateStream deflateStream = new(
+			stream: compressedStream,
+			mode: CompressionMode.Decompress))
+		{
+			deflateStream.CopyTo(decompressedStream);
+		}
+		decompressedStream.Position = 0;
+		using BinaryReader decompressedReader = new(
+			input: decompressedStream,
+			encoding: Encoding.UTF8);
+		decompressedReader.TryRIFF((reader, fourCC) =>
 		{
 			if (!"DATA".Equals(fourCC))
 				return false;
 			Global = new(reader);
 			return true;
 		});
-		ushort count = reader.ReadUInt16();
+		ushort count = decompressedReader.ReadUInt16();
 		for (ushort i = 0; i < count; i++)
 		{
-			string name = ReadKey(reader);
-			if (!reader.TryRIFF((reader, fourCC) =>
+			string name = ReadKey(decompressedReader);
+			if (!decompressedReader.TryRIFF((reader, fourCC) =>
 			{
 				if (!"MODL".Equals(fourCC))
 					return false;
@@ -323,17 +336,32 @@ public class BenVoxelFile : IBinaryWritable
 			leaveOpen: true);
 		Write(writer);
 	}
-	public void Write(BinaryWriter writer) => writer.RIFF("BENV", (writer) =>
+	public void Write(BinaryWriter writer)
 	{
-		WriteKey(writer, Version);
-		Global?.RIFF("DATA", writer);
-		writer.Write((ushort)Models.Count);
-		foreach (KeyValuePair<string, Model> model in Models)
+		using MemoryStream compressedStream = new();
+		using (DeflateStream deflateStream = new(
+			stream: compressedStream,
+			mode: CompressionMode.Compress,
+			leaveOpen: true))
+		using (BinaryWriter deflateWriter = new(
+			output: deflateStream,
+			encoding: Encoding.UTF8,
+			leaveOpen: true))
 		{
-			WriteKey(writer, model.Key);
-			model.Value.RIFF("MODL", writer);
+			Global?.RIFF("DATA", deflateWriter);
+			deflateWriter.Write((ushort)Models.Count);
+			foreach (KeyValuePair<string, Model> model in Models)
+			{
+				WriteKey(deflateWriter, model.Key);
+				model.Value.RIFF("MODL", deflateWriter);
+			}
+			deflateWriter.Flush();
 		}
-	});
+		writer.Write(Encoding.UTF8.GetBytes("BENV"));
+		writer.Write((uint)(Version.Length + 1 + compressedStream.Length));
+		WriteKey(writer, Version);
+		writer.Write(compressedStream.ToArray());
+	}
 	#endregion IBinaryWritable
 	#region JSON
 	public JsonObject ToJson()
