@@ -10,14 +10,16 @@ public class Test
 	[Fact]
 	public void Json2Binary2Json()
 	{
-		BenVoxelFile model;
+		JsonObject sourceJson;
 		using (FileStream jsonInputStream = new(
 			path: SourceFile,
 			mode: FileMode.Open,
 			access: FileAccess.Read))
 		{
-			model = new(JsonSerializer.Deserialize<JsonObject>(jsonInputStream));
+			sourceJson = JsonSerializer.Deserialize<JsonObject>(jsonInputStream)
+				?? throw new NullReferenceException();
 		}
+		BenVoxelFile model = new(sourceJson);
 		using (FileStream binaryOutputStream = new(
 			path: "test.ben",
 			mode: FileMode.OpenOrCreate,
@@ -40,9 +42,40 @@ public class Test
 			jsonOutputStream.Write(Encoding.UTF8.GetBytes(model.ToJson().Tabs()));
 		}
 		Assert.Equal(
-			expected: File.ReadAllText(SourceFile).Replace("\r\n", "\n"),
-			actual: File.ReadAllText("test.ben.json").Replace("\r\n", "\n"));
+			expected: NormalizeJson(sourceJson).ToJsonString(),
+			actual: NormalizeJson(model.ToJson()).ToJsonString());
 		File.Delete("test.ben");
 		File.Delete("test.ben.json");
+	}
+	/// <summary>
+	/// Stupidly, there is no way to make System.IO.Compression deterministic, so we have to remove the compression in order to test
+	/// </summary>
+	private static JsonObject NormalizeJson(JsonObject json)
+	{
+		JsonObject normalized = JsonSerializer.Deserialize<JsonObject>(json.ToJsonString())
+			?? throw new NullReferenceException();
+		if (normalized.TryGetPropertyValue("models", out JsonNode? modelsNode))
+		{
+			foreach (KeyValuePair<string, JsonNode?> model in modelsNode?.AsObject()
+				?? throw new NullReferenceException())
+			{
+				if (model.Value is JsonObject modelObj &&
+					modelObj.TryGetPropertyValue("geometry", out JsonNode? geometryNode) &&
+					geometryNode is JsonObject geometry)
+				{
+					ushort[] size = JsonSerializer.Deserialize<ushort[]>(geometry["size"])
+						?? throw new NullReferenceException();
+					string z85 = geometry["z85"]?.GetValue<string>()
+						?? throw new NullReferenceException();
+					SvoModel svoModel = new(
+						z85: z85,
+						sizeX: size[0],
+						sizeY: size[1],
+						sizeZ: size[2]);
+					geometry["z85"] = JsonValue.Create(svoModel.Z85());
+				}
+			}
+		}
+		return normalized;
 	}
 }
