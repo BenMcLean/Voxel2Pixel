@@ -120,8 +120,13 @@ public static class ExtensionMethods
 		switch (node)
 		{
 			case JsonObject obj:
+				if (obj.Count == 0)
+				{
+					output.Append("{}");
+					return;
+				}
 				output.AppendLine("{");
-				int propertyIndex = 0, propertyCount = obj.Count;
+				int propertyIndex = 0;
 				foreach (JsonProperty property in JsonSerializer.SerializeToElement(obj).EnumerateObject())
 				{
 					output.Append(indent + "\t" + JsonSerializer.Serialize(property.Name) + ": ");
@@ -129,7 +134,7 @@ public static class ExtensionMethods
 						element: property.Value,
 						output: output,
 						depth: (byte)(depth + 1));
-					if (++propertyIndex < propertyCount)
+					if (++propertyIndex < obj.Count)
 						output.AppendLine(",");
 					else
 						output.AppendLine();
@@ -137,8 +142,13 @@ public static class ExtensionMethods
 				output.Append(indent + "}");
 				break;
 			case JsonArray arr:
+				if (arr.Count == 0)
+				{
+					output.Append("[]");
+					return;
+				}
 				output.AppendLine("[");
-				int elementIndex = 0, elementCount = arr.Count;
+				int elementIndex = 0;
 				foreach (JsonNode element in arr)
 				{
 					output.Append(indent + "\t");
@@ -146,7 +156,7 @@ public static class ExtensionMethods
 						node: element,
 						output: output,
 						depth: (byte)(depth + 1));
-					if (++elementIndex < elementCount)
+					if (++elementIndex < arr.Count)
 						output.AppendLine(",");
 					else
 						output.AppendLine();
