@@ -19,28 +19,22 @@ public class Test
 			sourceJson = JsonSerializer.Deserialize<JsonObject>(jsonInputStream)
 				?? throw new NullReferenceException();
 		}
-		BenVoxelFile model = new(sourceJson);
+		BenVoxelFile benVoxelFile = new(sourceJson);
 		using (FileStream binaryOutputStream = new(
 			path: "test.ben",
 			mode: FileMode.OpenOrCreate,
 			access: FileAccess.Write))
 		{
-			model.Write(binaryOutputStream);
+			benVoxelFile.Write(binaryOutputStream);
 		}
 		using (FileStream binaryInputStream = new(
 			path: "test.ben",
 			mode: FileMode.Open,
 			access: FileAccess.Read))
 		{
-			model = new(binaryInputStream);
+			benVoxelFile = new(binaryInputStream);
 		}
-		using (FileStream jsonOutputStream = new(
-			path: "test.ben.json",
-			mode: FileMode.OpenOrCreate,
-			access: FileAccess.Write))
-		{
-			jsonOutputStream.Write(Encoding.UTF8.GetBytes(model.ToJson().Tabs()));
-		}
+		File.WriteAllText(path: "test.ben.json", contents: benVoxelFile.ToJson().Tabs());
 		using (FileStream jsonInputStream = new(
 			path: "test.ben.json",
 			mode: FileMode.Open,

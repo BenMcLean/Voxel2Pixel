@@ -33,7 +33,7 @@ public static class ExtensionMethods
 			node: jsonObject,
 			output: output,
 			depth: depth);
-		return output.ToString();
+		return output.ToString() + Environment.NewLine;
 	}
 	/// <summary>
 	/// I hate how Microsoft tried to force spaces over tabs

@@ -1,5 +1,5 @@
-# BenVoxel Formats Specification
-BenVoxel files use sparse voxel octrees to compress voxel model geometry for file storage (with optional metadata) based on an open standard developed by Ben McLean.
+# BenVoxel Specification
+BenVoxel is an open standard using sparse voxel octrees to compress voxel model geometry for file storage (with optional metadata) developed by Ben McLean. This specification is released under the [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/) license.
 
 The idea is to sacrifice processing speed to get a very small memory storage size for the geometry while keeping the implementation relatively simple and also allowing for extensive metadata to be optionally included.
 
@@ -8,7 +8,7 @@ There will be no license requirements restricting usage, but this format is desi
 The BenVoxel standard describes two inter-related file formats. One is a binary format with the extension `.ben` and the other is a JSON format (recommended extension `.ben.json`) designed to contain all of the same information as the binary format but with the metadata kept human-readable. The JSON format uses Z85 encoding for the geometry data. A game developer might keep their voxel models in the JSON format during development but automatically convert to the binary format (potentially stripping out metadata) as part of their release pipeline.
 ## Definitions
 ### Coordinates
-BenVoxel format adopts the MagicaVoxel Z+up right-handed 3D coordinate system where: X+ is right/east (width), Y+ is forward/north (depth), and Z+ is up (height). Negative coordinates cannot contain voxels. Models are expected to be aligned so that their lowest edge is on 0 of each axis.
+The BenVoxel standard adopts the MagicaVoxel Z+up right-handed 3D coordinate system where: X+ is right/east (width), Y+ is forward/north (depth), and Z+ is up (height). Negative coordinates cannot contain voxels. Models are expected to be aligned so that their lowest edge is on 0 of each axis.
 ### Special Keys
 The empty string key has special meaning in several contexts:
 - In models: Indicates the default model.
@@ -22,17 +22,15 @@ When converting between JSON and binary formats:
    - Empty string keys retain their special meanings across formats.
 2. Geometry Data
    - Binary: Direct octree bytes.
-   - JSON: Z85-encoded octree bytes.
-## Implementation Requirements
-1. Format Conversion
-   - Implementations must preserve all data during binary-JSON conversion.
+   - JSON: DEFLATE (RFC 1951) compressed, Z85-encoded octree bytes.
+### Implementation Requirements
    - Missing optional fields should be omitted rather than included as `null`.
    - Empty string keys must retain their special meaning.
-2. Validation
-   - Size constraints are mandatory for compatibility
+   - Size constraints are mandatory for compatibility.
    - Out-of-bounds voxels are invalid and may be discarded without warning during reading as an implementation detail.
    - Files containing out-of-bounds voxels should still be readable if otherwise valid.
    - Key strings longer than 255 characters are invalid. Key strings that start or end with whitespace are invalid. However, it is recommended as an implementation detail to first trim whitespace, then truncate the keys with last-in-wins dictionary behavior.
+   - Implementations are required to tolerate any unused 0-padding at the end of decompressed geometry data.
 ## JSON Format
 ### Schema
 A JSON schema for documentation purposes only (not providing validation for security) is included in the file `benvoxel.schema.json`. All the objects and properties in the JSON format correspond directly to chunks or fields in the binary format.
@@ -185,10 +183,52 @@ An empty model would be represented by the hexadecimal string `00000000000000000
 - 1 byte for the payload of the leaf node
 
 The 15 branch node headers correspond to the 15 levels of the octree needed to address a space with 16-bit integer coordinates (2^16 = 65,536, except remember to subtract one for zero-based indexing). The 16th level corresponds to the leaf node.
-## Reference Implementation
-An MIT-licensed reference implementation library is provided in C# 8.0 for .NET Standard 2.0 via PolySharp.
-### Dependencies
+# BenVoxel Reference Implementation
+An MIT-licensed reference implementation library is provided as a C# 8.0 .NET Standard 2.0 library via PolySharp.
+## Dependencies
 |Package|Liscense|Included Via|
 |---|---|---|
 |[`Cromulent.Encoding.Z85`](https://github.com/Trigger2991/Cromulent.Encoding.Z85)|[MIT](https://github.com/Trigger2991/Cromulent.Encoding.Z85/blob/master/LICENSE)|[NuGet](https://www.nuget.org/packages/Cromulent.Encoding.Z85)|
 |[`PolySharp`](https://github.com/Sergio0694/PolySharp)|[MIT](https://github.com/Sergio0694/PolySharp/blob/main/LICENSE)|[NuGet](https://www.nuget.org/packages/PolySharp/)|
+## Usage
+### Read binary
+```csharp
+BenVoxelFile benVoxelFile;
+using (FileStream binaryInputStream = new(
+	path: "filename.ben",
+	mode: FileMode.Open,
+	access: FileAccess.Read))
+{
+	benVoxelFile = new(binaryInputStream);
+}
+```
+### Write binary
+```csharp
+using (FileStream binaryOutputStream = new(
+	path: "filename.ben",
+	mode: FileMode.OpenOrCreate,
+	access: FileAccess.Write))
+{
+	benVoxelFile.Write(binaryOutputStream);
+}
+```
+### Read JSON
+```csharp
+BenVoxelFile benVoxelFile;
+using (FileStream jsonInputStream = new(
+	path: "filename.ben.json",
+	mode: FileMode.Open,
+	access: FileAccess.Read))
+{
+	benVoxelFile = new(JsonSerializer.Deserialize<JsonObject>(jsonInputStream)
+		?? throw new NullReferenceException());
+}
+```
+### Write JSON
+```csharp
+File.WriteAllText(path: "filename.ben.json", contents: benVoxelFile.ToJson().Tabs());
+```
+### Iterate voxels
+```csharp
+foreach (Voxel voxel in benVoxelFile.Models[""].Geometry)
+```
