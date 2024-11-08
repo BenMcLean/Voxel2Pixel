@@ -189,7 +189,7 @@ An empty model would be represented by the hexadecimal string `00000000000000000
 
 The 15 branch node headers correspond to the 15 levels of the octree needed to address a space with 16-bit integer coordinates (2^16 = 65,536, except remember to subtract one for zero-based indexing). The 16th level corresponds to the leaf node.
 # BenVoxel Reference Implementation
-An MIT-licensed reference implementation library is provided as a C# 8.0 .NET Standard 2.0 library via PolySharp.
+An MIT-licensed reference implementation is provided as a C# 8.0 .NET Standard 2.0 library via PolySharp.
 ## Dependencies
 |Package|Liscense|Included Via|
 |---|---|---|
