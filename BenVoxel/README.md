@@ -118,7 +118,7 @@ Corresponds to one or more `palettes` objects in the JSON format. It contains:
 Stands for "**S**parse **V**oxel **O**ctree **G**eometry". Corresponds to a `geometry` object in the JSON format. It contains:
 - `Size`: Three 16-bit unsigned integers defining model extents on X, Y, and Z axes. Valid voxel coordinates range from 0 to size-1 for each axis. Any geometry data present at coordinates equal to or greater than the corresponding size value is invalid and may be retained or safely discarded without warning as an implementation detail. For example, in a model of size `[5,5,5]`, coordinates `[4,4,4]` are valid while coordinates `[5,4,4]` are out of bounds. Selectively discarding out-of-bounds voxels when deserializing is recommended but not required. However, it is also strongly recommended that files containing such out-of-bounds voxels which are otherwise valid should still be readable.
 - `Geometry`: A variable length series of bytes which encodes the voxels according to the "Geometry" section of this document.
-### Geometry
+## Geometry
 Both the JSON and binary formats use the same sparse voxel octree data format, except that only for the JSON format, serializing the geometry data requires the following additional processing steps:
 1. The sparse voxel octree data is first compressed using raw DEFLATE. (RFC 1951)
 2. The compressed data is then encoded using Z85 (ZeroMQ Base-85) to ensure valid JSON characters. This includes automatically padding the end of the data with zeroes to make the length a multiple of 4 as a requirement of Z85 encoding. All implementations are required to tolerate having these extra zeroes optionally present at the end of the geometry data even though there is no need to add this padding in the binary format.
@@ -185,3 +185,10 @@ An empty model would be represented by the hexadecimal string `00000000000000000
 - 1 byte for the payload of the leaf node
 
 The 15 branch node headers correspond to the 15 levels of the octree needed to address a space with 16-bit integer coordinates (2^16 = 65,536, except remember to subtract one for zero-based indexing). The 16th level corresponds to the leaf node.
+## Reference Implementation
+An MIT-licensed reference implementation library is provided in C# 8.0 for .NET Standard 2.0 via PolySharp.
+### Dependencies
+|Package|Liscense|Included Via|
+|---|---|---|
+|[`Cromulent.Encoding.Z85`](https://github.com/Trigger2991/Cromulent.Encoding.Z85)|[MIT](https://github.com/Trigger2991/Cromulent.Encoding.Z85/blob/master/LICENSE)|[NuGet](https://www.nuget.org/packages/Cromulent.Encoding.Z85)|
+|[`PolySharp`](https://github.com/Sergio0694/PolySharp)|[MIT](https://github.com/Sergio0694/PolySharp/blob/main/LICENSE)|[NuGet](https://www.nuget.org/packages/PolySharp/)|
