@@ -118,8 +118,20 @@ Corresponds to one or more `palettes` objects in the JSON format. It contains:
 Stands for "**S**parse **V**oxel **O**ctree **G**eometry". Corresponds to a `geometry` object in the JSON format. It contains:
 - `Size`: Three 16-bit unsigned integers defining model extents on X, Y, and Z axes. Valid voxel coordinates range from 0 to size-1 for each axis. Any geometry data present at coordinates equal to or greater than the corresponding size value is invalid and may be retained or safely discarded without warning as an implementation detail. For example, in a model of size `[5,5,5]`, coordinates `[4,4,4]` are valid while coordinates `[5,4,4]` are out of bounds. Selectively discarding out-of-bounds voxels when deserializing is recommended but not required. However, it is also strongly recommended that files containing such out-of-bounds voxels which are otherwise valid should still be readable.
 - `Geometry`: A variable length series of bytes which encodes the voxels according to the "Geometry" section of this document.
-## Geometry
-Both the JSON and binary formats use this sparse voxel octree format. The JSON format specifically uses Z85 encoding for the geometry data to ensure valid JSON characters, while the binary format does not use Z85 encoding. The binary format prefixes the model size to this geometry data while the JSON format includes the model size in a separate `size` key instead.
+### Geometry
+Both the JSON and binary formats use the same sparse voxel octree data format, except that only for the JSON format, serializing the geometry data requires the following additional processing steps:
+1. The sparse voxel octree data is first compressed using raw DEFLATE. (RFC 1951)
+2. The compressed data is then encoded using Z85 (ZeroMQ Base-85) to ensure valid JSON characters. This includes automatically padding the end of the data with zeroes to make the length a multiple of 4 as a requirement of Z85 encoding. All implementations are required to tolerate having these extra zeroes optionally present at the end of the geometry data even though there is no need to add this padding in the binary format.
+3. Finally, the compressed and encoded string is stored in the `z85` property.
+
+Deserializing from the JSON format reverses the process:
+1. First, the string value of the `z85` property is decoded back into compressed data.
+1. The compressed data is then decompressed using raw DEFLATE. (RFC 1951)
+1. Finally, the decompressed data is read to deserialize the sparse voxel octree.
+
+This ensures that the non-human-readable section of the JSON files is compressed to a minimum length while only using JSON-safe characters. Due to typical DEFLATE implementations being pseudo-non-deterministic, the compressed and encoded string is not guaranteed to match between two runs with the same uncompressed and unencoded input data. However, the decoded and decompressed output data will be binary identical to the (padded) input data because DEFLATE data compression is lossless.
+
+The binary format uses the raw octree data directly without any additional compression or encoding applied to it. The binary format prefixes the model size to the geometry data in the `SVOG` chunk while the JSON format includes the model size in a separate `size` property instead, omitting the sizes from the compressed and encoded `z85` property.
 ### Voxels
 An individual voxel is defined as having four data elements.
 #### Coordinates

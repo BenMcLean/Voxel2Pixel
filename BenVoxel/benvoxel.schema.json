@@ -107,7 +107,7 @@
 										"type": "array"
 									},
 									"z85": {
-										"description": "Sparse voxel octree geometry data encoded using Z85 (ZeroMQ Base-85) encoding.",
+										"description": "Sparse voxel octree geometry data that has undergone compression and encoding. The data is first compressed using raw DEFLATE (RFC 1951), then encoded using Z85 (ZeroMQ Base-85) which may add zero padding to make the length a multiple of 4. When decoding, implementations must tolerate this optional padding. Due to typical DEFLATE implementations being pseudo-non-deterministic, the encoded string may vary between compressions of the same input data, but will always decompress to identical bytes.",
 										"type": "string"
 									}
 								},
