@@ -24,7 +24,6 @@ When converting between JSON and binary formats:
    - Binary: Direct octree bytes.
    - JSON: DEFLATE (RFC 1951) compressed, Z85-encoded octree bytes.
 ### Implementation Requirements
-   - Missing optional fields should be omitted rather than included as `null`.
    - Empty string keys must retain their special meaning.
    - Size constraints are mandatory for compatibility.
    - Out-of-bounds voxels are invalid and may be discarded without warning during reading as an implementation detail.
@@ -76,15 +75,21 @@ BenVoxel binary files start with a `BENV` chunk which contains the entire file a
     - `Model`: One `MODL` chunk.
 
 The size of the compressed data can be determined by subtracting the size of the Version field (the content of its unsigned 1-byte length field plus 1) from the `BENV` chunk size.
+
+The global metadata chunk must be ommitted if it is empty.
 #### `DATA` chunk (Metadata)
 Corresponds to the `metadata` key in the JSON format. It contains:
 - `Properties`: One `PROP` chunk. (optional)
 - `Points`: One `PT3D` chunk. (optional)
 - `Palettes`: One `PALC` chunk. (optional)
+
+Empty child chunks must be ommitted. Empty `DATA` chunks (where all three child chunks are empty) must be ommitted from their parent chunk.
 #### `MODL` chunk (Model)
 Corresponds to one of the `models` objects in the JSON format. It contains:
 - `Metadata`: One `DATA` chunk. (optional)
 - `Geometry`: One `SVOG` chunk.
+
+The metadata chunk must be ommitted if it is empty.
 #### `PROP` chunk (Properties)
 Key-value pairs for arbitrary metadata.
 
