@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 
@@ -270,7 +271,20 @@ public class SvoModel : IEditableModel, IBinaryWritable
 	public SvoModel(BinaryReader reader) : this(reader, reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16()) { }
 	public SvoModel(byte[] bytes, ushort sizeX, ushort sizeY, ushort sizeZ) : this(new MemoryStream(bytes), sizeX, sizeY, sizeZ) { }
 	public SvoModel(byte[] bytes) : this(new MemoryStream(bytes)) { }
-	public SvoModel(string z85, ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this(Cromulent.Encoding.Z85.FromZ85String(z85), sizeX, sizeY, sizeZ) { }
+	public SvoModel(string z85, ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this(sizeX, sizeY, sizeZ)
+	{
+		using MemoryStream decompressed = new();
+		using (MemoryStream compressed = new(Cromulent.Encoding.Z85.FromZ85String(z85)))
+		using (DeflateStream deflateStream = new(
+			stream: compressed,
+			mode: CompressionMode.Decompress,
+			leaveOpen: true))
+		{
+			deflateStream.CopyTo(decompressed);
+		}
+		decompressed.Position = 0;
+		Root = new Branch(decompressed);
+	}
 	public SvoModel(ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this()
 	{
 		SizeX = sizeX;
@@ -309,16 +323,19 @@ public class SvoModel : IEditableModel, IBinaryWritable
 	}
 	public string Z85(bool includeSizes = false)
 	{
-		using MemoryStream ms = new();
-		Write(stream: ms, includeSizes: includeSizes);
-		if (ms.Position % 4 is long four && four > 0)
-			using (BinaryWriter writer = new(
-				output: ms,
-				encoding: Encoding.UTF8,
-				leaveOpen: true))
-				for (byte @byte = 0; @byte < 4 - four; @byte++)
-					writer.Write((byte)0);
-		return Cromulent.Encoding.Z85.ToZ85String(ms.ToArray());
+		using MemoryStream compressed = new();
+		using (DeflateStream deflateStream = new(
+			stream: compressed,
+			mode: CompressionMode.Compress,
+			leaveOpen: true))
+		{
+			Write(stream: deflateStream, includeSizes: includeSizes);
+			deflateStream.Flush();
+		}
+		if (compressed.Length % 4 is long remainder && remainder > 0)
+			compressed.Write(new byte[4 - remainder], 0, (int)(4 - remainder));
+		compressed.Position = 0;
+		return Cromulent.Encoding.Z85.ToZ85String(compressed.ToArray());
 	}
 	#endregion Utilities
 	#region IEditableModel
