@@ -30,7 +30,7 @@ When converting between JSON and binary formats:
    - Empty string keys must retain their special meaning.
 2. Validation
    - Size constraints are mandatory for compatibility
-   - Out-of-bounds voxels may be discarded during reading as an implementation detail.
+   - Out-of-bounds voxels are invalid and may be discarded without warning during reading as an implementation detail.
    - Files containing out-of-bounds voxels should still be readable if otherwise valid.
    - Key strings longer than 255 characters are invalid. Key strings that start or end with whitespace are invalid. However, it is recommended as an implementation detail to first trim whitespace, then truncate the keys with last-in-wins dictionary behavior.
 ## JSON Format
