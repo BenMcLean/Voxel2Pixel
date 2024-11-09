@@ -16,7 +16,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    
+
     steps:
     - uses: actions/checkout@v4
 
@@ -38,12 +38,12 @@ jobs:
     - name: Change base-tag in index.html
       run: sed -i 's/<base href="\/" \/>/<base href="\/Voxel2Pixel\/" \/>/g' release/wwwroot/index.html
 
-    # Add .nojekyll file to tell GitHub pages not to run Jekyll processing
-    - name: Add .nojekyll file
-      run: touch release/wwwroot/.nojekyll
-
-    - name: Setup Pages
-      uses: actions/configure-pages@v4
+    # Prepare artifact with .nojekyll
+    - name: Prepare artifact
+      run: |
+        cd release/wwwroot
+        touch .nojekyll
+        ls -la
 
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
