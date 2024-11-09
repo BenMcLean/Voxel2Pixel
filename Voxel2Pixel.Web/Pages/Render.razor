@@ -107,7 +107,7 @@
 		if (Model is null) return;
 		Dictionary<string, Sprite> sprites = [];
 		byte direction = 0;
-		foreach (SpriteMaker spriteMaker in new SpriteMaker()
+		foreach (SpriteMaker spriteMaker in new SpriteMaker(SpriteMaker)
 			.Set(Model)
 			.Set(new NaiveDimmer(Palette))
 			.Iso8())
@@ -169,7 +169,7 @@
 				<MudCheckBox @bind-Value="@SpriteMaker.Shadow" Label="Shadow" />
 				@if (SpriteMaker.Shadow)
 				{
-					<MudColorPicker @bind-Value="ShadowMudColor" Label="Shadow Color" Style="@($"color:{ShadowMudColor};")" />
+					<MudColorPicker @bind-Value="ShadowMudColor" Label="Shadow Color" Style=@($"color: {ShadowMudColor.ToString()};") />
 				}
 			</MudElement>
 		}
@@ -197,7 +197,7 @@
 			<MudCheckBox @bind-Value="@SpriteMaker.Outline" Label="Outline" />
 			@if (SpriteMaker.Outline)
 			{
-				<MudColorPicker @bind-Value="OutlineMudColor" Label="Outline Color" Style="@($"color:{OutlineMudColor};")" />
+				<MudColorPicker @bind-Value="OutlineMudColor" Label="Outline Color" Style=@($"color: {OutlineMudColor.ToString()};") />
 			}
 		</MudElement>
 	</MudTabPanel>
@@ -223,3 +223,5 @@
 	<br />
 	<div>Loading...</div>
 }
+<br />
+<b>WARNING:</b> This web front-end is going to be really slow & unresponsive for larger models until someday when <MudLink Href="https://github.com/dotnet/aspnetcore/issues/17730" target="_blank">Blazor WASM gets real multithreading</MudLink>. Running on desktop is far faster or you can just have patience for now.
