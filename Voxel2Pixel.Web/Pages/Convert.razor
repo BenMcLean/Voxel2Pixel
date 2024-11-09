@@ -10,7 +10,7 @@
 
 <h1>BenVoxel Converter</h1>
 
-<p>Upload a BenVoxel or MagicaVoxel file to convert BenVoxel formats.</p>
+<p>Load a BenVoxel or <MudLink Href="https://ephtracy.github.io/" Target="_blank">MagicaVoxel</MudLink> file to convert to BenVoxel formats.</p>
 
 <MudFileUpload T="IBrowserFile" FilesChanged="LoadFile" Accept=".vox,.ben,.json">
 	<ActivatorContent>
@@ -31,10 +31,10 @@
 	<br />
 	<MudTextField T="string" Value=@Json Label="JSON" Variant="Variant.Outlined" Lines="10" ReadOnly="true" Style="font-family: monospace; white-space: pre;" />
 }
-@if (!string.IsNullOrWhiteSpace(ExceptionMessage.ToString()))
+@if (!string.IsNullOrWhiteSpace(ExceptionMessage))
 {
 	<br />
-	<div>@ExceptionMessage</div>
+	<MudTextField T="string" Value=@ExceptionMessage Label="Exception" Variant="Variant.Outlined" Lines="10" ReadOnly="true" Style="font-family: monospace; white-space: pre;" />
 }
 <script>
 	window.downloadFileFromStream = async (fileName, contentStreamReference) => {
@@ -51,8 +51,27 @@
 </script>
 @code {
 	#region Data
-	public bool IsLoading { get; set; } = false;
-	public MarkupString ExceptionMessage { get; set; }
+	private bool _isLoading = false;
+	public bool IsLoading
+	{
+		get => _isLoading;
+		set
+		{
+			_isLoading = value;
+			StateHasChanged();
+		}
+	}
+	private string? _exceptionMessage = null;
+	public string? ExceptionMessage
+	{
+		get => _exceptionMessage;
+		set
+		{
+			_exceptionMessage = value;
+			StateHasChanged();
+		}
+	}
+	public void Throw(Exception ex) => ExceptionMessage = ex.GetType().Name + ": \"" + ex.Message + "\"" + Environment.NewLine + ex.StackTrace; 
 	public BenVoxelFile? File { get; set; } = null;
 	public string? Json { get; set; } = null;
 	#endregion Data
@@ -80,19 +99,17 @@
 		}
 		catch (Exception ex)
 		{
-			ExceptionMessage = new MarkupString(ex.GetType().Name + ": \"" + ex.Message + "\"<br />" + ex.StackTrace);
+			Throw(ex);
 		}
 		IsLoading = false;
-		StateHasChanged();
 	}
 	private async Task DownloadBenFile()
 	{
-		MemoryStream? memoryStream = null;
 		try
 		{
 			if (File is null)
 				throw new NullReferenceException("No file!");
-			memoryStream = new MemoryStream();
+			using MemoryStream memoryStream = new();
 			File.Write(memoryStream);
 			memoryStream.Position = 0;
 			using DotNetStreamReference streamRef = new(stream: memoryStream, leaveOpen: true);
@@ -100,22 +117,16 @@
 		}
 		catch (Exception ex)
 		{
-			ExceptionMessage = new MarkupString(ex.GetType().Name + ": \"" + ex.Message + "\"<br />" + ex.StackTrace);
-			StateHasChanged();
-		}
-		finally
-		{
-			memoryStream?.Dispose();
+			Throw(ex);
 		}
 	}
 	private async Task DownloadJsonFile()
 	{
-		MemoryStream? memoryStream = null;
 		try
 		{
 			if (File is null)
 				throw new NullReferenceException("No file!");
-			memoryStream = new MemoryStream();
+			using MemoryStream memoryStream = new();
 			memoryStream.Write(Encoding.UTF8.GetBytes(File.ToJson().Tabs()));
 			memoryStream.Position = 0;
 			using DotNetStreamReference streamRef = new(stream: memoryStream, leaveOpen: true);
@@ -123,12 +134,7 @@
 		}
 		catch (Exception ex)
 		{
-			ExceptionMessage = new MarkupString(ex.GetType().Name + ": \"" + ex.Message + "\"<br />" + ex.StackTrace);
-			StateHasChanged();
-		}
-		finally
-		{
-			memoryStream?.Dispose();
+			Throw(ex);
 		}
 	}
 }

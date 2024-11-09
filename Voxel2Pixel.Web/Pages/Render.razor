@@ -148,6 +148,7 @@
 				</MudButton>
 			</ActivatorContent>
 		</MudFileUpload>
+		<p>Supported file formats include BenVoxel and <MudLink Href="https://ephtracy.github.io/" Target="_blank">MagicaVoxel</MudLink>.</p>
 	</MudTabPanel>
 	<MudTabPanel Text="Perspective">
 		<MudSelect T="Perspective" @bind-Value="@SpriteMaker.Perspective" Class="flex-grow-0">
@@ -223,5 +224,4 @@
 	<br />
 	<div>Loading...</div>
 }
-<br />
-<b>WARNING:</b> This web front-end is going to be really slow & unresponsive for larger models until someday when <MudLink Href="https://github.com/dotnet/aspnetcore/issues/17730" target="_blank">Blazor WASM gets real multithreading</MudLink>. Running on desktop is far faster or you can just have patience for now.
+<p><b>WARNING:</b> This web front-end is going to be really slow & unresponsive for larger models until someday when <MudLink Href="https://github.com/dotnet/aspnetcore/issues/17730" target="_blank">Blazor WASM gets real multithreading</MudLink>. Running on desktop is far faster or you can just have patience for now.</p>
