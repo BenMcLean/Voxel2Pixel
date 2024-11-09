@@ -1,0 +1,40 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ deploy ]
+  workflow_dispatch:
+
+jobs:
+  deploy-to-github-pages:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore Voxel2Pixel.sln
+
+    - name: Build
+      run: dotnet build Voxel2Pixel.sln --configuration Release --no-restore
+
+    - name: Publish
+      run: dotnet publish Voxel2Pixel.Web/Voxel2Pixel.Web.csproj -c Release -o release --nologo
+
+    # Changes the base tag in index.html from '/' to '/Voxel2Pixel/' to match GitHub Pages repository subdirectory
+    - name: Change base-tag in index.html
+      run: sed -i 's/<base href="\/" \/>/<base href="\/Voxel2Pixel\/" \/>/g' release/wwwroot/index.html
+
+    # Add .nojekyll file to tell GitHub pages not to run Jekyll processing
+    - name: Add .nojekyll file
+      run: touch release/wwwroot/.nojekyll
+
+    - name: Commit to GitHub Pages
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        folder: release/wwwroot
+        branch: gh-pages
