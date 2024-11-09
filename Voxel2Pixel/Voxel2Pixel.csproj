@@ -4,8 +4,6 @@
 		<LangVersion>latest</LangVersion>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Cromulent.Encoding.Z85" Version="1.0.0" />
-		<PackageReference Include="DotNetZip" Version="1.16.0" />
 		<PackageReference Include="FileToVoxCore" Version="1.4.0" />
 		<PackageReference Include="PolySharp" Version="1.14.1">
 			<PrivateAssets>all</PrivateAssets>
@@ -14,6 +12,6 @@
 		<PackageReference Include="RectpackSharp" Version="1.1.0" />
 	</ItemGroup>
 	<ItemGroup>
-	  <ProjectReference Include="..\BenVoxel\BenVoxel.csproj" />
+		<ProjectReference Include="..\BenVoxel\BenVoxel.csproj" />
 	</ItemGroup>
 </Project>
