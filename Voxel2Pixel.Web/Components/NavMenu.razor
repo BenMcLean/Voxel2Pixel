@@ -7,10 +7,10 @@
 			<MudLink Href="" Color="Color.Inherit" Underline="Underline.None">
 				<MudText Typo="Typo.h6">Voxel2Pixel</MudText>
 			</MudLink>
-			<MudLink Href="/"
-					 Color="@(IsCurrentPage("/") || IsCurrentPage("/render") ? Color.Secondary : Color.Inherit)"
+			<MudLink Href="" Match="NavLinkMatch.All"
+					 Color="@(IsCurrentPage("") || IsCurrentPage("/render") ? Color.Secondary : Color.Inherit)"
 					 Underline="Underline.Hover"
-					 Class="@(IsCurrentPage("/") || IsCurrentPage("/render") ? "active-link" : "")">
+					 Class="@(IsCurrentPage("") || IsCurrentPage("/render") ? "active-link" : "")">
 				<div class="d-flex align-center">
 					<MudIcon Icon="@Icons.Material.Filled.Image" Class="mr-2" />
 					Render
