@@ -1,9 +1,11 @@
-﻿@inherits LayoutComponentBase
+﻿@using Voxel2Pixel.Web.Components
+@inherits LayoutComponentBase
 <MudThemeProvider IsDarkMode="true" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 <MudLayout>
+	<NavMenu />
 	<MudMainContent>
 		@Body
 	</MudMainContent>

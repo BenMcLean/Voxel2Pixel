@@ -1,8 +1,6 @@
-using BenVoxel;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using MudBlazor.Services;
-using Voxel2Pixel.Model.FileFormats;
 
 namespace Voxel2Pixel.Web;
 
