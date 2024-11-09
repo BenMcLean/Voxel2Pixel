@@ -1,11 +1,14 @@
 ﻿@page "/"
 @page "/render"
+@using BenVoxel
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components.Web
 @using MudBlazor.Utilities
 @using SixLabors.ImageSharp
 @using SixLabors.ImageSharp.Formats.Gif
 @using SixLabors.ImageSharp.Formats.Png
+@using System.Text.Json
+@using System.Text.Json.Nodes
 @using Voxel2Pixel
 @using Voxel2Pixel.Color
 @using Voxel2Pixel.Draw
@@ -21,9 +24,20 @@
 @code {
 	#region Data
 	public bool IsLoading { get; set; } = false;
-	VoxFileModel? VoxFileModel { get; set; } = null;
+	public IModel? Model { get; set; } = null;
+	public uint[]? Palette { get; set; } = null;
 	public string ImageString { get; set; } = string.Empty;
-	public MarkupString ExceptionMessage { get; set; }
+	private string? _exceptionMessage = null;
+	public string? ExceptionMessage
+	{
+		get => _exceptionMessage;
+		set
+		{
+			_exceptionMessage = value;
+			StateHasChanged();
+		}
+	}
+	public void Throw(Exception ex) => ExceptionMessage = ex.GetType().Name + ": \"" + ex.Message + "\"" + Environment.NewLine + ex.StackTrace;
 	public SpriteMaker SpriteMaker { get; set; } = new();
 	public MudColor OutlineMudColor
 	{
@@ -46,81 +60,91 @@
 	private async void LoadFile(IBrowserFile file)
 	{
 		IsLoading = true;
-		MemoryStream memoryStream = new();
 		try
 		{
+			using MemoryStream memoryStream = new();
 			await file.OpenReadStream().CopyToAsync(memoryStream);
 			memoryStream.Position = 0;
-			VoxFileModel = new(memoryStream);
+			switch (Path.GetExtension(file.Name).ToLowerInvariant())
+			{
+				case ".vox":
+					Voxel2Pixel.Model.FileFormats.VoxFileModel voxFileModel = new(memoryStream);
+					Model = voxFileModel;
+					Palette = voxFileModel.Palette;
+					break;
+				case ".json":
+					BenVoxelFile benVoxelFile = new(JsonSerializer.Deserialize<JsonObject>(memoryStream));
+					Model = new DictionaryModel(benVoxelFile.Default(out uint[] palette));
+					Palette = palette ?? throw new NullReferenceException("Missing palette!");
+					break;
+				default:
+					benVoxelFile = new(memoryStream);
+					Model = new DictionaryModel(benVoxelFile.Default(out palette));
+					Palette = palette ?? throw new NullReferenceException("Missing palette!");
+					break;
+			}
 			SingleImage();
 		}
 		catch (Exception ex)
 		{
-			ExceptionMessage = new MarkupString(ex.GetType().Name + ": \"" + ex.Message + "\"<br />" + ex.StackTrace);
+			Throw(ex);
 		}
 		IsLoading = false;
 		StateHasChanged();
 	}
 	public void SingleImage()
 	{
-		if (VoxFileModel is VoxFileModel)
-			ImageString = SpriteMaker
-				.Set(VoxFileModel)
-				.Set(new NaiveDimmer(VoxFileModel.Palette))
-				.Make()
-				.Png()
-				.ToBase64String(PngFormat.Instance);
+		if (Model is null) return;
+		ImageString = SpriteMaker
+			.Set(Model)
+			.Set(new NaiveDimmer(Palette))
+			.Make()
+			.Png()
+			.ToBase64String(PngFormat.Instance);
 	}
 	public void Iso8TextureAtlas()
 	{
-		if (VoxFileModel is VoxFileModel)
-		{
-			Dictionary<string, Sprite> sprites = [];
-			byte direction = 0;
-			foreach (SpriteMaker spriteMaker in new SpriteMaker()
-				.Set(VoxFileModel)
-				.Set(new NaiveDimmer(VoxFileModel.Palette))
-				.Iso8())
-				sprites.Add("Sprite" + direction++, spriteMaker.Make());
-			ImageString = new Sprite(sprites, out _)
-				.Png()
-				.ToBase64String(PngFormat.Instance);
-		}
+		if (Model is null) return;
+		Dictionary<string, Sprite> sprites = [];
+		byte direction = 0;
+		foreach (SpriteMaker spriteMaker in new SpriteMaker()
+			.Set(Model)
+			.Set(new NaiveDimmer(Palette))
+			.Iso8())
+			sprites.Add("Sprite" + direction++, spriteMaker.Make());
+		ImageString = new Sprite(sprites, out _)
+			.Png()
+			.ToBase64String(PngFormat.Instance);
 	}
 	public void Iso8Gif()
 	{
-		if (VoxFileModel is VoxFileModel)
-			ImageString = SpriteMaker
-				.Set(VoxFileModel)
-				.Set(new NaiveDimmer(VoxFileModel.Palette))
-				.Iso8()
-				.Make()
-				.AnimatedGif()
-				.ToBase64String(GifFormat.Instance);
+		if (Model is null) return;
+		ImageString = SpriteMaker
+			.Set(Model)
+			.Set(new NaiveDimmer(Palette))
+			.Iso8()
+			.Make()
+			.AnimatedGif()
+			.ToBase64String(GifFormat.Instance);
 	}
 	public void StacksGif()
 	{
-		if (VoxFileModel is VoxFileModel)
-			ImageString = SpriteMaker
-				.Set(VoxFileModel)
-				.Set(new NaiveDimmer(VoxFileModel.Palette))
-				.Stacks()
-				.Make()
-				.AnimatedGif(25)
-				.ToBase64String(GifFormat.Instance);
+		if (Model is null) return;
+		ImageString = SpriteMaker
+			.Set(Model)
+			.Set(new NaiveDimmer(Palette))
+			.Stacks()
+			.Make()
+			.AnimatedGif(25)
+			.ToBase64String(GifFormat.Instance);
 	}
-}
-@if (!string.IsNullOrWhiteSpace(ImageString))
-{
-	<img src="@ImageString" />
-	<br />
 }
 <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
 	<MudTabPanel Text="Import">
-		<MudFileUpload T="IBrowserFile" FilesChanged="LoadFile" Accept=".vox">
+		<MudFileUpload T="IBrowserFile" FilesChanged="LoadFile" Accept=".vox,.ben,.json">
 			<ActivatorContent>
 				<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" StartIcon="@Icons.Material.Filled.UploadFile">
-					Upload .vox File
+					Load Voxel Model File
 				</MudButton>
 			</ActivatorContent>
 		</MudFileUpload>
@@ -145,7 +169,7 @@
 				<MudCheckBox @bind-Value="@SpriteMaker.Shadow" Label="Shadow" />
 				@if (SpriteMaker.Shadow)
 				{
-					<MudColorPicker @bind-Value="ShadowMudColor" Label="Shadow Color" Style="@($"color: {ShadowMudColor};")" />
+					<MudColorPicker @bind-Value="ShadowMudColor" Label="Shadow Color" Style="@($"color:{ShadowMudColor};")" />
 				}
 			</MudElement>
 		}
@@ -173,21 +197,26 @@
 			<MudCheckBox @bind-Value="@SpriteMaker.Outline" Label="Outline" />
 			@if (SpriteMaker.Outline)
 			{
-				<MudColorPicker @bind-Value="OutlineMudColor" Label="Outline Color" Style="@($"color: {OutlineMudColor};")" />
+				<MudColorPicker @bind-Value="OutlineMudColor" Label="Outline Color" Style="@($"color:{OutlineMudColor};")" />
 			}
 		</MudElement>
 	</MudTabPanel>
-	<MudTabPanel Text="Export" Disabled="VoxFileModel is null">
+	<MudTabPanel Text="Export" Disabled="Model is null">
 		<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" name="SingleImage" @onclick="SingleImage">Generate Single Image</MudButton>
 		<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" name="Iso8TextureAtlas" @onclick="Iso8TextureAtlas">Generate 8 Isometric Directional Sprites Texture Atlas</MudButton>
 		<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" name="Iso8" @onclick="Iso8Gif">Generate 8 Isometric Directional Sprites Animation</MudButton>
 		<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" name="Iso8" @onclick="StacksGif">Generate Sprite Stacks Animation</MudButton>
 	</MudTabPanel>
 </MudTabs>
-@if (!string.IsNullOrWhiteSpace(ExceptionMessage.ToString()))
+@if (!string.IsNullOrWhiteSpace(ImageString))
+{
+	<img src="@ImageString" />
+	<br />
+}
+@if (!string.IsNullOrWhiteSpace(ExceptionMessage?.ToString()))
 {
 	<br />
-	<div>@ExceptionMessage</div>
+	<MudTextField T="string" Value=@ExceptionMessage Label="Exception" Variant="Variant.Outlined" Lines="10" ReadOnly="true" Style="font-family: monospace; white-space: pre;" />
 }
 @if (IsLoading)
 {

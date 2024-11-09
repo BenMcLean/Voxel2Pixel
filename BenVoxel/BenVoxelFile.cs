@@ -326,6 +326,21 @@ public class BenVoxelFile : IBinaryWritable
 		foreach (KeyValuePair<string, JsonNode> model in json["models"].AsObject())
 			Models[model.Key] = new(model.Value.AsObject());
 	}
+	public SvoModel Default(out uint[] palette)
+	{
+		if (!Models.TryGetValue("", out Model benVoxelFileModel))
+			benVoxelFileModel = Models.FirstOrDefault().Value;
+		SvoModel svoModel = benVoxelFileModel?.Geometry;
+		if (!(benVoxelFileModel?.Metadata?.Palettes.TryGetValue("", out Color[] colors) ?? false)
+			&& !(Global?.Palettes.TryGetValue("", out colors) ?? false))
+			colors = benVoxelFileModel?.Metadata?.Palettes?.Any() ?? false ?
+				benVoxelFileModel.Metadata.Palettes.First().Value
+				: Global?.Palettes?.Any() ?? false ?
+					Global.Palettes.First().Value
+					: null;
+		palette = colors is null ? null : [.. colors.Take(256).Select(color => color.Rgba)];
+		return svoModel;
+	}
 	#endregion BenVoxelFile
 	#region IBinaryWritable
 	public void Write(Stream stream)

@@ -58,16 +58,21 @@
 
 @code {
 	[Inject]
-	private NavigationManager NavigationManager { get; set; }
+	private NavigationManager? NavigationManager { get; set; }
 	protected override void OnInitialized()
 	{
-		NavigationManager.LocationChanged += LocationChanged;
+		if (NavigationManager is not null)
+			NavigationManager.LocationChanged += LocationChanged;
 		base.OnInitialized();
 	}
-	private void LocationChanged(object sender, LocationChangedEventArgs e) => StateHasChanged();
-	public void Dispose() => NavigationManager.LocationChanged -= LocationChanged;
+	private void LocationChanged(object? sender, LocationChangedEventArgs e) => StateHasChanged();
+	public void Dispose()
+	{
+		if (NavigationManager is not null)
+			NavigationManager.LocationChanged -= LocationChanged;
+	}
 	private bool IsCurrentPage(string href) => string.Equals(
-		NavigationManager.ToBaseRelativePath(NavigationManager.Uri).ToLower().TrimEnd('/'),
+		NavigationManager?.ToBaseRelativePath(NavigationManager.Uri).ToLower().TrimEnd('/'),
 		href.TrimStart('/').ToLower(),
 		StringComparison.OrdinalIgnoreCase);
 }

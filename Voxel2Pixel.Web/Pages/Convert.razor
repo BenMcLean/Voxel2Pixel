@@ -15,7 +15,7 @@
 <MudFileUpload T="IBrowserFile" FilesChanged="LoadFile" Accept=".vox,.ben,.json">
 	<ActivatorContent>
 		<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" StartIcon="@Icons.Material.Filled.UploadFile">
-			Upload File
+			Load Voxel Model File
 		</MudButton>
 	</ActivatorContent>
 </MudFileUpload>
@@ -59,11 +59,11 @@
 	private async void LoadFile(IBrowserFile file)
 	{
 		IsLoading = true;
-		using MemoryStream memoryStream = new();
-		await file.OpenReadStream().CopyToAsync(memoryStream);
-		memoryStream.Position = 0;
 		try
 		{
+			using MemoryStream memoryStream = new();
+			await file.OpenReadStream().CopyToAsync(memoryStream);
+			memoryStream.Position = 0;
 			switch (Path.GetExtension(file.Name).ToLowerInvariant())
 			{
 				case ".vox":
