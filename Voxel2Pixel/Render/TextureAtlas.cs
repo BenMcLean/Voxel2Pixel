@@ -20,16 +20,16 @@ public class TextureAtlas
 		public string Name { get; set; }
 		[XmlAttribute("x")]
 		[JsonPropertyName("x")]
-		public ushort X { get; set; } = 0;
+		public ushort X { get; set; }
 		[XmlAttribute("y")]
 		[JsonPropertyName("y")]
-		public ushort Y { get; set; } = 0;
+		public ushort Y { get; set; }
 		[XmlAttribute("width")]
 		[JsonPropertyName("width")]
-		public ushort Width { get; set; } = 0;
+		public ushort Width { get; set; }
 		[XmlAttribute("height")]
 		[JsonPropertyName("height")]
-		public ushort Height { get; set; } = 0;
+		public ushort Height { get; set; }
 		#region Expansion beyond Kenney's format
 		/// <summary>
 		/// Points use signed 32-bit integers so that they can refer to areas outside of their subtextures.
