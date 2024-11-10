@@ -166,10 +166,10 @@ public class Sprite : Dictionary<string, Point>, ISprite, IRenderer, IVoxelColor
 			SubTextures = packingRectangles.Zip(sprites, (packingRectangle, spritePair) => new SubTexture
 			{
 				Name = spritePair.Key,
-				X = (int)packingRectangle.X + 1,
-				Y = (int)packingRectangle.Y + 1,
-				Width = (int)packingRectangle.Width - 2,
-				Height = (int)packingRectangle.Height - 2,
+				X = (ushort)(packingRectangle.X + 1),
+				Y = (ushort)(packingRectangle.Y + 1),
+				Width = (ushort)(packingRectangle.Width - 2),
+				Height = (ushort)(packingRectangle.Height - 2),
 				Points = spritePair.Value
 					.Select(pointPair => new SubTexture.Point
 					{
