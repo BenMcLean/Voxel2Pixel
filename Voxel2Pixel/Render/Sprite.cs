@@ -1,6 +1,8 @@
-﻿using RectpackSharp;
+﻿using BenVoxel;
+using RectpackSharp;
 using System;
 using System.Buffers.Binary;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,7 +13,7 @@ using static Voxel2Pixel.Render.TextureAtlas;
 
 namespace Voxel2Pixel.Render;
 
-public class Sprite : Dictionary<string, Point>, ISprite, IRenderer, IVoxelColor
+public class Sprite : IDictionary<string, Point>, ISprite, IRenderer, IVoxelColor
 {
 	#region ISprite
 	public byte[] Texture { get; set; }
@@ -44,6 +46,29 @@ public class Sprite : Dictionary<string, Point>, ISprite, IRenderer, IVoxelColor
 		return this;
 	}
 	#endregion Sprite
+	#region IDictionary
+	private readonly SanitizedKeyDictionary<Point> _points = [];
+	public Point this[string key]
+	{
+		get => _points[key];
+		set => _points[key] = value;
+	}
+	public ICollection<string> Keys => _points.Keys;
+	public ICollection<Point> Values => _points.Values;
+	public int Count => _points.Count;
+	public bool IsReadOnly => _points.IsReadOnly;
+	public void Add(string key, Point value) => _points.Add(key, value);
+	public void Add(KeyValuePair<string, Point> item) => _points.Add(item);
+	public void Clear() => _points.Clear();
+	public bool Contains(KeyValuePair<string, Point> item) => _points.Contains(item);
+	public bool ContainsKey(string key) => _points.ContainsKey(key);
+	public void CopyTo(KeyValuePair<string, Point>[] array, int arrayIndex) => _points.CopyTo(array, arrayIndex);
+	public IEnumerator<KeyValuePair<string, Point>> GetEnumerator() => _points.GetEnumerator();
+	public bool Remove(string key) => _points.Remove(key);
+	public bool Remove(KeyValuePair<string, Point> item) => _points.Remove(item);
+	public bool TryGetValue(string key, out Point value) => _points.TryGetValue(key, out value);
+	IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+	#endregion IDictionary
 	#region IVoxelColor
 	public IVoxelColor VoxelColor { get; set; }
 	public uint this[byte index, VisibleFace visibleFace = VisibleFace.Front] => VoxelColor[index, visibleFace];
