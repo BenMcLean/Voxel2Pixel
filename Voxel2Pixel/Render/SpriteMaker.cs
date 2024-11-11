@@ -397,7 +397,7 @@ public class SpriteMaker
 		.Rotate(Radians);
 	public IEnumerable<Sprite> StacksShadows(ushort quantity = 24)
 	{
-		Task<Sprite>[] tasks = StacksShadowsTasks(quantity).ToArray();
+		Task<Sprite>[] tasks = [.. StacksShadowsTasks(quantity)];
 		foreach (Task<Sprite> task in tasks)
 			task.Start();
 		Task.WaitAll(tasks);

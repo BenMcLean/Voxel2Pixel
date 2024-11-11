@@ -69,7 +69,7 @@ public sealed class CuboidOrientation : ITurnable
 					return i;
 			throw new InvalidDataException("This line should be unreachable.");
 		}
-		Reverse = Array.AsReadOnly(Enumerable.Range(0, 3).Select(i => ReverseLookup(i)).ToArray());
+		Reverse = Array.AsReadOnly([.. Enumerable.Range(0, 3).Select(i => ReverseLookup(i))]);
 	}
 	public override string ToString() => Name;
 	public static explicit operator CuboidOrientation(string @string) => Values
@@ -136,7 +136,7 @@ public sealed class CuboidOrientation : ITurnable
 			&& value.Rotation[1] == rotation[1]
 			&& value.Rotation[2] == rotation[2]);
 	public int Rotate(int axis, Point3D point) => point[Affected(axis)] * Step(axis);
-	public Point3D Rotate(Point3D point) => new(Enumerable.Range(0, 3).Select(axis => Rotate(axis, point)).ToArray());
+	public Point3D Rotate(Point3D point) => new([.. Enumerable.Range(0, 3).Select(axis => Rotate(axis, point))]);
 	#endregion Rotate
 	#region ReverseRotate
 	public int ReverseAffected(int axis) => Reverse[FlipBits(axis)];
@@ -148,7 +148,7 @@ public sealed class CuboidOrientation : ITurnable
 		axis = ReverseAffected(axis);
 		return point[axis] * Step(axis);
 	}
-	public Point3D ReverseRotate(Point3D point) => new(Enumerable.Range(0, 3).Select(axis => ReverseRotate(axis, point)).ToArray());
+	public Point3D ReverseRotate(Point3D point) => new([.. Enumerable.Range(0, 3).Select(axis => ReverseRotate(axis, point))]);
 	#endregion ReverseRotate
 	#region Offset
 	public int Offset(int axis, params ushort[] size) =>
@@ -158,6 +158,6 @@ public sealed class CuboidOrientation : ITurnable
 	/// <summary>
 	/// Calculates the offsets to move the rotated voxel model so that it is in the x+,y+,z+ quadrant after the rotation.
 	/// </summary>
-	public Point3D Offset(params ushort[] size) => new(Enumerable.Range(0, 3).Select(axis => Offset(axis, size)).ToArray());
+	public Point3D Offset(params ushort[] size) => new([.. Enumerable.Range(0, 3).Select(axis => Offset(axis, size))]);
 	#endregion Offset
 }

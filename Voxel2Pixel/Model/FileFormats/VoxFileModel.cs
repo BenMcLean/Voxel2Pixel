@@ -15,7 +15,7 @@ public class VoxFileModel : DictionaryModel
 		if (incluePalette)
 		{
 			Palette = new uint[256];
-			uint[] palette = model.Palette.Take(Palette.Length).Select(Color).ToArray();
+			uint[] palette = [.. model.Palette.Take(Palette.Length).Select(Color)];
 			Array.Copy(
 				sourceArray: palette,
 				sourceIndex: 0,

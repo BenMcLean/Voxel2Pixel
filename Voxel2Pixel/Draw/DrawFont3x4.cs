@@ -131,7 +131,7 @@ public static class DrawFont3x4
 	{
 		if (width < 1)
 			width = (int)Math.Sqrt(texture.Length >> 2);
-		Parallel.Invoke(@string
+		Parallel.Invoke([.. @string
 			.Select<char, Action>((char @char, int index) => () =>
 				texture.Draw3x4(
 					@char: @char,
@@ -139,7 +139,7 @@ public static class DrawFont3x4
 					x: x + (index << 2),
 					y: y,
 					color: color))
-			.ToArray());
+			]);
 		return texture;
 	}
 	public static byte[] Draw3x4(this byte[] texture, char @char, int width = 0, int x = 0, int y = 0, uint color = 0xFFFFFFFF)

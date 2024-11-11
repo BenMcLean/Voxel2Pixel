@@ -19,10 +19,8 @@ namespace Voxel2Pixel.Test
 			0x4B0082FFu,//Indigo
 			0x8F00FFFFu,//Violet
 		});
-		public static readonly uint[] RainbowPalette =
-			Enumerable.Range(0, byte.MaxValue)
-			.Select(i => i == 0 ? 0 : Rainbow[(i - 1) % Rainbow.Count])
-			.ToArray();
+		public static readonly uint[] RainbowPalette = [.. Enumerable.Range(0, byte.MaxValue)
+			.Select(i => i == 0 ? 0 : Rainbow[(i - 1) % Rainbow.Count])];
 		public static byte[][][] RainbowBox(int sizeX, int sizeY, int sizeZ)
 		{
 			byte[][][] model = Array3D.Initialize<byte>(sizeX, sizeY, sizeZ);
@@ -132,7 +130,7 @@ namespace Voxel2Pixel.Test
 		public static byte[][][] Pyramid(int width, params byte[]? colors)
 		{
 			if (colors is null || colors.Length < 1)
-				colors = Enumerable.Range(0, 256).Select(i => (byte)i).ToArray();
+				colors = [.. Enumerable.Range(0, 256).Select(i => (byte)i)];
 			int halfWidth = width >> 1;
 			byte[][][] voxels = Array3D.Initialize<byte>(width, width, halfWidth + 1);
 			voxels[0][0][0] = colors[1];
@@ -153,7 +151,7 @@ namespace Voxel2Pixel.Test
 		public static byte[][][] Pyramid2(int width, int depth, params byte[]? colors)
 		{
 			if (colors is null || colors.Length < 1)
-				colors = Enumerable.Range(0, 256).Select(i => (byte)i).ToArray();
+				colors = [.. Enumerable.Range(0, 256).Select(i => (byte)i)];
 			int halfWidth = width >> 1;
 			byte[][][] voxels = Array3D.Initialize<byte>(width, depth, halfWidth + 1);
 			voxels[width - 1][0][0] = colors[2];
@@ -166,7 +164,7 @@ namespace Voxel2Pixel.Test
 		public static byte[][][] Arch(int width, params byte[]? colors)
 		{
 			if (colors is null || colors.Length < 1)
-				colors = Enumerable.Range(0, 256).Select(i => (byte)i).ToArray();
+				colors = [.. Enumerable.Range(0, 256).Select(i => (byte)i)];
 			int halfWidth = width >> 1;
 			byte[][][] voxels = Array3D.Initialize<byte>(width, width, halfWidth + 1);
 			for (int i = 0; i <= halfWidth - 1; i++)

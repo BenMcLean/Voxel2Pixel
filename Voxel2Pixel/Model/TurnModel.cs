@@ -43,11 +43,11 @@ public class TurnModel : ContainerModel, ITurnable
 	#endregion ITurnable
 	#region Rotate
 	public int Rotate(int axis, Point3D point) => CuboidOrientation.Rotate(axis, point) + CuboidOrientation.Offset(axis, SizeX, SizeY, SizeZ);
-	public Point3D Rotate(Point3D point) => new(Enumerable.Range(0, 3).Select(axis => Rotate(axis, point)).ToArray());
+	public Point3D Rotate(Point3D point) => new([.. Enumerable.Range(0, 3).Select(axis => Rotate(axis, point))]);
 	#endregion Rotate
 	#region ReverseRotate
 	public int ReverseRotate(int axis, Point3D point) => CuboidOrientation.ReverseRotate(axis, point) + CuboidOrientation.Offset(CuboidOrientation.ReverseAffected(axis), SizeX, SizeY, SizeZ);
-	public Point3D ReverseRotate(Point3D point) => new(Enumerable.Range(0, 3).Select(axis => ReverseRotate(axis, point)).ToArray());
+	public Point3D ReverseRotate(Point3D point) => new([.. Enumerable.Range(0, 3).Select(axis => ReverseRotate(axis, point))]);
 	public byte Reverse(ushort x, ushort y, ushort z)
 	{
 		Point3D point = ReverseRotate(new Point3D(x, y, z));

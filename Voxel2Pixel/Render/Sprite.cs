@@ -126,24 +126,23 @@ public class Sprite : Dictionary<string, Point>, ISprite, IRenderer, IVoxelColor
 	public virtual void Diamond(ushort x, ushort y, byte index, VisibleFace visibleFace = VisibleFace.Front) => Diamond(x: x, y: y, color: VoxelColor[index, visibleFace]);
 	#endregion ITriangleRenderer
 	#region Packing
-	public Sprite(out PackingRectangle[] packingRectangles, IEnumerable<Sprite> sprites) : this(packingRectangles: out packingRectangles, sprites: sprites.ToArray()) { }
+	public Sprite(out PackingRectangle[] packingRectangles, IEnumerable<Sprite> sprites) : this(packingRectangles: out packingRectangles, sprites: [.. sprites]) { }
 	public Sprite(out PackingRectangle[] packingRectangles, params Sprite[] sprites)
 	{
-		packingRectangles = sprites
+		packingRectangles = [.. sprites
 			.Select((sprite, index) => new PackingRectangle(
 				x: 0,
 				y: 0,
 				width: (ushort)(sprite.Width + 2),
 				height: (ushort)(sprite.Height + 2),
-				id: index))
-			.ToArray();
+				id: index))];
 		RectanglePacker.Pack(
 			rectangles: packingRectangles,
 			bounds: out PackingRectangle bounds,
 			packingHint: PackingHints.TryByBiggerSide);
 		Width = (ushort)bounds.Width;
 		Texture = new byte[bounds.Width * bounds.Height << 2];
-		Parallel.Invoke(packingRectangles
+		Parallel.Invoke([.. packingRectangles
 			.Select<PackingRectangle, Action>(packingRectangle => () => Texture
 				.DrawInsert(
 					x: (ushort)(packingRectangle.X + 1),
@@ -157,27 +156,27 @@ public class Sprite : Dictionary<string, Point>, ISprite, IRenderer, IVoxelColor
 					areaWidth: sprites[packingRectangle.Id].Width,
 					areaHeight: sprites[packingRectangle.Id].Height,
 					width: Width))
-			.ToArray());
+			]);
 	}
 	public Sprite(IDictionary<string, Sprite> dictionary, out TextureAtlas textureAtlas) : this(sprites: [.. dictionary], textureAtlas: out textureAtlas) { }
 	public Sprite(KeyValuePair<string, Sprite>[] sprites, out TextureAtlas textureAtlas) : this(packingRectangles: out PackingRectangle[] packingRectangles, sprites: sprites.Select(pair => pair.Value)) =>
 		textureAtlas = new TextureAtlas
 		{
-			SubTextures = packingRectangles.Zip(sprites, (packingRectangle, spritePair) => new SubTexture
+			SubTextures = [.. packingRectangles.Zip(sprites, (packingRectangle, spritePair) => new SubTexture
 			{
 				Name = spritePair.Key,
 				X = (ushort)(packingRectangle.X + 1),
 				Y = (ushort)(packingRectangle.Y + 1),
 				Width = (ushort)(packingRectangle.Width - 2),
 				Height = (ushort)(packingRectangle.Height - 2),
-				Points = spritePair.Value
+				Points = [.. spritePair.Value
 					.Select(pointPair => new SubTexture.Point
 					{
 						Name = pointPair.Key,
 						X = pointPair.Value.X,
 						Y = pointPair.Value.Y,
-					}).ToArray(),
-			}).ToArray(),
+					})],
+			})],
 		};
 	#endregion Packing
 	#region Image manipulation

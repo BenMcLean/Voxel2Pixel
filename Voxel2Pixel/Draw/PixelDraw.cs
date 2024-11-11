@@ -1367,11 +1367,10 @@ public static class PixelDraw
 	}
 	public static uint[] PaletteFromTexture(this byte[] texture)
 	{
-		uint[] palette = new HashSet<uint> { 0u }
+		uint[] palette = [.. new HashSet<uint> { 0u }
 				.Append(texture.Byte2UIntArray())
 				.OrderBy(@uint => @uint)
-				.Take(byte.MaxValue)
-				.ToArray(),
+				.Take(byte.MaxValue)],
 			result = new uint[byte.MaxValue];
 		Array.Copy(
 			sourceArray: palette,
@@ -1390,7 +1389,7 @@ public static class PixelDraw
 	/// <param name="indices">Palette indices (one byte per pixel)</param>
 	/// <param name="palette">256 rgba8888 color values</param>
 	/// <returns>rgba8888 texture (one int per pixel)</returns>
-	public static uint[] Index2UIntArray(this byte[] indices, uint[] palette) => indices.Select(@byte => palette[@byte]).ToArray();
+	public static uint[] Index2UIntArray(this byte[] indices, uint[] palette) => [.. indices.Select(@byte => palette[@byte])];
 	/// <param name="ints">rgba8888 color values (one int per pixel)</param>
 	/// <returns>rgba8888 texture (four bytes per pixel)</returns>
 	public static byte[] UInt2ByteArray(this uint[] uints)

@@ -29,7 +29,7 @@ public static class ImageMaker
 	public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(int frameDelay = DefaultFrameDelay, ushort repeatCount = 0, params ISprite[] sprites) => sprites.AsEnumerable().AnimatedGif(frameDelay, repeatCount);
 	public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(this IEnumerable<ISprite> sprites, int frameDelay = DefaultFrameDelay, ushort repeatCount = 0)
 	{
-		Sprite[] resized = Voxel2Pixel.ExtensionMethods.SameSize(sprites).ToArray();
+		Sprite[] resized = [.. Voxel2Pixel.ExtensionMethods.SameSize(sprites)];
 		SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> gif = new(resized[0].Width, resized[0].Height);
 		SixLabors.ImageSharp.Formats.Gif.GifMetadata gifMetaData = gif.Metadata.GetGifMetadata();
 		gifMetaData.RepeatCount = repeatCount;
@@ -50,9 +50,7 @@ public static class ImageMaker
 		frameDelay: frameDelay,
 		repeatCount: repeatCount,
 		frames: scaleX == 1 && scaleY == 1 ? frames
-			: frames
-				.Select(f => Voxel2Pixel.Draw.PixelDraw.Upscale(f, scaleX, scaleY, width))
-				.ToArray());
+			: [.. frames.Select(f => Voxel2Pixel.Draw.PixelDraw.Upscale(f, scaleX, scaleY, width))]);
 	public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(ushort width = 0, int frameDelay = DefaultFrameDelay, ushort repeatCount = 0, params byte[][] frames)
 	{
 		if (width < 1)

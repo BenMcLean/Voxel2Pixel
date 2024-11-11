@@ -27,7 +27,7 @@ public class SvoModelTest(Xunit.Abstractions.ITestOutputHelper output)
 	[Fact]
 	public void LeafTest()
 	{
-		byte[] bytes = Enumerable.Range(1, 8).Select(i => (byte)i).ToArray();
+		byte[] bytes = [.. Enumerable.Range(1, 8).Select(i => (byte)i)];
 		Leaf leaf = new(null, 0);
 		for (byte i = 0; i < bytes.Length; i++)
 		{
