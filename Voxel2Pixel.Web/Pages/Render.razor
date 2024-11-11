@@ -201,6 +201,11 @@
 				<MudColorPicker @bind-Value="OutlineMudColor" Label="Outline Color" Style=@($"color: {OutlineMudColor.ToString()};") />
 			}
 		</MudElement>
+		<br />
+		<MudElement Class="d-inline-flex flex-wrap gap-2">
+			<MudNumericField T="ushort" @bind-Value="SpriteMaker.FinalScaleX" Label="Final (after outline) Scale X" Variant="Variant.Text" Min="1" />
+			<MudNumericField T="ushort" @bind-Value="SpriteMaker.FinalScaleY" Label="Final (after outline) Scale Y" Variant="Variant.Text" Min="1" />
+		</MudElement>
 	</MudTabPanel>
 	<MudTabPanel Text="Export" Disabled="Model is null">
 		<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" name="SingleImage" @onclick="SingleImage">Generate Single Image</MudButton>

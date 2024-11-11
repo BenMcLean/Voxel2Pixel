@@ -71,6 +71,30 @@ public class SpriteMaker
 		}
 	}
 	private ushort scaleY = 1;
+	public ushort FinalScaleX
+	{
+		get => finalScaleX;
+		set
+		{
+			if (value < 1)
+				throw new InvalidDataException();
+			else
+				finalScaleX = value;
+		}
+	}
+	private ushort finalScaleX = 1;
+	public ushort FinalScaleY
+	{
+		get => finalScaleY;
+		set
+		{
+			if (value < 1)
+				throw new InvalidDataException();
+			else
+				finalScaleY = value;
+		}
+	}
+	private ushort finalScaleY = 1;
 	public bool Shadow { get; set; } = false;
 	public IVoxelColor ShadowColor { get; set; } = DefaultShadowVoxelColor;
 	public bool Outline { get; set; } = false;
@@ -95,6 +119,8 @@ public class SpriteMaker
 		CuboidOrientation = maker.CuboidOrientation;
 		ScaleX = maker.ScaleX;
 		ScaleY = maker.ScaleY;
+		FinalScaleX = maker.FinalScaleX;
+		FinalScaleY = maker.FinalScaleY;
 		Shadow = maker.Shadow;
 		ShadowColor = maker.ShadowColor;
 		Outline = maker.Outline;
@@ -116,6 +142,8 @@ public class SpriteMaker
 	public SpriteMaker Set(CuboidOrientation cuboidOrientation) { CuboidOrientation = cuboidOrientation; return this; }
 	public SpriteMaker SetScaleX(ushort scaleX) { ScaleX = scaleX; return this; }
 	public SpriteMaker SetScaleY(ushort scaleY) { ScaleY = scaleY; return this; }
+	public SpriteMaker SetFinalScaleX(ushort finalScaleX) { FinalScaleX = finalScaleX; return this; }
+	public SpriteMaker SetFinalScaleY(ushort finalScaleY) { FinalScaleY = finalScaleY; return this; }
 	public SpriteMaker SetShadow(bool shadow) { Shadow = shadow; return this; }
 	public SpriteMaker ToggleShadow() => SetShadow(!Shadow);
 	public SpriteMaker SetShadowColor(IVoxelColor shadowColor) { ShadowColor = shadowColor; return this; }
@@ -298,8 +326,10 @@ public class SpriteMaker
 				Y: point.Y * maker.ScaleY + (maker.Outline ? 1 : 0));
 		}
 		sprite.SetRange(points.Select(point => new KeyValuePair<string, Point>(point.Key, Point(point.Value))));
-		return maker.Crop ?
-			sprite.Crop2Content(maker.Threshold)
+		if (maker.Crop)
+			sprite = sprite.Crop2Content(maker.Threshold);
+		return maker.FinalScaleX > 1 || maker.FinalScaleY > 1 ?
+			sprite.Upscale(maker.FinalScaleX, maker.FinalScaleY)
 			: sprite;
 	}
 	public static IEnumerable<Sprite> Make(params SpriteMaker[] spriteMakers) => spriteMakers.Make();
