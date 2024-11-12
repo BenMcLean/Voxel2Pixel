@@ -240,7 +240,13 @@ public class SvoModel : IEditableModel, IBinaryWritable
 			Parent = parent;
 			Octant = octant;
 		}
-		public Leaf(Node parent, byte octant, byte color) : this(parent, octant) => Data = [.. Enumerable.Repeat(color, 8)];
+		public Leaf(Node parent, byte octant, byte color) : this(parent, octant)
+		{
+			if (color == 0)
+				Data[0] = 0;//trigger removal
+			else
+				Data = [.. Enumerable.Repeat(color, 8)];
+		}
 		public Leaf(Stream stream, Node parent = null) : this()
 		{
 			using BinaryReader reader = new(
@@ -261,7 +267,10 @@ public class SvoModel : IEditableModel, IBinaryWritable
 					byte where = (byte)(header >> 3 & 7),
 						foreground = reader.ReadByte(),
 						background = reader.ReadByte();
-					Data = [.. Enumerable.Range(0, 8).Select(i => i == where ? foreground : background)];
+					if (foreground == 0 && background == 0)
+						Data[0] = 0;//trigger removal
+					else
+						Data = [.. Enumerable.Range(0, 8).Select(i => i == where ? foreground : background)];
 					break;
 				case 0b11://8-byte payload leaf
 					Data = reader.ReadBytes(8);
@@ -299,7 +308,7 @@ public class SvoModel : IEditableModel, IBinaryWritable
 			}
 			else
 			{//Multiple colors - use 8-byte payload leaf
-				writer.Write((byte)(0b11000000 | Octant & 7));//Header
+				writer.Write(Header);
 				writer.Write(Data);
 			}
 		}
