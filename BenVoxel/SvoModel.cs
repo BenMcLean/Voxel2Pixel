@@ -199,12 +199,7 @@ public class SvoModel : IEditableModel, IBinaryWritable
 		protected byte TryCollapse(byte? color = null)
 		{
 			if (!color.HasValue)
-				return TryCollapse(Children[0] switch
-				{
-					Leaf leaf => leaf[0],
-					Branch branch => branch.TryCollapse(),
-					_ => 0,
-				});
+				return TryCollapse(TryCollapseGetColor());
 			if (color.Value == 0)
 				return 0;
 			foreach (Node child in Children)
@@ -214,6 +209,12 @@ public class SvoModel : IEditableModel, IBinaryWritable
 					return 0;
 			return color.Value;
 		}
+		protected byte TryCollapseGetColor() => Children[0] switch
+		{
+			Leaf leaf => leaf[0],
+			Branch branch => branch.TryCollapseGetColor(),
+			_ => 0,
+		};
 		#endregion Collapse
 	}
 	public class Leaf : Node, IBinaryWritable, IEnumerable<Voxel>, IEnumerable
