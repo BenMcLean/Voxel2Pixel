@@ -118,14 +118,23 @@ public class SvoModel : IEditableModel, IBinaryWritable
 					return node;
 			return null;
 		}
-		public Branch(Node parent = null, byte octant = 0)
+		public Branch() { }
+		public Branch(Node parent = null, byte octant = 0) : this()
 		{
 			Parent = parent;
 			Octant = octant;
 		}
 		public Branch(Branch parent, byte octant, byte color) : this(parent, octant) => ExpandCollapsed(color);
-		public Branch(Stream stream, Branch parent = null) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true), parent) { }
-		public Branch(BinaryReader reader, Branch parent = null)
+		public Branch(Stream stream, Branch parent = null) : this()
+		{
+			using BinaryReader reader = new(
+				input: stream,
+				encoding: Encoding.UTF8,
+				leaveOpen: true);
+			FromReader(reader, parent);
+		}
+		public Branch(BinaryReader reader, Branch parent = null) : this() => FromReader(reader, parent);
+		private void FromReader(BinaryReader reader, Branch parent = null)
 		{
 			Parent = parent;
 			byte header = reader.ReadByte();
@@ -151,7 +160,14 @@ public class SvoModel : IEditableModel, IBinaryWritable
 			}
 		}
 		#region IBinaryWritable
-		public override void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: Encoding.UTF8, leaveOpen: true));
+		public override void Write(Stream stream)
+		{
+			using BinaryWriter writer = new(
+				output: stream,
+				encoding: Encoding.UTF8,
+				leaveOpen: true);
+			Write(writer);
+		}
 		public override void Write(BinaryWriter writer)
 		{
 			if (TryCollapse() is byte collapsed && collapsed != 0)
@@ -218,14 +234,23 @@ public class SvoModel : IEditableModel, IBinaryWritable
 		public IEnumerable<byte> Values => Data;
 		public override byte Depth => 16;
 		public override ushort Size => 1;
-		public Leaf(Node parent, byte octant)
+		public Leaf() { }
+		public Leaf(Node parent, byte octant) : this()
 		{
 			Parent = parent;
 			Octant = octant;
 		}
 		public Leaf(Node parent, byte octant, byte color) : this(parent, octant) => Data = [.. Enumerable.Repeat(color, 8)];
-		public Leaf(Stream stream, Node parent = null) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true), parent) { }
-		public Leaf(BinaryReader reader, Node parent = null)
+		public Leaf(Stream stream, Node parent = null) : this()
+		{
+			using BinaryReader reader = new(
+				input: stream,
+				encoding: Encoding.UTF8,
+				leaveOpen: true);
+			FromReader(reader, parent);
+		}
+		public Leaf(BinaryReader reader, Node parent = null) : this() => FromReader(reader, parent);
+		private void FromReader(BinaryReader reader, Node parent = null)
 		{
 			Parent = parent;
 			byte header = reader.ReadByte();
@@ -246,7 +271,14 @@ public class SvoModel : IEditableModel, IBinaryWritable
 			}
 		}
 		#region IBinaryWritable
-		public override void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: Encoding.UTF8, leaveOpen: true));
+		public override void Write(Stream stream)
+		{
+			using BinaryWriter writer = new(
+				output: stream,
+				encoding: Encoding.UTF8,
+				leaveOpen: true);
+			Write(writer);
+		}
 		public override void Write(BinaryWriter writer)
 		{
 			(byte, byte)[] occurrences = [.. Data
@@ -300,9 +332,15 @@ public class SvoModel : IEditableModel, IBinaryWritable
 	}
 	#endregion Nested classes
 	#region SvoModel
-	public readonly Branch Root = new();
+	public Branch Root = new();
 	public void Clear() => Root.Clear();
 	public SvoModel() { }
+	public SvoModel(ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this()
+	{
+		SizeX = sizeX;
+		SizeY = sizeY;
+		SizeZ = sizeZ;
+	}
 	public SvoModel(IModel model) : this(
 		voxels: model,
 		sizeX: model.SizeX,
@@ -314,13 +352,45 @@ public class SvoModel : IEditableModel, IBinaryWritable
 		foreach (Voxel voxel in voxels)
 			this.Set(voxel);
 	}
-	public SvoModel(Stream stream, ushort sizeX, ushort sizeY, ushort sizeZ) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true), sizeX, sizeY, sizeZ) { }
-	public SvoModel(Stream stream) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true)) { }
+	public SvoModel(Stream stream, ushort sizeX, ushort sizeY, ushort sizeZ) : this(sizeX, sizeY, sizeZ)
+	{
+		using BinaryReader reader = new(
+			input: stream,
+			encoding: Encoding.UTF8,
+			leaveOpen: true);
+		Root = new Branch(reader);
+	}
+	public SvoModel(Stream stream) : this()
+	{
+		using BinaryReader reader = new(
+			input: stream,
+			encoding: Encoding.UTF8,
+			leaveOpen: true);
+		FromReader(reader);
+	}
+	private void FromReader(BinaryReader reader)
+	{
+		SizeX = reader.ReadUInt16();
+		SizeY = reader.ReadUInt16();
+		SizeZ = reader.ReadUInt16();
+		Root = new Branch(reader);
+	}
 	public SvoModel(BinaryReader reader, ushort sizeX, ushort sizeY, ushort sizeZ) : this(sizeX, sizeY, sizeZ) => Root = new Branch(reader);
-	public SvoModel(BinaryReader reader) : this(reader, reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16()) { }
-	public SvoModel(byte[] bytes, ushort sizeX, ushort sizeY, ushort sizeZ) : this(new MemoryStream(bytes), sizeX, sizeY, sizeZ) { }
-	public SvoModel(byte[] bytes) : this(new MemoryStream(bytes)) { }
-	public SvoModel(string z85, ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this(sizeX, sizeY, sizeZ)
+	public SvoModel(BinaryReader reader) : this() => FromReader(reader);
+	public SvoModel(byte[] bytes, ushort sizeX, ushort sizeY, ushort sizeZ) : this(sizeX, sizeY, sizeZ)
+	{
+		using MemoryStream stream = new(bytes);
+		using BinaryReader reader = new(input: stream, encoding: Encoding.UTF8);
+		Root = new Branch(reader);
+	}
+	public SvoModel(byte[] bytes) : this()
+	{
+		using MemoryStream stream = new(bytes);
+		using BinaryReader reader = new(input: stream, encoding: Encoding.UTF8);
+		FromReader(reader);
+	}
+	public SvoModel(string z85, ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue)
+		: this(sizeX, sizeY, sizeZ)
 	{
 		using MemoryStream decompressed = new();
 		using (MemoryStream compressed = new(Cromulent.Encoding.Z85.FromZ85String(z85)))
@@ -334,16 +404,17 @@ public class SvoModel : IEditableModel, IBinaryWritable
 		decompressed.Position = 0;
 		Root = new Branch(decompressed);
 	}
-	public SvoModel(ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this()
-	{
-		SizeX = sizeX;
-		SizeY = sizeY;
-		SizeZ = sizeZ;
-	}
 	#endregion SvoModel
 	#region IBinaryWritable
 	public void Write(Stream stream) => Write(stream, true);
-	public void Write(Stream stream, bool includeSizes) => Write(writer: new BinaryWriter(output: stream, encoding: Encoding.UTF8, leaveOpen: true), includeSizes: includeSizes);
+	public void Write(Stream stream, bool includeSizes)
+	{
+		using BinaryWriter writer = new(
+			output: stream,
+			encoding: Encoding.UTF8,
+			leaveOpen: true);
+		Write(writer: writer, includeSizes: includeSizes);
+	}
 	public void Write(BinaryWriter writer) => Write(writer, true);
 	public void Write(BinaryWriter writer, bool includeSizes)
 	{
@@ -358,8 +429,8 @@ public class SvoModel : IEditableModel, IBinaryWritable
 		else
 		{//Empty model
 			writer.Write(new byte[15]);//Branch headers
-			writer.Write((byte)0x40);//Leaf header
-			writer.Write((byte)0);//Empty 2x2x2 voxel cube
+			writer.Write((byte)0b10000000);//2-byte payload Leaf header
+			writer.Write(new byte[2]);//Empty 2x2x2 voxel cube
 		}
 	}
 	#endregion IBinaryWritable

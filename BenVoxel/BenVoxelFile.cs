@@ -30,7 +30,7 @@ public class BenVoxelFile : IBinaryWritable
 			set => Palettes[paletteName] = [.. Color.Colors(value.Take(256))];
 		}
 		public Metadata() { }
-		public Metadata(Stream stream)
+		public Metadata(Stream stream) : this()
 		{
 			using BinaryReader reader = new(
 				input: stream,
@@ -38,7 +38,7 @@ public class BenVoxelFile : IBinaryWritable
 				leaveOpen: true);
 			FromReader(reader);
 		}
-		public Metadata(BinaryReader reader) => FromReader(reader);
+		public Metadata(BinaryReader reader) : this() => FromReader(reader);
 		private void FromReader(BinaryReader reader)
 		{
 			while (reader.BaseStream.Position < reader.BaseStream.Length - 4
@@ -271,7 +271,7 @@ public class BenVoxelFile : IBinaryWritable
 	#endregion Data
 	#region BenVoxelFile
 	public BenVoxelFile() { }
-	public BenVoxelFile(Stream stream)
+	public BenVoxelFile(Stream stream) : this()
 	{
 		using BinaryReader reader = new(
 			input: stream,
@@ -279,7 +279,7 @@ public class BenVoxelFile : IBinaryWritable
 			leaveOpen: true);
 		FromReader(reader);
 	}
-	public BenVoxelFile(BinaryReader reader) => FromReader(reader);
+	public BenVoxelFile(BinaryReader reader) : this() => FromReader(reader);
 	private void FromReader(BinaryReader reader)
 	{
 		if (!FourCC(reader).Equals("BENV"))
@@ -319,7 +319,7 @@ public class BenVoxelFile : IBinaryWritable
 				throw new IOException("Expected \"MODL\"");
 		}
 	}
-	public BenVoxelFile(JsonObject json)
+	public BenVoxelFile(JsonObject json) : this()
 	{
 		if (json.TryGetPropertyValue("metadata", out JsonNode metadata))
 			Global = Metadata.FromJson(metadata.AsObject());
