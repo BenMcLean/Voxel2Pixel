@@ -123,8 +123,8 @@ public class SvoModel : IEditableModel, IBinaryWritable
 			Parent = parent;
 			Octant = octant;
 		}
-		public Branch(Stream stream, Node parent = null) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true), parent) { }
-		public Branch(BinaryReader reader, Node parent = null)
+		public Branch(Stream stream, Branch parent = null) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true), parent) { }
+		public Branch(BinaryReader reader, Branch parent = null)
 		{
 			Parent = parent;
 			byte header = reader.ReadByte(),
@@ -152,6 +152,42 @@ public class SvoModel : IEditableModel, IBinaryWritable
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 		public IEnumerator<Node> GetEnumerator() => Children.OfType<Node>().GetEnumerator();
 		#endregion IEnumerable<Node>
+		#region Collapse
+		protected static Branch ExpandCollapsed(Branch parent, byte octant, byte color)
+		{
+			Branch branch = new(parent, octant);
+			if (branch.Depth == 15)
+				for (byte child = 0; child < 8; child++)
+				{
+					Leaf leaf = new(branch, child);
+					for (byte index = 0; index < 8; index++)
+						leaf[index] = color;
+					branch[child] = leaf;
+				}
+			else
+				for (byte child = 0; child < 8; child++)
+					branch[child] = ExpandCollapsed(branch, child, color);
+			return branch;
+		}
+		protected byte TryCollapse(byte? color = null)
+		{
+			if (!color.HasValue)
+				return TryCollapse(Children[0] switch
+				{
+					Leaf leaf => leaf[0],
+					Branch branch => branch.TryCollapse(),
+					_ => 0,
+				});
+			if (color.Value == 0)
+				return 0;
+			foreach (Node child in Children)
+				if (child is null
+					|| (child is Leaf leaf && leaf.Values.Any(value => value != color.Value))
+					|| (child is Branch branch && branch.TryCollapse(color.Value) == 0))
+					return 0;
+			return color.Value;
+		}
+		#endregion Collapse
 	}
 	public class Leaf : Node, IBinaryWritable, IEnumerable<Voxel>, IEnumerable
 	{
@@ -168,6 +204,7 @@ public class SvoModel : IEditableModel, IBinaryWritable
 					parent[Octant] = null;
 			}
 		}
+		public IEnumerable<byte> Values => Data;
 		public override byte Depth => 16;
 		public override ushort Size => 1;
 		public Leaf(Node parent, byte octant)
