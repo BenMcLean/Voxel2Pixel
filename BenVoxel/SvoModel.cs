@@ -123,26 +123,43 @@ public class SvoModel : IEditableModel, IBinaryWritable
 			Parent = parent;
 			Octant = octant;
 		}
+		public Branch(Branch parent, byte octant, byte color) : this(parent, octant) => ExpandCollapsed(color);
 		public Branch(Stream stream, Branch parent = null) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true), parent) { }
 		public Branch(BinaryReader reader, Branch parent = null)
 		{
 			Parent = parent;
-			byte header = reader.ReadByte(),
-				children = (byte)((header >> 3 & 7) + 1);
+			byte header = reader.ReadByte();
 			Octant = (byte)(header & 0b111);
-			for (byte child = 0; child < children; child++)
-			{
-				header = reader.ReadByte();
-				reader.BaseStream.Position--;
-				this[(byte)(header & 7)] = (header & 0b11000000) > 0 ?
-					new Leaf(reader, this)
-					: new Branch(reader, this);
+			switch ((byte)(header >> 6 & 3))
+			{//Check the node type (bits 7-6)
+				case 0b00: // Regular branch
+					byte children = (byte)((header >> 3 & 7) + 1);
+					for (byte child = 0; child < children; child++)
+					{
+						header = reader.ReadByte();
+						reader.BaseStream.Position--;
+						this[(byte)(header & 7)] = (header & 0b10000000) > 0 ?
+							new Leaf(reader, this)
+							: new Branch(reader, this);
+					}
+					break;
+				case 0b01: // Collapsed branch
+					ExpandCollapsed(reader.ReadByte());
+					break;
+				default:
+					throw new IOException("Invalid node type in branch header.");
 			}
 		}
 		#region IBinaryWritable
 		public override void Write(Stream stream) => Write(new BinaryWriter(output: stream, encoding: Encoding.UTF8, leaveOpen: true));
 		public override void Write(BinaryWriter writer)
 		{
+			if (TryCollapse() is byte collapsed && collapsed != 0)
+			{
+				writer.Write((byte)(0b01000000 | Octant & 7));//Header
+				writer.Write(collapsed);
+				return;
+			}
 			writer.Write(Header);
 			foreach (Node child in this)
 				child.Write(writer);
@@ -153,21 +170,15 @@ public class SvoModel : IEditableModel, IBinaryWritable
 		public IEnumerator<Node> GetEnumerator() => Children.OfType<Node>().GetEnumerator();
 		#endregion IEnumerable<Node>
 		#region Collapse
-		protected static Branch ExpandCollapsed(Branch parent, byte octant, byte color)
+		public Branch ExpandCollapsed(byte color)
 		{
-			Branch branch = new(parent, octant);
-			if (branch.Depth == 15)
-				for (byte child = 0; child < 8; child++)
-				{
-					Leaf leaf = new(branch, child);
-					for (byte index = 0; index < 8; index++)
-						leaf[index] = color;
-					branch[child] = leaf;
-				}
+			if (Depth == 15)
+				for (byte octant = 0; octant < 8; octant++)
+					Children[octant] = new Leaf(this, octant, color);
 			else
-				for (byte child = 0; child < 8; child++)
-					branch[child] = ExpandCollapsed(branch, child, color);
-			return branch;
+				for (byte octant = 0; octant < 8; octant++)
+					Children[octant] = new Branch(this, octant, color);
+			return this;
 		}
 		protected byte TryCollapse(byte? color = null)
 		{
@@ -212,6 +223,7 @@ public class SvoModel : IEditableModel, IBinaryWritable
 			Parent = parent;
 			Octant = octant;
 		}
+		public Leaf(Node parent, byte octant, byte color) : this(parent, octant) => Data = [.. Enumerable.Repeat(color, 8)];
 		public Leaf(Stream stream, Node parent = null) : this(new BinaryReader(input: stream, encoding: Encoding.UTF8, leaveOpen: true), parent) { }
 		public Leaf(BinaryReader reader, Node parent = null)
 		{
@@ -219,19 +231,18 @@ public class SvoModel : IEditableModel, IBinaryWritable
 			byte header = reader.ReadByte();
 			Octant = (byte)(header & 7);
 			switch ((byte)(header >> 6 & 3))
-			{
-				case 0b01://1-byte payload leaf
-					Data = [.. Enumerable.Repeat(reader.ReadByte(), 8)];
-					break;
+			{//Check the node type (bits 7-6)
 				case 0b10://2-byte payload leaf
 					byte where = (byte)(header >> 3 & 7),
 						foreground = reader.ReadByte(),
 						background = reader.ReadByte();
 					Data = [.. Enumerable.Range(0, 8).Select(i => i == where ? foreground : background)];
 					break;
-				default://0b11 for 8-byte payload leaf
+				case 0b11://8-byte payload leaf
 					Data = reader.ReadBytes(8);
 					break;
+				default:
+					throw new IOException("Invalid node type in leaf header.");
 			}
 		}
 		#region IBinaryWritable
@@ -243,19 +254,20 @@ public class SvoModel : IEditableModel, IBinaryWritable
 				.Select(g => (g.Key, (byte)g.Count()))
 				.OrderBy(t => t.Item2)];
 			if (occurrences.Length == 1)
-			{//1-byte payload leaf
-				writer.Write((byte)(0b01000000 | Octant & 7));//Header
-				writer.Write(Data[0]);
+			{//Single color - use 2-byte payload leaf with same color for both bytes
+				writer.Write((byte)(0b10000000 | Octant & 7));//Header
+				writer.Write(Data[0]); // Foreground color
+				writer.Write(Data[0]); // Background color (same)
 			}
 			else if (occurrences.Length == 2 && occurrences[0].Item2 == 1)
-			{//2-byte payload leaf
+			{//Two colors with one unique - use 2-byte payload leaf
 				writer.Write((byte)(0b10000000 | (Array.IndexOf(Data, occurrences[0].Item1) & 7) << 3 | Octant & 7));//Header
-				writer.Write(occurrences[0].Item1);//Foreground
-				writer.Write(occurrences[1].Item1);//Background
+				writer.Write(occurrences[0].Item1);//Foreground color (the unique one)
+				writer.Write(occurrences[1].Item1);//Background color (the repeated one)
 			}
 			else
-			{//8-byte payload leaf
-				writer.Write(Header);
+			{//Multiple colors - use 8-byte payload leaf
+				writer.Write((byte)(0b11000000 | Octant & 7));//Header
 				writer.Write(Data);
 			}
 		}

@@ -10,6 +10,11 @@ namespace Voxel2Pixel;
 
 public static class ExtensionMethods
 {
+	public static T Also<T>(this T obj, Action<T> action)
+	{
+		action(obj);
+		return obj;
+	}
 	/// <param name="color">Using only colors 1-63</param>
 	/// <returns>Big Endian RGBA8888 32-bit 256 color palette, leaving colors 0, 64, 128 and 192 as zeroes</returns>
 	public static uint[] CreatePalette(this IVoxelColor color)
