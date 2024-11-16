@@ -148,33 +148,40 @@ To serialize a model, geometry is structured as a sparse voxel octree for compre
 
 The octree has a fixed depth of 16 levels, corresponding to the 16 bits of addressable space in the unsigned 16-bit integer spatial coordinates. The first 15 levels consist of only Branch nodes, while the 16th and final level contains only Leaf nodes.
 #### Nodes
-There are four node types, which include one type of branch and three types of leaves.
+There are four node types, including two types of branches and two types of leaves.
 ##### Node Headers
 All nodes start with a 1-byte header, composed of bits from left to right:
-- Header bits 7-6: Node type indicator
-  - `00`: Branch
-  - `01`: 1-byte payload Leaf
-  - `10`: 2-byte payload Leaf
-  - `11`: 8-byte payload Leaf
+- Header bit 7: Node type indicator
+  - `0`: Branch node
+  - `1`: Leaf node
+- Header bit 6: Branch/Leaf subtype
+  - For Branch nodes:
+    - `0`: Regular branch with child nodes
+    - `1`: Collapsed branch containing identical values
+  - For Leaf nodes:
+    - `0`: 2-byte payload Leaf
+    - `1`: 8-byte payload Leaf
 - Header bits 5-3:
-  - For Branch nodes: number of children (1-8) minus one.
-  - For 2-byte Leaf nodes: ZYX octant of the foreground voxel.
-  - For other node types: unused.
+  - For regular Branch nodes: number of children (1-8) minus one
+  - For 2-byte Leaf nodes: ZYX octant of the foreground voxel
+  - For other node types: unused
 - Header bits 2-0: ZYX octant indicator
-  - These bits encode the node's position relative to its parent in ascending Z, Y, X order.
-  - `0` represents the negative direction and `1` represents the positive direction for each axis.
+  - These bits encode the node's position relative to its parent in ascending Z, Y, X order
+  - `0` represents the negative direction and `1` represents the positive direction for each axis
   - Examples:
     - `000`: (-Z, -Y, -X) octant
     - `111`: (+Z, +Y, +X) octant
     - `001`: (-Z, -Y, +X) octant
 ##### Branch nodes
-In Branch nodes, the header byte is followed by the child nodes. On the 16th (last) level of the octree, all of the children will be Leaf nodes, but the children will all be Branch nodes on every other level.
+Branch nodes come in two forms:
+1. Regular branches contain up to eight child nodes. Header bits 5-3 indicate the number of children minus one. The header byte is followed by the child nodes, each with a specific octant position corresponding to its location in the parent's 2x2x2 grid using the same ZYX octant encoding described above.
+2. Collapsed branches abbreviate full subtrees of cubes where all descendant leaves contain the same non-zero value. The header is followed by a single byte specifying this value. If the value would be zero, the node should not exist at all since it represents entirely empty space.
+
+On the 16th (last) level of the octree, all children will be Leaf nodes, but the children will all be Branch nodes on every other level.
 ##### Leaf nodes
-Each leaf node represents the contents of a 2x2x2 voxel cube. There are three types of leaf nodes.
-###### 1-byte payload Leaf nodes
-These represent cubes of all the same color or material. The header byte is followed by one payload byte, which should fill in all eight voxels.
+Leaf nodes represent the contents of a 2x2x2 voxel cube and come in two forms:
 ###### 2-byte payload Leaf nodes
-These represent cubes in which all the voxels are the same except one, called the foreground voxel. The header byte is followed by two payload bytes: the first for the foreground voxel and then the second for the background voxels.
+These represent cubes in which all the voxels are the same except one, called the foreground voxel. The header byte (with the foreground voxel's position encoded in bits 5-3) is followed by two payload bytes: the first for the foreground voxel and then the second for all background voxels. Either the foreground or background value may be zero, representing empty space in those positions, but in the case that both would be zero, the leaf should not exist because it would only contain empty space. The only exception would be to indicate a completely empty model.
 
 The octant/position of the foreground voxel is indicated by coordinates in header bits 5-3, using the same ZYX octant encoding scheme as described in the Node Headers section above.
 
@@ -182,12 +189,12 @@ The background voxel value should be repeated in all octants/positions except fo
 ###### 8-byte payload Leaf nodes
 These represent cubes of any arbitrary values. In 8-byte Leaf nodes, the header byte is followed by the eight payload bytes of a 2x2x2 voxel cube in ascending Z, Y, X order from left to right, with 0 representing empty voxels.
 #### Empty models
-An empty model would be represented by the hexadecimal string `0000000000000000000000000000004000` which is structured as follows:
-- 15 bytes for branch node headers which are all `0`.
-- 1 byte for a leaf node header with hexadecimal value `0x40`
-- 1 byte for the payload of the leaf node
+An empty model is represented by the following 18 bytes in hexadecimal:
+- 15 bytes of `00` for branch node headers
+- 1 byte of `80` for a 2-byte payload Leaf header 
+- 2 bytes of `00` for the payload (both foreground and background values zero)
 
-The 15 branch node headers correspond to the 15 levels of the octree needed to address a space with 16-bit integer coordinates (2^16 = 65,536, except remember to subtract one for zero-based indexing). The 16th level corresponds to the leaf node.
+The 15 branch node headers correspond to the 15 levels of the octree needed to address a space with 16-bit integer coordinates (2^16 = 65,536, except remember to subtract one for zero-based indexing). The 16th level corresponds to the leaf node containing all empty space.
 # BenVoxel Reference Implementation
 An MIT-licensed reference implementation is provided as a .NET Standard 2.0 library written in C# 8.0 via PolySharp.
 ## Dependencies
