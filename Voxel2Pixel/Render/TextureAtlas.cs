@@ -1,4 +1,5 @@
-﻿using BenVoxel;
+﻿using System.Collections.ObjectModel;
+using BenVoxel;
 using System.Linq;
 using System.Text.Json.Serialization;
 using System.Xml;
@@ -53,9 +54,9 @@ public class TextureAtlas
 		public SanitizedKeyDictionary<Point> Points { get; set; } = [];
 		[XmlElement("Point")]
 		[JsonIgnore]
-		public XmlPoint[] PointsArray
+		public ReadOnlyCollection<XmlPoint> PointsArray
 		{
-			get => Points.Any() ? [.. Points.Select(kvp => new XmlPoint { Name = kvp.Key, X = kvp.Value.X, Y = kvp.Value.Y })] : null;
+			get => Points.Any() ? new([.. Points.Select(kvp => new XmlPoint { Name = kvp.Key, X = kvp.Value.X, Y = kvp.Value.Y })]) : null;
 			set
 			{
 				Points.Clear();
@@ -76,9 +77,9 @@ public class TextureAtlas
 	public SanitizedKeyDictionary<SubTexture> SubTextures { get; set; } = [];
 	[XmlElement("SubTexture")]
 	[JsonIgnore]
-	public XmlSubTexture[] SubTexturesArray
+	public ReadOnlyCollection<XmlSubTexture> SubTexturesArray
 	{
-		get => [.. SubTextures.Select(kvp => new XmlSubTexture { Name = kvp.Key, X = kvp.Value.X, Y = kvp.Value.Y, Width = kvp.Value.Width, Height = kvp.Value.Height, Points = kvp.Value.Points })];
+		get => new([.. SubTextures.Select(kvp => new XmlSubTexture { Name = kvp.Key, X = kvp.Value.X, Y = kvp.Value.Y, Width = kvp.Value.Width, Height = kvp.Value.Height, Points = kvp.Value.Points })]);
 		set
 		{
 			SubTextures.Clear();
