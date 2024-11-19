@@ -1,4 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿using BenVoxel;
+using System.Linq;
+using System.Text.Json.Serialization;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -6,7 +8,7 @@ namespace Voxel2Pixel.Render;
 
 /// <summary>
 /// This is an expansion upon the XML texture atlas metadata format used by Kenney. https://kenney.nl/
-/// Supports both XML and JSON serialization.
+/// Supports both XML and JSON serialization using sanitized dictionary keys.
 /// </summary>
 public class TextureAtlas
 {
@@ -15,9 +17,6 @@ public class TextureAtlas
 	public string ImagePath { get; set; }
 	public class SubTexture
 	{
-		[XmlAttribute("name")]
-		[JsonPropertyName("name")]
-		public string Name { get; set; }
 		[XmlAttribute("x")]
 		[JsonPropertyName("x")]
 		public ushort X { get; set; }
@@ -36,9 +35,6 @@ public class TextureAtlas
 		/// </summary>
 		public class Point
 		{
-			[XmlAttribute("name")]
-			[JsonPropertyName("name")]
-			public string Name { get; set; }
 			[XmlAttribute("x")]
 			[JsonPropertyName("x")]
 			public int X { get; set; }
@@ -46,12 +42,49 @@ public class TextureAtlas
 			[JsonPropertyName("y")]
 			public int Y { get; set; }
 		}
-		[XmlElement("Point")]
+		public class XmlPoint : Point
+		{
+			[XmlAttribute("name")]
+			public string Name { get; set; }
+		}
 		[JsonPropertyName("points")]
-		public Point[] Points { get; set; }
+		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+		[XmlIgnore]
+		public SanitizedKeyDictionary<Point> Points { get; set; } = [];
+		[XmlElement("Point")]
+		[JsonIgnore]
+		public XmlPoint[] PointsArray
+		{
+			get => Points.Any() ? [.. Points.Select(kvp => new XmlPoint { Name = kvp.Key, X = kvp.Value.X, Y = kvp.Value.Y })] : null;
+			set
+			{
+				Points.Clear();
+				if (value != null)
+					foreach (XmlPoint point in value)
+						Points[point.Name] = point;
+			}
+		}
 		#endregion Expansion beyond Kenney's format
 	}
-	[XmlElement("SubTexture")]
+	public class XmlSubTexture : SubTexture
+	{
+		[XmlAttribute("name")]
+		public string Name { get; set; }
+	}
 	[JsonPropertyName("subTextures")]
-	public SubTexture[] SubTextures { get; set; }
+	[XmlIgnore]
+	public SanitizedKeyDictionary<SubTexture> SubTextures { get; set; } = [];
+	[XmlElement("SubTexture")]
+	[JsonIgnore]
+	public XmlSubTexture[] SubTexturesArray
+	{
+		get => [.. SubTextures.Select(kvp => new XmlSubTexture { Name = kvp.Key, X = kvp.Value.X, Y = kvp.Value.Y, Width = kvp.Value.Width, Height = kvp.Value.Height, Points = kvp.Value.Points })];
+		set
+		{
+			SubTextures.Clear();
+			if (value != null)
+				foreach (XmlSubTexture subTexture in value)
+					SubTextures[subTexture.Name] = subTexture;
+		}
+	}
 }

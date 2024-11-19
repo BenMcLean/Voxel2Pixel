@@ -187,21 +187,19 @@ public class Sprite : IDictionary<string, Point>, ISprite, IRenderer, IVoxelColo
 	public Sprite(KeyValuePair<string, Sprite>[] sprites, out TextureAtlas textureAtlas) : this(packingRectangles: out PackingRectangle[] packingRectangles, sprites: sprites.Select(pair => pair.Value)) =>
 		textureAtlas = new TextureAtlas
 		{
-			SubTextures = [.. packingRectangles.Zip(sprites, (packingRectangle, spritePair) => new SubTexture
+			SubTextures = [.. packingRectangles.Zip(sprites, (packingRectangle, spritePair) => new KeyValuePair<string, SubTexture>(spritePair.Key, new()
 			{
-				Name = spritePair.Key,
 				X = (ushort)(packingRectangle.X + 1),
 				Y = (ushort)(packingRectangle.Y + 1),
 				Width = (ushort)(packingRectangle.Width - 2),
 				Height = (ushort)(packingRectangle.Height - 2),
 				Points = [.. spritePair.Value
-					.Select(pointPair => new SubTexture.Point
+					.Select(pointPair => new KeyValuePair<string, SubTexture.Point>(pointPair.Key, new()
 					{
-						Name = pointPair.Key,
 						X = pointPair.Value.X,
 						Y = pointPair.Value.Y,
-					})],
-			})],
+					}))],
+			}))],
 		};
 	#endregion Packing
 	#region Image manipulation

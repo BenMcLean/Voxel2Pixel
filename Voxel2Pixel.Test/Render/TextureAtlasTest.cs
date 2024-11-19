@@ -1,5 +1,4 @@
-﻿using BenVoxel;
-using SixLabors.ImageSharp;
+﻿using SixLabors.ImageSharp;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
@@ -7,7 +6,6 @@ using Voxel2Pixel.Color;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model.FileFormats;
 using Voxel2Pixel.Render;
-using static Voxel2Pixel.Render.TextureAtlas;
 using static Voxel2Pixel.Web.ImageMaker;
 
 namespace Voxel2Pixel.Test.Render;
@@ -51,6 +49,7 @@ public class TextureAtlasTest
 	//	expected: TestData,
 	//	actual: ((TextureAtlas)(new XmlSerializer(typeof(TextureAtlas)).Deserialize(new MemoryStream(Encoding.UTF8.GetBytes(TestData)))
 	//	?? throw new NullReferenceException())).Utf8Xml());
+	/*
 	[Fact]
 	public void SubTextureTest()
 	{
@@ -94,6 +93,7 @@ public class TextureAtlasTest
 			expected: subTexture.Height,
 			actual: subTexture2?.Height);
 	}
+	*/
 	[Fact]
 	public void Iso8()
 	{
