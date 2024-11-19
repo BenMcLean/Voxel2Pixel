@@ -62,7 +62,7 @@ namespace Voxel2Pixel.Test
 				data: pixels,
 				settings: new PixelReadSettings(
 					width: width,
-					height: (pixels.Length >> 2) / width,
+					height: (uint)((pixels.Length >> 2) / width),
 					storageType: StorageType.Int32,
 					mapping: PixelMapping.RGBA));
 			return magickImage;
