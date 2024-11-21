@@ -1,5 +1,4 @@
-﻿using System.Text;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace BenVoxel.Test;
@@ -19,22 +18,10 @@ public class Test
 			sourceJson = JsonSerializer.Deserialize<JsonObject>(jsonInputStream)
 				?? throw new NullReferenceException();
 		}
-		BenVoxelFile benVoxelFile = new(sourceJson);
-		using (FileStream binaryOutputStream = new(
-			path: "test.ben",
-			mode: FileMode.OpenOrCreate,
-			access: FileAccess.Write))
-		{
-			benVoxelFile.Write(binaryOutputStream);
-		}
-		using (FileStream binaryInputStream = new(
-			path: "test.ben",
-			mode: FileMode.Open,
-			access: FileAccess.Read))
-		{
-			benVoxelFile = new(binaryInputStream);
-		}
-		File.WriteAllText(path: "test.ben.json", contents: benVoxelFile.ToJson().Tabs());
+		new BenVoxelFile(sourceJson)
+			.Save("test.ben");
+		BenVoxelFile.Load("test.ben")
+			.Save("test.ben.json");
 		using (FileStream jsonInputStream = new(
 			path: "test.ben.json",
 			mode: FileMode.Open,
@@ -75,5 +62,18 @@ public class Test
 						autoPad: true));
 				}
 		return normalized;
+	}
+	[Fact]
+	public void OutputSvo()
+	{
+		using FileStream binaryOutputStream = new(
+			path: "SORA.SVO",
+			mode: FileMode.OpenOrCreate,
+			access: FileAccess.Write);
+		BenVoxelFile.Load(SourceFile)
+			.Default(out _)
+			.Write(
+				stream: binaryOutputStream,
+				includeSizes: true);
 	}
 }

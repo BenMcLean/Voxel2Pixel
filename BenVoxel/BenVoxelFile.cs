@@ -326,6 +326,31 @@ public class BenVoxelFile : IBinaryWritable
 		foreach (KeyValuePair<string, JsonNode> model in json["models"].AsObject())
 			Models[model.Key] = new(model.Value.AsObject());
 	}
+	public static BenVoxelFile Load(string path)
+	{
+		using FileStream fileStream = new(
+			path: path,
+			mode: FileMode.Open,
+			access: FileAccess.Read);
+		return ".json".Equals(Path.GetExtension(path), StringComparison.InvariantCultureIgnoreCase) ?
+			new(JsonSerializer.Deserialize<JsonObject>(fileStream)
+				?? throw new NullReferenceException())
+			: new(fileStream);
+	}
+	public BenVoxelFile Save(string path)
+	{
+		if (".json".Equals(Path.GetExtension(path), StringComparison.InvariantCultureIgnoreCase))
+			File.WriteAllText(path: path, contents: ToJson().Tabs());
+		else
+			using (FileStream fileStream = new(
+				path: path,
+				mode: FileMode.OpenOrCreate,
+				access: FileAccess.Write))
+			{
+				Write(fileStream);
+			}
+		return this;
+	}
 	public SvoModel Default(out uint[] palette)
 	{
 		if (!Models.TryGetValue("", out Model benVoxelFileModel))
