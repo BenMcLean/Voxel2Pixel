@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Cromulent.Encoding;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -434,20 +435,7 @@ public class SvoModel() : IEditableModel, IBinaryWritable
 		using BinaryReader reader = new(input: stream, encoding: Encoding.UTF8);
 		FromReader(reader);
 	}
-	public SvoModel(string z85, ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this(sizeX, sizeY, sizeZ)
-	{
-		using MemoryStream decompressed = new();
-		using (MemoryStream compressed = new(Cromulent.Encoding.Z85.FromZ85String(z85)))
-		using (DeflateStream deflateStream = new(
-			stream: compressed,
-			mode: CompressionMode.Decompress,
-			leaveOpen: true))
-		{
-			deflateStream.CopyTo(decompressed);
-		}
-		decompressed.Position = 0;
-		Root = new Branch(decompressed);
-	}
+	public SvoModel(string z85, ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this(sizeX, sizeY, sizeZ) => Z85 = z85;
 	#endregion SvoModel
 	#region IBinaryWritable
 	public void Write(Stream stream) => Write(stream, true);
@@ -506,6 +494,7 @@ public class SvoModel() : IEditableModel, IBinaryWritable
 			SizeZ = value[2];
 		}
 	}
+	[JsonIgnore]
 	public byte this[ushort x, ushort y, ushort z]
 	{
 		get => FindVoxel(

@@ -12,20 +12,20 @@ namespace BenVoxel;
 public class BenVoxelFile() : IBinaryWritable
 {
 	[JsonPropertyName("version")]
-	public const string Version = "0.1";
+	public string Version { get; set; } = "0.1";
 	#region Nested classes
 	public class Metadata() : IBinaryWritable
 	{
 		#region Data
 		[JsonPropertyName("properties")]
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-		public readonly SanitizedKeyDictionary<string> Properties = [];
+		public SanitizedKeyDictionary<string> Properties { get; set; } = [];
 		[JsonPropertyName("points")]
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-		public readonly SanitizedKeyDictionary<Point3D> Points = [];
+		public SanitizedKeyDictionary<Point3D> Points { get; set; } = [];
 		[JsonPropertyName("palettes")]
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-		public readonly SanitizedKeyDictionary<Color[]> Palettes = [];
+		public SanitizedKeyDictionary<Color[]> Palettes { get; set; } = [];
 		#endregion Data
 		#region Metadata
 		/// <summary>
@@ -159,9 +159,9 @@ public class BenVoxelFile() : IBinaryWritable
 		#region Data
 		[JsonPropertyName("metadata")]
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-		public Metadata Metadata = null;
+		public Metadata Metadata { get; set; } = null;
 		[JsonPropertyName("geometry")]
-		public SvoModel Geometry = null;
+		public SvoModel Geometry { get; set; } = null;
 		#endregion Data
 		#region Model
 		public Model(Stream stream) : this()
@@ -214,7 +214,7 @@ public class BenVoxelFile() : IBinaryWritable
 	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public Metadata Global { get; set; } = null;
 	[JsonPropertyName("models")]
-	public readonly SanitizedKeyDictionary<Model> Models = [];
+	public SanitizedKeyDictionary<Model> Models { get; set; } = [];
 	#endregion Data
 	#region BenVoxelFile
 	public BenVoxelFile(Stream stream) : this()
