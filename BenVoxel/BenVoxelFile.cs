@@ -160,29 +160,8 @@ public class BenVoxelFile() : IBinaryWritable
 		[JsonPropertyName("metadata")]
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		public Metadata Metadata = null;
-		[JsonIgnore]
-		public SvoModel Geometry = null;
-		public class GeometryJsonData
-		{
-			[JsonPropertyName("size")]
-			public ushort[] Size { get; set; }
-			[JsonPropertyName("z85")]
-			public string Z85 { get; set; }
-		}
 		[JsonPropertyName("geometry")]
-		public GeometryJsonData GeometryJson
-		{
-			get => new()
-			{
-				Size = [Geometry.SizeX, Geometry.SizeY, Geometry.SizeZ],
-				Z85 = Geometry.Z85(),
-			};
-			set => Geometry = new SvoModel(
-				z85: value.Z85,
-				sizeX: value.Size[0],
-				sizeY: value.Size[1],
-				sizeZ: value.Size[2]);
-		}
+		public SvoModel Geometry = null;
 		#endregion Data
 		#region Model
 		public Model(Stream stream) : this()

@@ -5,13 +5,14 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace BenVoxel;
 
 /// <summary>
 /// SVO stands for "Sparse Voxel Octree"
 /// </summary>
-public class SvoModel : IEditableModel, IBinaryWritable
+public class SvoModel() : IEditableModel, IBinaryWritable
 {
 	#region Nested classes
 	public abstract class Node : IBinaryWritable
@@ -342,9 +343,43 @@ public class SvoModel : IEditableModel, IBinaryWritable
 	}
 	#endregion Nested classes
 	#region SvoModel
+	[JsonIgnore]
 	public Branch Root = new();
+	[JsonPropertyName("z85")]
+	public string Z85
+	{
+		get
+		{
+			using MemoryStream compressed = new();
+			using (DeflateStream deflateStream = new(
+				stream: compressed,
+				mode: CompressionMode.Compress,
+				leaveOpen: true))
+			{
+				Write(stream: deflateStream, includeSizes: false);
+				deflateStream.Flush();
+			}
+			if (compressed.Length % 4 is long remainder && remainder > 0)
+				compressed.Write(new byte[4 - remainder], 0, (int)(4 - remainder));
+			compressed.Position = 0;
+			return Cromulent.Encoding.Z85.ToZ85String(compressed.ToArray());
+		}
+		set
+		{
+			using MemoryStream decompressed = new();
+			using (MemoryStream compressed = new(Cromulent.Encoding.Z85.FromZ85String(value)))
+			using (DeflateStream deflateStream = new(
+				stream: compressed,
+				mode: CompressionMode.Decompress,
+				leaveOpen: true))
+			{
+				deflateStream.CopyTo(decompressed);
+			}
+			decompressed.Position = 0;
+			Root = new Branch(decompressed);
+		}
+	}
 	public void Clear() => Root.Clear();
-	public SvoModel() { }
 	public SvoModel(ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this()
 	{
 		SizeX = sizeX;
@@ -399,8 +434,7 @@ public class SvoModel : IEditableModel, IBinaryWritable
 		using BinaryReader reader = new(input: stream, encoding: Encoding.UTF8);
 		FromReader(reader);
 	}
-	public SvoModel(string z85, ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue)
-		: this(sizeX, sizeY, sizeZ)
+	public SvoModel(string z85, ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this(sizeX, sizeY, sizeZ)
 	{
 		using MemoryStream decompressed = new();
 		using (MemoryStream compressed = new(Cromulent.Encoding.Z85.FromZ85String(z85)))
@@ -451,27 +485,27 @@ public class SvoModel : IEditableModel, IBinaryWritable
 		Write(stream: ms, includeSizes: includeSizes);
 		return ms.ToArray();
 	}
-	public string Z85(bool includeSizes = false)
-	{
-		using MemoryStream compressed = new();
-		using (DeflateStream deflateStream = new(
-			stream: compressed,
-			mode: CompressionMode.Compress,
-			leaveOpen: true))
-		{
-			Write(stream: deflateStream, includeSizes: includeSizes);
-			deflateStream.Flush();
-		}
-		if (compressed.Length % 4 is long remainder && remainder > 0)
-			compressed.Write(new byte[4 - remainder], 0, (int)(4 - remainder));
-		compressed.Position = 0;
-		return Cromulent.Encoding.Z85.ToZ85String(compressed.ToArray());
-	}
 	#endregion Utilities
 	#region IEditableModel
+	[JsonIgnore]
 	public ushort SizeX { get; set; } = ushort.MaxValue;
+	[JsonIgnore]
 	public ushort SizeY { get; set; } = ushort.MaxValue;
+	[JsonIgnore]
 	public ushort SizeZ { get; set; } = ushort.MaxValue;
+	[JsonPropertyName("size")]
+	public ushort[] Size
+	{
+		get => [SizeX, SizeY, SizeZ];
+		set
+		{
+			if (value is null || value.Length != 3)
+				throw new ArgumentException("Size must be an array of exactly 3 ushorts.");
+			SizeX = value[0];
+			SizeY = value[1];
+			SizeZ = value[2];
+		}
+	}
 	public byte this[ushort x, ushort y, ushort z]
 	{
 		get => FindVoxel(

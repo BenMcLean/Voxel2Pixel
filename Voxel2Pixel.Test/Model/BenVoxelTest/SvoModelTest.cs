@@ -5,6 +5,7 @@ using Voxel2Pixel.Model.FileFormats;
 using Voxel2Pixel.Render;
 using static BenVoxel.SvoModel;
 using static BenVoxel.ExtensionMethods;
+using System.Text.Json;
 
 namespace Voxel2Pixel.Test.Model.BenVoxelTest;
 
@@ -137,7 +138,8 @@ public class SvoModelTest(Xunit.Abstractions.ITestOutputHelper output)
 	{
 		VoxFileModel model = new(@"..\..\..\TestData\Models\Sora.vox");
 		SvoModel svo = new(model),
-			svo2 = new(svo.Z85(includeSizes: false), svo.SizeX, svo.SizeY, svo.SizeZ);
+			svo2 = JsonSerializer.Deserialize<SvoModel>(JsonSerializer.Serialize(svo))
+				?? throw new NullReferenceException();
 		foreach (Voxel voxel in svo)
 		{
 			Assert.Equal(
