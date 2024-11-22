@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Runtime.InteropServices.JavaScript;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace BenVoxel.Test;
@@ -18,7 +19,7 @@ public class Test
 			sourceJson = JsonSerializer.Deserialize<JsonObject>(jsonInputStream)
 				?? throw new NullReferenceException();
 		}
-		new BenVoxelFile(sourceJson)
+		JsonSerializer.Deserialize<BenVoxelFile>(sourceJson)
 			.Save("test.ben");
 		BenVoxelFile.Load("test.ben")
 			.Save("test.ben.json");

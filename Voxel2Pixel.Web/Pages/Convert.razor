@@ -89,13 +89,13 @@
 					File = Voxel2Pixel.Model.SvoModel.FromMagicaVoxel(memoryStream);
 					break;
 				case ".json":
-					File = new BenVoxelFile(JsonSerializer.Deserialize<JsonObject>(memoryStream));
+					File = JsonSerializer.Deserialize<BenVoxelFile>(memoryStream);
 					break;
 				default:
 					File = new BenVoxelFile(memoryStream);
 					break;
 			}
-			Json = File.ToJson().Tabs();
+			Json = JsonSerializer.Serialize(File).TabsJson();
 		}
 		catch (Exception ex)
 		{
@@ -127,7 +127,7 @@
 			if (File is null)
 				throw new NullReferenceException("No file!");
 			using MemoryStream memoryStream = new();
-			memoryStream.Write(Encoding.UTF8.GetBytes(File.ToJson().Tabs()));
+			memoryStream.Write(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(File).TabsJson()));
 			memoryStream.Position = 0;
 			using DotNetStreamReference streamRef = new(stream: memoryStream, leaveOpen: true);
 			await JS.InvokeVoidAsync(identifier: "downloadFileFromStream", ".ben.json", streamRef);

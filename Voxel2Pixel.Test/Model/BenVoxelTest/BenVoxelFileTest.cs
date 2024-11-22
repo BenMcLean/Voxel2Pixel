@@ -1,5 +1,6 @@
 ﻿using BenVoxel;
 using System.Text;
+using System.Text.Json;
 using System.Xml.Serialization;
 using Voxel2Pixel.Model.FileFormats;
 using static BenVoxel.ExtensionMethods;
@@ -38,11 +39,11 @@ public class BenVoxelFileTest(Xunit.Abstractions.ITestOutputHelper output)
 			Metadata = metadata,
 			Geometry = model,
 		};
-		string s = file.ToJson().Tabs();
+		string s = JsonSerializer.Serialize(file).TabsJson();
 		output.WriteLine(s);
 		Assert.Equal(
 			expected: s,
-			actual: ((BenVoxelFile)(new XmlSerializer(typeof(BenVoxelFile)).Deserialize(new MemoryStream(Encoding.UTF8.GetBytes(s))) ?? throw new NullReferenceException())).ToJson().Tabs());
+			actual: JsonSerializer.Serialize(JsonSerializer.Deserialize<BenVoxelFile>(s)).TabsJson());
 	}
 	//[Fact]
 	//public void RiffTest() => output.WriteLine(Convert.ToHexString(new Point3D(1, 2, 3).RIFF("PT3D").ToArray()));

@@ -5,19 +5,26 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 
 namespace BenVoxel;
 
-public class BenVoxelFile : IBinaryWritable
+public class BenVoxelFile() : IBinaryWritable
 {
+	[JsonPropertyName("version")]
 	public const string Version = "0.1";
 	#region Nested classes
-	public class Metadata : IBinaryWritable
+	public class Metadata() : IBinaryWritable
 	{
 		#region Data
+		[JsonPropertyName("properties")]
+		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		public readonly SanitizedKeyDictionary<string> Properties = [];
+		[JsonPropertyName("points")]
+		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		public readonly SanitizedKeyDictionary<Point3D> Points = [];
+		[JsonPropertyName("palettes")]
+		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		public readonly SanitizedKeyDictionary<Color[]> Palettes = [];
 		#endregion Data
 		#region Metadata
@@ -29,7 +36,6 @@ public class BenVoxelFile : IBinaryWritable
 			get => [.. Palettes[paletteName].Take(256).Select(color => color.Rgba)];
 			set => Palettes[paletteName] = [.. Color.Colors(value.Take(256))];
 		}
-		public Metadata() { }
 		public Metadata(Stream stream) : this()
 		{
 			using BinaryReader reader = new(
@@ -74,18 +80,6 @@ public class BenVoxelFile : IBinaryWritable
 							return false;
 					}
 				})) { }
-		}
-		public Metadata(JsonObject json)
-		{
-			if (json.TryGetPropertyValue("properties", out JsonNode properties))
-				foreach (KeyValuePair<string, JsonNode> property in properties.AsObject())
-					Properties[property.Key] = property.Value.GetValue<string>();
-			if (json.TryGetPropertyValue("points", out JsonNode points))
-				foreach (KeyValuePair<string, JsonNode> point in points.AsObject())
-					Points[point.Key] = new Point3D(JsonSerializer.Deserialize<int[]>(point.Value));
-			if (json.TryGetPropertyValue("palettes", out JsonNode palettes))
-				foreach (KeyValuePair<string, JsonNode> palette in palettes.AsObject())
-					Palettes[palette.Key] = [.. palette.Value.AsArray().Take(256).Select(color => new Color(color.AsObject()))];
 		}
 		public bool Any() => Properties.Any() || Points.Any() || Palettes.Any();
 		#endregion Metadata
@@ -142,53 +136,56 @@ public class BenVoxelFile : IBinaryWritable
 				});
 		}
 		#endregion IBinaryWritable
-		#region JSON
-		public JsonObject ToJson()
-		{
-			if (!Any()) return null;
-			JsonObject metadata = [];
-			if (Properties.Any())
-				metadata.Add("properties", new JsonObject(Properties.Select(property => new KeyValuePair<string, JsonNode>(property.Key, JsonValue.Create(property.Value)))));
-			if (Points.Any())
-				metadata.Add("points", new JsonObject(Points.Select(point => new KeyValuePair<string, JsonNode>(point.Key, JsonSerializer.SerializeToNode(point.Value.ToArray())))));
-			if (Palettes.Any())
-				metadata.Add("palettes", new JsonObject(Palettes.Select(palette => new KeyValuePair<string, JsonNode>(palette.Key, new JsonArray([.. palette.Value.Take(256).Select(color => (JsonNode)color.ToJson())])))));
-			return metadata;
-		}
-		public static Metadata FromJson(JsonObject json) => new Metadata(json) is Metadata metadata && metadata.Any() ? metadata : null;
-		#endregion JSON
 	}
-	public readonly record struct Color(uint Rgba = 0u, string Description = null)
-	{
-		#region Color
-		public Color(JsonObject json) : this(
-			Rgba: uint.Parse(json["rgba"].GetValue<string>()[1..], System.Globalization.NumberStyles.HexNumber),
-			Description: json.TryGetPropertyValue("description", out JsonNode description) ?
-				description.GetValue<string>()
-				: null)
-		{ }
-		public static IEnumerable<Color> Colors(IEnumerable<uint> colors) => colors.Select(rgba => new Color { Rgba = rgba, });
-		#endregion Color
-		#region JSON
-		public JsonObject ToJson()
-		{
-			JsonObject json = new() { { "rgba", JsonValue.Create($"#{Rgba:X8}") } };
-			if (!string.IsNullOrWhiteSpace(Description))
-				json.Add("description", JsonValue.Create(Description));
-			return json;
-		}
-		public static Color FromJson(JsonObject json) => new(json);
-		#endregion JSON
-	}
-	public class Model : IBinaryWritable
+	public readonly record struct Color()
 	{
 		#region Data
+		[JsonIgnore]
+		public uint Rgba { get; init; } = 0u;
+		[JsonPropertyName("rgba")]
+		public string RgbaHex
+		{
+			get => $"#{Rgba:X8}";
+			init => Rgba = uint.Parse(value[1..], System.Globalization.NumberStyles.HexNumber);
+		}
+		[JsonPropertyName("description")]
+		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+		public string Description { get; init; } = null;
+		#endregion Data
+		public static IEnumerable<Color> Colors(IEnumerable<uint> colors) => colors.Select(rgba => new Color { Rgba = rgba, });
+	}
+	public class Model() : IBinaryWritable
+	{
+		#region Data
+		[JsonPropertyName("metadata")]
+		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		public Metadata Metadata = null;
+		[JsonIgnore]
 		public SvoModel Geometry = null;
+		public class GeometryJsonData
+		{
+			[JsonPropertyName("size")]
+			public ushort[] Size { get; set; }
+			[JsonPropertyName("z85")]
+			public string Z85 { get; set; }
+		}
+		[JsonPropertyName("geometry")]
+		public GeometryJsonData GeometryJson
+		{
+			get => new()
+			{
+				Size = [Geometry.SizeX, Geometry.SizeY, Geometry.SizeZ],
+				Z85 = Geometry.Z85(),
+			};
+			set => Geometry = new SvoModel(
+				z85: value.Z85,
+				sizeX: value.Size[0],
+				sizeY: value.Size[1],
+				sizeZ: value.Size[2]);
+		}
 		#endregion Data
 		#region Model
-		public Model() { }
-		public Model(Stream stream)
+		public Model(Stream stream) : this()
 		{
 			using BinaryReader reader = new(
 				input: stream,
@@ -196,7 +193,7 @@ public class BenVoxelFile : IBinaryWritable
 				leaveOpen: true);
 			FromReader(reader);
 		}
-		public Model(BinaryReader reader) => FromReader(reader);
+		public Model(BinaryReader reader) : this() => FromReader(reader);
 		private void FromReader(BinaryReader reader)
 		{
 			reader.TryRIFF((reader, fourCC) =>
@@ -215,21 +212,6 @@ public class BenVoxelFile : IBinaryWritable
 				}))
 				throw new IOException("Expected \"SVOG\"");
 		}
-		public Model(JsonObject json)
-		{
-			if (json.TryGetPropertyValue("metadata", out JsonNode metadataNode))
-				Metadata = new Metadata(metadataNode.AsObject());
-			if (!json.TryGetPropertyValue("geometry", out JsonNode geometryNode))
-				throw new InvalidDataException("Missing geometry data.");
-			JsonObject geometry = geometryNode.AsObject();
-			int[] size = JsonSerializer.Deserialize<int[]>(geometry["size"]);
-			Geometry = new SvoModel(
-				z85: geometry["z85"].GetValue<string>(),
-				sizeX: (ushort)size[0],
-				sizeY: (ushort)size[1],
-				sizeZ: (ushort)size[2]
-			);
-		}
 		#endregion Model
 		#region IBinaryWritable
 		public void Write(Stream stream)
@@ -246,31 +228,16 @@ public class BenVoxelFile : IBinaryWritable
 			Geometry.RIFF("SVOG", writer);
 		}
 		#endregion IBinaryWritable
-		#region JSON
-		public JsonObject ToJson()
-		{
-			JsonObject model = [];
-			if (Metadata?.ToJson() is JsonObject metadata)
-				model.Add("metadata", metadata);
-			if (Geometry is null)
-				throw new NullReferenceException("Missing geometry data.");
-			model.Add("geometry", new JsonObject
-			{
-				{ "size", JsonSerializer.SerializeToNode(new[] { Geometry.SizeX, Geometry.SizeY, Geometry.SizeZ }) },
-				{ "z85", JsonValue.Create(Geometry.Z85()) },
-			});
-			return model;
-		}
-		public static Model FromJson(JsonObject json) => new(json);
-		#endregion JSON
 	}
 	#endregion Nested classes
 	#region Data
-	public Metadata Global = null;
+	[JsonPropertyName("metadata")]
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public Metadata Global { get; set; } = null;
+	[JsonPropertyName("models")]
 	public readonly SanitizedKeyDictionary<Model> Models = [];
 	#endregion Data
 	#region BenVoxelFile
-	public BenVoxelFile() { }
 	public BenVoxelFile(Stream stream) : this()
 	{
 		using BinaryReader reader = new(
@@ -319,13 +286,6 @@ public class BenVoxelFile : IBinaryWritable
 				throw new IOException("Expected \"MODL\"");
 		}
 	}
-	public BenVoxelFile(JsonObject json) : this()
-	{
-		if (json.TryGetPropertyValue("metadata", out JsonNode metadata))
-			Global = Metadata.FromJson(metadata.AsObject());
-		foreach (KeyValuePair<string, JsonNode> model in json["models"].AsObject())
-			Models[model.Key] = new(model.Value.AsObject());
-	}
 	public static BenVoxelFile Load(string path)
 	{
 		using FileStream fileStream = new(
@@ -333,14 +293,13 @@ public class BenVoxelFile : IBinaryWritable
 			mode: FileMode.Open,
 			access: FileAccess.Read);
 		return ".json".Equals(Path.GetExtension(path), StringComparison.InvariantCultureIgnoreCase) ?
-			new(JsonSerializer.Deserialize<JsonObject>(fileStream)
-				?? throw new NullReferenceException())
+			JsonSerializer.Deserialize<BenVoxelFile>(fileStream)
 			: new(fileStream);
 	}
 	public BenVoxelFile Save(string path)
 	{
 		if (".json".Equals(Path.GetExtension(path), StringComparison.InvariantCultureIgnoreCase))
-			File.WriteAllText(path: path, contents: ToJson().Tabs());
+			File.WriteAllText(path: path, contents: JsonSerializer.Serialize(this).TabsJson());
 		else
 			using (FileStream fileStream = new(
 				path: path,
@@ -403,18 +362,6 @@ public class BenVoxelFile : IBinaryWritable
 		writer.Write(compressedStream.ToArray());
 	}
 	#endregion IBinaryWritable
-	#region JSON
-	public JsonObject ToJson()
-	{
-		JsonObject root = new() { { "version", JsonValue.Create(Version) } };
-		if (Global?.ToJson() is JsonObject global)
-			root.Add("metadata", global);
-		if (Models.Any())
-			root.Add("models", new JsonObject(Models.Select(model => new KeyValuePair<string, JsonNode>(model.Key, model.Value.ToJson()))));
-		return root;
-	}
-	public static BenVoxelFile FromJson(JsonObject json) => new(json);
-	#endregion JSON
 	#region Utilities
 	public static string FourCC(BinaryReader reader) => Encoding.UTF8.GetString(reader.ReadBytes(4));
 	public static string ReadKey(BinaryReader reader) => Encoding.UTF8.GetString(reader.ReadBytes(reader.ReadByte()));

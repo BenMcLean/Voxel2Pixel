@@ -73,7 +73,8 @@
 					Palette = voxFileModel.Palette;
 					break;
 				case ".json":
-					BenVoxelFile benVoxelFile = new(JsonSerializer.Deserialize<JsonObject>(memoryStream));
+					BenVoxelFile benVoxelFile = JsonSerializer.Deserialize<BenVoxelFile>(memoryStream)
+						?? throw new NullReferenceException();
 					Model = new DictionaryModel(benVoxelFile.Default(out uint[] palette));
 					Palette = palette ?? throw new NullReferenceException("Missing palette!");
 					break;
