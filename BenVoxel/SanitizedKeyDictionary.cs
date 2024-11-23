@@ -1,15 +1,29 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Text.Json.Serialization;
 
 namespace BenVoxel;
 
 /// <summary>
 /// Restricts keys to max length 255 with last-in-wins behavior.
 /// </summary>
-public sealed class SanitizedKeyDictionary<T> : IDictionary<string, T>
+public sealed class SanitizedKeyDictionary<T>() : IDictionary<string, T>
 {
-	private readonly Dictionary<string, T> Dictionary = [];
+	private readonly Dictionary<string, T> _dictionary = [];
+	[JsonInclude]
+	public ReadOnlyDictionary<string, T> ReadOnlyDictionary
+	{
+		get => new(this);
+		set
+		{
+			_dictionary.Clear();
+			if (value is null) return;
+			foreach (KeyValuePair<string, T> pair in value)
+				Add(pair.Key, pair.Value);
+		}
+	}
 	public static string SanitizeKey(string key)
 	{
 		key = key.Trim();
@@ -18,20 +32,20 @@ public sealed class SanitizedKeyDictionary<T> : IDictionary<string, T>
 	#region IDictionary
 	public T this[string key]
 	{
-		get => Dictionary[SanitizeKey(key)];
-		set => Dictionary[SanitizeKey(key)] = value;
+		get => _dictionary[SanitizeKey(key)];
+		set => _dictionary[SanitizeKey(key)] = value;
 	}
-	public ICollection<string> Keys => Dictionary.Keys;
-	public ICollection<T> Values => Dictionary.Values;
-	public int Count => Dictionary.Count;
-	public bool IsReadOnly => ((ICollection<KeyValuePair<string, T>>)Dictionary).IsReadOnly;
+	public ICollection<string> Keys => _dictionary.Keys;
+	public ICollection<T> Values => _dictionary.Values;
+	public int Count => _dictionary.Count;
+	public bool IsReadOnly => ((ICollection<KeyValuePair<string, T>>)_dictionary).IsReadOnly;
 	public void Add(string key, T value) => this[key] = value;
 	public void Add(KeyValuePair<string, T> item) => this[item.Key] = item.Value;
-	public void Clear() => Dictionary.Clear();
+	public void Clear() => _dictionary.Clear();
 	public bool Contains(KeyValuePair<string, T> item) =>
-		Dictionary.TryGetValue(SanitizeKey(item.Key), out T value)
+		_dictionary.TryGetValue(SanitizeKey(item.Key), out T value)
 			&& EqualityComparer<T>.Default.Equals(value, item.Value);
-	public bool ContainsKey(string key) => Dictionary.ContainsKey(SanitizeKey(key));
+	public bool ContainsKey(string key) => _dictionary.ContainsKey(SanitizeKey(key));
 	public void CopyTo(KeyValuePair<string, T>[] array, int arrayIndex)
 	{
 		if (array == null)
@@ -40,20 +54,20 @@ public sealed class SanitizedKeyDictionary<T> : IDictionary<string, T>
 			throw new ArgumentOutOfRangeException(nameof(arrayIndex));
 		if (array.Length - arrayIndex < Count)
 			throw new ArgumentException("Destination array is not large enough.");
-		foreach (KeyValuePair<string, T> pair in Dictionary)
+		foreach (KeyValuePair<string, T> pair in _dictionary)
 			array[arrayIndex++] = new KeyValuePair<string, T>(pair.Key, pair.Value);
 	}
-	public IEnumerator<KeyValuePair<string, T>> GetEnumerator() => Dictionary.GetEnumerator();
-	public bool Remove(string key) => Dictionary.Remove(SanitizeKey(key));
+	public IEnumerator<KeyValuePair<string, T>> GetEnumerator() => _dictionary.GetEnumerator();
+	public bool Remove(string key) => _dictionary.Remove(SanitizeKey(key));
 	public bool Remove(KeyValuePair<string, T> item)
 	{
 		string sanitizedKey = SanitizeKey(item.Key);
-		if (Dictionary.TryGetValue(sanitizedKey, out T value) &&
+		if (_dictionary.TryGetValue(sanitizedKey, out T value) &&
 			EqualityComparer<T>.Default.Equals(value, item.Value))
-			return Dictionary.Remove(sanitizedKey);
+			return _dictionary.Remove(sanitizedKey);
 		return false;
 	}
-	public bool TryGetValue(string key, out T value) => Dictionary.TryGetValue(SanitizeKey(key), out value);
-	IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)Dictionary).GetEnumerator();
+	public bool TryGetValue(string key, out T value) => _dictionary.TryGetValue(SanitizeKey(key), out value);
+	IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)_dictionary).GetEnumerator();
 	#endregion IDictionary
 }

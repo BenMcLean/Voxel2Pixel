@@ -1,11 +1,12 @@
-﻿using Cromulent.Encoding;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
 namespace BenVoxel;
@@ -13,6 +14,7 @@ namespace BenVoxel;
 /// <summary>
 /// SVO stands for "Sparse Voxel Octree"
 /// </summary>
+[JsonConverter(typeof(SvoModelConverter))]
 public class SvoModel() : IEditableModel, IBinaryWritable
 {
 	#region Nested classes
@@ -344,9 +346,7 @@ public class SvoModel() : IEditableModel, IBinaryWritable
 	}
 	#endregion Nested classes
 	#region SvoModel
-	[JsonIgnore]
 	public Branch Root = new();
-	[JsonPropertyName("z85")]
 	public string Z85
 	{
 		get
@@ -377,7 +377,7 @@ public class SvoModel() : IEditableModel, IBinaryWritable
 				deflateStream.CopyTo(decompressed);
 			}
 			decompressed.Position = 0;
-			Root = new Branch(decompressed);
+			Root = new(decompressed);
 		}
 	}
 	public void Clear() => Root.Clear();
@@ -387,12 +387,7 @@ public class SvoModel() : IEditableModel, IBinaryWritable
 		SizeY = sizeY;
 		SizeZ = sizeZ;
 	}
-	public SvoModel(IModel model) : this(
-		voxels: model,
-		sizeX: model.SizeX,
-		sizeY: model.SizeY,
-		sizeZ: model.SizeZ)
-	{ }
+	public SvoModel(IModel model) : this(voxels: model, sizeX: model.SizeX, sizeY: model.SizeY, sizeZ: model.SizeZ) { }
 	public SvoModel(IEnumerable<Voxel> voxels, ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : this(sizeX, sizeY, sizeZ)
 	{
 		foreach (Voxel voxel in voxels)
@@ -404,7 +399,7 @@ public class SvoModel() : IEditableModel, IBinaryWritable
 			input: stream,
 			encoding: Encoding.UTF8,
 			leaveOpen: true);
-		Root = new Branch(reader);
+		Root = new(reader);
 	}
 	public SvoModel(Stream stream) : this()
 	{
@@ -419,15 +414,15 @@ public class SvoModel() : IEditableModel, IBinaryWritable
 		SizeX = reader.ReadUInt16();
 		SizeY = reader.ReadUInt16();
 		SizeZ = reader.ReadUInt16();
-		Root = new Branch(reader);
+		Root = new(reader);
 	}
-	public SvoModel(BinaryReader reader, ushort sizeX, ushort sizeY, ushort sizeZ) : this(sizeX, sizeY, sizeZ) => Root = new Branch(reader);
+	public SvoModel(BinaryReader reader, ushort sizeX, ushort sizeY, ushort sizeZ) : this(sizeX, sizeY, sizeZ) => Root = new(reader);
 	public SvoModel(BinaryReader reader) : this() => FromReader(reader);
 	public SvoModel(byte[] bytes, ushort sizeX, ushort sizeY, ushort sizeZ) : this(sizeX, sizeY, sizeZ)
 	{
 		using MemoryStream stream = new(bytes);
 		using BinaryReader reader = new(input: stream, encoding: Encoding.UTF8);
-		Root = new Branch(reader);
+		Root = new(reader);
 	}
 	public SvoModel(byte[] bytes) : this()
 	{
@@ -475,13 +470,9 @@ public class SvoModel() : IEditableModel, IBinaryWritable
 	}
 	#endregion Utilities
 	#region IEditableModel
-	[JsonIgnore]
 	public ushort SizeX { get; set; } = ushort.MaxValue;
-	[JsonIgnore]
 	public ushort SizeY { get; set; } = ushort.MaxValue;
-	[JsonIgnore]
 	public ushort SizeZ { get; set; } = ushort.MaxValue;
-	[JsonPropertyName("size")]
 	public ushort[] Size
 	{
 		get => [SizeX, SizeY, SizeZ];
@@ -494,7 +485,6 @@ public class SvoModel() : IEditableModel, IBinaryWritable
 			SizeZ = value[2];
 		}
 	}
-	[JsonIgnore]
 	public byte this[ushort x, ushort y, ushort z]
 	{
 		get => FindVoxel(
@@ -582,6 +572,37 @@ public class SvoModel() : IEditableModel, IBinaryWritable
 		}
 	}
 	#endregion IEditableModel
+	#region JSON
+	public class SvoModelConverter : JsonConverter<SvoModel>
+	{
+		public override SvoModel Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+		{
+			if (reader.TokenType != JsonTokenType.StartObject)
+				throw new JsonException("Expected start of object.");
+			JsonObject jsonObject = JsonNode.Parse(ref reader).AsObject()
+				?? throw new JsonException("Couldn't parse JSON object.");
+			ushort[] size = jsonObject["size"]?.GetValue<ushort[]>()
+				?? throw new JsonException("Couldn't parse model size.");
+			if (size.Length != 3)
+				throw new JsonException($"Model size array must be length 3. Was: {size.Length}.");
+			return new SvoModel(
+				z85: jsonObject["z85"]?.GetValue<string>()
+					?? throw new JsonException("z85 property missing in geometry."),
+				sizeX: size[0],
+				sizeY: size[1],
+				sizeZ: size[2]);
+		}
+		public override void Write(Utf8JsonWriter writer, SvoModel value, JsonSerializerOptions options)
+		{
+			writer.WriteStartObject();
+			writer.WritePropertyName("size");
+			JsonSerializer.Serialize(writer, value.Size, options);
+			writer.WritePropertyName("z85");
+			JsonSerializer.Serialize(writer, value.Z85, options);
+			writer.WriteEndObject();
+		}
+	}
+	#endregion JSON
 	#region Debug
 #if DEBUG
 	public uint NodeCount

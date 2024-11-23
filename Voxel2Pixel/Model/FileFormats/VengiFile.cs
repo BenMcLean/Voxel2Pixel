@@ -302,9 +302,9 @@ public static class VengiFile
 								Index: (byte)(voxel.Color + 1));
 		}
 		public Point3D Size => new(
-			X: UpperX - LowerX + 1,
-			Y: UpperZ - LowerZ + 1,
-			Z: UpperY - LowerY + 1);
+			x: UpperX - LowerX + 1,
+			y: UpperZ - LowerZ + 1,
+			z: UpperY - LowerY + 1);
 	}
 	public readonly record struct Voxel(
 		bool Air,

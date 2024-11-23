@@ -197,9 +197,9 @@ public class SpriteMaker
 				FlipZ = FlipZ,
 			};
 			maker.SetAll(Points.Select(point => new KeyValuePair<string, Point3D>(point.Key, new Point3D(
-				X: FlipX ? maker.Model.SizeX - point.Value.X - 1 : point.Value.X,
-				Y: FlipY ? maker.Model.SizeY - point.Value.Y - 1 : point.Value.Y,
-				Z: FlipZ ? maker.Model.SizeZ - point.Value.Z - 1 : point.Value.Z))));
+				x: FlipX ? maker.Model.SizeX - point.Value.X - 1 : point.Value.X,
+				y: FlipY ? maker.Model.SizeY - point.Value.Y - 1 : point.Value.Y,
+				z: FlipZ ? maker.Model.SizeZ - point.Value.Z - 1 : point.Value.Z))));
 		}
 		return maker;
 	}
