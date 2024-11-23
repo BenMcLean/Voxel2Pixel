@@ -5,11 +5,11 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="FileToVoxCore" Version="1.4.0" />
-		<PackageReference Include="PolySharp" Version="1.14.1">
+		<PackageReference Include="PolySharp" Version="1.15.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="RectpackSharp" Version="1.2.0" />
+		<PackageReference Include="RectpackSharp" Version="1.1.0" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\BenVoxel\BenVoxel.csproj" />

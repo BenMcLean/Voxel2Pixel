@@ -1,5 +1,4 @@
-﻿using System.Collections.ObjectModel;
-using BenVoxel;
+﻿using BenVoxel;
 using System.Linq;
 using System.Text.Json.Serialization;
 using System.Xml;
@@ -54,15 +53,15 @@ public class TextureAtlas
 		public SanitizedKeyDictionary<Point> Points { get; set; } = [];
 		[XmlElement("Point")]
 		[JsonIgnore]
-		public ReadOnlyCollection<XmlPoint> PointsArray
+		public XmlPoint[] PointsArray
 		{
-			get => Points.Any() ? new([.. Points.Select(kvp => new XmlPoint { Name = kvp.Key, X = kvp.Value.X, Y = kvp.Value.Y })]) : null;
+			get => Points.Any() ? [.. Points.Select(kvp => new XmlPoint { Name = kvp.Key, X = kvp.Value.X, Y = kvp.Value.Y })] : null;
 			set
 			{
 				Points.Clear();
-				if (value != null)
-					foreach (XmlPoint point in value)
-						Points[point.Name] = point;
+				if (value is null) return;
+				foreach (XmlPoint point in value)
+					Points[point.Name] = point;
 			}
 		}
 		#endregion Expansion beyond Kenney's format
@@ -77,15 +76,15 @@ public class TextureAtlas
 	public SanitizedKeyDictionary<SubTexture> SubTextures { get; set; } = [];
 	[XmlElement("SubTexture")]
 	[JsonIgnore]
-	public ReadOnlyCollection<XmlSubTexture> SubTexturesArray
+	public XmlSubTexture[] SubTexturesArray
 	{
-		get => new([.. SubTextures.Select(kvp => new XmlSubTexture { Name = kvp.Key, X = kvp.Value.X, Y = kvp.Value.Y, Width = kvp.Value.Width, Height = kvp.Value.Height, Points = kvp.Value.Points })]);
+		get => [.. SubTextures.Select(kvp => new XmlSubTexture { Name = kvp.Key, X = kvp.Value.X, Y = kvp.Value.Y, Width = kvp.Value.Width, Height = kvp.Value.Height, Points = kvp.Value.Points })];
 		set
 		{
 			SubTextures.Clear();
-			if (value != null)
-				foreach (XmlSubTexture subTexture in value)
-					SubTextures[subTexture.Name] = subTexture;
+			if (value is null) return;
+			foreach (XmlSubTexture subTexture in value)
+				SubTextures[subTexture.Name] = subTexture;
 		}
 	}
 }
