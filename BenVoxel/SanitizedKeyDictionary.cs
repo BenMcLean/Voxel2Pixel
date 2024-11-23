@@ -12,18 +12,6 @@ namespace BenVoxel;
 public sealed class SanitizedKeyDictionary<T>() : IDictionary<string, T>
 {
 	private readonly Dictionary<string, T> _dictionary = [];
-	[JsonInclude]
-	public ReadOnlyDictionary<string, T> ReadOnlyDictionary
-	{
-		get => new(this);
-		set
-		{
-			_dictionary.Clear();
-			if (value is null) return;
-			foreach (KeyValuePair<string, T> pair in value)
-				Add(pair.Key, pair.Value);
-		}
-	}
 	public static string SanitizeKey(string key)
 	{
 		key = key.Trim();
@@ -70,4 +58,18 @@ public sealed class SanitizedKeyDictionary<T>() : IDictionary<string, T>
 	public bool TryGetValue(string key, out T value) => _dictionary.TryGetValue(SanitizeKey(key), out value);
 	IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)_dictionary).GetEnumerator();
 	#endregion IDictionary
+	#region JSON
+	[JsonInclude]
+	public ReadOnlyDictionary<string, T> ReadOnlyDictionary
+	{
+		get => new(this);
+		set
+		{
+			_dictionary.Clear();
+			if (value is null) return;
+			foreach (KeyValuePair<string, T> pair in value)
+				Add(pair.Key, pair.Value);
+		}
+	}
+	#endregion JSON
 }
