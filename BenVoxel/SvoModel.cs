@@ -581,7 +581,9 @@ public class SvoModel() : IEditableModel, IBinaryWritable
 				throw new JsonException("Expected start of object.");
 			JsonObject jsonObject = JsonNode.Parse(ref reader).AsObject()
 				?? throw new JsonException("Couldn't parse JSON object.");
-			ushort[] size = jsonObject["size"]?.GetValue<ushort[]>()
+			if (!jsonObject.TryGetPropertyValue("size", out JsonNode sizeNode) || sizeNode is null)
+				throw new JsonException("Invalid model size. The size property must be an array.");
+			ushort[] size = JsonSerializer.Deserialize<ushort[]>(sizeNode.ToJsonString(), options)
 				?? throw new JsonException("Couldn't parse model size.");
 			if (size.Length != 3)
 				throw new JsonException($"Model size array must be length 3. Was: {size.Length}.");

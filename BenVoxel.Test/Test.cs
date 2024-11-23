@@ -86,5 +86,13 @@ public class Test
 		File.WriteAllText(
 			path: "whatever.json",
 			contents: JsonSerializer.Serialize(svoModel).TabsJson());
+		SvoModel svoModel2 = JsonSerializer.Deserialize<SvoModel>(File.ReadAllText("whatever.json"))
+			?? throw new NullReferenceException();
+		for (ushort x = 0; x < svoModel.SizeX; x++)
+			for (ushort y = 0; y < svoModel.SizeY; y++)
+				for (ushort z = 0; z < svoModel.SizeZ; z++)
+					Assert.Equal(
+						expected: svoModel[x, y, z],
+						actual: svoModel2[x, y, z]);
 	}
 }

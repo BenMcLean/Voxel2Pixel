@@ -12,6 +12,7 @@ namespace Voxel2Pixel.Test.Model.BenVoxelTest;
 public class SvoModelTest(Xunit.Abstractions.ITestOutputHelper output)
 {
 	private readonly Xunit.Abstractions.ITestOutputHelper output = output;
+	/*
 	private void PrintVoxels(IEnumerable<Voxel> voxels)
 	{
 		foreach (Voxel voxel in voxels)
@@ -21,6 +22,7 @@ public class SvoModelTest(Xunit.Abstractions.ITestOutputHelper output)
 				"Z: " + voxel.Z,
 				"Index: " + voxel.Index));
 	}
+	*/
 	private void CompareBinary(ushort a, ushort b) => output.WriteLine(
 		Convert.ToString(a, 2)
 		+ Environment.NewLine
