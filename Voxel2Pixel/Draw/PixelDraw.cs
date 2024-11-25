@@ -306,30 +306,60 @@ public static class PixelDraw
 	/// <summary>
 	/// Based on https://stackoverflow.com/a/6207833
 	/// </summary>
-	public static byte[] Rotate(this byte[] texture, out ushort rotatedWidth, out ushort rotatedHeight, double radians = 0d, ushort width = 0)
+	public static byte[] Rotate(this byte[] texture, out ushort rotatedWidth, out ushort rotatedHeight, double radians = 0d, ushort width = 0, ushort scaleX = 1, ushort scaleY = 1)
 	{
 		if (width < 1)
 			width = (ushort)Math.Sqrt(texture.Length >> 2);
 		ushort height = Height(texture.Length, width);
 		double cos = Math.Cos(radians),
-			sin = Math.Sin(radians);
-		rotatedWidth = (ushort)(width * Math.Abs(cos) + height * Math.Abs(sin));
-		rotatedHeight = (ushort)(width * Math.Abs(sin) + height * Math.Abs(cos));
-		byte[] rotated = new byte[rotatedWidth * rotatedHeight << 2];
-		double offsetX = (width >> 1) - cos * (rotatedWidth >> 1) - sin * (rotatedHeight >> 1),
+			sin = Math.Sin(radians),
+			offsetX,
+			offsetY;
+		byte[] rotated;
+		if (scaleX == 1 && scaleY == 1)
+		{
+			rotatedWidth = (ushort)(width * Math.Abs(cos) + height * Math.Abs(sin));
+			rotatedHeight = (ushort)(width * Math.Abs(sin) + height * Math.Abs(cos));
+			rotated = new byte[rotatedWidth * rotatedHeight << 2];
+			offsetX = (width >> 1) - cos * (rotatedWidth >> 1) - sin * (rotatedHeight >> 1);
 			offsetY = (height >> 1) - cos * (rotatedHeight >> 1) + sin * (rotatedWidth >> 1);
+			for (ushort y = 0; y < rotatedHeight; y++)
+				for (ushort x = 0; x < rotatedWidth; x++)
+					if ((ushort)(x * cos + y * sin + offsetX) is ushort oldX
+						&& oldX >= 0 && oldX < width
+						&& (ushort)(y * cos - x * sin + offsetY) is ushort oldY
+						&& oldY >= 0 && oldY < height)
+						rotated.DrawPixel(
+							x: x,
+							y: y,
+							color: texture.Pixel(
+								x: oldX,
+								y: oldY,
+								width: width),
+							width: rotatedWidth);
+			return rotated;
+		}
+		if (scaleX < 1 || scaleY < 1)
+			throw new ArgumentException("Scaling factors must be positive.");
+		ushort scaledWidth = (ushort)(width * scaleX),
+			scaledHeight = (ushort)(height * scaleY);
+		rotatedWidth = (ushort)(scaledWidth * Math.Abs(cos) + scaledHeight * Math.Abs(sin));
+		rotatedHeight = (ushort)(scaledWidth * Math.Abs(sin) + scaledHeight * Math.Abs(cos));
+		rotated = new byte[rotatedWidth * rotatedHeight << 2];
+		offsetX = (scaledWidth >> 1) - cos * (rotatedWidth >> 1) - sin * (rotatedHeight >> 1);
+		offsetY = (scaledHeight >> 1) - cos * (rotatedHeight >> 1) + sin * (rotatedWidth >> 1);
 		for (ushort y = 0; y < rotatedHeight; y++)
 			for (ushort x = 0; x < rotatedWidth; x++)
-				if ((int)(x * cos + y * sin + offsetX) is int oldX
+				if ((ushort)((x * cos + y * sin + offsetX) / scaleX) is ushort oldX
 					&& oldX >= 0 && oldX < width
-					&& (int)(y * cos - x * sin + offsetY) is int oldY
+					&& (ushort)((y * cos - x * sin + offsetY) / scaleY) is ushort oldY
 					&& oldY >= 0 && oldY < height)
 					rotated.DrawPixel(
 						x: x,
 						y: y,
 						color: texture.Pixel(
-							x: (ushort)oldX,
-							y: (ushort)oldY,
+							x: oldX,
+							y: oldY,
 							width: width),
 						width: rotatedWidth);
 		return rotated;
