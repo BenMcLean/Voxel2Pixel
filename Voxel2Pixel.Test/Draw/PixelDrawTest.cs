@@ -13,7 +13,7 @@ public class PixelDrawTest
 	[Fact]
 	public void Test1()
 	{
-		ushort width = 2, height = 2, xScale = 32, yScale = 32, xTile = 1, yTile = 1;
+		byte width = 2, height = 2, xScale = 32, yScale = 32, xTile = 1, yTile = 1;
 		byte[] bytes = new byte[width * height * 4]
 			.DrawPixel(0, 0, 0xFF0000FFu, width)
 			.DrawPixel(1, 0, 0x00FF00FFu, width)
@@ -83,7 +83,7 @@ public class PixelDrawTest
 	[Fact]
 	public void DrawRectangleTest()
 	{
-		ushort width = 10, height = 10, xScale = 10, yScale = 10;
+		byte width = 10, height = 10, xScale = 10, yScale = 10;
 		byte[] bytes = new byte[width * height * 4]
 			.DrawRectangle(0xFFu, -5, -5, width + 5, height + 5, width)
 			.DrawRectangle(0xFFFFu, 0, 5, 5, 5, width);
@@ -107,12 +107,12 @@ public class PixelDrawTest
 	[Fact]
 	public void Crop2ContentInfo()
 	{
-		byte[][][] bytes = TestData.Arch(46);
+		byte[][][] bytes = TestData.TestData.Arch(46);
 		bytes[1][0][0] = 1;
 		Sprite sprite = new SpriteMaker
 		{
 			Model = new ArrayModel(bytes),
-			VoxelColor = new NaiveDimmer(TestData.RainbowPalette),
+			VoxelColor = new NaiveDimmer(TestData.TestData.RainbowPalette),
 		}.Make();
 		sprite.Texture.Crop2ContentInfo(
 			cutLeft: out ushort cutLeft,

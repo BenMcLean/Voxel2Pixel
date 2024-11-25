@@ -47,7 +47,7 @@ public class SpriteMaker
 	public bool FlipY { get; set; } = false;
 	public bool FlipZ { get; set; } = false;
 	public CuboidOrientation CuboidOrientation { get; set; } = CuboidOrientation.SOUTH0;
-	public ushort ScaleX
+	public byte ScaleX
 	{
 		get => scaleX;
 		set
@@ -58,8 +58,8 @@ public class SpriteMaker
 				scaleX = value;
 		}
 	}
-	private ushort scaleX = 1;
-	public ushort ScaleY
+	private byte scaleX = 1;
+	public byte ScaleY
 	{
 		get => scaleY;
 		set
@@ -70,8 +70,8 @@ public class SpriteMaker
 				scaleY = value;
 		}
 	}
-	private ushort scaleY = 1;
-	public ushort FinalScaleX
+	private byte scaleY = 1;
+	public byte FinalScaleX
 	{
 		get => finalScaleX;
 		set
@@ -82,8 +82,8 @@ public class SpriteMaker
 				finalScaleX = value;
 		}
 	}
-	private ushort finalScaleX = 1;
-	public ushort FinalScaleY
+	private byte finalScaleX = 1;
+	public byte FinalScaleY
 	{
 		get => finalScaleY;
 		set
@@ -94,7 +94,7 @@ public class SpriteMaker
 				finalScaleY = value;
 		}
 	}
-	private ushort finalScaleY = 1;
+	private byte finalScaleY = 1;
 	public bool Shadow { get; set; } = false;
 	public IVoxelColor ShadowColor { get; set; } = DefaultShadowVoxelColor;
 	public bool Outline { get; set; } = false;
@@ -140,10 +140,10 @@ public class SpriteMaker
 	public SpriteMaker SetFlipY(bool flipY) { FlipY = flipY; return this; }
 	public SpriteMaker SetFlipZ(bool flipZ) { FlipZ = flipZ; return this; }
 	public SpriteMaker Set(CuboidOrientation cuboidOrientation) { CuboidOrientation = cuboidOrientation; return this; }
-	public SpriteMaker SetScaleX(ushort scaleX) { ScaleX = scaleX; return this; }
-	public SpriteMaker SetScaleY(ushort scaleY) { ScaleY = scaleY; return this; }
-	public SpriteMaker SetFinalScaleX(ushort finalScaleX) { FinalScaleX = finalScaleX; return this; }
-	public SpriteMaker SetFinalScaleY(ushort finalScaleY) { FinalScaleY = finalScaleY; return this; }
+	public SpriteMaker SetScaleX(byte scaleX) { ScaleX = scaleX; return this; }
+	public SpriteMaker SetScaleY(byte scaleY) { ScaleY = scaleY; return this; }
+	public SpriteMaker SetFinalScaleX(byte finalScaleX) { FinalScaleX = finalScaleX; return this; }
+	public SpriteMaker SetFinalScaleY(byte finalScaleY) { FinalScaleY = finalScaleY; return this; }
 	public SpriteMaker SetShadow(bool shadow) { Shadow = shadow; return this; }
 	public SpriteMaker ToggleShadow() => SetShadow(!Shadow);
 	public SpriteMaker SetShadowColor(IVoxelColor shadowColor) { ShadowColor = shadowColor; return this; }
@@ -357,13 +357,13 @@ public class SpriteMaker
 			yield return new SpriteMaker(maker)
 				.Set(cuboidOrientation)
 				.Set(Perspective.Above)
-				.SetScaleX((ushort)(5 * ScaleX))
-				.SetScaleY((ushort)(ScaleY << 2));
+				.SetScaleX((byte)(5 * ScaleX))
+				.SetScaleY((byte)(ScaleY << 2));
 			cuboidOrientation = (CuboidOrientation)cuboidOrientation.Turn(Turn.CounterZ);
 			yield return new SpriteMaker(maker)
 				.Set(cuboidOrientation)
 				.Set(Perspective.Iso)
-				.SetScaleX((ushort)(ScaleX << 1))
+				.SetScaleX((byte)(ScaleX << 1))
 				.SetScaleY(ScaleY);
 		}
 	}
@@ -382,13 +382,13 @@ public class SpriteMaker
 			yield return new SpriteMaker(maker)
 				.Set(cuboidOrientation)
 				.Set(Perspective.Underneath)
-				.SetScaleX((ushort)(5 * ScaleX))
-				.SetScaleY((ushort)(ScaleY << 2));
+				.SetScaleX((byte)(5 * ScaleX))
+				.SetScaleY((byte)(ScaleY << 2));
 			cuboidOrientation = (CuboidOrientation)cuboidOrientation.Turn(Turn.CounterZ);
 			yield return new SpriteMaker(maker)
 				.Set(cuboidOrientation)
 				.Set(Perspective.IsoShadow)
-				.SetScaleX((ushort)(ScaleX << 1))
+				.SetScaleX((byte)(ScaleX << 1))
 				.SetScaleY(ScaleY);
 		}
 	}

@@ -69,12 +69,12 @@ namespace Voxel2Pixel.Test.Render
 		[Fact]
 		public void ArchTest()
 		{
-			byte[][][] bytes = TestData.Arch(80);
+			byte[][][] bytes = TestData.TestData.Arch(80);
 			bytes[1][0][0] = 1;
 			new SpriteMaker
 			{
 				Model = new ArrayModel(bytes),
-				VoxelColor = new NaiveDimmer(TestData.RainbowPalette),
+				VoxelColor = new NaiveDimmer(TestData.TestData.RainbowPalette),
 			}.Make()
 				.Png()
 				.SaveAsPng("Arch.png");

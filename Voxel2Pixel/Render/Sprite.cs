@@ -205,8 +205,8 @@ public class Sprite : IDictionary<string, Point>, ISprite, IRenderer, IVoxelColo
 	#region Image manipulation
 	/// <returns>processed copy</returns>
 	public Sprite Process(
-		ushort scaleX = 1,
-		ushort scaleY = 1,
+		byte scaleX = 1,
+		byte scaleY = 1,
 		bool outline = false,
 		uint outlineColor = PixelDraw.DefaultOutlineColor,
 		byte threshold = PixelDraw.DefaultTransparencyThreshold)
@@ -316,11 +316,11 @@ public class Sprite : IDictionary<string, Point>, ISprite, IRenderer, IVoxelColo
 			X: point.Value.X - cutLeft,
 			Y: point.Value.Y - cutTop))));
 	/// <returns>upscaled copy</returns>
-	public Sprite Upscale(ushort factorX, ushort factorY = 1) => new Sprite
+	public Sprite Upscale(byte scaleX = 1, byte scaleY = 1) => new Sprite
 	{
 		Texture = Texture.Upscale(
-			factorX: factorX,
-			factorY: factorY,
+			scaleX: scaleX,
+			scaleY: scaleY,
 			newWidth: out ushort newWidth,
 			width: Width),
 		Width = newWidth,
@@ -328,8 +328,8 @@ public class Sprite : IDictionary<string, Point>, ISprite, IRenderer, IVoxelColo
 	}.SetRange(this.Select(point => new KeyValuePair<string, Point>(
 		key: point.Key,
 		value: new Point(
-			X: point.Value.X * factorX,
-			Y: point.Value.Y * factorY))));
+			X: point.Value.X * scaleX,
+			Y: point.Value.Y * scaleY))));
 	public Sprite DrawInsert(int x, int y, Sprite insert) => DrawInsert(x, y, insert.Texture, insert.Width);
 	public Sprite DrawInsert(int x, int y, byte[] insert, ushort insertWidth = 0)
 	{
@@ -370,17 +370,19 @@ public class Sprite : IDictionary<string, Point>, ISprite, IRenderer, IVoxelColo
 	/// <summary>
 	/// Based on https://iiif.io/api/annex/notes/rotation/
 	/// </summary>
-	public Point RotatedSize(double radians)
+	public Point RotatedSize(double radians = 0d, byte scaleX = 1, byte scaleY = 1)
 	{
 		PixelDraw.RotatedSize(
 			width: Width,
 			height: Height,
 			rotatedWidth: out ushort rotatedWidth,
 			rotatedHeight: out ushort rotatedHeight,
-			radians: radians);
+			radians: radians,
+			scaleX: scaleX,
+			scaleY: scaleY);
 		return new Point(rotatedWidth, rotatedHeight);
 	}
-	public Sprite Rotate(double radians)
+	public Sprite Rotate(double radians = 0d, byte scaleX = 1, byte scaleY = 1)
 	{
 		Sprite sprite = new()
 		{
@@ -388,43 +390,71 @@ public class Sprite : IDictionary<string, Point>, ISprite, IRenderer, IVoxelColo
 				rotatedWidth: out ushort rotatedWidth,
 				rotatedHeight: out ushort rotatedHeight,
 				radians: radians,
-				width: Width),
+				width: Width,
+				scaleX: scaleX,
+				scaleY: scaleY),
 			Width = rotatedWidth,
 			VoxelColor = VoxelColor,
 		};
+		ushort scaledWidth = (ushort)(Width * scaleX),
+			scaledHeight = (ushort)(Height * scaleY);
 		double cos = Math.Cos(radians),
 			sin = Math.Sin(radians),
-			offsetX = (Width >> 1) - cos * (rotatedWidth >> 1) - sin * (rotatedHeight >> 1),
-			offsetY = (Height >> 1) - cos * (rotatedHeight >> 1) + sin * (rotatedWidth >> 1);
+		offsetX = (scaledWidth >> 1) - cos * (rotatedWidth >> 1) - sin * (rotatedHeight >> 1),
+		offsetY = (scaledHeight >> 1) - cos * (rotatedHeight >> 1) + sin * (rotatedWidth >> 1);
 		return sprite.SetRange(this.Select(pair => new KeyValuePair<string, Point>(
 			key: pair.Key,
 			value: new Point(
-				X: (int)(cos * (pair.Value.X - offsetX) - sin * (pair.Value.Y - offsetY)),
-				Y: (int)(sin * (pair.Value.X - offsetX) + cos * (pair.Value.Y - offsetY))))));
+				X: (int)(cos * (pair.Value.X * scaleX - offsetX) - sin * (pair.Value.Y * scaleY - offsetY)),
+				Y: (int)(sin * (pair.Value.X * scaleX - offsetX) + cos * (pair.Value.Y * scaleY - offsetY))))));
 	}
 	/// <summary>
 	/// Based on https://stackoverflow.com/a/6207833
 	/// </summary>
-	public void Rotate(double radians, IRectangleRenderer renderer)
+	public void Rotate(double radians, IRectangleRenderer renderer, byte scaleX = 1, byte scaleY = 1)
 	{
-		Point size = RotatedSize(radians);
+		Point size = RotatedSize(radians, scaleX, scaleY);
 		ushort height = Height;
 		double cos = Math.Cos(radians),
 			sin = Math.Sin(radians),
-			offsetX = (Width >> 1) - cos * (size.X >> 1) - sin * (size.Y >> 1),
+			offsetX,
+			offsetY;
+		if (scaleX == 1 && scaleY == 1)
+		{
+			offsetX = (Width >> 1) - cos * (size.X >> 1) - sin * (size.Y >> 1);
 			offsetY = (height >> 1) - cos * (size.Y >> 1) + sin * (size.X >> 1);
+			for (ushort y = 0; y < size.Y; y++)
+				for (ushort x = 0; x < size.X; x++)
+					if ((ushort)(x * cos + y * sin + offsetX) is ushort oldX
+						&& oldX >= 0 && oldX < Width
+						&& (ushort)(y * cos - x * sin + offsetY) is ushort oldY
+						&& oldY >= 0 && oldY < height)
+						renderer.Rect(
+							x: x,
+							y: y,
+							color: Pixel(
+								x: oldX,
+								y: oldY));
+			return;
+		}
+		if (scaleX < 1 || scaleY < 1)
+			throw new ArgumentException("Scaling factors must be positive.");
+		ushort scaledWidth = (ushort)(Width * scaleX),
+			scaledHeight = (ushort)(height * scaleY);
+		offsetX = (scaledWidth >> 1) - cos * (size.X >> 1) - sin * (size.Y >> 1);
+		offsetY = (scaledHeight >> 1) - cos * (size.Y >> 1) + sin * (size.X >> 1);
 		for (ushort y = 0; y < size.Y; y++)
 			for (ushort x = 0; x < size.X; x++)
-				if ((int)(x * cos + y * sin + offsetX) is int oldX
+				if ((ushort)((x * cos + y * sin + offsetX) / scaleX) is ushort oldX
 					&& oldX >= 0 && oldX < Width
-					&& (int)(y * cos - x * sin + offsetY) is int oldY
+					&& (ushort)((y * cos - x * sin + offsetY) / scaleY) is ushort oldY
 					&& oldY >= 0 && oldY < height)
 					renderer.Rect(
 						x: x,
 						y: y,
 						color: Pixel(
-							x: (ushort)oldX,
-							y: (ushort)oldY));
+							x: oldX,
+							y: oldY));
 	}
 	#endregion Image manipulation
 }

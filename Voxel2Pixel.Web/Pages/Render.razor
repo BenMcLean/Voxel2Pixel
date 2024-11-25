@@ -191,8 +191,8 @@
 	</MudTabPanel>
 	<MudTabPanel Text="Post-Processing">
 		<MudElement Class="d-inline-flex flex-wrap gap-2">
-			<MudNumericField T="ushort" @bind-Value="SpriteMaker.ScaleX" Label="Scale X" Variant="Variant.Text" Min="1" />
-			<MudNumericField T="ushort" @bind-Value="SpriteMaker.ScaleY" Label="Scale Y" Variant="Variant.Text" Min="1" />
+			<MudNumericField T="byte" @bind-Value="SpriteMaker.ScaleX" Label="Scale X" Variant="Variant.Text" Min="1" Max="255" />
+			<MudNumericField T="byte" @bind-Value="SpriteMaker.ScaleY" Label="Scale Y" Variant="Variant.Text" Min="1" Max="255" />
 		</MudElement>
 		<br />
 		<MudElement Class="d-inline-flex flex-wrap gap-2">
@@ -204,8 +204,8 @@
 		</MudElement>
 		<br />
 		<MudElement Class="d-inline-flex flex-wrap gap-2">
-			<MudNumericField T="ushort" @bind-Value="SpriteMaker.FinalScaleX" Label="Final (after outline) Scale X" Variant="Variant.Text" Min="1" />
-			<MudNumericField T="ushort" @bind-Value="SpriteMaker.FinalScaleY" Label="Final (after outline) Scale Y" Variant="Variant.Text" Min="1" />
+			<MudNumericField T="byte" @bind-Value="SpriteMaker.FinalScaleX" Label="Final (after outline) Scale X" Variant="Variant.Text" Min="1" Max="255" />
+			<MudNumericField T="byte" @bind-Value="SpriteMaker.FinalScaleY" Label="Final (after outline) Scale Y" Variant="Variant.Text" Min="1" Max="255" />
 		</MudElement>
 	</MudTabPanel>
 	<MudTabPanel Text="Export" Disabled="Model is null">

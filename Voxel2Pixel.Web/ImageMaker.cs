@@ -1,6 +1,7 @@
 ﻿using SixLabors.ImageSharp;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Render;
+using static Voxel2Pixel.Draw.PixelDraw;
 
 namespace Voxel2Pixel.Web;
 
@@ -45,12 +46,6 @@ public static class ImageMaker
 		gif.Frames.RemoveFrame(0);//I don't know why ImageSharp has me doing this but if I don't then I get an extra transparent frame at the start.
 		return gif;
 	}
-	public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(ushort scaleX, ushort scaleY, ushort width = 0, int frameDelay = DefaultFrameDelay, ushort repeatCount = 0, params byte[][] frames) => AnimatedGif(
-		width: (ushort)(width * scaleX),
-		frameDelay: frameDelay,
-		repeatCount: repeatCount,
-		frames: scaleX == 1 && scaleY == 1 ? frames
-			: [.. frames.Select(f => Voxel2Pixel.Draw.PixelDraw.Upscale(f, scaleX, scaleY, width))]);
 	public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(ushort width = 0, int frameDelay = DefaultFrameDelay, ushort repeatCount = 0, params byte[][] frames)
 	{
 		if (width < 1)
@@ -74,5 +69,14 @@ public static class ImageMaker
 		gif.Frames.RemoveFrame(0);//I don't know why ImageSharp has me doing this but if I don't then I get an extra transparent frame at the start.
 		return gif;
 	}
+	public static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> AnimatedGif(byte scaleX = 1, byte scaleY = 1, ushort width = 0, int frameDelay = DefaultFrameDelay, ushort repeatCount = 0, params byte[][] frames) => AnimatedGif(
+		width: (ushort)(width * scaleX),
+		frameDelay: frameDelay,
+		repeatCount: repeatCount,
+		frames: scaleX == 1 && scaleY == 1 ? frames
+			: [.. frames.Parallelize(frame => frame.Upscale(
+				scaleX: scaleX,
+				scaleY: scaleY,
+				width: width))]);
 	#endregion ImageSharp
 }

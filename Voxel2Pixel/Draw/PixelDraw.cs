@@ -296,17 +296,17 @@ public static class PixelDraw
 	/// <summary>
 	/// Based on https://iiif.io/api/annex/notes/rotation/
 	/// </summary>
-	public static void RotatedSize(ushort width, ushort height, out ushort rotatedWidth, out ushort rotatedHeight, double radians = 0d)
+	public static void RotatedSize(ushort width, ushort height, out ushort rotatedWidth, out ushort rotatedHeight, double radians = 0d, byte scaleX = 1, byte scaleY = 1)
 	{
 		double cos = Math.Abs(Math.Cos(radians)),
 			sin = Math.Abs(Math.Sin(radians));
-		rotatedWidth = (ushort)(width * cos + height * sin);
-		rotatedHeight = (ushort)(width * sin + height * cos);
+		rotatedWidth = (ushort)(width * scaleX * cos + height * scaleY * sin);
+		rotatedHeight = (ushort)(width * scaleX * sin + height * scaleY * cos);
 	}
 	/// <summary>
 	/// Based on https://stackoverflow.com/a/6207833
 	/// </summary>
-	public static byte[] Rotate(this byte[] texture, out ushort rotatedWidth, out ushort rotatedHeight, double radians = 0d, ushort width = 0, ushort scaleX = 1, ushort scaleY = 1)
+	public static byte[] Rotate(this byte[] texture, out ushort rotatedWidth, out ushort rotatedHeight, double radians = 0d, ushort width = 0, byte scaleX = 1, byte scaleY = 1)
 	{
 		if (width < 1)
 			width = (ushort)Math.Sqrt(texture.Length >> 2);
@@ -1208,7 +1208,7 @@ public static class PixelDraw
 	/// <param name="factorY">number of times to tile vertically</param>
 	/// <param name="width">width of texture or 0 to assume square texture</param>
 	/// <returns>new raw rgba8888 pixel data of newWidth = width * factorX</returns>
-	public static byte[] Tile(this byte[] texture, ushort width = 0, ushort factorX = 2, ushort factorY = 2)
+	public static byte[] Tile(this byte[] texture, ushort width = 0, byte factorX = 2, byte factorY = 2)
 	{
 		if (factorX < 1 || factorY < 1 || factorX < 2 && factorY < 2) return (byte[])texture.Clone();
 		byte[] tiled = new byte[texture.Length * factorX * factorY];
@@ -1245,18 +1245,18 @@ public static class PixelDraw
 	/// Simple nearest-neighbor upscaling by integer multipliers
 	/// </summary>
 	/// <param name="texture">raw rgba8888 pixel data of source image</param>
-	/// <param name="factorX">horizontal scaling factor</param>
-	/// <param name="factorY">vertical scaling factor</param>
+	/// <param name="scaleX">horizontal scaling factor</param>
+	/// <param name="scaleY">vertical scaling factor</param>
 	/// <param name="width">width of texture or 0 to assume square texture</param>
 	/// <returns>new raw rgba8888 pixel data of newWidth = width * factorX</returns>
-	public static byte[] Upscale(this byte[] texture, ushort factorX, ushort factorY, ushort width = 0)
+	public static byte[] Upscale(this byte[] texture, byte scaleX = 1, byte scaleY = 1, ushort width = 0)
 	{
-		if (factorX < 1 || factorY < 1 || factorX < 2 && factorY < 2) return (byte[])texture.Clone();
+		if (scaleX < 1 || scaleY < 1 || scaleX < 2 && scaleY < 2) return (byte[])texture.Clone();
 		int xSide = (width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) << 2,
-			newXside = xSide * factorX,
-			newXsidefactorY = newXside * factorY;
-		byte[] scaled = new byte[texture.Length * factorY * factorX];
-		if (factorX < 2)
+			newXside = xSide * scaleX,
+			newXsidefactorY = newXside * scaleY;
+		byte[] scaled = new byte[texture.Length * scaleY * scaleX];
+		if (scaleX < 2)
 			for (int y1 = 0, y2 = 0; y1 < texture.Length; y1 += xSide, y2 += newXsidefactorY)
 				for (int z = y2; z < y2 + newXsidefactorY; z += newXside)
 					Array.Copy(
@@ -1267,7 +1267,7 @@ public static class PixelDraw
 						length: xSide);
 		else
 		{
-			int factorX4 = factorX << 2;
+			int factorX4 = scaleX << 2;
 			for (int y1 = 0, y2 = 0; y1 < texture.Length; y1 += xSide, y2 += newXsidefactorY)
 			{
 				for (int x1 = y1, x2 = y2; x1 < y1 + xSide; x1 += 4, x2 += factorX4)
@@ -1289,12 +1289,12 @@ public static class PixelDraw
 		}
 		return scaled;
 	}
-	public static byte[] Upscale(this byte[] texture, ushort factorX, ushort factorY, out ushort newWidth, ushort width = 0)
+	public static byte[] Upscale(this byte[] texture, out ushort newWidth, byte scaleX = 1, byte scaleY = 1, ushort width = 0)
 	{
-		newWidth = (ushort)((width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) * factorX);
-		return texture.Upscale(factorX, factorY, width);
+		newWidth = (ushort)((width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width) * scaleX);
+		return texture.Upscale(scaleX, scaleY, width);
 	}
-	public static byte[][] UpscaleSprites(this byte[][] sprites, ushort[] widths, ushort[][] pixelOrigins, ushort factorX, ushort factorY, out ushort[] newWidths, out ushort[][] newPixelOrigins)
+	public static byte[][] UpscaleSprites(this byte[][] sprites, ushort[] widths, ushort[][] pixelOrigins, out ushort[] newWidths, out ushort[][] newPixelOrigins, byte scaleX = 1, byte scaleY = 1)
 	{
 		byte[][] newSprites = new byte[sprites.Length][];
 		newWidths = new ushort[widths.Length];
@@ -1302,25 +1302,25 @@ public static class PixelDraw
 		for (int i = 0; i < sprites.Length; i++)
 		{
 			newSprites[i] = sprites[i].Upscale(
-				factorX: factorX,
-				factorY: factorY,
+				scaleX: scaleX,
+				scaleY: scaleY,
 				width: widths[i]);
-			newWidths[i] = (ushort)(widths[i] * factorX);
-			newPixelOrigins[i] = [(ushort)(pixelOrigins[i][0] * factorX), (ushort)(pixelOrigins[i][1] * factorY)];
+			newWidths[i] = (ushort)(widths[i] * scaleX);
+			newPixelOrigins[i] = [(ushort)(pixelOrigins[i][0] * scaleX), (ushort)(pixelOrigins[i][1] * scaleY)];
 		}
 		return newSprites;
 	}
-	public static byte[,] Upscale(this byte[,] bytes, ushort factorX, ushort factorY)
+	public static byte[,] Upscale(this byte[,] bytes, byte scaleX = 1, byte scaleY = 1)
 	{
 		ushort width = (ushort)bytes.GetLength(0),
 			height = (ushort)bytes.GetLength(1);
-		byte[,] scaled = new byte[width * factorX, height * factorY];
-		for (ushort x1 = 0, x2 = 0; x1 < width; x1++, x2 += factorX)
-			for (ushort y1 = 0, y2 = 0; y1 < height; y1++, y2 += factorX)
+		byte[,] scaled = new byte[width * scaleX, height * scaleY];
+		for (ushort x1 = 0, x2 = 0; x1 < width; x1++, x2 += scaleX)
+			for (ushort y1 = 0, y2 = 0; y1 < height; y1++, y2 += scaleX)
 			{
 				byte @byte = bytes[x1, y1];
-				for (ushort x = 0; x < factorX; x++)
-					for (ushort y = 0; y < factorY; y++)
+				for (ushort x = 0; x < scaleX; x++)
+					for (ushort y = 0; y < scaleY; y++)
 						scaled[x2 + x, y2 + y] = @byte;
 			}
 		return scaled;
