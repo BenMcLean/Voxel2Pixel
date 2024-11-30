@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -18,15 +19,51 @@ public class BenVoxelFile() : IBinaryWritable
 	public class Metadata() : IBinaryWritable
 	{
 		#region Data
+		[JsonIgnore]
+		public SanitizedKeyDictionary<string> Properties { get; set; } = [];
 		[JsonPropertyName("properties")]
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-		public SanitizedKeyDictionary<string> Properties { get; set; } = [];
+		public IReadOnlyDictionary<string, string> PropertiesReadOnly
+		{
+			get => Properties.Any() ? new ReadOnlyDictionary<string, string>(Properties) : null;
+			set
+			{
+				Properties.Clear();
+				if (value is null) return;
+				foreach (KeyValuePair<string, string> pair in value)
+					Properties.Add(pair);
+			}
+		}
+		[JsonIgnore]
+		public SanitizedKeyDictionary<Point3D> Points { get; set; } = [];
 		[JsonPropertyName("points")]
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-		public SanitizedKeyDictionary<Point3D> Points { get; set; } = [];
+		public IReadOnlyDictionary<string, Point3D> PointsReadOnly
+		{
+			get => Points.Any() ? new ReadOnlyDictionary<string, Point3D>(Points) : null;
+			set
+			{
+				Points.Clear();
+				if (value is null) return;
+				foreach (KeyValuePair<string, Point3D> pair in value)
+					Points.Add(pair);
+			}
+		}
+		[JsonIgnore]
+		public SanitizedKeyDictionary<Color[]> Palettes { get; set; } = [];
 		[JsonPropertyName("palettes")]
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-		public SanitizedKeyDictionary<Color[]> Palettes { get; set; } = [];
+		public IReadOnlyDictionary<string, Color[]> PalettesReadOnly
+		{
+			get => Palettes.Any() ? new ReadOnlyDictionary<string, Color[]>(Palettes) : null;
+			set
+			{
+				Palettes.Clear();
+				if (value is null) return;
+				foreach (KeyValuePair<string, Color[]> pair in value)
+					Palettes.Add(pair);
+			}
+		}
 		#endregion Data
 		#region Metadata
 		/// <summary>
