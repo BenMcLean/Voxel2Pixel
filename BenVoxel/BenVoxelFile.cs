@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -67,7 +68,7 @@ public class BenVoxelFile() : IBinaryWritable
 							for (ushort i = 0; i < count; i++)
 							{
 								string key = ReadKey(reader);
-								uint[] colors = [.. Enumerable.Range(0, reader.ReadByte() + 1).Select(i => reader.ReadUInt32())];
+								uint[] colors = [.. Enumerable.Range(0, reader.ReadByte() + 1).Select(i => BinaryPrimitives.ReverseEndianness(reader.ReadUInt32()))];
 								bool hasDescriptions = reader.ReadByte() != 0;
 								Palettes[key] = [.. colors.Select(rgba => new Color
 								{
@@ -123,7 +124,7 @@ public class BenVoxelFile() : IBinaryWritable
 						WriteKey(writer, palette.Key);
 						writer.Write((byte)(palette.Value.Length - 1));
 						foreach (Color color in palette.Value)
-							writer.Write(color.Rgba);
+							writer.Write(BinaryPrimitives.ReverseEndianness(color.Rgba));
 						if (palette.Value.Any(color => !string.IsNullOrWhiteSpace(color.Description)))
 						{
 							writer.Write((byte)1);
