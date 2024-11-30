@@ -17,7 +17,7 @@ namespace Voxel2Pixel.Draw;
 public static class VoxelDraw
 {
 	#region Perspectives
-	public static void Draw(this IModel model, IRenderer renderer, Perspective perspective, byte peakScaleX = 6, byte peakScaleY = 6, double radians = 0d)
+	public static void Draw(this IModel model, IRenderer renderer, Perspective perspective, byte scaleX = 6, byte scaleY = 6, double radians = 0d)
 	{
 		switch (perspective)
 		{
@@ -26,7 +26,7 @@ public static class VoxelDraw
 				Front(model, renderer);
 				break;
 			case Perspective.FrontPeak:
-				FrontPeak(model, renderer, peakScaleX, peakScaleY);
+				FrontPeak(model, renderer, scaleX, scaleY);
 				break;
 			case Perspective.Overhead:
 				Overhead(model, renderer);
@@ -38,7 +38,7 @@ public static class VoxelDraw
 				Diagonal(model, renderer);
 				break;
 			case Perspective.DiagonalPeak:
-				DiagonalPeak(model, renderer, peakScaleX, peakScaleY);
+				DiagonalPeak(model, renderer, scaleX, scaleY);
 				break;
 			case Perspective.Above:
 				Above(model, renderer);
@@ -57,13 +57,13 @@ public static class VoxelDraw
 				break;
 		}
 	}
-	public static Point Size(this IModel model, Perspective perspective, byte peakScaleX = 6, byte peakScaleY = 6, double radians = 0d) => perspective switch
+	public static Point Size(this IModel model, Perspective perspective, byte scaleX = 6, byte scaleY = 6, double radians = 0d) => perspective switch
 	{
-		Perspective.FrontPeak => FrontPeakSize(model, peakScaleX, peakScaleY),
+		Perspective.FrontPeak => FrontPeakSize(model, scaleX, scaleY),
 		Perspective.Overhead => OverheadSize(model),
 		Perspective.Underneath => UnderneathSize(model),
 		Perspective.Diagonal => DiagonalSize(model),
-		Perspective.DiagonalPeak => DiagonalPeakSize(model, peakScaleX, peakScaleY),
+		Perspective.DiagonalPeak => DiagonalPeakSize(model, scaleX, scaleY),
 		Perspective.Above => AboveSize(model),
 		Perspective.Iso => IsoSize(model),
 		Perspective.IsoShadow => IsoShadowSize(model),
@@ -71,7 +71,7 @@ public static class VoxelDraw
 		Perspective.ZSlices => ZSlicesSize(model),
 		_ => FrontSize(model),
 	};
-	public static Point Locate(this IModel model, Perspective perspective, Point3D point, byte peakScaleX = 6, byte peakScaleY = 6, double radians = 0d)
+	public static Point Locate(this IModel model, Perspective perspective, Point3D point, byte scaleX = 6, byte scaleY = 6, double radians = 0d)
 	{
 		Point result;
 		switch (perspective)
@@ -101,8 +101,8 @@ public static class VoxelDraw
 		}
 		return perspective.IsPeak() ? new()
 		{
-			X = result.X * peakScaleX,
-			Y = result.Y * peakScaleY,
+			X = result.X * scaleX,
+			Y = result.Y * scaleY,
 		} : result;
 	}
 	#endregion Perspectives
@@ -151,7 +151,7 @@ public static class VoxelDraw
 						index: voxelY.Index,
 						visibleFace: visibleFace);
 	}
-	public static Point FrontPeakSize(IModel model, ushort peakScaleX = 6, ushort peakScaleY = 6) => new(model.SizeX * peakScaleX, model.SizeZ * peakScaleY);
+	public static Point FrontPeakSize(IModel model, byte scaleX = 6, byte scaleY = 6) => new(model.SizeX * scaleX, model.SizeZ * scaleY);
 	public static void FrontPeak(IModel model, IRectangleRenderer renderer, byte scaleX = 6, byte scaleY = 6)
 	{
 		ushort voxelWidth = model.SizeX,
@@ -294,9 +294,9 @@ public static class VoxelDraw
 						index: rect.Index,
 						visibleFace: rect.VisibleFace);
 	}
-	public static Point DiagonalPeakSize(IModel model, byte peakScaleX = 6, byte peakScaleY = 6) => new(
-		X: (model.SizeX + model.SizeY) * peakScaleX,
-		Y: model.SizeZ * peakScaleY);
+	public static Point DiagonalPeakSize(IModel model, byte scaleX = 6, byte scaleY = 6) => new(
+		X: (model.SizeX + model.SizeY) * scaleX,
+		Y: model.SizeZ * scaleY);
 	public static void DiagonalPeak(IModel model, IRectangleRenderer renderer, byte scaleX = 6, byte scaleY = 6)
 	{
 		ushort voxelWidth = model.SizeX,

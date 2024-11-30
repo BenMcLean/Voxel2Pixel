@@ -231,8 +231,8 @@ public class SpriteMaker
 		Point size = VoxelDraw.Size(
 			perspective: maker.Perspective,
 			model: maker.Model,
-			peakScaleX: maker.PeakScaleX,
-			peakScaleY: maker.PeakScaleY,
+			scaleX: maker.PeakScaleX,
+			scaleY: maker.PeakScaleY,
 			radians: maker.Radians);
 		Sprite sprite = new(
 			width: (ushort)(size.X * maker.ScaleX + (maker.Outline ? 2 : 0)),
@@ -251,8 +251,8 @@ public class SpriteMaker
 				ScaleX = maker.ScaleX,
 				ScaleY = maker.ScaleY,
 			},
-			peakScaleX: maker.PeakScaleX,
-			peakScaleY: maker.PeakScaleY,
+			scaleX: maker.PeakScaleX,
+			scaleY: maker.PeakScaleY,
 			radians: maker.Radians);
 		if (maker.Outline)
 			sprite = sprite.Outline(
@@ -318,8 +318,8 @@ public class SpriteMaker
 				perspective: maker.Perspective,
 				model: maker.Model,
 				point: point3D,
-				peakScaleX: maker.PeakScaleX,
-				peakScaleY: maker.PeakScaleY,
+				scaleX: maker.PeakScaleX,
+				scaleY: maker.PeakScaleY,
 				radians: maker.Radians);
 			return new Point(
 				X: point.X * maker.ScaleX + (maker.Outline ? 1 : 0),
