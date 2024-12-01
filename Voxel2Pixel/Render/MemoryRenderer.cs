@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
@@ -13,11 +12,11 @@ public class MemoryRenderer : Renderer, IList<MemoryRenderer.Rectangle>
 {
 	#region MemoryRenderer
 	public void Rect(IRectangleRenderer renderer) => Rectangles.ForEach(rect => rect.Rect(renderer));
-	public readonly record struct Rectangle(ushort X, ushort Y, ushort SizeX = 1, ushort SizeY = 1, uint Color = 0u, byte Index = 0, VisibleFace? VisibleFace = null)
+	public readonly record struct Rectangle(ushort X, ushort Y, ushort SizeX = 1, ushort SizeY = 1, byte Index = 0, VisibleFace VisibleFace = VisibleFace.Front, uint Color = 0u)
 	{
 		public void Rect(IRectangleRenderer renderer)
 		{
-			if (VisibleFace is null)
+			if (Index == 0)
 				renderer.Rect(
 					x: X,
 					y: Y,
@@ -29,7 +28,7 @@ public class MemoryRenderer : Renderer, IList<MemoryRenderer.Rectangle>
 					x: X,
 					y: Y,
 					index: Index,
-					visibleFace: VisibleFace ?? throw new NullReferenceException(),
+					visibleFace: VisibleFace,
 					sizeX: SizeX,
 					sizeY: SizeY);
 		}
@@ -37,8 +36,8 @@ public class MemoryRenderer : Renderer, IList<MemoryRenderer.Rectangle>
 	protected List<Rectangle> Rectangles = [];
 	#endregion MemoryRenderer
 	#region IRectangleRenderer
-	public override void Rect(ushort x, ushort y, uint color, ushort sizeX = 1, ushort sizeY = 1) => Rectangles.Add(new(X: x, Y: y, Color: color, SizeX: sizeX, SizeY: sizeY));
-	public override void Rect(ushort x, ushort y, byte index, VisibleFace visibleFace = VisibleFace.Front, ushort sizeX = 1, ushort sizeY = 1) => Rectangles.Add(new(X: x, Y: y, Index: index, VisibleFace: visibleFace, SizeX: sizeX, SizeY: sizeY));
+	public override void Rect(ushort x, ushort y, uint color, ushort sizeX = 1, ushort sizeY = 1) => Rectangles.Add(new(X: x, Y: y, SizeX: sizeX, SizeY: sizeY, Color: color));
+	public override void Rect(ushort x, ushort y, byte index, VisibleFace visibleFace = VisibleFace.Front, ushort sizeX = 1, ushort sizeY = 1) => Rectangles.Add(new(X: x, Y: y, SizeX: sizeX, SizeY: sizeY, Index: index, VisibleFace: visibleFace));
 	#endregion IRectangleRenderer
 	#region IList
 	public int IndexOf(Rectangle item) => ((IList<Rectangle>)Rectangles1).IndexOf(item);
