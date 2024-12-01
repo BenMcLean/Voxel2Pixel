@@ -317,7 +317,7 @@ public static class PixelDraw
 		rotatedWidth = (ushort)rWidth;
 		rotatedHeight = (ushort)rHeight;
 	}
-	public static void RotatedLocate(ushort width, ushort height, ushort x, ushort y, out ushort rotatedX, out ushort rotatedY, double radians = 0d, byte scaleX = 1, byte scaleY = 1)
+	public static void RotatedLocate(ushort width, ushort height, int x, int y, out int rotatedX, out int rotatedY, double radians = 0d, byte scaleX = 1, byte scaleY = 1)
 	{
 		if (scaleX < 1) throw new ArgumentOutOfRangeException(nameof(scaleX));
 		if (scaleY < 1) throw new ArgumentOutOfRangeException(nameof(scaleY));
@@ -325,8 +325,6 @@ public static class PixelDraw
 			throw new OverflowException("Scaled width exceeds maximum allowed size.");
 		if (height > ushort.MaxValue / scaleY)
 			throw new OverflowException("Scaled height exceeds maximum allowed size.");
-		if (x >= width) throw new ArgumentOutOfRangeException(nameof(x));
-		if (y >= height) throw new ArgumentOutOfRangeException(nameof(y));
 		ushort scaledWidth = (ushort)(width * scaleX),
 			scaledHeight = (ushort)(height * scaleY);
 		radians %= Tau;
@@ -340,10 +338,10 @@ public static class PixelDraw
 			offsetY = (scaledHeight >> 1) - cos * halfRotatedHeight + sin * halfRotatedWidth,
 			newX = (x + 0.5d) * scaleX * cos - (y + 0.5d) * scaleY * sin + offsetX,
 			newY = (x + 0.5d) * scaleX * sin + (y + 0.5d) * scaleY * cos + offsetY;
-		if (newX < 0 || newY < 0 || newX > ushort.MaxValue || newY > ushort.MaxValue)
+		if (newX < int.MinValue || newY < int.MinValue || newX > int.MaxValue || newY > int.MaxValue)
 			throw new OverflowException("Rotated coordinates exceed valid range.");
-		rotatedX = (ushort)newX;
-		rotatedY = (ushort)newY;
+		rotatedX = (int)Math.Round(newX);
+		rotatedY = (int)Math.Round(newY);
 	}
 	/// <summary>
 	/// Based on https://stackoverflow.com/a/6207833
@@ -404,8 +402,8 @@ public static class PixelDraw
 						x: x,
 						y: y,
 						color: texture.Pixel(
-							x: (ushort)sourceX,
-							y: (ushort)sourceY,
+							x: (ushort)Math.Floor(sourceX),
+							y: (ushort)Math.Floor(sourceY),
 							width: width),
 						width: rotatedWidth);
 			}

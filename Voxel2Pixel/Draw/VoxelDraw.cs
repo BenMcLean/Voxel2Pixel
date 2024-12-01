@@ -635,13 +635,15 @@ public static class VoxelDraw
 	#region Stacked
 	public static Point ZSliceSize(IModel model, double radians = 0d, byte scaleX = 1, byte scaleY = 1)
 	{
-		if (scaleX < 1) throw new ArgumentOutOfRangeException(nameof(scaleX));
-		if (scaleY < 1) throw new ArgumentOutOfRangeException(nameof(scaleY));
-		double cos = Math.Abs(Math.Cos(radians)),
-			sin = Math.Abs(Math.Sin(radians));
-		return new Point(
-			X: (int)(model.SizeX * scaleX * cos + model.SizeY * scaleY * sin),
-			Y: (int)(model.SizeX * scaleX * sin + model.SizeY * scaleY * cos));
+		PixelDraw.RotatedSize(
+			width: model.SizeX,
+			height: model.SizeY,
+			out ushort rotatedWidth,
+			out ushort rotatedHeight,
+			radians: radians,
+			scaleX: scaleX,
+			scaleY: scaleY);
+		return new Point(X: rotatedWidth, Y: rotatedHeight);
 	}
 	public static void ZSlice(IModel model, IRectangleRenderer renderer, ushort z = 0, bool peak = false, VisibleFace visibleFace = VisibleFace.Front)
 	{
@@ -659,74 +661,88 @@ public static class VoxelDraw
 	}
 	public static void ZSlice(IModel model, IRectangleRenderer renderer, double radians, ushort z = 0, byte scaleX = 1, byte scaleY = 1, bool peak = false, VisibleFace visibleFace = VisibleFace.Front)
 	{
-		Point size = ZSliceSize(model, radians);
-		double cos = Math.Cos(radians),
-			sin = Math.Sin(radians),
-			offsetX,
-			offsetY;
-		if (scaleX == 1 && scaleY == 1)
-		{
-			offsetX = (model.SizeX >> 1) - cos * (size.X >> 1) - sin * (size.Y >> 1);
-			offsetY = (model.SizeY >> 1) - cos * (size.Y >> 1) + sin * (size.X >> 1);
-			for (ushort y = 0; y < size.Y; y++)
-				for (ushort x = 0; x < size.X; x++)
-					if ((int)(x * cos + y * sin + offsetX) is int oldX
-						&& oldX >= 0 && oldX < model.SizeX
-						&& (int)(y * cos - x * sin + offsetY) is int oldY
-						&& oldY >= 0 && oldY < model.SizeY
-						&& model[(ushort)oldX, (ushort)(model.SizeY - 1 - oldY), z] is byte index && index != 0)
-						renderer.Rect(
-							x: x,
-							y: y,
-							index: index,
-							visibleFace: peak && (z == model.SizeZ - 1
-								|| model[(ushort)oldX, (ushort)(model.SizeY - 1 - oldY), (ushort)(z + 1)] == 0) ?
-								VisibleFace.Top
-								: visibleFace);
-			return;
-		}
+		if (z >= model.SizeZ) throw new ArgumentOutOfRangeException(nameof(z));
 		if (scaleX < 1) throw new ArgumentOutOfRangeException(nameof(scaleX));
 		if (scaleY < 1) throw new ArgumentOutOfRangeException(nameof(scaleY));
-		offsetX = (model.SizeX * scaleX >> 1) - cos * (size.X >> 1) - sin * (size.Y >> 1);
-		offsetY = (model.SizeY * scaleY >> 1) - cos * (size.Y >> 1) + sin * (size.X >> 1);
-		for (ushort y = 0; y < size.Y; y++)
-			for (ushort x = 0; x < size.X; x++)
-				if ((int)((x * cos + y * sin + offsetX) / scaleX) is int oldX
-					&& oldX >= 0 && oldX < model.SizeX
-					&& (int)((y * cos - x * sin + offsetY) / scaleY) is int oldY
-					&& oldY >= 0 && oldY < model.SizeY
-					&& model[(ushort)oldX, (ushort)(model.SizeY - 1 - oldY), z] is byte index && index != 0)
+		radians %= PixelDraw.Tau;
+		double cos = Math.Cos(radians),
+			sin = Math.Sin(radians),
+			absCos = Math.Abs(cos),
+			absSin = Math.Abs(sin);
+		if (model.SizeX > ushort.MaxValue / scaleX)
+			throw new OverflowException("Scaled width exceeds maximum allowed size.");
+		if (model.SizeY > ushort.MaxValue / scaleY)
+			throw new OverflowException("Scaled height exceeds maximum allowed size.");
+		ushort scaledWidth = (ushort)(model.SizeX * scaleX),
+			scaledHeight = (ushort)(model.SizeY * scaleY);
+		uint rWidth = (uint)(scaledWidth * absCos + scaledHeight * absSin),
+			rHeight = (uint)(scaledWidth * absSin + scaledHeight * absCos);
+		if (rWidth > ushort.MaxValue || rHeight > ushort.MaxValue)
+			throw new OverflowException("Rotated dimensions exceed maximum allowed size.");
+		double offsetX = (scaledWidth >> 1) - cos * (rWidth >> 1) - sin * (rHeight >> 1),
+			offsetY = (scaledHeight >> 1) - cos * (rHeight >> 1) + sin * (rWidth >> 1);
+		bool isNearVertical = absCos < 1e-10;
+		for (ushort y = 0; y < rHeight; y++)
+		{
+			ushort startX, endX;
+			if (isNearVertical)
+			{
+				startX = 0;
+				endX = (ushort)rWidth;
+			}
+			else
+			{
+				double xLeft = (-offsetX - y * sin) / cos,
+					xRight = (scaledWidth - offsetX - y * sin) / cos;
+				if (cos < 0d)
+					(xLeft, xRight) = (xRight, xLeft);
+				startX = (ushort)Math.Max(0, Math.Floor(xLeft));
+				endX = (ushort)Math.Min(rWidth, Math.Ceiling(xRight));
+			}
+			for (ushort x = startX; x < endX; x++)
+			{
+				double sourceX = (x * cos + y * sin + offsetX) / scaleX,
+					sourceY = (y * cos - x * sin + offsetY) / scaleY;
+				ushort oldX = (ushort)(Math.Floor(sourceX)),
+					oldY = (ushort)(model.SizeY - 1 - Math.Floor(sourceY));
+				if (!model.IsOutside(oldX, oldY, z) && model[oldX, oldY, z] is byte index && index != 0)
 					renderer.Rect(
 						x: x,
 						y: y,
 						index: index,
-						visibleFace: peak && (z == model.SizeZ - 1
-							|| model[(ushort)oldX, (ushort)(model.SizeY - 1 - oldY), (ushort)(z + 1)] == 0) ?
+						visibleFace: peak && (z == model.SizeZ - 1 || model[oldX, oldY, (ushort)(z + 1)] == 0) ?
 							VisibleFace.Top
 							: visibleFace);
+			}
+		}
 	}
 	public static Point StackedSize(this IModel model, double radians = 0d, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1)
 	{
-		double cos = Math.Abs(Math.Cos(radians)),
-			sin = Math.Abs(Math.Sin(radians));
+		Point zSliceSize = ZSliceSize(
+			model: model,
+			radians: radians,
+			scaleX: scaleX,
+			scaleY: scaleY);
 		return new Point(
-			X: (int)(model.SizeX * scaleX * cos + model.SizeY * scaleY * sin),
-			Y: (int)(model.SizeX * scaleX * sin + model.SizeY * scaleY * cos) + (model.SizeZ * scaleZ) - 1);
+			X: zSliceSize.X,
+			Y: zSliceSize.Y + (model.SizeZ * scaleZ) - 1);
 	}
 	public static Point StackedLocate(IModel model, Point3D point, double radians = 0d, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1)
 	{
-		if (scaleX < 1) throw new ArgumentOutOfRangeException(nameof(scaleX));
-		if (scaleY < 1) throw new ArgumentOutOfRangeException(nameof(scaleY));
 		if (scaleZ < 1) throw new ArgumentOutOfRangeException(nameof(scaleZ));
-		double cos = Math.Cos(radians),
-			sin = Math.Sin(radians);
-		ushort width = (ushort)(model.SizeX * scaleX * Math.Abs(cos) + model.SizeY * scaleY * Math.Abs(sin)),
-			height = (ushort)(model.SizeX * scaleX * Math.Abs(sin) + model.SizeY * scaleY * Math.Abs(cos));
-		double offsetX = (model.SizeX * scaleX >> 1) - cos * (width >> 1) - sin * (height >> 1),
-			offsetY = (model.SizeY * scaleY >> 1) - cos * (height >> 1) + sin * (width >> 1);
+		PixelDraw.RotatedLocate(
+			width: model.SizeX,
+			height: model.SizeY,
+			x: point.X,
+			y: point.Y,
+			out int rotatedX,
+			out int rotatedY,
+			radians: radians,
+			scaleX: scaleX,
+			scaleY: scaleY);
 		return new Point(
-			X: (int)(cos * ((point.X * scaleX) - offsetX) - sin * ((point.Y * scaleY) - offsetY)),
-			Y: (int)(sin * ((point.X * scaleX) - offsetX) + cos * ((point.Y * scaleY) - offsetY) + (model.SizeZ * scaleZ) - 1 - (point.Z * scaleZ)));
+			X: rotatedX,
+			Y: rotatedY + (model.SizeZ * scaleZ) - 1 - (point.Z * scaleZ));
 	}
 	public static void Stacked(IModel model, IRectangleRenderer renderer, double radians = 0d, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, bool peak = false, VisibleFace visibleFace = VisibleFace.Front)
 	{
