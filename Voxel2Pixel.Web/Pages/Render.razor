@@ -158,11 +158,14 @@
 				<MudSelectItem Value="@perspective" />
 			}
 		</MudSelect>
-		@if (SpriteMaker.Perspective.IsPeak())
+		@if (SpriteMaker.Perspective.HasScale())
 		{
 			<MudElement Class="d-inline-flex flex-wrap gap-2">
-				<MudNumericField T="byte" @bind-Value="SpriteMaker.PeakScaleX" Label="Peak Scale X" Variant="Variant.Text" Min="1" Max="255" />
-				<MudNumericField T="byte" @bind-Value="SpriteMaker.PeakScaleY" Label="Peak Scale Y" Variant="Variant.Text" Min="2" Max="255" />
+				<MudNumericField T="byte" @bind-Value="SpriteMaker.ScaleX" Label="Internal Scale X" Variant="Variant.Text" Min="1" Max="255" />
+				<MudNumericField T="byte" @bind-Value="SpriteMaker.ScaleY" Label="Internal Scale Y" Variant="Variant.Text" Min="2" Max="255" />
+				@if (SpriteMaker.Perspective.HasScaleZ()) {
+					<MudNumericField T="byte" @bind-Value="SpriteMaker.ScaleZ" Label="Internal Scale Z" Variant="Variant.Text" Min="2" Max="255" />
+				}
 			</MudElement>
 		}
 		@if (SpriteMaker.Perspective.HasShadow())
@@ -175,7 +178,7 @@
 				}
 			</MudElement>
 		}
-		@if (SpriteMaker.Perspective == Perspective.Stacked)
+		@if (SpriteMaker.Perspective == Perspective.Stacked || SpriteMaker.Perspective == Perspective.StackedPeak)
 		{
 			<MudSlider @bind-Value="@SpriteMaker.Radians" Min="0d" Max="@Math.Tau" Step="double.Epsilon">Radians</MudSlider>
 		}
@@ -190,11 +193,6 @@
 		<CuboidOrientationInput @bind-Value="@SpriteMaker.CuboidOrientation" />
 	</MudTabPanel>
 	<MudTabPanel Text="Post-Processing">
-		<MudElement Class="d-inline-flex flex-wrap gap-2">
-			<MudNumericField T="byte" @bind-Value="SpriteMaker.ScaleX" Label="Scale X" Variant="Variant.Text" Min="1" Max="255" />
-			<MudNumericField T="byte" @bind-Value="SpriteMaker.ScaleY" Label="Scale Y" Variant="Variant.Text" Min="1" Max="255" />
-		</MudElement>
-		<br />
 		<MudElement Class="d-inline-flex flex-wrap gap-2">
 			<MudCheckBox @bind-Value="@SpriteMaker.Outline" Label="Outline" />
 			@if (SpriteMaker.Outline)

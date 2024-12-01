@@ -19,30 +19,6 @@ public class SpriteMaker
 	public IVoxelColor VoxelColor { get; set; }
 	public Dictionary<string, Point3D> Points { get; set; } = [];
 	public Perspective Perspective { get; set; } = Perspective.Iso;
-	public byte PeakScaleX
-	{
-		get => peakScaleX;
-		set
-		{
-			if (value < 1)
-				throw new InvalidDataException();
-			else
-				peakScaleX = value;
-		}
-	}
-	private byte peakScaleX = 6;
-	public byte PeakScaleY
-	{
-		get => peakScaleY;
-		set
-		{
-			if (value < 2)
-				throw new InvalidDataException();
-			else
-				peakScaleY = value;
-		}
-	}
-	private byte peakScaleY = 6;
 	public bool FlipX { get; set; } = false;
 	public bool FlipY { get; set; } = false;
 	public bool FlipZ { get; set; } = false;
@@ -71,6 +47,18 @@ public class SpriteMaker
 		}
 	}
 	private byte scaleY = 1;
+	public byte ScaleZ
+	{
+		get => scaleZ;
+		set
+		{
+			if (value < 1)
+				throw new InvalidDataException();
+			else
+				scaleZ = value;
+		}
+	}
+	private byte scaleZ = 1;
 	public byte FinalScaleX
 	{
 		get => finalScaleX;
@@ -111,14 +99,13 @@ public class SpriteMaker
 		VoxelColor = maker.VoxelColor;
 		Points = new(maker.Points);
 		Perspective = maker.Perspective;
-		PeakScaleX = maker.PeakScaleX;
-		PeakScaleY = maker.PeakScaleY;
 		FlipX = maker.FlipX;
 		FlipY = maker.FlipY;
 		FlipZ = maker.FlipZ;
 		CuboidOrientation = maker.CuboidOrientation;
 		ScaleX = maker.ScaleX;
 		ScaleY = maker.ScaleY;
+		ScaleZ = maker.ScaleZ;
 		FinalScaleX = maker.FinalScaleX;
 		FinalScaleY = maker.FinalScaleY;
 		Shadow = maker.Shadow;
@@ -134,14 +121,13 @@ public class SpriteMaker
 	public SpriteMaker Set(IModel model) { Model = model; return this; }
 	public SpriteMaker Set(IVoxelColor voxelColor) { VoxelColor = voxelColor; return this; }
 	public SpriteMaker Set(Perspective perspective) { Perspective = perspective; return this; }
-	public SpriteMaker SetPeakScaleX(byte peakScaleX) { PeakScaleX = peakScaleX; return this; }
-	public SpriteMaker SetPeakScaleY(byte peakScaleY) { PeakScaleY = peakScaleY; return this; }
 	public SpriteMaker SetFlipX(bool flipX) { FlipX = flipX; return this; }
 	public SpriteMaker SetFlipY(bool flipY) { FlipY = flipY; return this; }
 	public SpriteMaker SetFlipZ(bool flipZ) { FlipZ = flipZ; return this; }
 	public SpriteMaker Set(CuboidOrientation cuboidOrientation) { CuboidOrientation = cuboidOrientation; return this; }
 	public SpriteMaker SetScaleX(byte scaleX) { ScaleX = scaleX; return this; }
 	public SpriteMaker SetScaleY(byte scaleY) { ScaleY = scaleY; return this; }
+	public SpriteMaker SetScaleZ(byte scaleZ) { ScaleZ = scaleZ; return this; }
 	public SpriteMaker SetFinalScaleX(byte finalScaleX) { FinalScaleX = finalScaleX; return this; }
 	public SpriteMaker SetFinalScaleY(byte finalScaleY) { FinalScaleY = finalScaleY; return this; }
 	public SpriteMaker SetShadow(bool shadow) { Shadow = shadow; return this; }
@@ -231,12 +217,13 @@ public class SpriteMaker
 		Point size = VoxelDraw.Size(
 			perspective: maker.Perspective,
 			model: maker.Model,
-			scaleX: maker.PeakScaleX,
-			scaleY: maker.PeakScaleY,
+			scaleX: maker.ScaleX,
+			scaleY: maker.ScaleY,
+			scaleZ: maker.ScaleZ,
 			radians: maker.Radians);
 		Sprite sprite = new(
-			width: (ushort)(size.X * maker.ScaleX + (maker.Outline ? 2 : 0)),
-			height: (ushort)(size.Y * maker.ScaleX + (maker.Outline ? 2 : 0)))
+			width: (ushort)(size.X + (maker.Outline ? 2 : 0)),
+			height: (ushort)(size.Y + (maker.Outline ? 2 : 0)))
 		{
 			VoxelColor = maker.VoxelColor,
 		};
@@ -251,8 +238,9 @@ public class SpriteMaker
 				ScaleX = maker.ScaleX,
 				ScaleY = maker.ScaleY,
 			},
-			scaleX: maker.PeakScaleX,
-			scaleY: maker.PeakScaleY,
+			scaleX: maker.ScaleX,
+			scaleY: maker.ScaleY,
+			scaleZ: maker.ScaleZ,
 			radians: maker.Radians);
 		if (maker.Outline)
 			sprite = sprite.Outline(
@@ -264,7 +252,7 @@ public class SpriteMaker
 			sprite.Texture = new byte[sprite.Texture.Length];
 			//sprite.Rect(0, 0, 0xFF0000FFu, sprite.Width, sprite.Height);
 			Perspective shadowPerspective = maker.Perspective == Perspective.Iso ? Perspective.IsoShadow : Perspective.Underneath;
-			if (maker.Perspective == Perspective.Stacked)
+			if (maker.Perspective == Perspective.Stacked || maker.Perspective == Perspective.StackedPeak)
 			{
 				Sprite shadow = new SpriteMaker(maker)
 					.Set(shadowPerspective)
@@ -274,17 +262,20 @@ public class SpriteMaker
 					.SetScaleX(1)
 					.SetScaleY(1)
 					.Make();
-				Point shadowSize = shadow.RotatedSize(maker.Radians);
+				Point shadowSize = shadow.RotatedSize(
+					radians: maker.Radians,
+					scaleX: maker.ScaleX,
+					scaleY: maker.ScaleY);
 				shadow.Rotate(
 					radians: maker.Radians,
 					renderer: new OffsetRenderer
 					{
 						RectangleRenderer = sprite,
 						OffsetX = maker.Outline ? 1 : 0,
-						OffsetY = maker.Model.SizeZ - 1 + (maker.Outline ? 1 : 0),
-						ScaleX = maker.ScaleX,
-						ScaleY = maker.ScaleY,
-					});
+						OffsetY = (maker.Model.SizeZ * maker.ScaleZ) - 1 + (maker.Outline ? 1 : 0),
+					},
+					scaleX: maker.ScaleX,
+					scaleY: maker.ScaleY);
 			}
 			else
 			{
@@ -318,8 +309,9 @@ public class SpriteMaker
 				perspective: maker.Perspective,
 				model: maker.Model,
 				point: point3D,
-				scaleX: maker.PeakScaleX,
-				scaleY: maker.PeakScaleY,
+				scaleX: maker.ScaleX,
+				scaleY: maker.ScaleY,
+				scaleZ: maker.ScaleZ,
 				radians: maker.Radians);
 			return new Point(
 				X: point.X * maker.ScaleX + (maker.Outline ? 1 : 0),
@@ -410,10 +402,10 @@ public class SpriteMaker
 		return dictionary;
 	}
 	public const double Tau = 2d * Math.PI;
-	public IEnumerable<SpriteMaker> Stacks(ushort quantity = 24)
+	public IEnumerable<SpriteMaker> Stacks(bool peak = false, ushort quantity = 24)
 	{
 		SpriteMaker maker = Reoriented()
-			.Set(Perspective.Stacked);
+			.Set(peak ? Perspective.StackedPeak : Perspective.Stacked);
 		for (ushort i = 0; i < quantity; i++)
 			yield return new SpriteMaker(maker)
 				.SetRadians(Radians + Tau * ((double)i / quantity));
@@ -444,14 +436,14 @@ public class SpriteMaker
 			.Select(i => new Task<Sprite>(() =>
 			shadow.Rotate(Radians + Tau * ((double)i / quantity))));
 	}
-	public Sprite StacksTextureAtlas(out TextureAtlas textureAtlas, string name = "SpriteStack", ushort quantity = 24) => new(dictionary: StacksTextureAtlas(name, quantity), textureAtlas: out textureAtlas);
-	public Dictionary<string, Sprite> StacksTextureAtlas(string name = "SpriteStack", ushort quantity = 24)
+	public Sprite StacksTextureAtlas(out TextureAtlas textureAtlas, string name = "SpriteStack", bool peak = false, ushort quantity = 24) => new(dictionary: StacksTextureAtlas(name, peak, quantity), textureAtlas: out textureAtlas);
+	public Dictionary<string, Sprite> StacksTextureAtlas(string name = "SpriteStack", bool peak = false, ushort quantity = 24)
 	{
 		Dictionary<string, Sprite> dictionary = [];
 		byte direction = 0;
 		foreach (Sprite sprite in new SpriteMaker(this)
 			.SetShadow(false)
-			.Stacks(quantity)
+			.Stacks(peak: peak, quantity: quantity)
 			.Make())
 			dictionary.Add(name + direction++, sprite);
 		direction = 0;

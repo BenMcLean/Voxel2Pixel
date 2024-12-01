@@ -8,5 +8,5 @@ namespace Voxel2Pixel.Interfaces;
 /// </summary>
 public interface ISpecializedModel : IModel
 {
-	void Draw(IRenderer renderer, Perspective perspective, byte peakScaleX = 6, byte peakScaleY = 6, double radians = 0d);
+	void Draw(IRenderer renderer, Perspective perspective, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, double radians = 0d);
 }

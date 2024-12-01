@@ -2,7 +2,7 @@
 
 namespace Voxel2Pixel.Render;
 
-public class OffsetRenderer : Renderer
+public class OffsetRenderer : ColoredRenderer
 {
 	public IRectangleRenderer RectangleRenderer
 	{

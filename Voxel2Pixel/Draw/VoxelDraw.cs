@@ -17,7 +17,7 @@ namespace Voxel2Pixel.Draw;
 public static class VoxelDraw
 {
 	#region Perspectives
-	public static void Draw(this IModel model, IRenderer renderer, Perspective perspective, byte scaleX = 6, byte scaleY = 6, double radians = 0d)
+	public static void Draw(this IModel model, IRenderer renderer, Perspective perspective, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, double radians = 0d)
 	{
 		switch (perspective)
 		{
@@ -50,28 +50,36 @@ public static class VoxelDraw
 				IsoShadow(model, renderer);
 				break;
 			case Perspective.Stacked:
-				Stacked(model, renderer, radians);
+			case Perspective.StackedPeak:
+				Stacked(model, renderer, radians, scaleX, scaleY, scaleZ, perspective == Perspective.StackedPeak);
 				break;
 			case Perspective.ZSlices:
-				ZSlices(model, renderer);
+			case Perspective.ZSlicesPeak:
+				ZSlices(model, renderer, perspective == Perspective.ZSlicesPeak);
 				break;
 		}
 	}
-	public static Point Size(this IModel model, Perspective perspective, byte scaleX = 6, byte scaleY = 6, double radians = 0d) => perspective switch
+	public static Point Size(this IModel model, Perspective perspective, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, double radians = 0d)
 	{
-		Perspective.FrontPeak => FrontPeakSize(model, scaleX, scaleY),
-		Perspective.Overhead => OverheadSize(model),
-		Perspective.Underneath => UnderneathSize(model),
-		Perspective.Diagonal => DiagonalSize(model),
-		Perspective.DiagonalPeak => DiagonalPeakSize(model, scaleX, scaleY),
-		Perspective.Above => AboveSize(model),
-		Perspective.Iso => IsoSize(model),
-		Perspective.IsoShadow => IsoShadowSize(model),
-		Perspective.Stacked => StackedSize(model, radians),
-		Perspective.ZSlices => ZSlicesSize(model),
-		_ => FrontSize(model),
-	};
-	public static Point Locate(this IModel model, Perspective perspective, Point3D point, byte scaleX = 6, byte scaleY = 6, double radians = 0d)
+		Point size = perspective switch
+		{
+			Perspective.FrontPeak => FrontPeakSize(model, scaleX, scaleY),
+			Perspective.Overhead => OverheadSize(model),
+			Perspective.Underneath => UnderneathSize(model),
+			Perspective.Diagonal => DiagonalSize(model),
+			Perspective.DiagonalPeak => DiagonalPeakSize(model, scaleX, scaleY),
+			Perspective.Above => AboveSize(model),
+			Perspective.Iso => IsoSize(model),
+			Perspective.IsoShadow => IsoShadowSize(model),
+			Perspective.Stacked => StackedSize(model, radians, scaleX, scaleY, scaleZ),
+			Perspective.StackedPeak => StackedSize(model, radians, scaleX, scaleY, scaleZ),
+			Perspective.ZSlices => ZSlicesSize(model),
+			Perspective.ZSlicesPeak => ZSlicesSize(model),
+			_ => FrontSize(model),
+		};
+		return perspective.HasScale() ? size : new Point(X: size.X * scaleX, Y: size.Y * scaleY);
+	}
+	public static Point Locate(this IModel model, Perspective perspective, Point3D point, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, double radians = 0d)
 	{
 		Point result;
 		switch (perspective)
@@ -95,8 +103,10 @@ public static class VoxelDraw
 			case Perspective.IsoShadow:
 				return IsoShadowLocate(model, point);
 			case Perspective.Stacked:
-				return StackedLocate(model, point, radians);
+			case Perspective.StackedPeak:
+				return StackedLocate(model, point, radians, scaleX, scaleY, scaleZ);
 			case Perspective.ZSlices:
+			case Perspective.ZSlicesPeak:
 				return ZSlicesLocate(model, point);
 		}
 		return perspective.IsPeak() ? new()
@@ -154,6 +164,8 @@ public static class VoxelDraw
 	public static Point FrontPeakSize(IModel model, byte scaleX = 6, byte scaleY = 6) => new(model.SizeX * scaleX, model.SizeZ * scaleY);
 	public static void FrontPeak(IModel model, IRectangleRenderer renderer, byte scaleX = 6, byte scaleY = 6)
 	{
+		if (scaleX < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleX));
+		if (scaleY < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleY));
 		ushort voxelWidth = model.SizeX,
 			voxelHeight = model.SizeZ;
 		Voxel?[] grid = new Voxel?[voxelWidth * voxelHeight];
@@ -299,6 +311,8 @@ public static class VoxelDraw
 		Y: model.SizeZ * scaleY);
 	public static void DiagonalPeak(IModel model, IRectangleRenderer renderer, byte scaleX = 6, byte scaleY = 6)
 	{
+		if (scaleX < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleX));
+		if (scaleY < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleY));
 		ushort voxelWidth = model.SizeX,
 			voxelDepth = model.SizeY,
 			voxelHeight = model.SizeZ,
@@ -619,15 +633,17 @@ public static class VoxelDraw
 	}
 	#endregion Isometric
 	#region Stacked
-	public static Point ZSliceSize(IModel model, double radians = 0d)
+	public static Point ZSliceSize(IModel model, double radians = 0d, byte scaleX = 1, byte scaleY = 1)
 	{
+		if (scaleX < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleX));
+		if (scaleY < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleY));
 		double cos = Math.Abs(Math.Cos(radians)),
 			sin = Math.Abs(Math.Sin(radians));
 		return new Point(
-			X: (int)(model.SizeX * cos + model.SizeY * sin),
-			Y: (int)(model.SizeX * sin + model.SizeY * cos));
+			X: (int)(model.SizeX * scaleX * cos + model.SizeY * scaleY * sin),
+			Y: (int)(model.SizeX * scaleX * sin + model.SizeY * scaleY * cos));
 	}
-	public static void ZSlice(IModel model, IRectangleRenderer renderer, ushort z = 0, VisibleFace visibleFace = VisibleFace.Front)
+	public static void ZSlice(IModel model, IRectangleRenderer renderer, ushort z = 0, bool peak = false, VisibleFace visibleFace = VisibleFace.Front)
 	{
 		for (ushort y = 0; y < model.SizeY; y++)
 			for (ushort x = 0; x < model.SizeX; x++)
@@ -636,62 +652,138 @@ public static class VoxelDraw
 						x: x,
 						y: y,
 						index: index,
-						visibleFace: visibleFace);
+						visibleFace: peak && (z == model.SizeZ - 1
+							|| model[x, (ushort)(model.SizeY - 1 - y), (ushort)(z + 1)] == 0) ?
+							VisibleFace.Top
+							: visibleFace);
 	}
-	public static void ZSlice(IModel model, IRectangleRenderer renderer, double radians, ushort z = 0, VisibleFace visibleFace = VisibleFace.Front)
+	public static void ZSlice(IModel model, IRectangleRenderer renderer, double radians, ushort z = 0, byte scaleX = 1, byte scaleY = 1, bool peak = false, VisibleFace visibleFace = VisibleFace.Front)
 	{
 		Point size = ZSliceSize(model, radians);
 		double cos = Math.Cos(radians),
 			sin = Math.Sin(radians),
-			offsetX = (model.SizeX >> 1) - cos * (size.X >> 1) - sin * (size.Y >> 1),
+			offsetX,
+			offsetY;
+		if (scaleX == 1 && scaleY == 1)
+		{
+			offsetX = (model.SizeX >> 1) - cos * (size.X >> 1) - sin * (size.Y >> 1);
 			offsetY = (model.SizeY >> 1) - cos * (size.Y >> 1) + sin * (size.X >> 1);
+			for (ushort y = 0; y < size.Y; y++)
+				for (ushort x = 0; x < size.X; x++)
+					if ((int)(x * cos + y * sin + offsetX) is int oldX
+						&& oldX >= 0 && oldX < model.SizeX
+						&& (int)(y * cos - x * sin + offsetY) is int oldY
+						&& oldY >= 0 && oldY < model.SizeY
+						&& model[(ushort)oldX, (ushort)(model.SizeY - 1 - oldY), z] is byte index && index != 0)
+						renderer.Rect(
+							x: x,
+							y: y,
+							index: index,
+							visibleFace: peak && (z == model.SizeZ - 1
+								|| model[(ushort)oldX, (ushort)(model.SizeY - 1 - oldY), (ushort)(z + 1)] == 0) ?
+								VisibleFace.Top
+								: visibleFace);
+			return;
+		}
+		if (scaleX < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleX));
+		if (scaleY < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleY));
+		offsetX = (model.SizeX * scaleX >> 1) - cos * (size.X >> 1) - sin * (size.Y >> 1);
+		offsetY = (model.SizeY * scaleY >> 1) - cos * (size.Y >> 1) + sin * (size.X >> 1);
 		for (ushort y = 0; y < size.Y; y++)
 			for (ushort x = 0; x < size.X; x++)
-				if ((int)(x * cos + y * sin + offsetX) is int oldX
+				if ((int)((x * cos + y * sin + offsetX) / scaleX) is int oldX
 					&& oldX >= 0 && oldX < model.SizeX
-					&& (int)(y * cos - x * sin + offsetY) is int oldY
+					&& (int)((y * cos - x * sin + offsetY) / scaleY) is int oldY
 					&& oldY >= 0 && oldY < model.SizeY
 					&& model[(ushort)oldX, (ushort)(model.SizeY - 1 - oldY), z] is byte index && index != 0)
 					renderer.Rect(
 						x: x,
 						y: y,
 						index: index,
-						visibleFace: visibleFace);
+						visibleFace: peak && (z == model.SizeZ - 1
+							|| model[(ushort)oldX, (ushort)(model.SizeY - 1 - oldY), (ushort)(z + 1)] == 0) ?
+							VisibleFace.Top
+							: visibleFace);
 	}
-	public static Point StackedSize(this IModel model, double radians = 0d)
+	public static Point StackedSize(this IModel model, double radians = 0d, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1)
 	{
 		double cos = Math.Abs(Math.Cos(radians)),
 			sin = Math.Abs(Math.Sin(radians));
 		return new Point(
-			X: (int)(model.SizeX * cos + model.SizeY * sin),
-			Y: (int)(model.SizeX * sin + model.SizeY * cos) + model.SizeZ - 1);
+			X: (int)(model.SizeX * scaleX * cos + model.SizeY * scaleY * sin),
+			Y: (int)(model.SizeX * scaleX * sin + model.SizeY * scaleY * cos) + (model.SizeZ * scaleZ) - 1);
 	}
-	public static Point StackedLocate(IModel model, Point3D point, double radians = 0d)
+	public static Point StackedLocate(IModel model, Point3D point, double radians = 0d, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1)
 	{
+		if (scaleX < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleX));
+		if (scaleY < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleY));
+		if (scaleZ < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleZ));
 		double cos = Math.Cos(radians),
 			sin = Math.Sin(radians);
-		ushort width = (ushort)(model.SizeX * Math.Abs(cos) + model.SizeY * Math.Abs(sin)),
-			height = (ushort)(model.SizeX * Math.Abs(sin) + model.SizeY * Math.Abs(cos));
-		double offsetX = (model.SizeX >> 1) - cos * (width >> 1) - sin * (height >> 1),
-			offsetY = (model.SizeY >> 1) - cos * (height >> 1) + sin * (width >> 1);
+		ushort width = (ushort)(model.SizeX * scaleX * Math.Abs(cos) + model.SizeY * scaleY * Math.Abs(sin)),
+			height = (ushort)(model.SizeX * scaleX * Math.Abs(sin) + model.SizeY * scaleY * Math.Abs(cos));
+		double offsetX = (model.SizeX * scaleX >> 1) - cos * (width >> 1) - sin * (height >> 1),
+			offsetY = (model.SizeY * scaleY >> 1) - cos * (height >> 1) + sin * (width >> 1);
 		return new Point(
-			X: (int)(cos * (point.X - offsetX) - sin * (point.Y - offsetY)),
-			Y: (int)(sin * (point.X - offsetX) + cos * (point.Y - offsetY) + model.SizeX - 1 - point.Z));
+			X: (int)(cos * ((point.X * scaleX) - offsetX) - sin * ((point.Y * scaleY) - offsetY)),
+			Y: (int)(sin * ((point.X * scaleX) - offsetX) + cos * ((point.Y * scaleY) - offsetY) + (model.SizeZ * scaleZ) - 1 - (point.Z * scaleZ)));
 	}
-	public static void Stacked(IModel model, IRectangleRenderer renderer, double radians = 0d, VisibleFace visibleFace = VisibleFace.Front)
+	public static void Stacked(IModel model, IRectangleRenderer renderer, double radians = 0d, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, bool peak = false, VisibleFace visibleFace = VisibleFace.Front)
 	{
+		if (scaleX < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleX));
+		if (scaleY < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleY));
+		if (scaleZ < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleZ));
 		OffsetRenderer offsetRenderer = new()
 		{
 			RectangleRenderer = renderer,
-			OffsetY = model.SizeZ - 1,
 		};
-		for (ushort z = 0; z < model.SizeZ; z++, offsetRenderer.OffsetY--)
-			ZSlice(
-				model: model,
-				renderer: offsetRenderer,
-				radians: radians,
-				z: z,
-				visibleFace: visibleFace);
+		if (scaleZ == 1)
+		{
+			offsetRenderer.OffsetY = model.SizeZ - 1;
+			for (ushort z = 0; z < model.SizeZ; z++, offsetRenderer.OffsetY--)
+				ZSlice(
+					model: model,
+					renderer: offsetRenderer,
+					radians: radians,
+					z: z,
+					scaleX: scaleX,
+					scaleY: scaleY,
+					peak: peak,
+					visibleFace: visibleFace);
+			return;
+		}
+		(MemoryRenderer, MemoryRenderer)[] memories = [.. Enumerable.Range(0, model.SizeZ)
+			.Parallelize(z => {
+				MemoryRenderer memoryRenderer = [];
+				ZSlice(
+					model: model,
+					renderer: memoryRenderer,
+					radians: radians,
+					z: (ushort)z,
+					scaleX: scaleX,
+					scaleY: scaleY,
+					visibleFace: visibleFace);
+				if (!peak)
+					return (memoryRenderer, memoryRenderer);
+				MemoryRenderer peakRenderer = [];
+				ZSlice(
+					model: model,
+					renderer: peakRenderer,
+					radians: radians,
+					z: (ushort)z,
+					scaleX: scaleX,
+					scaleY: scaleY,
+					peak: true,
+					visibleFace: visibleFace);
+				return (memoryRenderer, peakRenderer);
+			})];
+		offsetRenderer.OffsetY = (ushort)((model.SizeZ * scaleZ) - 1);
+		for (ushort z = 0; z < model.SizeZ; z += scaleZ)
+			for (ushort offsetY = 0; offsetY < scaleZ; offsetY++, offsetRenderer.OffsetY--)
+				if (offsetY == scaleZ - 1)
+					memories[z].Item2.Rect(offsetRenderer);
+				else
+					memories[z].Item1.Rect(offsetRenderer);
 	}
 	public static Point ZSlicesSize(IModel model) => new(
 		X: model.SizeX * model.SizeZ,
@@ -699,7 +791,7 @@ public static class VoxelDraw
 	public static Point ZSlicesLocate(IModel model, Point3D point) => new(
 		X: model.SizeX * point.Z + point.X,
 		Y: point.Y);
-	public static void ZSlices(IModel model, IRectangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Front)
+	public static void ZSlices(IModel model, IRectangleRenderer renderer, bool peak = false, VisibleFace visibleFace = VisibleFace.Front)
 	{
 		OffsetRenderer offsetRenderer = new()
 		{
@@ -710,7 +802,8 @@ public static class VoxelDraw
 				model: model,
 				renderer: offsetRenderer,
 				z: z,
-				visibleFace: visibleFace);
+				visibleFace: visibleFace,
+				peak: peak);
 	}
 	#endregion Stacked
 }

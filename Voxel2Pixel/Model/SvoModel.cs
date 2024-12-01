@@ -38,7 +38,7 @@ public class SvoModel : BenVoxel.SvoModel, ISpecializedModel
 	public SvoModel(ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : base(sizeX, sizeY, sizeZ) { }
 	#endregion SvoModel
 	#region ISpecializedModel
-	public void Draw(IRenderer renderer, Perspective perspective, byte peakScaleX = 6, byte peakScaleY = 6, double radians = 0d)
+	public void Draw(IRenderer renderer, Perspective perspective, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, double radians = 0d)
 	{
 		switch (perspective)
 		{
@@ -52,7 +52,7 @@ public class SvoModel : BenVoxel.SvoModel, ISpecializedModel
 				Above(renderer);
 				break;
 			default:
-				VoxelDraw.Draw(this, renderer, perspective, peakScaleX, peakScaleY, radians);
+				VoxelDraw.Draw(this, renderer, perspective, scaleX, scaleY, scaleZ, radians);
 				break;
 		}
 	}

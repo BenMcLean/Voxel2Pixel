@@ -117,7 +117,7 @@ namespace Voxel2Pixel.Test.Render
 				Shadow = true,
 			}
 				.SetShadowColor(0xFFu)
-				.Stacks(24)
+				.Stacks(true, 24)
 				.Parallelize(spriteMaker => spriteMaker
 					.Make()
 					.DrawPoint())
