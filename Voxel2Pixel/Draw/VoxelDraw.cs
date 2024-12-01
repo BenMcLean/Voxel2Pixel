@@ -794,7 +794,7 @@ public static class VoxelDraw
 				return (memoryRenderer, peakRenderer);
 			})];
 		offsetRenderer.OffsetY = (ushort)((model.SizeZ * scaleZ) - 1);
-		for (ushort z = 0; z < model.SizeZ; z += scaleZ)
+		for (ushort z = 0; z < model.SizeZ; z++)
 			for (ushort offsetY = 0; offsetY < scaleZ; offsetY++, offsetRenderer.OffsetY--)
 				if (offsetY == scaleZ - 1)
 					memories[z].Item2.Rect(offsetRenderer);
