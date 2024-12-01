@@ -235,8 +235,8 @@ public class SpriteMaker
 				RectangleRenderer = sprite,
 				OffsetX = maker.Outline ? 1 : 0,
 				OffsetY = maker.Outline ? 1 : 0,
-				ScaleX = maker.ScaleX,
-				ScaleY = maker.ScaleY,
+				ScaleX = maker.Perspective.IsInternallyScaled() ? 1 : maker.ScaleX,
+				ScaleY = maker.Perspective.IsInternallyScaled() ? 1 : maker.ScaleY,
 			},
 			scaleX: maker.ScaleX,
 			scaleY: maker.ScaleY,
@@ -314,8 +314,8 @@ public class SpriteMaker
 				scaleZ: maker.ScaleZ,
 				radians: maker.Radians);
 			return new Point(
-				X: point.X * maker.ScaleX + (maker.Outline ? 1 : 0),
-				Y: point.Y * maker.ScaleY + (maker.Outline ? 1 : 0));
+				X: point.X + (maker.Outline ? 1 : 0),
+				Y: point.Y + (maker.Outline ? 1 : 0));
 		}
 		sprite.SetRange(points.Select(point => new KeyValuePair<string, Point>(point.Key, Point(point.Value))));
 		if (maker.Crop)

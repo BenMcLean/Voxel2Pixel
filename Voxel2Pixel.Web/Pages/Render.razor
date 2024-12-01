@@ -134,7 +134,7 @@
 		ImageString = SpriteMaker
 			.Set(Model)
 			.Set(new NaiveDimmer(Palette))
-			.Stacks()
+			.Stacks(true)
 			.Make()
 			.AnimatedGif(25)
 			.ToBase64String(GifFormat.Instance);
@@ -158,16 +158,14 @@
 				<MudSelectItem Value="@perspective" />
 			}
 		</MudSelect>
-		@if (SpriteMaker.Perspective.HasScale())
-		{
-			<MudElement Class="d-inline-flex flex-wrap gap-2">
-				<MudNumericField T="byte" @bind-Value="SpriteMaker.ScaleX" Label="Internal Scale X" Variant="Variant.Text" Min="1" Max="255" />
-				<MudNumericField T="byte" @bind-Value="SpriteMaker.ScaleY" Label="Internal Scale Y" Variant="Variant.Text" Min="2" Max="255" />
-				@if (SpriteMaker.Perspective.HasScaleZ()) {
-					<MudNumericField T="byte" @bind-Value="SpriteMaker.ScaleZ" Label="Internal Scale Z" Variant="Variant.Text" Min="2" Max="255" />
-				}
-			</MudElement>
-		}
+		<MudElement Class="d-inline-flex flex-wrap gap-2">
+			<MudNumericField T="byte" @bind-Value="SpriteMaker.ScaleX" Label="Internal Scale X" Variant="Variant.Text" Min="1" Max="255" />
+			<MudNumericField T="byte" @bind-Value="SpriteMaker.ScaleY" Label="Internal Scale Y" Variant="Variant.Text" Min="1" Max="255" />
+			@if (SpriteMaker.Perspective.HasScaleZ())
+			{
+				<MudNumericField T="byte" @bind-Value="SpriteMaker.ScaleZ" Label="Internal Scale Z" Variant="Variant.Text" Min="1" Max="255" />
+			}
+		</MudElement>
 		@if (SpriteMaker.Perspective.HasShadow())
 		{
 			<MudElement Class="d-inline-flex flex-wrap gap-2">

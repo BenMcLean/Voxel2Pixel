@@ -77,7 +77,7 @@ public static class VoxelDraw
 			Perspective.ZSlicesPeak => ZSlicesSize(model),
 			_ => FrontSize(model),
 		};
-		return perspective.HasScale() ? size : new Point(X: size.X * scaleX, Y: size.Y * scaleY);
+		return perspective.IsInternallyScaled() ? size : new Point(X: size.X * scaleX, Y: size.Y * scaleY);
 	}
 	public static Point Locate(this IModel model, Perspective perspective, Point3D point, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, double radians = 0d)
 	{
@@ -164,8 +164,8 @@ public static class VoxelDraw
 	public static Point FrontPeakSize(IModel model, byte scaleX = 6, byte scaleY = 6) => new(model.SizeX * scaleX, model.SizeZ * scaleY);
 	public static void FrontPeak(IModel model, IRectangleRenderer renderer, byte scaleX = 6, byte scaleY = 6)
 	{
-		if (scaleX < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleX));
-		if (scaleY < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleY));
+		if (scaleX < 1) throw new ArgumentOutOfRangeException(nameof(scaleX));
+		if (scaleY < 1) throw new ArgumentOutOfRangeException(nameof(scaleY));
 		ushort voxelWidth = model.SizeX,
 			voxelHeight = model.SizeZ;
 		Voxel?[] grid = new Voxel?[voxelWidth * voxelHeight];
@@ -311,8 +311,8 @@ public static class VoxelDraw
 		Y: model.SizeZ * scaleY);
 	public static void DiagonalPeak(IModel model, IRectangleRenderer renderer, byte scaleX = 6, byte scaleY = 6)
 	{
-		if (scaleX < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleX));
-		if (scaleY < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleY));
+		if (scaleX < 1) throw new ArgumentOutOfRangeException(nameof(scaleX));
+		if (scaleY < 1) throw new ArgumentOutOfRangeException(nameof(scaleY));
 		ushort voxelWidth = model.SizeX,
 			voxelDepth = model.SizeY,
 			voxelHeight = model.SizeZ,
@@ -635,8 +635,8 @@ public static class VoxelDraw
 	#region Stacked
 	public static Point ZSliceSize(IModel model, double radians = 0d, byte scaleX = 1, byte scaleY = 1)
 	{
-		if (scaleX < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleX));
-		if (scaleY < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleY));
+		if (scaleX < 1) throw new ArgumentOutOfRangeException(nameof(scaleX));
+		if (scaleY < 1) throw new ArgumentOutOfRangeException(nameof(scaleY));
 		double cos = Math.Abs(Math.Cos(radians)),
 			sin = Math.Abs(Math.Sin(radians));
 		return new Point(
@@ -685,8 +685,8 @@ public static class VoxelDraw
 								: visibleFace);
 			return;
 		}
-		if (scaleX < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleX));
-		if (scaleY < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleY));
+		if (scaleX < 1) throw new ArgumentOutOfRangeException(nameof(scaleX));
+		if (scaleY < 1) throw new ArgumentOutOfRangeException(nameof(scaleY));
 		offsetX = (model.SizeX * scaleX >> 1) - cos * (size.X >> 1) - sin * (size.Y >> 1);
 		offsetY = (model.SizeY * scaleY >> 1) - cos * (size.Y >> 1) + sin * (size.X >> 1);
 		for (ushort y = 0; y < size.Y; y++)
@@ -715,9 +715,9 @@ public static class VoxelDraw
 	}
 	public static Point StackedLocate(IModel model, Point3D point, double radians = 0d, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1)
 	{
-		if (scaleX < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleX));
-		if (scaleY < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleY));
-		if (scaleZ < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleZ));
+		if (scaleX < 1) throw new ArgumentOutOfRangeException(nameof(scaleX));
+		if (scaleY < 1) throw new ArgumentOutOfRangeException(nameof(scaleY));
+		if (scaleZ < 1) throw new ArgumentOutOfRangeException(nameof(scaleZ));
 		double cos = Math.Cos(radians),
 			sin = Math.Sin(radians);
 		ushort width = (ushort)(model.SizeX * scaleX * Math.Abs(cos) + model.SizeY * scaleY * Math.Abs(sin)),
@@ -730,9 +730,9 @@ public static class VoxelDraw
 	}
 	public static void Stacked(IModel model, IRectangleRenderer renderer, double radians = 0d, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, bool peak = false, VisibleFace visibleFace = VisibleFace.Front)
 	{
-		if (scaleX < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleX));
-		if (scaleY < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleY));
-		if (scaleZ < 1) throw new ArgumentException(message: "Value must be positive.", paramName: nameof(scaleZ));
+		if (scaleX < 1) throw new ArgumentOutOfRangeException(nameof(scaleX));
+		if (scaleY < 1) throw new ArgumentOutOfRangeException(nameof(scaleY));
+		if (scaleZ < 1) throw new ArgumentOutOfRangeException(nameof(scaleZ));
 		OffsetRenderer offsetRenderer = new()
 		{
 			RectangleRenderer = renderer,

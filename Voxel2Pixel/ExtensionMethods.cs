@@ -31,7 +31,7 @@ public static class ExtensionMethods
 		|| perspective == Perspective.DiagonalPeak
 		|| perspective == Perspective.StackedPeak
 		|| perspective == Perspective.ZSlicesPeak;
-	public static bool HasScale(this Perspective perspective) => IsPeak(perspective) || perspective == Perspective.Stacked;
+	public static bool IsInternallyScaled(this Perspective perspective) => IsPeak(perspective) || perspective == Perspective.Stacked;
 	public static bool HasScaleZ(this Perspective perspective) => perspective == Perspective.Stacked || perspective == Perspective.StackedPeak;
 	public static bool HasShadow(this Perspective perspective) => perspective == Perspective.Above || perspective == Perspective.Iso || perspective == Perspective.Stacked || perspective == Perspective.StackedPeak;
 	#region PLINQ
