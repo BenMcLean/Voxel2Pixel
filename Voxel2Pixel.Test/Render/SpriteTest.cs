@@ -97,7 +97,7 @@ namespace Voxel2Pixel.Test.Render
 			sprite["dot"] = new Voxel2Pixel.Model.Point(sprite.Width / 4, 3 * sprite.Height / 4);
 			int numSprites = 64;
 			Enumerable.Range(0, numSprites)
-				.Select(i => sprite
+				.Parallelize(i => sprite
 					.Rotate(Math.Tau * ((double)i / numSprites))
 					.DrawPoint("dot"))
 				.Select(Origin0)

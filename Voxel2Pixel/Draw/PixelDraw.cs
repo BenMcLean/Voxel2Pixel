@@ -334,8 +334,8 @@ public static class PixelDraw
 			calculatedHeight = scaledWidth * absSin + scaledHeight * absCos;
 		if (calculatedWidth > ushort.MaxValue || calculatedHeight > ushort.MaxValue)
 			throw new OverflowException("Resulting image dimensions exceed maximum allowed size.");
-		double scaledX = x * scaleX - scaledWidth / 2d,
-			scaledY = y * scaleY - scaledHeight / 2d,
+		double scaledX = (x + 0.5d) * scaleX - scaledWidth / 2d,
+			scaledY = (y + 0.5d) * scaleY - scaledHeight / 2d,
 			rotatedXd = scaledX * cos - scaledY * sin + calculatedWidth / 2d,
 			rotatedYd = scaledX * sin + scaledY * cos + calculatedHeight / 2d;
 		rotatedX = (ushort)rotatedXd;
@@ -350,9 +350,11 @@ public static class PixelDraw
 		if (scaleY < 1) throw new ArgumentOutOfRangeException(nameof(scaleY));
 		if (width < 1)
 			width = (ushort)Math.Sqrt(texture.Length >> 2);
+		if (width > ushort.MaxValue / scaleX)
+			throw new OverflowException("Scaled width exceeds maximum allowed size.");
 		ushort height = Height(texture.Length, width);
-		if (width * (uint)scaleX > ushort.MaxValue || height * (uint)scaleY > ushort.MaxValue)
-			throw new OverflowException("Scaled dimensions exceed maximum allowed size.");
+		if (height > ushort.MaxValue / scaleY)
+			throw new OverflowException("Scaled height exceeds maximum allowed size.");
 		ushort scaledWidth = (ushort)(width * scaleX),
 			scaledHeight = (ushort)(height * scaleY);
 		radians %= Tau;
@@ -360,15 +362,17 @@ public static class PixelDraw
 			sin = Math.Sin(radians),
 			absCos = Math.Abs(cos),
 			absSin = Math.Abs(sin);
-		double calculatedWidth = scaledWidth * absCos + scaledHeight * absSin,
-			calculatedHeight = scaledWidth * absSin + scaledHeight * absCos;
-		if (calculatedWidth > ushort.MaxValue || calculatedHeight > ushort.MaxValue)
-			throw new OverflowException("Resulting image dimensions exceed maximum allowed size.");
-		rotatedWidth = (ushort)calculatedWidth;
-		rotatedHeight = (ushort)calculatedHeight;
+		uint rWidth = (uint)(scaledWidth * absCos + scaledHeight * absSin);
+		uint rHeight = (uint)(scaledWidth * absSin + scaledHeight * absCos);
+		if (rWidth > ushort.MaxValue || rHeight > ushort.MaxValue)
+			throw new OverflowException("Rotated dimensions exceed maximum allowed size.");
+		if (rWidth * rHeight > int.MaxValue >> 2)
+			throw new OverflowException("Resulting image would be too large to allocate");
+		rotatedWidth = (ushort)rWidth;
+		rotatedHeight = (ushort)rHeight;
+		double offsetX = (scaledWidth >> 1) - cos * (rotatedWidth >> 1) - sin * (rotatedHeight >> 1),
+			offsetY = (scaledHeight >> 1) - cos * (rotatedHeight >> 1) + sin * (rotatedWidth >> 1);
 		byte[] rotated = new byte[rotatedWidth * rotatedHeight << 2];
-		double centerX = scaledWidth / 2d,
-			centerY = scaledHeight / 2d;
 		bool isNearVertical = absCos < 1e-10;
 		for (ushort y = 0; y < rotatedHeight; y++)
 		{
@@ -380,16 +384,17 @@ public static class PixelDraw
 			}
 			else
 			{
-				double yRelative = y - rotatedHeight / 2d,
-					xIntersectStart = (yRelative * sin - centerY * absSin - centerX * absCos) / cos,
-					xIntersectEnd = (yRelative * sin - centerY * absSin + centerX * absCos) / cos;
-				startX = Math.Max((ushort)0, (ushort)Math.Floor(Math.Min(xIntersectStart, xIntersectEnd) + rotatedWidth / 2d));
-				endX = Math.Min(rotatedWidth, (ushort)Math.Ceiling(Math.Max(xIntersectStart, xIntersectEnd) + rotatedWidth / 2d));
+				double xLeft = (-offsetX - y * sin) / cos,
+					xRight = (scaledWidth - offsetX - y * sin) / cos;
+				if (cos < 0)
+					(xLeft, xRight) = (xRight, xLeft);
+				startX = (ushort)Math.Max(0, Math.Floor(xLeft));
+				endX = (ushort)Math.Min(rotatedWidth, Math.Ceiling(xRight));
 			}
 			for (ushort x = startX; x < endX; x++)
 			{
-				ushort oldX = (ushort)((x * cos + y * sin - centerX) / scaleX + width / 2d),
-					oldY = (ushort)((y * cos - x * sin - centerY) / scaleY + height / 2d);
+				ushort oldX = (ushort)((x * cos + y * sin + offsetX) / scaleX),
+					oldY = (ushort)((y * cos - x * sin + offsetY) / scaleY);
 				if (oldX < width && oldY < height)
 					rotated.DrawPixel(
 						x: x,

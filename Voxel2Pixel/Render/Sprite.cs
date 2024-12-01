@@ -390,9 +390,9 @@ public class Sprite : IDictionary<string, Point>, ISprite, IRenderer, IVoxelColo
 				rotatedWidth: out ushort rotatedWidth,
 				rotatedHeight: out ushort rotatedHeight,
 				radians: radians,
-				width: Width,
 				scaleX: scaleX,
-				scaleY: scaleY),
+				scaleY: scaleY,
+				width: Width),
 			Width = rotatedWidth,
 			VoxelColor = VoxelColor,
 		};
