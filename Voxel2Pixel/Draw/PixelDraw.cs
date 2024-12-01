@@ -301,45 +301,49 @@ public static class PixelDraw
 	{
 		if (scaleX < 1) throw new ArgumentOutOfRangeException(nameof(scaleX));
 		if (scaleY < 1) throw new ArgumentOutOfRangeException(nameof(scaleY));
-		if (width * (uint)scaleX > ushort.MaxValue || height * (uint)scaleY > ushort.MaxValue)
-			throw new OverflowException("Scaled dimensions exceed maximum allowed size.");
+		if (width > ushort.MaxValue / scaleX)
+			throw new OverflowException("Scaled width exceeds maximum allowed size.");
+		if (height > ushort.MaxValue / scaleY)
+			throw new OverflowException("Scaled height exceeds maximum allowed size.");
 		ushort scaledWidth = (ushort)(width * scaleX),
 			scaledHeight = (ushort)(height * scaleY);
 		radians %= Tau;
 		double absCos = Math.Abs(Math.Cos(radians)),
-			absSin = Math.Abs(Math.Sin(radians)),
-			calculatedWidth = scaledWidth * absCos + scaledHeight * absSin,
-			calculatedHeight = scaledWidth * absSin + scaledHeight * absCos;
-		if (calculatedWidth > ushort.MaxValue || calculatedHeight > ushort.MaxValue)
-			throw new OverflowException("Resulting image dimensions exceed maximum allowed size.");
-		rotatedWidth = (ushort)calculatedWidth;
-		rotatedHeight = (ushort)calculatedHeight;
+			absSin = Math.Abs(Math.Sin(radians));
+		uint rWidth = (uint)(scaledWidth * absCos + scaledHeight * absSin),
+			rHeight = (uint)(scaledWidth * absSin + scaledHeight * absCos);
+		if (rWidth > ushort.MaxValue || rHeight > ushort.MaxValue)
+			throw new OverflowException("Rotated dimensions exceed maximum allowed size.");
+		rotatedWidth = (ushort)rWidth;
+		rotatedHeight = (ushort)rHeight;
 	}
 	public static void RotatedLocate(ushort width, ushort height, ushort x, ushort y, out ushort rotatedX, out ushort rotatedY, double radians = 0d, byte scaleX = 1, byte scaleY = 1)
 	{
 		if (scaleX < 1) throw new ArgumentOutOfRangeException(nameof(scaleX));
 		if (scaleY < 1) throw new ArgumentOutOfRangeException(nameof(scaleY));
+		if (width > ushort.MaxValue / scaleX)
+			throw new OverflowException("Scaled width exceeds maximum allowed size.");
+		if (height > ushort.MaxValue / scaleY)
+			throw new OverflowException("Scaled height exceeds maximum allowed size.");
 		if (x >= width) throw new ArgumentOutOfRangeException(nameof(x));
 		if (y >= height) throw new ArgumentOutOfRangeException(nameof(y));
-		if (width * (uint)scaleX > ushort.MaxValue || height * (uint)scaleY > ushort.MaxValue)
-			throw new OverflowException("Scaled dimensions exceed maximum allowed size.");
 		ushort scaledWidth = (ushort)(width * scaleX),
 			scaledHeight = (ushort)(height * scaleY);
 		radians %= Tau;
 		double cos = Math.Cos(radians),
 			sin = Math.Sin(radians),
 			absCos = Math.Abs(cos),
-			absSin = Math.Abs(sin),
-			calculatedWidth = scaledWidth * absCos + scaledHeight * absSin,
-			calculatedHeight = scaledWidth * absSin + scaledHeight * absCos;
-		if (calculatedWidth > ushort.MaxValue || calculatedHeight > ushort.MaxValue)
-			throw new OverflowException("Resulting image dimensions exceed maximum allowed size.");
-		double scaledX = (x + 0.5d) * scaleX - scaledWidth / 2d,
-			scaledY = (y + 0.5d) * scaleY - scaledHeight / 2d,
-			rotatedXd = scaledX * cos - scaledY * sin + calculatedWidth / 2d,
-			rotatedYd = scaledX * sin + scaledY * cos + calculatedHeight / 2d;
-		rotatedX = (ushort)rotatedXd;
-		rotatedY = (ushort)rotatedYd;
+			absSin = Math.Abs(sin);
+		ushort halfRotatedWidth = (ushort)((ushort)(scaledWidth * absCos + scaledHeight * absSin) >> 1),
+			halfRotatedHeight = (ushort)((ushort)(scaledWidth * absSin + scaledHeight * absCos) >> 1);
+		double offsetX = (scaledWidth >> 1) - cos * halfRotatedWidth - sin * halfRotatedHeight,
+			offsetY = (scaledHeight >> 1) - cos * halfRotatedHeight + sin * halfRotatedWidth,
+			newX = (x + 0.5d) * scaleX * cos - (y + 0.5d) * scaleY * sin + offsetX,
+			newY = (x + 0.5d) * scaleX * sin + (y + 0.5d) * scaleY * cos + offsetY;
+		if (newX < 0 || newY < 0 || newX > ushort.MaxValue || newY > ushort.MaxValue)
+			throw new OverflowException("Rotated coordinates exceed valid range.");
+		rotatedX = (ushort)newX;
+		rotatedY = (ushort)newY;
 	}
 	/// <summary>
 	/// Based on https://stackoverflow.com/a/6207833
@@ -386,22 +390,22 @@ public static class PixelDraw
 			{
 				double xLeft = (-offsetX - y * sin) / cos,
 					xRight = (scaledWidth - offsetX - y * sin) / cos;
-				if (cos < 0)
+				if (cos < 0d)
 					(xLeft, xRight) = (xRight, xLeft);
 				startX = (ushort)Math.Max(0, Math.Floor(xLeft));
 				endX = (ushort)Math.Min(rotatedWidth, Math.Ceiling(xRight));
 			}
 			for (ushort x = startX; x < endX; x++)
 			{
-				ushort oldX = (ushort)((x * cos + y * sin + offsetX) / scaleX),
-					oldY = (ushort)((y * cos - x * sin + offsetY) / scaleY);
-				if (oldX < width && oldY < height)
+				double sourceX = (x * cos + y * sin + offsetX) / scaleX,
+					sourceY = (y * cos - x * sin + offsetY) / scaleY;
+				if (sourceX >= 0d && sourceX < width && sourceY >= 0d && sourceY < height)
 					rotated.DrawPixel(
 						x: x,
 						y: y,
 						color: texture.Pixel(
-							x: oldX,
-							y: oldY,
+							x: (ushort)sourceX,
+							y: (ushort)sourceY,
 							width: width),
 						width: rotatedWidth);
 			}
