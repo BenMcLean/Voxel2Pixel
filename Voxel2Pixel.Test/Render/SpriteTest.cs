@@ -92,9 +92,9 @@ namespace Voxel2Pixel.Test.Render
 			{
 				VoxelColor = new NaiveDimmer(voxFileModel.Palette),
 			};
-			sprite.Rect(0, 0, 0xFFFFu, sprite.Width, sprite.Height);
 			voxFileModel.Draw(sprite, Perspective.Iso);
 			sprite["dot"] = new Voxel2Pixel.Model.Point(sprite.Width / 4, 3 * sprite.Height / 4);
+			sprite.DrawBoundingBox();
 			int numSprites = 64;
 			Enumerable.Range(0, numSprites)
 				.Parallelize(i => sprite

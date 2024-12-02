@@ -71,7 +71,8 @@ public static class PixelDraw
 			rectHeight += y;
 			y = 0;
 		}
-		width = width < 1 ? (ushort)Math.Sqrt(texture.Length >> 2) : width;
+		if (width < 1)
+			width = (ushort)Math.Sqrt(texture.Length >> 2);
 		int height = texture.Length / width >> 2;
 		if (rectWidth < 1 || rectHeight < 1 || x >= width || y >= height) return texture;
 		rectWidth = Math.Min(rectWidth, width - x);
@@ -95,6 +96,36 @@ public static class PixelDraw
 				destinationIndex: y2,
 				length: rectWidth4);
 		return texture;
+	}
+	public static byte[] DrawBoundingBox(this byte[] texture, ushort width = 0)
+	{
+		if (width < 1)
+			width = (ushort)Math.Sqrt(texture.Length >> 2);
+		ushort height = Height(length: texture.Length, width: width);
+		return texture.DrawRectangle(
+				x: 0,
+				y: 0,
+				color: 0xFF0000FFu,
+				rectWidth: (ushort)(width - 1),
+				width: width)
+			.DrawRectangle(
+				x: 1,
+				y: (ushort)(height - 1),
+				color: 0x00FF00FFu,
+				rectWidth: (ushort)(width - 1),
+				width: width)
+			.DrawRectangle(
+				x: 0,
+				y: 1,
+				color: 0x0000FFFFu,
+				rectHeight: (ushort)(height - 1),
+				width: width)
+			.DrawRectangle(
+				x: (ushort)(width - 1),
+				y: 0,
+				color: 0xFFFF00FFu,
+				rectHeight: (ushort)(height - 1),
+				width: width);
 	}
 	/// <summary>
 	/// Draws a texture onto a different texture

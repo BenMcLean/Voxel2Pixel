@@ -408,6 +408,11 @@ public class Sprite : IDictionary<string, Point>, ISprite, IRenderer, IVoxelColo
 				X: (int)(cos * (pair.Value.X * scaleX - offsetX) - sin * (pair.Value.Y * scaleY - offsetY)),
 				Y: (int)(sin * (pair.Value.X * scaleX - offsetX) + cos * (pair.Value.Y * scaleY - offsetY))))));
 	}
+	public Sprite DrawBoundingBox()
+	{
+		Texture.DrawBoundingBox(Width);
+		return this;
+	}
 	/// <summary>
 	/// Based on https://stackoverflow.com/a/6207833
 	/// </summary>
