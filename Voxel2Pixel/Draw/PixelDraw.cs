@@ -8,13 +8,22 @@ using System.Text;
 namespace Voxel2Pixel.Draw;
 
 /// <summary>
-/// All methods in this static class are actually stateless functions, meaning that they do not reference any modifiable variables besides their parameters.
-/// These methods assume rgba8888 a.k.a. rgba32 color, stored Big-Endian.
-/// That means every four bytes represent one pixel.
+/// Most graphics-related libraries want you to use their custom classes and structs to represent pixels, textures and colors.
+/// However, following that pattern tends very strongly towards undesirable vendor lock-in.
+/// Switching libraries would require re-writing the same operations using different classes and structs.
+/// After spending a lot of time with this, I decided that at the most absolute basic level of rendering individual pixels, I needed to do the actual work Jonathan Blow style, meaning no abstractions.
+/// I don't apply Blow's anti-abstraction ideology to the rest of the codebase and I didn't know about Blow's views on this topic until afterwards but I find that Blow's anti-abstraction view matched my intuitions for the specific needs this class addresses, even though I do not agree with it for most tasks.
+/// Directly using primitive types like this does limit the utility of the code to only work with 24-bit color (plus 8 bits of transparency) but I found this to be an acceptable compromise because I judged that adding abstraction for greater color depths involved too much overhead for such a niche use case as going beyond 24-bit color.
+/// Future people might laugh at the idea that we only need 24-bit color but it pretty much covers how human eyes work for the purpose of making 1990s style pixel art for video games in the early 21st century.
+/// All methods in this static class are stateless functions, meaning that they do not reference any modifiable variables besides their parameters.
+/// Methods that start with "Draw" modify the original texture array. Other methods that return a texture array are making a copy.
+/// These methods assume rgba8888 a.k.a. rgba32 color. That means every four bytes represent one pixel.
 /// A texture is a byte array of size = wdith * 4 * height.
-/// width is max x, height is max y.
-/// x+ is right, y+ is down.
-/// Methods that start with "Draw" modify the original array. Other methods return a copy.
+/// Because of 0-based indexing, valid x values range from 0 to width-1 inclusive and valid y values range from 0 to height-1 inclusive.
+/// x+ is right, y+ is down. 0, 0 is located in the upper left of a texture.
+/// uint colors use a, b, g, r byte order so that they conform to C#'s little-endian standard, so that writing 0x00FF00FFu in the source code would indicate fully opaque green. (Yes, C# reverses the byte order in memory from its inline hex representation.)
+/// However, byte array textures use r, g, b, a byte order, which requires reversing the endianness if writing to a byte array texture from a little-endian uint color using BinaryPrimitives.WriteUInt32BigEndian or similar.
+/// Omitting the width to get a default value of 0 for texture manipulation methods indicates that the source texture is square.
 /// Sometimes bitwise operations are hard to follow:
 /// (i << 2 == i * 4)
 /// (i >> 2 == i / 4) when i is a positive integer
