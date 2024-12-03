@@ -114,13 +114,13 @@ public static class PixelDraw
 		return texture.DrawRectangle(
 				x: 0,
 				y: 0,
-				color: 0xFF0000FFu,
+				color: 0xFFFF00FFu,
 				rectWidth: (ushort)(width - 1),
 				width: width)
 			.DrawRectangle(
 				x: 1,
 				y: (ushort)(height - 1),
-				color: 0x00FF00FFu,
+				color: 0xFF0000FFu,
 				rectWidth: (ushort)(width - 1),
 				width: width)
 			.DrawRectangle(
@@ -132,7 +132,7 @@ public static class PixelDraw
 			.DrawRectangle(
 				x: (ushort)(width - 1),
 				y: 0,
-				color: 0xFFFF00FFu,
+				color: 0x00FF00FFu,
 				rectHeight: (ushort)(height - 1),
 				width: width);
 	}
@@ -1481,19 +1481,10 @@ public static class PixelDraw
 		list.AddRange(other);
 		return list;
 	}
-	public static uint[] PaletteFromTexture(this byte[] texture)
-	{
-		uint[] palette = [.. new HashSet<uint> { 0u }
-				.Append(texture.Byte2UIntArray())
-				.OrderBy(@uint => @uint)
-				.Take(byte.MaxValue)],
-			result = new uint[byte.MaxValue];
-		Array.Copy(
-			sourceArray: palette,
-			destinationArray: result,
-			length: palette.Length);
-		return result;
-	}
+	public static uint[] PaletteFromTexture(this byte[] texture) => [.. new HashSet<uint> {0u}
+		.Append(texture.Byte2UIntArray())
+		.OrderBy(@uint => @uint)
+		.Take(256)];
 	public static byte[] Byte2IndexArray(this byte[] bytes, uint[] palette)
 	{
 		byte[] indices = new byte[bytes.Length >> 2];

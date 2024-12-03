@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Voxel2Pixel.Draw;
+using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model;
 
@@ -14,6 +15,7 @@ public class TextureModel : IModel
 		Indices = texture.Byte2IndexArray(Palette);
 		SizeX = width < 1 ? (ushort)Math.Sqrt(Indices.Length) : width;
 	}
+	public TextureModel(ISprite sprite) : this(texture: sprite.Texture, width: sprite.Width) { }
 	public uint[] Palette { get; set; }
 	public byte[] Indices { get; }
 	#region IModel
