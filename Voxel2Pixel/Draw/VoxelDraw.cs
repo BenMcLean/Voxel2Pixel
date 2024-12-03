@@ -675,20 +675,22 @@ public static class VoxelDraw
 			throw new OverflowException("Scaled height exceeds maximum allowed size.");
 		ushort scaledWidth = (ushort)(model.SizeX * scaleX),
 			scaledHeight = (ushort)(model.SizeY * scaleY);
-		uint rWidth = (uint)(scaledWidth * absCos + scaledHeight * absSin),
-			rHeight = (uint)(scaledWidth * absSin + scaledHeight * absCos);
-		if (rWidth > ushort.MaxValue || rHeight > ushort.MaxValue)
+		uint rotatedWidth = (uint)(scaledWidth * absCos + scaledHeight * absSin),
+			rotatedHeight = (uint)(scaledWidth * absSin + scaledHeight * absCos);
+		if (rotatedWidth > ushort.MaxValue || rotatedHeight > ushort.MaxValue)
 			throw new OverflowException("Rotated dimensions exceed maximum allowed size.");
-		double offsetX = (scaledWidth >> 1) - cos * (rWidth >> 1) - sin * (rHeight >> 1),
-			offsetY = (scaledHeight >> 1) - cos * (rHeight >> 1) + sin * (rWidth >> 1);
+		ushort halfRotatedWidth = (ushort)(rotatedWidth >> 1),
+			halfRotatedHeight = (ushort)(rotatedHeight >> 1);
+		double offsetX = (scaledWidth >> 1) - cos * halfRotatedWidth - sin * halfRotatedHeight,
+			offsetY = (scaledHeight >> 1) - cos * halfRotatedHeight + sin * halfRotatedWidth;
 		bool isNearVertical = absCos < 1e-10;
-		for (ushort y = 0; y < rHeight; y++)
+		for (ushort y = 0; y < rotatedHeight; y++)
 		{
 			ushort startX, endX;
 			if (isNearVertical)
 			{
 				startX = 0;
-				endX = (ushort)rWidth;
+				endX = (ushort)rotatedWidth;
 			}
 			else
 			{
@@ -697,20 +699,18 @@ public static class VoxelDraw
 				if (cos < 0d)
 					(xLeft, xRight) = (xRight, xLeft);
 				startX = (ushort)Math.Max(0, Math.Floor(xLeft));
-				endX = (ushort)Math.Min(rWidth, Math.Ceiling(xRight));
+				endX = (ushort)Math.Min(rotatedWidth, Math.Ceiling(xRight));
 			}
 			for (ushort x = startX; x < endX; x++)
 			{
-				double sourceX = (x * cos + y * sin + offsetX) / scaleX,
-					sourceY = (y * cos - x * sin + offsetY) / scaleY;
-				ushort oldX = (ushort)(Math.Floor(sourceX)),
-					oldY = (ushort)(model.SizeY - 1 - Math.Floor(sourceY));
-				if (!model.IsOutside(oldX, oldY, z) && model[oldX, oldY, z] is byte index && index != 0)
+				ushort sourceX = (ushort)Math.Floor((x * cos + y * sin + offsetX) / scaleX),
+					sourceY = (ushort)Math.Floor((y * cos - x * sin + offsetY) / scaleY);
+				if (!model.IsOutside(sourceX, sourceY, z) && model[sourceX, sourceY, z] is byte index && index != 0)
 					renderer.Rect(
 						x: x,
 						y: y,
 						index: index,
-						visibleFace: peak && (z == model.SizeZ - 1 || model[oldX, oldY, (ushort)(z + 1)] == 0) ?
+						visibleFace: peak && (z == model.SizeZ - 1 || model[sourceX, sourceY, (ushort)(z + 1)] == 0) ?
 							VisibleFace.Top
 							: visibleFace);
 			}

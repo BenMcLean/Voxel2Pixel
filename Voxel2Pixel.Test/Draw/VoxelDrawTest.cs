@@ -44,7 +44,7 @@ public class VoxelDrawTest
 					z: 0,
 					scaleX: scaleX,
 					scaleY: scaleY);
-				return sprite;
+				return sprite.DrawBoundingBox();
 			})
 			.AnimatedGif(10)
 			.SaveAsGif("ZSlice.gif");
