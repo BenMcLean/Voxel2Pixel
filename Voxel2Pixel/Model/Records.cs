@@ -1,6 +1,17 @@
-﻿namespace Voxel2Pixel.Model;
+﻿using BenVoxel;
+using System;
 
-public readonly record struct Point(int X, int Y);
+namespace Voxel2Pixel.Model;
+
+public readonly record struct Point(int X, int Y)
+{
+	public Point Transform(Func<int, int> x, Func<int, int> y) => new(X: x(X), Y: y(Y));
+	public override string ToString() => $"[{X},{Y}]";
+	public Point(Point3D point3d, ushort sizeY = 0) : this(
+		X: point3d.X,
+		Y: sizeY == 0 ? point3d.Y : sizeY - 1 - point3d.Y)
+	{ }
+}
 public enum VisibleFace : byte
 {
 	Front = 0,

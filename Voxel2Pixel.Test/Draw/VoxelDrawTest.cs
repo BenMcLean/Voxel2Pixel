@@ -8,7 +8,7 @@ using static Voxel2Pixel.Web.ImageMaker;
 
 namespace Voxel2Pixel.Test.Draw;
 
-public class VoxelDrawTest
+public class VoxelDrawTest(Xunit.Abstractions.ITestOutputHelper output)
 {
 	[Fact]
 	public void ZSliceTest()
@@ -19,13 +19,13 @@ public class VoxelDrawTest
 			VoxelColor = new NaiveDimmer(voxFileModel.Palette),
 		};
 		voxFileModel.Draw(sprite, Perspective.Iso);
-		sprite["dot"] = new Voxel2Pixel.Model.Point(sprite.Width / 4, 3 * sprite.Height / 4);
+		Voxel2Pixel.Model.Point dot = new(sprite.Width / 4, 3 * sprite.Height / 4);
 		sprite.DrawBoundingBox();
 		sprite.Png().SaveAsPng("ZSlice.png");
 		TextureModel textureModel = new(sprite);
 		int numSprites = 64;
-		byte scaleX = 6, scaleY = 6;
-		Enumerable.Range(0, numSprites)
+		byte scaleX = 1, scaleY = 1;
+		List<Sprite> sprites = [.. Enumerable.Range(0, numSprites)
 			.Parallelize(i =>
 			{
 				double radians = Math.Tau * ((double)i / numSprites);
@@ -36,6 +36,12 @@ public class VoxelDrawTest
 					scaleY: scaleY))
 				{
 					VoxelColor = new NaiveDimmer(textureModel.Palette),
+					["dot"] = VoxelDraw.ZSliceLocate(
+						model: textureModel,
+						point: dot,
+						radians: radians,
+						scaleX: scaleX,
+						scaleY: scaleY),
 				};
 				VoxelDraw.ZSlice(
 					model: textureModel,
@@ -44,9 +50,15 @@ public class VoxelDrawTest
 					z: 0,
 					scaleX: scaleX,
 					scaleY: scaleY);
-				return sprite.DrawBoundingBox();
-			})
-			.AnimatedGif(10)
-			.SaveAsGif("ZSlice.gif");
+				return sprite.DrawPoint("dot").DrawBoundingBox();
+			})];
+		ushort i = 0;
+		foreach (Sprite frame in sprites)
+		{
+			i++;
+			output.WriteLine($"Frame {i}: {frame["dot"]}");
+			frame.Png().SaveAsPng($"frame{i:D2}.png");
+		}
+		sprites.AnimatedGif(10).SaveAsGif("ZSlice.gif");
 	}
 }

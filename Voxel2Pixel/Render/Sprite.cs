@@ -208,7 +208,7 @@ public class Sprite : IDictionary<string, Point>, ISprite, IRenderer, IVoxelColo
 		byte scaleX = 1,
 		byte scaleY = 1,
 		bool outline = false,
-		uint outlineColor = PixelDraw.DefaultOutlineColor,
+		uint outlineColor = PixelDraw.Black,
 		byte threshold = PixelDraw.DefaultTransparencyThreshold)
 	{
 		if (outline)
@@ -284,7 +284,7 @@ public class Sprite : IDictionary<string, Point>, ISprite, IRenderer, IVoxelColo
 		value: new Point(
 			X: point.Value.X - cutLeft,
 			Y: point.Value.Y - cutTop))));
-	public Sprite Outline(uint color = PixelDraw.DefaultOutlineColor, byte threshold = PixelDraw.DefaultTransparencyThreshold) => new Sprite
+	public Sprite Outline(uint color = PixelDraw.Black, byte threshold = PixelDraw.DefaultTransparencyThreshold) => new Sprite
 	{
 		Texture = Texture.Outline(
 			width: Width,
@@ -294,7 +294,7 @@ public class Sprite : IDictionary<string, Point>, ISprite, IRenderer, IVoxelColo
 		VoxelColor = VoxelColor,
 	}.SetRange(this);
 	/// <returns>cropped and outlined copy</returns>
-	public Sprite CropOutline(uint color = PixelDraw.DefaultOutlineColor, byte threshold = PixelDraw.DefaultTransparencyThreshold) => new Sprite
+	public Sprite CropOutline(uint color = PixelDraw.Black, byte threshold = PixelDraw.DefaultTransparencyThreshold) => new Sprite
 	{
 		Texture = Texture
 			.Crop2ContentPlus1(
@@ -396,17 +396,22 @@ public class Sprite : IDictionary<string, Point>, ISprite, IRenderer, IVoxelColo
 			Width = rotatedWidth,
 			VoxelColor = VoxelColor,
 		};
-		ushort scaledWidth = (ushort)(Width * scaleX),
-			scaledHeight = (ushort)(Height * scaleY);
-		double cos = Math.Cos(radians),
-			sin = Math.Sin(radians),
-		offsetX = (scaledWidth >> 1) - cos * (rotatedWidth >> 1) - sin * (rotatedHeight >> 1),
-		offsetY = (scaledHeight >> 1) - cos * (rotatedHeight >> 1) + sin * (rotatedWidth >> 1);
-		return sprite.SetRange(this.Select(pair => new KeyValuePair<string, Point>(
-			key: pair.Key,
-			value: new Point(
-				X: (int)(cos * (pair.Value.X * scaleX - offsetX) - sin * (pair.Value.Y * scaleY - offsetY)),
-				Y: (int)(sin * (pair.Value.X * scaleX - offsetX) + cos * (pair.Value.Y * scaleY - offsetY))))));
+		return sprite.SetRange(this.Select(pair =>
+		{
+			PixelDraw.RotatedLocate(
+				width: Width,
+				height: Height,
+				x: pair.Value.X,
+				y: pair.Value.Y,
+				out int rotatedX,
+				out int rotatedY,
+				radians: radians,
+				scaleX: scaleX,
+				scaleY: scaleY);
+			return new KeyValuePair<string, Point>(
+				key: pair.Key,
+				value: new Point(X: rotatedX, Y: rotatedY));
+		}));
 	}
 	public Sprite DrawBoundingBox()
 	{

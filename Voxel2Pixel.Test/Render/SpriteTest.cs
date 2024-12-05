@@ -96,12 +96,11 @@ namespace Voxel2Pixel.Test.Render
 			sprite["dot"] = new Voxel2Pixel.Model.Point(sprite.Width / 4, 3 * sprite.Height / 4);
 			sprite.DrawBoundingBox();
 			int numSprites = 64;
-			Enumerable.Range(0, numSprites)
+			List<Sprite> frames = [.. Enumerable.Range(0, numSprites)
 				.Parallelize(i => sprite
 					.Rotate(Math.Tau * ((double)i / numSprites))
-					.DrawPoint("dot"))
-				.Select(Origin0)
-				.AnimatedGif(10)
+					.DrawPoint("dot"))];
+			frames.AnimatedGif(10)
 				.SaveAsGif("Rotate.gif");
 		}
 		[Fact]

@@ -33,7 +33,9 @@ public static class PixelDraw
 	//TODO: DrawLine
 	//TODO: DrawCircle
 	//TODO: DrawEllipse
-	public const uint DefaultOutlineColor = 0xFFu;
+	public const double Tau = Math.PI * 2d;
+	public const uint Black = 0xFFu,
+		White = 0xFFFFFFFFu;
 	public const byte DefaultTransparencyThreshold = 127;
 	#region Drawing
 	/// <summary>
@@ -43,7 +45,7 @@ public static class PixelDraw
 	/// <param name="color">rgba color to draw</param>
 	/// <param name="width">width of texture or 0 to assume square texture</param>
 	/// <returns>same texture with pixel drawn</returns>
-	public static byte[] DrawPixel(this byte[] texture, ushort x, ushort y, uint color = 0xFFFFFFFFu, ushort width = 0)
+	public static byte[] DrawPixel(this byte[] texture, ushort x, ushort y, uint color = White, ushort width = 0)
 	{
 		ushort xSide = (ushort)((width < 1 ? (ushort)Math.Sqrt(texture.Length >> 2) : width) << 2),
 			ySide = (ushort)((width < 1 ? xSide : texture.Length / width) >> 2);
@@ -80,8 +82,7 @@ public static class PixelDraw
 			rectHeight += y;
 			y = 0;
 		}
-		if (width < 1)
-			width = (ushort)Math.Sqrt(texture.Length >> 2);
+		if (width < 1) width = (ushort)Math.Sqrt(texture.Length >> 2);
 		int height = texture.Length / width >> 2;
 		if (rectWidth < 1 || rectHeight < 1 || x >= width || y >= height) return texture;
 		rectWidth = Math.Min(rectWidth, width - x);
@@ -108,8 +109,7 @@ public static class PixelDraw
 	}
 	public static byte[] DrawBoundingBox(this byte[] texture, ushort width = 0)
 	{
-		if (width < 1)
-			width = (ushort)Math.Sqrt(texture.Length >> 2);
+		if (width < 1) width = (ushort)Math.Sqrt(texture.Length >> 2);
 		ushort height = Height(length: texture.Length, width: width);
 		return texture.DrawRectangle(
 				x: 0,
@@ -333,7 +333,6 @@ public static class PixelDraw
 					length: 4);
 		return flipped;
 	}
-	public const double Tau = Math.PI * 2d;
 	/// <summary>
 	/// Based on https://iiif.io/api/annex/notes/rotation/
 	/// </summary>
@@ -365,23 +364,21 @@ public static class PixelDraw
 			throw new OverflowException("Scaled width exceeds maximum allowed size.");
 		if (height > ushort.MaxValue / scaleY)
 			throw new OverflowException("Scaled height exceeds maximum allowed size.");
-		ushort scaledWidth = (ushort)(width * scaleX),
-			scaledHeight = (ushort)(height * scaleY);
 		radians %= Tau;
 		double cos = Math.Cos(radians),
 			sin = Math.Sin(radians),
 			absCos = Math.Abs(cos),
 			absSin = Math.Abs(sin);
-		ushort halfRotatedWidth = (ushort)((ushort)(scaledWidth * absCos + scaledHeight * absSin) >> 1),
-			halfRotatedHeight = (ushort)((ushort)(scaledWidth * absSin + scaledHeight * absCos) >> 1);
+		ushort scaledWidth = (ushort)(width * scaleX),
+			scaledHeight = (ushort)(height * scaleY),
+			rotatedWidth = (ushort)(scaledWidth * absCos + scaledHeight * absSin),
+			rotatedHeight = (ushort)(scaledWidth * absSin + scaledHeight * absCos),
+			halfRotatedWidth = (ushort)(rotatedWidth >> 1),
+			halfRotatedHeight = (ushort)(rotatedHeight >> 1);
 		double offsetX = (scaledWidth >> 1) - cos * halfRotatedWidth - sin * halfRotatedHeight,
-			offsetY = (scaledHeight >> 1) - cos * halfRotatedHeight + sin * halfRotatedWidth,
-			newX = (x + 0.5d) * scaleX * cos - (y + 0.5d) * scaleY * sin + offsetX,
-			newY = (x + 0.5d) * scaleX * sin + (y + 0.5d) * scaleY * cos + offsetY;
-		if (newX < int.MinValue || newY < int.MinValue || newX > int.MaxValue || newY > int.MaxValue)
-			throw new OverflowException("Rotated coordinates exceed valid range.");
-		rotatedX = (int)Math.Round(newX);
-		rotatedY = (int)Math.Round(newY);
+			offsetY = (scaledHeight >> 1) - cos * halfRotatedHeight + sin * halfRotatedWidth;
+		rotatedX = (int)(cos * (x * scaleX - offsetX) - sin * (y * scaleY - offsetY));
+		rotatedY = (int)(sin * (x * scaleX - offsetX) + cos * (y * scaleY - offsetY));
 	}
 	/// <summary>
 	/// Based on https://stackoverflow.com/a/6207833
@@ -390,8 +387,7 @@ public static class PixelDraw
 	{
 		if (scaleX < 1) throw new ArgumentOutOfRangeException(nameof(scaleX));
 		if (scaleY < 1) throw new ArgumentOutOfRangeException(nameof(scaleY));
-		if (width < 1)
-			width = (ushort)Math.Sqrt(texture.Length >> 2);
+		if (width < 1) width = (ushort)Math.Sqrt(texture.Length >> 2);
 		if (width > ushort.MaxValue / scaleX)
 			throw new OverflowException("Scaled width exceeds maximum allowed size.");
 		ushort height = Height(texture.Length, width);
@@ -404,8 +400,8 @@ public static class PixelDraw
 			sin = Math.Sin(radians),
 			absCos = Math.Abs(cos),
 			absSin = Math.Abs(sin);
-		uint rWidth = (uint)(scaledWidth * absCos + scaledHeight * absSin);
-		uint rHeight = (uint)(scaledWidth * absSin + scaledHeight * absCos);
+		uint rWidth = (uint)(scaledWidth * absCos + scaledHeight * absSin),
+			rHeight = (uint)(scaledWidth * absSin + scaledHeight * absCos);
 		if (rWidth > ushort.MaxValue || rHeight > ushort.MaxValue)
 			throw new OverflowException("Rotated dimensions exceed maximum allowed size.");
 		if (rWidth * rHeight > int.MaxValue >> 2)
@@ -988,8 +984,7 @@ public static class PixelDraw
 	/// <returns>new raw rgba8888 pixel data of width croppedWidth or smaller if x is smaller than zero or if x + croppedWidth extends outside the source texture</returns>
 	public static byte[] Crop(this byte[] texture, int x, int y, int croppedWidth, int croppedHeight, ushort width = 0)
 	{
-		if (width < 1)
-			width = (ushort)Math.Sqrt(texture.Length >> 2);
+		if (width < 1) width = (ushort)Math.Sqrt(texture.Length >> 2);
 		if (x < 0)
 		{
 			croppedWidth += x;
@@ -1035,8 +1030,7 @@ public static class PixelDraw
 	/// <returns>cropped texture</returns>
 	public static byte[] Crop2Content(this byte[] texture, out ushort cutLeft, out ushort cutTop, out ushort croppedWidth, out ushort croppedHeight, ushort width = 0, byte threshold = DefaultTransparencyThreshold)
 	{
-		if (width < 1)
-			width = (ushort)Math.Sqrt(texture.Length >> 2);
+		if (width < 1) width = (ushort)Math.Sqrt(texture.Length >> 2);
 		Crop2ContentInfo(
 			texture: texture,
 			cutLeft: out cutLeft,
@@ -1054,8 +1048,7 @@ public static class PixelDraw
 	}
 	public static void Crop2ContentInfo(this byte[] texture, out ushort cutLeft, out ushort cutTop, out ushort croppedWidth, out ushort croppedHeight, ushort width = 0, byte threshold = DefaultTransparencyThreshold)
 	{
-		if (width < 1)
-			width = (ushort)Math.Sqrt(texture.Length >> 2);
+		if (width < 1) width = (ushort)Math.Sqrt(texture.Length >> 2);
 		int xSide = width << 2,
 			indexTop, indexBottom;
 		for (indexTop = 3; indexTop < texture.Length && texture[indexTop] < threshold; indexTop += 4) { }
@@ -1082,8 +1075,7 @@ public static class PixelDraw
 	}
 	public static byte[] Crop2ContentPlus1(this byte[] texture, out int cutLeft, out int cutTop, out ushort croppedWidth, out ushort croppedHeight, ushort width = 0, byte threshold = DefaultTransparencyThreshold)
 	{
-		if (width < 1)
-			width = (ushort)Math.Sqrt(texture.Length >> 2);
+		if (width < 1) width = (ushort)Math.Sqrt(texture.Length >> 2);
 		Crop2ContentInfo(
 			texture: texture,
 			cutLeft: out ushort cutLeftShort,
@@ -1112,8 +1104,7 @@ public static class PixelDraw
 	public static byte[] TransparentOutline(byte[] texture, ushort width = 0, byte threshold = DefaultTransparencyThreshold) => UInt2ByteArray(TransparentOutline(Byte2UIntArray(texture), width, threshold));
 	public static uint[] TransparentOutline(uint[] texture, ushort width = 0, byte threshold = DefaultTransparencyThreshold)
 	{
-		if (width < 1)
-			width = (ushort)Math.Sqrt(texture.Length >> 2);
+		if (width < 1) width = (ushort)Math.Sqrt(texture.Length >> 2);
 		uint[] result = new uint[texture.Length];
 		Array.Copy(
 			sourceArray: texture,
@@ -1184,8 +1175,7 @@ public static class PixelDraw
 	{
 		addLeft = 0;
 		addTop = 0;
-		if (width < 1)
-			width = (ushort)Math.Sqrt(texture.Length >> 2);
+		if (width < 1) width = (ushort)Math.Sqrt(texture.Length >> 2);
 		ushort height = (ushort)(texture.Length / width);
 		int xSide = width << 2;
 		resultWidth = width;
@@ -1232,10 +1222,9 @@ public static class PixelDraw
 				width: resultWidth);
 		return true;
 	}
-	public static byte[] Outline(this byte[] texture, ushort width = 0, uint color = DefaultOutlineColor, byte threshold = DefaultTransparencyThreshold)
+	public static byte[] Outline(this byte[] texture, ushort width = 0, uint color = Black, byte threshold = DefaultTransparencyThreshold)
 	{
-		if (width < 1)
-			width = (ushort)Math.Sqrt(texture.Length >> 2);
+		if (width < 1) width = (ushort)Math.Sqrt(texture.Length >> 2);
 		int xSide = width << 2;
 		byte[] result = new byte[texture.Length];
 		Array.Copy(texture, result, result.Length);
@@ -1545,8 +1534,7 @@ public static class PixelDraw
 	}
 	public static uint[,] Texture2UInt2D(this byte[] texture, ushort width = 0)
 	{
-		if (width < 1)
-			width = (ushort)Math.Sqrt(texture.Length >> 2);
+		if (width < 1) width = (ushort)Math.Sqrt(texture.Length >> 2);
 		int height = (texture.Length >> 2) / width,
 			xSide = width << 2;
 		uint[,] uints = new uint[width, height];
@@ -1582,7 +1570,11 @@ public static class PixelDraw
 		}
 		return result;
 	}
-	public static uint[] LoadPalette(string @string) => LoadPalette(new MemoryStream(Encoding.UTF8.GetBytes(@string)));
+	public static uint[] LoadPalette(string @string)
+	{
+		using MemoryStream memoryStream = new(Encoding.UTF8.GetBytes(@string));
+		return LoadPalette(memoryStream);
+	}
 	public static uint[] LoadPalette(Stream stream)
 	{
 		uint[] result;

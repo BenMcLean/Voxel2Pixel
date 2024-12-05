@@ -86,7 +86,7 @@ public class SpriteMaker
 	public bool Shadow { get; set; } = false;
 	public IVoxelColor ShadowColor { get; set; } = DefaultShadowVoxelColor;
 	public bool Outline { get; set; } = false;
-	public uint OutlineColor { get; set; } = PixelDraw.DefaultOutlineColor;
+	public uint OutlineColor { get; set; } = PixelDraw.Black;
 	public double Radians { get; set; } = 0d;
 	public byte Threshold { get; set; } = PixelDraw.DefaultTransparencyThreshold;
 	public bool Crop { get; set; } = true;

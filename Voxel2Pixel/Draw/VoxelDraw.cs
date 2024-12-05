@@ -643,7 +643,21 @@ public static class VoxelDraw
 			radians: radians,
 			scaleX: scaleX,
 			scaleY: scaleY);
-		return new Point(X: rotatedWidth, Y: rotatedHeight);
+		return new(X: rotatedWidth, Y: rotatedHeight);
+	}
+	public static Point ZSliceLocate(IModel model, Point point, double radians = 0d, byte scaleX = 1, byte scaleY = 1)
+	{
+		PixelDraw.RotatedLocate(
+			width: model.SizeX,
+			height: model.SizeY,
+			x: point.X,
+			y: model.SizeY - 1 - point.Y,
+			out int rotatedX,
+			out int rotatedY,
+			radians: radians,
+			scaleX: scaleX,
+			scaleY: scaleY);
+		return new(X: rotatedX, Y: rotatedY);
 	}
 	public static void ZSlice(IModel model, IRectangleRenderer renderer, ushort z = 0, bool peak = false, VisibleFace visibleFace = VisibleFace.Front)
 	{
@@ -730,19 +744,15 @@ public static class VoxelDraw
 	public static Point StackedLocate(IModel model, Point3D point, double radians = 0d, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1)
 	{
 		if (scaleZ < 1) throw new ArgumentOutOfRangeException(nameof(scaleZ));
-		PixelDraw.RotatedLocate(
-			width: model.SizeX,
-			height: model.SizeY,
-			x: point.X,
-			y: point.Y,
-			out int rotatedX,
-			out int rotatedY,
+		Point sliceLocation = ZSliceLocate(
+			model: model,
+			point: new(point),
 			radians: radians,
 			scaleX: scaleX,
 			scaleY: scaleY);
-		return new Point(
-			X: rotatedX,
-			Y: rotatedY + (model.SizeZ * scaleZ) - 1 - (point.Z * scaleZ));
+		return new(
+			X: sliceLocation.X,
+			Y: sliceLocation.Y + ((model.SizeZ - 1 - point.Z) * scaleZ));
 	}
 	public static void Stacked(IModel model, IRectangleRenderer renderer, double radians = 0d, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, bool peak = false, VisibleFace visibleFace = VisibleFace.Front)
 	{
@@ -797,7 +807,11 @@ public static class VoxelDraw
 		for (ushort z = 0; z < model.SizeZ; z++)
 			for (ushort offsetY = 0; offsetY < scaleZ; offsetY++, offsetRenderer.OffsetY--)
 				if (offsetY == scaleZ - 1)
+				{
 					memories[z].Item2.Rect(offsetRenderer);
+					if (z < model.SizeZ - 1)
+						memories[z + 1].Item1.Rect(offsetRenderer);
+				}
 				else
 					memories[z].Item1.Rect(offsetRenderer);
 	}
