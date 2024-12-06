@@ -34,8 +34,16 @@ public static class PixelDraw
 	//TODO: DrawCircle
 	//TODO: DrawEllipse
 	public const double Tau = Math.PI * 2d;
-	public const uint Black = 0xFFu,
-		White = 0xFFFFFFFFu;
+	public const uint Red = 0xFF0000FFu,
+		Yellow = 0xFFFF00FFu,
+		Black = 0x000000FFu,
+		White = 0xFFFFFFFFu,
+		Green = 0x00FF00FFu,
+		Blue = 0x0000FFFFu,
+		Orange = 0xFFA500FFu,
+		Indigo = 0x4B0082FFu,
+		Violet = 0x8F00FFFFu,
+		Purple = 0xFF00FFFFu;
 	public const byte DefaultTransparencyThreshold = 127;
 	#region Drawing
 	/// <summary>
@@ -381,7 +389,7 @@ public static class PixelDraw
 		rotatedY = (int)(sin * (x * scaleX - offsetX) + cos * (y * scaleY - offsetY));
 	}
 	/// <summary>
-	/// Based on https://stackoverflow.com/a/6207833
+	/// Rotates a texture after optionally upscaling in one operation so that the resulting upscaled texture is aligned so that its leftmost pixel is on x=0 and its highest pixel is on y=0.
 	/// </summary>
 	public static byte[] Rotate(this byte[] texture, out ushort rotatedWidth, out ushort rotatedHeight, double radians = 0d, byte scaleX = 1, byte scaleY = 1, ushort width = 0)
 	{
@@ -408,26 +416,18 @@ public static class PixelDraw
 			throw new OverflowException("Resulting image would be too large to allocate");
 		rotatedWidth = (ushort)rWidth;
 		rotatedHeight = (ushort)rHeight;
-		double offsetX = (scaledWidth >> 1) - cos * (rotatedWidth >> 1) - sin * (rotatedHeight >> 1),
-			offsetY = (scaledHeight >> 1) - cos * (rotatedHeight >> 1) + sin * (rotatedWidth >> 1);
+		ushort halfRotatedWidth = (ushort)(rotatedWidth >> 1),
+			halfRotatedHeight = (ushort)(rotatedHeight >> 1);
+		double offsetX = (scaledWidth >> 1) - cos * halfRotatedWidth - sin * halfRotatedHeight,
+			offsetY = (scaledHeight >> 1) - cos * halfRotatedHeight + sin * halfRotatedWidth;
 		byte[] rotated = new byte[rotatedWidth * rotatedHeight << 2];
-		bool isNearVertical = absCos < 1e-10;
+		bool isNearZero = absCos < 1e-10 || absSin < 1e-10;
 		for (ushort y = 0; y < rotatedHeight; y++)
 		{
-			ushort startX, endX;
-			if (isNearVertical)
+			ushort startX = 0, endX = rotatedWidth;
+			if (!isNearZero)
 			{
-				startX = 0;
-				endX = rotatedWidth;
-			}
-			else
-			{
-				double xLeft = (-offsetX - y * sin) / cos,
-					xRight = (scaledWidth - offsetX - y * sin) / cos;
-				if (cos < 0d)
-					(xLeft, xRight) = (xRight, xLeft);
-				startX = (ushort)Math.Max(0, Math.Floor(xLeft));
-				endX = (ushort)Math.Min(rotatedWidth, Math.Ceiling(xRight));
+				//TODO calculate startX and endX based on the bounding box edges to avoid iterating through known empty pixels.
 			}
 			for (ushort x = startX; x < endX; x++)
 			{
@@ -443,6 +443,18 @@ public static class PixelDraw
 							width: width),
 						width: rotatedWidth);
 			}
+#if DEBUG
+			rotated.DrawPixel(
+				x: startX,
+				y: y,
+				color: Purple,
+				width: rotatedWidth);
+			rotated.DrawPixel(
+				x: endX,
+				y: y,
+				color: Orange,
+				width: rotatedWidth);
+#endif
 		}
 		return rotated;
 	}
