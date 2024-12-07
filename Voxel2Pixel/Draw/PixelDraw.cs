@@ -470,8 +470,8 @@ public static class PixelDraw
 						}
 					}
 				}
-				if (minX.HasValue) startX = (ushort)Math.Max(0, Math.Floor(minX.Value));
-				if (maxX.HasValue) endX = (ushort)Math.Min(rotatedWidth - 1, Math.Ceiling(maxX.Value));
+				if (minX.HasValue) startX = (ushort)Math.Floor(minX.Value);
+				if (maxX.HasValue) endX = (ushort)Math.Ceiling(maxX.Value);
 			}
 			for (ushort x = startX; x <= endX; x++)
 			{

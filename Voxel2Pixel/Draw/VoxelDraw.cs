@@ -697,30 +697,68 @@ public static class VoxelDraw
 			throw new OverflowException("Rotated height exceeds maximum allowed size.");
 		ushort rotatedWidth = (ushort)rWidth,
 			rotatedHeight = (ushort)rHeight,
+			halfScaledWidth = (ushort)(scaledWidth >> 1),
+			halfScaledHeight = (ushort)(scaledHeight >> 1),
 			halfRotatedWidth = (ushort)(rotatedWidth >> 1),
 			halfRotatedHeight = (ushort)(rotatedHeight >> 1);
-		double offsetX = (scaledWidth >> 1) - cos * halfRotatedWidth - sin * halfRotatedHeight,
-			offsetY = (scaledHeight >> 1) - cos * halfRotatedHeight + sin * halfRotatedWidth;
+		double offsetX = halfScaledWidth - cos * halfRotatedWidth - sin * halfRotatedHeight,
+			offsetY = halfScaledHeight - cos * halfRotatedHeight + sin * halfRotatedWidth;
 		bool isNearZero = absCos < 1e-10 || absSin < 1e-10;
+		double[] cornerX = isNearZero ? null : [-halfScaledWidth, halfScaledWidth, halfScaledWidth, -halfScaledWidth],
+			cornerY = isNearZero ? null : [-halfScaledHeight, -halfScaledHeight, halfScaledHeight, halfScaledHeight];
+		if (!isNearZero)
+			for (byte cornerIndex = 0; cornerIndex < 4; cornerIndex++)
+			{
+				double unrotatedX = cornerX[cornerIndex];
+				cornerX[cornerIndex] = unrotatedX * cos - cornerY[cornerIndex] * sin + halfRotatedWidth;
+				cornerY[cornerIndex] = unrotatedX * sin + cornerY[cornerIndex] * cos + halfRotatedHeight;
+			}
 		for (ushort y = 0; y < rotatedHeight; y++)
 		{
 			ushort startX = 0, endX = rotatedWidth;
 			if (!isNearZero)
 			{
-				//TODO fix
+				double? minX = null, maxX = null;
+				for (byte cornerIndex = 0; cornerIndex < 4; cornerIndex++)
+				{
+					if (Math.Abs(cornerY[cornerIndex] - y) <= 0.5)
+					{
+						minX = minX.HasValue ? Math.Min(minX.Value, cornerX[cornerIndex]) : cornerX[cornerIndex];
+						maxX = maxX.HasValue ? Math.Max(maxX.Value, cornerX[cornerIndex]) : cornerX[cornerIndex];
+					}
+					byte nextCornerIndex = (byte)((cornerIndex + 1) % 4);
+					double currentY = cornerY[cornerIndex],
+						nextY = cornerY[nextCornerIndex];
+					if ((currentY <= y && nextY >= y) || (currentY >= y && nextY <= y))
+					{
+						double intersectX = cornerX[cornerIndex]
+							+ (y - currentY) / (nextY - currentY)
+							* (cornerX[nextCornerIndex] - cornerX[cornerIndex]);
+						minX = minX.HasValue ? Math.Min(minX.Value, intersectX) : intersectX;
+						maxX = maxX.HasValue ? Math.Max(maxX.Value, intersectX) : intersectX;
+					}
+				}
+				if (minX.HasValue) startX = (ushort)Math.Floor(minX.Value);
+				if (maxX.HasValue) endX = (ushort)Math.Ceiling(maxX.Value);
 			}
 			for (ushort x = startX; x < endX; x++)
 			{
-				ushort sourceX = (ushort)Math.Floor((x * cos + y * sin + offsetX) / scaleX),
-					sourceY = (ushort)Math.Floor((y * cos - x * sin + offsetY) / scaleY);
-				if (!model.IsOutside(sourceX, sourceY, z) && model[sourceX, sourceY, z] is byte index && index != 0)
-					renderer.Rect(
-						x: x,
-						y: y,
-						index: index,
-						visibleFace: peak && (z == model.SizeZ - 1 || model[sourceX, sourceY, (ushort)(z + 1)] == 0) ?
-							VisibleFace.Top
-							: visibleFace);
+				double sourceX = (x * cos + y * sin + offsetX) / scaleX,
+					sourceY = (y * cos - x * sin + offsetY) / scaleY;
+				if (sourceX >= 0d && sourceX < model.SizeX && sourceY >= 0d && sourceY < model.SizeY)
+				{
+					ushort voxelX = (ushort)Math.Floor(sourceX),
+						voxelY = (ushort)(model.SizeY - 1 - Math.Floor(sourceY)),
+						voxelZ = z;
+					if (model[voxelX, voxelY, voxelZ] is byte index && index != 0)
+						renderer.Rect(
+							x: x,
+							y: y,
+							index: index,
+							visibleFace: peak && (voxelZ == model.SizeZ - 1 || model[voxelX, voxelY, (ushort)(voxelZ + 1)] == 0) ?
+								VisibleFace.Top
+								: visibleFace);
+				}
 			}
 		}
 	}
