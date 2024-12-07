@@ -92,7 +92,7 @@ namespace Voxel2Pixel.Test.Render
 			{
 				VoxelColor = new NaiveDimmer(voxFileModel.Palette),
 			};
-			voxFileModel.Draw(sprite, Perspective.Iso);
+			//voxFileModel.Draw(sprite, Perspective.Iso);
 			sprite["dot"] = new Voxel2Pixel.Model.Point(sprite.Width / 4, 3 * sprite.Height / 4);
 			sprite.DrawBoundingBox();
 			int numSprites = 64;
@@ -100,6 +100,9 @@ namespace Voxel2Pixel.Test.Render
 				.Parallelize(i => sprite
 					.Rotate(Math.Tau * ((double)i / numSprites))
 					.DrawPoint("dot"))];
+			//byte i = 0;
+			//foreach (Sprite frame in frames)
+			//	frame.Png().SaveAsPng($"frame{i++}.png");
 			frames.AnimatedGif(10)
 				.SaveAsGif("Rotate.gif");
 		}

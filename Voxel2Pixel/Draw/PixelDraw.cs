@@ -122,25 +122,25 @@ public static class PixelDraw
 		return texture.DrawRectangle(
 				x: 0,
 				y: 0,
-				color: 0xFFFF00FFu,
+				color: Yellow,
 				rectWidth: (ushort)(width - 1),
 				width: width)
 			.DrawRectangle(
 				x: 1,
 				y: (ushort)(height - 1),
-				color: 0xFF0000FFu,
+				color: Red,
 				rectWidth: (ushort)(width - 1),
 				width: width)
 			.DrawRectangle(
 				x: 0,
 				y: 1,
-				color: 0x0000FFFFu,
+				color: Blue,
 				rectHeight: (ushort)(height - 1),
 				width: width)
 			.DrawRectangle(
 				x: (ushort)(width - 1),
 				y: 0,
-				color: 0x00FF00FFu,
+				color: Green,
 				rectHeight: (ushort)(height - 1),
 				width: width);
 	}
@@ -359,9 +359,11 @@ public static class PixelDraw
 			absSin = Math.Abs(Math.Sin(radians));
 		uint rWidth = (uint)(scaledWidth * absCos + scaledHeight * absSin),
 			rHeight = (uint)(scaledWidth * absSin + scaledHeight * absCos);
-		if (rWidth > ushort.MaxValue || rHeight > ushort.MaxValue)
-			throw new OverflowException("Rotated dimensions exceed maximum allowed size.");
+		if (rWidth > ushort.MaxValue)
+			throw new OverflowException("Rotated width exceeds maximum allowed size.");
 		rotatedWidth = (ushort)rWidth;
+		if (rHeight > ushort.MaxValue)
+			throw new OverflowException("Rotated height exceeds maximum allowed size.");
 		rotatedHeight = (ushort)rHeight;
 	}
 	public static void RotatedLocate(ushort width, ushort height, int x, int y, out int rotatedX, out int rotatedY, double radians = 0d, byte scaleX = 1, byte scaleY = 1)
@@ -410,26 +412,68 @@ public static class PixelDraw
 			absSin = Math.Abs(sin);
 		uint rWidth = (uint)(scaledWidth * absCos + scaledHeight * absSin),
 			rHeight = (uint)(scaledWidth * absSin + scaledHeight * absCos);
-		if (rWidth > ushort.MaxValue || rHeight > ushort.MaxValue)
-			throw new OverflowException("Rotated dimensions exceed maximum allowed size.");
+		if (rWidth > ushort.MaxValue)
+			throw new OverflowException("Rotated width exceeds maximum allowed size.");
+		if (rHeight > ushort.MaxValue)
+			throw new OverflowException("Rotated height exceeds maximum allowed size.");
 		if (rWidth * rHeight > int.MaxValue >> 2)
 			throw new OverflowException("Resulting image would be too large to allocate");
 		rotatedWidth = (ushort)rWidth;
 		rotatedHeight = (ushort)rHeight;
-		ushort halfRotatedWidth = (ushort)(rotatedWidth >> 1),
+		ushort halfScaledWidth = (ushort)(scaledWidth >> 1),
+			halfScaledHeight = (ushort)(scaledHeight >> 1),
+			halfRotatedWidth = (ushort)(rotatedWidth >> 1),
 			halfRotatedHeight = (ushort)(rotatedHeight >> 1);
-		double offsetX = (scaledWidth >> 1) - cos * halfRotatedWidth - sin * halfRotatedHeight,
-			offsetY = (scaledHeight >> 1) - cos * halfRotatedHeight + sin * halfRotatedWidth;
-		byte[] rotated = new byte[rotatedWidth * rotatedHeight << 2];
+		double offsetX = halfScaledWidth - cos * halfRotatedWidth - sin * halfRotatedHeight,
+			offsetY = halfScaledHeight - cos * halfRotatedHeight + sin * halfRotatedWidth;
+		//Pre-calculate rotated corners in clockwise order:
+		//0 = top-left (0,0)
+		//1 = top-right (w,0)
+		//2 = bottom-right (w,h)
+		//3 = bottom-left (0,h)
 		bool isNearZero = absCos < 1e-10 || absSin < 1e-10;
+		double[] cornerX = isNearZero ? null : [-halfScaledWidth, halfScaledWidth, halfScaledWidth, -halfScaledWidth],
+			cornerY = isNearZero ? null : [-halfScaledHeight, -halfScaledHeight, halfScaledHeight, halfScaledHeight];
+		if (!isNearZero)
+			for (byte cornerIndex = 0; cornerIndex < 4; cornerIndex++)
+			{
+				double unrotatedX = cornerX[cornerIndex];
+				cornerX[cornerIndex] = unrotatedX * cos - cornerY[cornerIndex] * sin + halfRotatedWidth;
+				cornerY[cornerIndex] = unrotatedX * sin + cornerY[cornerIndex] * cos + halfRotatedHeight;
+			}
+		byte[] rotated = new byte[rotatedWidth * rotatedHeight << 2];
 		for (ushort y = 0; y < rotatedHeight; y++)
 		{
-			ushort startX = 0, endX = rotatedWidth;
+			ushort startX = 0, endX = (ushort)(rotatedWidth - 1);
 			if (!isNearZero)
 			{
-				//TODO calculate startX and endX based on the bounding box edges to avoid iterating through known empty pixels.
+				double? minX = null, maxX = null;
+				for (byte cornerIndex = 0; cornerIndex < 4; cornerIndex++)
+				{//Check each edge of the rectangle
+					if (Math.Abs(cornerY[cornerIndex] - y) <= 0.5)
+					{//If this corner is on this scanline
+						minX = minX.HasValue ? Math.Min(minX.Value, cornerX[cornerIndex]) : cornerX[cornerIndex];
+						maxX = maxX.HasValue ? Math.Max(maxX.Value, cornerX[cornerIndex]) : cornerX[cornerIndex];
+					}
+					byte nextCornerIndex = (byte)((cornerIndex + 1) % 4);
+					double currentY = cornerY[cornerIndex],
+						nextY = cornerY[nextCornerIndex];
+					if ((currentY <= y && nextY >= y) || (currentY >= y && nextY <= y))
+					{//If the edge crosses this scanline
+						if (Math.Abs(nextY - currentY) > 1e-10)
+						{//Only calculate intersection if denominator isn't zero
+							double intersectX = cornerX[cornerIndex]
+								+ (y - currentY) / (nextY - currentY)
+								* (cornerX[nextCornerIndex] - cornerX[cornerIndex]);
+							minX = minX.HasValue ? Math.Min(minX.Value, intersectX) : intersectX;
+							maxX = maxX.HasValue ? Math.Max(maxX.Value, intersectX) : intersectX;
+						}
+					}
+				}
+				if (minX.HasValue) startX = (ushort)Math.Max(0, Math.Floor(minX.Value));
+				if (maxX.HasValue) endX = (ushort)Math.Min(rotatedWidth - 1, Math.Ceiling(maxX.Value));
 			}
-			for (ushort x = startX; x < endX; x++)
+			for (ushort x = startX; x <= endX; x++)
 			{
 				double sourceX = (x * cos + y * sin + offsetX) / scaleX,
 					sourceY = (y * cos - x * sin + offsetY) / scaleY;
@@ -443,18 +487,6 @@ public static class PixelDraw
 							width: width),
 						width: rotatedWidth);
 			}
-#if DEBUG
-			rotated.DrawPixel(
-				x: startX,
-				y: y,
-				color: Purple,
-				width: rotatedWidth);
-			rotated.DrawPixel(
-				x: endX,
-				y: y,
-				color: Orange,
-				width: rotatedWidth);
-#endif
 		}
 		return rotated;
 	}
