@@ -11,7 +11,7 @@ namespace Voxel2Pixel.Draw;
 /// <summary>
 /// All methods in this static class are actually stateless functions, meaning that they do not reference any modifiable variables besides their parameters. This makes them as thread-safe as their parameters.
 /// I have been forced into a situation where X and Y mean something different in 2D space from what they mean in 3D space. Not only do the coordinates not match, but 3D is upside down when compared to 2D. I hate this. I hate it so much. But I'm stuck with it if I want my software to be interoperable with other existing software.
-/// In 2D space for pixels, X+ means east/right, Y+ means south/down. 0, 0 is the upper-left / northwestern corner of the screen. This is dictated by how 2D raster graphics are typically stored.
+/// In 2D space for pixels, X+ means east/right, Y+ means south/down. 0, 0 is the upper-left / northwestern corner of the screen. This is dictated by how 2D raster graphics are typically stored in computer memory.
 /// In 3D space for voxels, I'm following the MagicaVoxel convention, which is Z+up, right-handed, so X+ means right/east, Y+ means forwards/north and Z+ means up. 0, 0, 0 is the bottom left nearest / southwestern corner of the model.
 /// </summary>
 public static class VoxelDraw
@@ -683,7 +683,9 @@ public static class VoxelDraw
 		if (model.SizeY > ushort.MaxValue / scaleY)
 			throw new OverflowException("Scaled height exceeds maximum allowed size.");
 		ushort scaledWidth = (ushort)(model.SizeX * scaleX),
-			scaledHeight = (ushort)(model.SizeY * scaleY);
+			scaledHeight = (ushort)(model.SizeY * scaleY),
+			halfScaledWidth = (ushort)(scaledWidth >> 1),
+			halfScaledHeight = (ushort)(scaledHeight >> 1);
 		radians %= PixelDraw.Tau;
 		double cos = Math.Cos(radians),
 			sin = Math.Sin(radians),
@@ -697,8 +699,6 @@ public static class VoxelDraw
 			throw new OverflowException("Rotated height exceeds maximum allowed size.");
 		ushort rotatedWidth = (ushort)rWidth,
 			rotatedHeight = (ushort)rHeight,
-			halfScaledWidth = (ushort)(scaledWidth >> 1),
-			halfScaledHeight = (ushort)(scaledHeight >> 1),
 			halfRotatedWidth = (ushort)(rotatedWidth >> 1),
 			halfRotatedHeight = (ushort)(rotatedHeight >> 1);
 		double offsetX = halfScaledWidth - cos * halfRotatedWidth - sin * halfRotatedHeight,

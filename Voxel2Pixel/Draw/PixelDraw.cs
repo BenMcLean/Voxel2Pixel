@@ -404,7 +404,9 @@ public static class PixelDraw
 		if (height > ushort.MaxValue / scaleY)
 			throw new OverflowException("Scaled height exceeds maximum allowed size.");
 		ushort scaledWidth = (ushort)(width * scaleX),
-			scaledHeight = (ushort)(height * scaleY);
+			scaledHeight = (ushort)(height * scaleY),
+			halfScaledWidth = (ushort)(scaledWidth >> 1),
+			halfScaledHeight = (ushort)(scaledHeight >> 1);
 		radians %= Tau;
 		double cos = Math.Cos(radians),
 			sin = Math.Sin(radians),
@@ -420,9 +422,7 @@ public static class PixelDraw
 			throw new OverflowException("Resulting image would be too large to allocate");
 		rotatedWidth = (ushort)rWidth;
 		rotatedHeight = (ushort)rHeight;
-		ushort halfScaledWidth = (ushort)(scaledWidth >> 1),
-			halfScaledHeight = (ushort)(scaledHeight >> 1),
-			halfRotatedWidth = (ushort)(rotatedWidth >> 1),
+		ushort halfRotatedWidth = (ushort)(rotatedWidth >> 1),
 			halfRotatedHeight = (ushort)(rotatedHeight >> 1);
 		double offsetX = halfScaledWidth - cos * halfRotatedWidth - sin * halfRotatedHeight,
 			offsetY = halfScaledHeight - cos * halfRotatedHeight + sin * halfRotatedWidth;
