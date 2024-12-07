@@ -8,7 +8,7 @@ There will be no license requirements restricting usage, but this format is desi
 The BenVoxel standard describes two inter-related file formats. One is a binary format with the extension `.ben` and the other is a JSON format (recommended extension `.ben.json`) designed to contain all of the same information as the binary format but with the metadata kept human-readable. The JSON format uses Z85 encoding for the geometry data. A game developer might keep their voxel models in the JSON format during development but automatically convert to the binary format (potentially stripping out metadata) as part of their release pipeline.
 ## Definitions
 ### Coordinates
-The BenVoxel standard adopts the MagicaVoxel Z+up right-handed 3D coordinate system where: X+ is right/east (width), Y+ is forward/north (depth), and Z+ is up (height). Negative coordinates cannot contain voxels. Models are expected to be aligned so that their lowest edge occupies coordinate value 0 on all three axes.
+The BenVoxel standard adopts the MagicaVoxel Z+up right-handed 3D coordinate system where: X+ is right/east (width), Y+ is forward/north (depth), and Z+ is up (height). 0, 0, 0 is the bottom left nearest / southwestern corner of the model. Negative coordinates cannot contain voxels. Models are expected to be aligned so that their lowest edge occupies coordinate value 0 on all three axes.
 ### Special Keys
 The empty string key has special meaning in several contexts:
 - In models: Indicates the default model.

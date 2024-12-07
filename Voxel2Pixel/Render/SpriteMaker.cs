@@ -272,7 +272,7 @@ public class SpriteMaker
 					{
 						RectangleRenderer = sprite,
 						OffsetX = maker.Outline ? 1 : 0,
-						OffsetY = (maker.Model.SizeZ * maker.ScaleZ) - 1 + (maker.Outline ? 1 : 0),
+						OffsetY = maker.Model.SizeZ - 1 + (maker.Outline ? 1 : 0),
 					},
 					scaleX: maker.ScaleX,
 					scaleY: maker.ScaleY);
