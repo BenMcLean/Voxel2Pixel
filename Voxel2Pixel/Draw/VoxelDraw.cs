@@ -11,8 +11,8 @@ namespace Voxel2Pixel.Draw;
 /// <summary>
 /// All methods in this static class are actually stateless functions, meaning that they do not reference any modifiable variables besides their parameters. This makes them as thread-safe as their parameters.
 /// I have been forced into a situation where X and Y mean something different in 2D space from what they mean in 3D space. Not only do the coordinates not match, but 3D is upside down when compared to 2D. I hate this. I hate it so much. But I'm stuck with it if I want my software to be interoperable with other existing software.
-/// In 2D space for pixels, X+ means east/right, Y+ means down. This is dictated by how 2D raster graphics are typically stored.
-/// In 3D space for voxels, I'm following the MagicaVoxel convention, which is Z+up, right-handed, so X+ means right/east, Y+ means forwards/north and Z+ means up.
+/// In 2D space for pixels, X+ means east/right, Y+ means south/down. 0, 0 is the upper-left / northwestern corner of the screen. This is dictated by how 2D raster graphics are typically stored.
+/// In 3D space for voxels, I'm following the MagicaVoxel convention, which is Z+up, right-handed, so X+ means right/east, Y+ means forwards/north and Z+ means up. 0, 0, 0 is the bottom left nearest / southwestern corner of the model.
 /// </summary>
 public static class VoxelDraw
 {
@@ -678,42 +678,36 @@ public static class VoxelDraw
 		if (z >= model.SizeZ) throw new ArgumentOutOfRangeException(nameof(z));
 		if (scaleX < 1) throw new ArgumentOutOfRangeException(nameof(scaleX));
 		if (scaleY < 1) throw new ArgumentOutOfRangeException(nameof(scaleY));
-		radians %= PixelDraw.Tau;
-		double cos = Math.Cos(radians),
-			sin = Math.Sin(radians),
-			absCos = Math.Abs(cos),
-			absSin = Math.Abs(sin);
 		if (model.SizeX > ushort.MaxValue / scaleX)
 			throw new OverflowException("Scaled width exceeds maximum allowed size.");
 		if (model.SizeY > ushort.MaxValue / scaleY)
 			throw new OverflowException("Scaled height exceeds maximum allowed size.");
 		ushort scaledWidth = (ushort)(model.SizeX * scaleX),
 			scaledHeight = (ushort)(model.SizeY * scaleY);
-		uint rotatedWidth = (uint)(scaledWidth * absCos + scaledHeight * absSin),
-			rotatedHeight = (uint)(scaledWidth * absSin + scaledHeight * absCos);
-		if (rotatedWidth > ushort.MaxValue || rotatedHeight > ushort.MaxValue)
-			throw new OverflowException("Rotated dimensions exceed maximum allowed size.");
-		ushort halfRotatedWidth = (ushort)(rotatedWidth >> 1),
+		radians %= PixelDraw.Tau;
+		double cos = Math.Cos(radians),
+			sin = Math.Sin(radians),
+			absCos = Math.Abs(cos),
+			absSin = Math.Abs(sin);
+		uint rWidth = (uint)(scaledWidth * absCos + scaledHeight * absSin),
+			rHeight = (uint)(scaledWidth * absSin + scaledHeight * absCos);
+		if (rWidth > ushort.MaxValue)
+			throw new OverflowException("Rotated width exceeds maximum allowed size.");
+		if (rHeight > ushort.MaxValue)
+			throw new OverflowException("Rotated height exceeds maximum allowed size.");
+		ushort rotatedWidth = (ushort)rWidth,
+			rotatedHeight = (ushort)rHeight,
+			halfRotatedWidth = (ushort)(rotatedWidth >> 1),
 			halfRotatedHeight = (ushort)(rotatedHeight >> 1);
 		double offsetX = (scaledWidth >> 1) - cos * halfRotatedWidth - sin * halfRotatedHeight,
 			offsetY = (scaledHeight >> 1) - cos * halfRotatedHeight + sin * halfRotatedWidth;
-		bool isNearVertical = absCos < 1e-10;
+		bool isNearZero = absCos < 1e-10 || absSin < 1e-10;
 		for (ushort y = 0; y < rotatedHeight; y++)
 		{
-			ushort startX, endX;
-			if (isNearVertical)
+			ushort startX = 0, endX = rotatedWidth;
+			if (!isNearZero)
 			{
-				startX = 0;
-				endX = (ushort)rotatedWidth;
-			}
-			else
-			{
-				double xLeft = (-offsetX - y * sin) / cos,
-					xRight = (scaledWidth - offsetX - y * sin) / cos;
-				if (cos < 0d)
-					(xLeft, xRight) = (xRight, xLeft);
-				startX = (ushort)Math.Max(0, Math.Floor(xLeft));
-				endX = (ushort)Math.Min(rotatedWidth, Math.Ceiling(xRight));
+				//TODO fix
 			}
 			for (ushort x = startX; x < endX; x++)
 			{
