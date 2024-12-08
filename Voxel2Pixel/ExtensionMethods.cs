@@ -38,14 +38,13 @@ public static class ExtensionMethods
 	/// <summary>
 	/// Parallelizes the execution of a Select query while preserving the order of the source sequence.
 	/// </summary>
-	public static List<TResult> Parallelize<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector) => source
+	public static List<TResult> Parallelize<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector) => [.. source
 		.Select((element, index) => (element, index))
 		.AsParallel()
 		.Select(sourceTuple => (result: selector(sourceTuple.element), sourceTuple.index))
 		.OrderBy(resultTuple => resultTuple.index)
 		.AsEnumerable()
-		.Select(resultTuple => resultTuple.result)
-		.ToList();
+		.Select(resultTuple => resultTuple.result)];
 	#endregion PLINQ
 	#region Sprite
 	public static Point Size(this ISprite sprite) => new(sprite.Width, sprite.Height);
