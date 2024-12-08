@@ -72,7 +72,7 @@ public class Test
 			mode: FileMode.OpenOrCreate,
 			access: FileAccess.Write);
 		BenVoxelFile benVoxelFile = BenVoxelFile.Load(SourceFile);
-		benVoxelFile.Default(out _)
+		benVoxelFile.Models[""].SvoModel
 			.Write(
 				stream: binaryOutputStream,
 				includeSizes: true);

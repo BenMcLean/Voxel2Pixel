@@ -21,7 +21,7 @@ public class SvoModel : BenVoxel.SvoModel, ISpecializedModel
 			Global = global,
 		};
 		for (int i = 0; i < models.Length; i++)
-			file.Models[i == 0 ? "" : i.ToString()] = new BenVoxelFile.Model { Geometry = new BenVoxel.SvoModel(models[i]) };
+			file.Models[i == 0 ? "" : i.ToString()] = new BenVoxelFile.Model { Geometry = new(models[i]) };
 		return file;
 	}
 	#region SvoModel

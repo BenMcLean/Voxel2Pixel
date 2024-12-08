@@ -75,12 +75,12 @@
 				case ".json":
 					BenVoxelFile benVoxelFile = JsonSerializer.Deserialize<BenVoxelFile>(memoryStream)
 						?? throw new NullReferenceException();
-					Model = new DictionaryModel(benVoxelFile.Default(out uint[] palette));
+					Model = benVoxelFile.Default(out uint[] palette);
 					Palette = palette ?? throw new NullReferenceException("Missing palette!");
 					break;
 				default:
 					benVoxelFile = new(memoryStream);
-					Model = new DictionaryModel(benVoxelFile.Default(out palette));
+					Model = benVoxelFile.Default(out palette);
 					Palette = palette ?? throw new NullReferenceException("Missing palette!");
 					break;
 			}

@@ -198,8 +198,14 @@ public class BenVoxelFile() : IBinaryWritable
 		[JsonPropertyName("metadata")]
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		public Metadata Metadata { get; set; } = null;
+		[JsonIgnore]
+		public DictionaryModel Geometry { get; set; } = null;
 		[JsonPropertyName("geometry")]
-		public SvoModel Geometry { get; set; } = null;
+		public SvoModel SvoModel
+		{
+			get => new(Geometry);
+			set => Geometry = new DictionaryModel(value);
+		}
 		#endregion Data
 		#region Model
 		public Model(Stream stream) : this()
@@ -224,7 +230,7 @@ public class BenVoxelFile() : IBinaryWritable
 				{
 					if (!"SVOG".Equals(fourCC))
 						return false;
-					Geometry = new(reader);
+					SvoModel = new(reader);
 					return true;
 				}))
 				throw new IOException("Expected \"SVOG\"");
@@ -242,7 +248,7 @@ public class BenVoxelFile() : IBinaryWritable
 		public void Write(BinaryWriter writer)
 		{
 			Metadata?.RIFF("DATA", writer);
-			Geometry.RIFF("SVOG", writer);
+			SvoModel.RIFF("SVOG", writer);
 		}
 		#endregion IBinaryWritable
 	}
@@ -327,11 +333,11 @@ public class BenVoxelFile() : IBinaryWritable
 			}
 		return this;
 	}
-	public SvoModel Default(out uint[] palette)
+	public DictionaryModel Default(out uint[] palette)
 	{
 		if (!Models.TryGetValue("", out Model benVoxelFileModel))
 			benVoxelFileModel = Models.FirstOrDefault().Value;
-		SvoModel svoModel = benVoxelFileModel?.Geometry;
+		DictionaryModel geometry = benVoxelFileModel?.Geometry;
 		if (!(benVoxelFileModel?.Metadata?.Palettes.TryGetValue("", out Color[] colors) ?? false)
 			&& !(Global?.Palettes.TryGetValue("", out colors) ?? false))
 			colors = benVoxelFileModel?.Metadata?.Palettes?.Any() ?? false ?
@@ -340,7 +346,7 @@ public class BenVoxelFile() : IBinaryWritable
 					Global.Palettes.First().Value
 					: null;
 		palette = colors is null ? null : [.. colors.Take(256).Select(color => color.Rgba)];
-		return svoModel;
+		return geometry;
 	}
 	#endregion BenVoxelFile
 	#region IBinaryWritable

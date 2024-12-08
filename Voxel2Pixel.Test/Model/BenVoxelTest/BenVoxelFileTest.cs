@@ -1,7 +1,5 @@
 ﻿using BenVoxel;
-using System.Text;
 using System.Text.Json;
-using System.Xml.Serialization;
 using Voxel2Pixel.Model.FileFormats;
 using static BenVoxel.ExtensionMethods;
 
@@ -24,7 +22,7 @@ public class BenVoxelFileTest(Xunit.Abstractions.ITestOutputHelper output)
 				Description = "",
 			})];
 		}
-		SvoModel model = new(new VoxFileModel(@"..\..\..\TestData\Models\Sora.vox"));
+		DictionaryModel model = new(new VoxFileModel(@"..\..\..\TestData\Models\Sora.vox"));
 		BenVoxelFile file = new()
 		{
 			Global = metadata
@@ -32,7 +30,7 @@ public class BenVoxelFileTest(Xunit.Abstractions.ITestOutputHelper output)
 		file.Models[""] = new BenVoxelFile.Model()
 		{
 			Metadata = metadata,
-			Geometry = new SvoModel(),
+			Geometry = new DictionaryModel(),
 		};
 		file.Models["Another"] = new BenVoxelFile.Model()
 		{

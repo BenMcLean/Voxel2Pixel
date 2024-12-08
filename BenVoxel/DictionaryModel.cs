@@ -1,17 +1,16 @@
-﻿using BenVoxel;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Voxel2Pixel.Model;
+namespace BenVoxel;
 
 public class DictionaryModel : IEditableModel
 {
 	#region DictionaryModel
 	private readonly Dictionary<ulong, byte> Dictionary = [];
 	public void Clear() => Dictionary.Clear();
-	public static ulong Encode(ushort x, ushort y, ushort z) => ((ulong)z << 32) | ((uint)y << 16) | x;
+	public static ulong Encode(ushort x, ushort y, ushort z) => (ulong)z << 32 | (uint)y << 16 | x;
 	public static void Decode(ulong @ulong, out ushort x, out ushort y, out ushort z)
 	{
 		x = (ushort)@ulong;
