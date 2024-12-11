@@ -419,7 +419,7 @@ public static class PixelDraw
 		if (rHeight > ushort.MaxValue)
 			throw new OverflowException("Rotated height exceeds maximum allowed size.");
 		if (rWidth * rHeight > int.MaxValue >> 2)
-			throw new OverflowException("Resulting image would be too large to allocate");
+			throw new OverflowException("Resulting image would be too large to allocate.");
 		rotatedWidth = (ushort)rWidth;
 		rotatedHeight = (ushort)rHeight;
 		ushort halfRotatedWidth = (ushort)(rotatedWidth >> 1),
@@ -450,7 +450,7 @@ public static class PixelDraw
 				double? minX = null, maxX = null;
 				for (byte cornerIndex = 0; cornerIndex < 4; cornerIndex++)
 				{//Check each edge of the rectangle
-					if (Math.Abs(cornerY[cornerIndex] - y) <= 0.5)
+					if (Math.Abs(cornerY[cornerIndex] - y) <= 0.5d)
 					{//If this corner is on this scanline
 						minX = minX.HasValue ? Math.Min(minX.Value, cornerX[cornerIndex]) : cornerX[cornerIndex];
 						maxX = maxX.HasValue ? Math.Max(maxX.Value, cornerX[cornerIndex]) : cornerX[cornerIndex];
@@ -1465,7 +1465,7 @@ public static class PixelDraw
 	}
 	public static ushort Height(int length, ushort width = 0) =>
 		width > 0 ?
-			(ushort)(length / width >> 2)
+			(ushort)((length / width) >> 2)
 			: (ushort)Math.Sqrt(length >> 2);
 	public static uint Color(byte r, byte g, byte b, byte a) => (uint)(r << 24 | g << 16 | b << 8 | a);
 	/// <param name="rgba">rgba8888, Big Endian</param>

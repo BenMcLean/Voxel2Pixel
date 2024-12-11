@@ -721,7 +721,7 @@ public static class VoxelDraw
 				double? minX = null, maxX = null;
 				for (byte cornerIndex = 0; cornerIndex < 4; cornerIndex++)
 				{
-					if (Math.Abs(cornerY[cornerIndex] - y) <= 0.5)
+					if (Math.Abs(cornerY[cornerIndex] - y) <= 0.5d)
 					{
 						minX = minX.HasValue ? Math.Min(minX.Value, cornerX[cornerIndex]) : cornerX[cornerIndex];
 						maxX = maxX.HasValue ? Math.Max(maxX.Value, cornerX[cornerIndex]) : cornerX[cornerIndex];

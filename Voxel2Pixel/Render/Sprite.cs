@@ -418,53 +418,93 @@ public class Sprite : IDictionary<string, Point>, ISprite, IRenderer, IVoxelColo
 		Texture.DrawBoundingBox(Width);
 		return this;
 	}
-	/// <summary>
-	/// Based on https://stackoverflow.com/a/6207833
-	/// </summary>
-	public void Rotate(double radians, IRectangleRenderer renderer, byte scaleX = 1, byte scaleY = 1)
+	public void Rotate(IRectangleRenderer renderer, double radians = 0d, byte scaleX = 1, byte scaleY = 1)
 	{
-		Point size = RotatedSize(radians, scaleX, scaleY);
+		if (scaleX < 1) throw new ArgumentOutOfRangeException(nameof(scaleX));
+		if (scaleY < 1) throw new ArgumentOutOfRangeException(nameof(scaleY));
 		ushort height = Height;
+		if (height > ushort.MaxValue / scaleY)
+			throw new OverflowException("Scaled height exceeds maximum allowed size.");
+		ushort scaledWidth = (ushort)(Width * scaleX),
+			scaledHeight = (ushort)(height * scaleY),
+			halfScaledWidth = (ushort)(scaledWidth >> 1),
+			halfScaledHeight = (ushort)(scaledHeight >> 1);
+		radians %= PixelDraw.Tau;
 		double cos = Math.Cos(radians),
 			sin = Math.Sin(radians),
-			offsetX,
-			offsetY;
-		if (scaleX == 1 && scaleY == 1)
+			absCos = Math.Abs(cos),
+			absSin = Math.Abs(sin);
+		uint rWidth = (uint)(scaledWidth * absCos + scaledHeight * absSin),
+			rHeight = (uint)(scaledWidth * absSin + scaledHeight * absCos);
+		if (rWidth > ushort.MaxValue)
+			throw new OverflowException("Rotated width exceeds maximum allowed size.");
+		if (rHeight > ushort.MaxValue)
+			throw new OverflowException("Rotated height exceeds maximum allowed size.");
+		ushort rotatedWidth = (ushort)rWidth,
+			rotatedHeight = (ushort)rHeight,
+			halfRotatedWidth = (ushort)(rotatedWidth >> 1),
+			halfRotatedHeight = (ushort)(rotatedHeight >> 1);
+		double offsetX = halfScaledWidth - cos * halfRotatedWidth - sin * halfRotatedHeight,
+			offsetY = halfScaledHeight - cos * halfRotatedHeight + sin * halfRotatedWidth;
+		//Pre-calculate rotated corners in clockwise order:
+		//0 = top-left (0,0)
+		//1 = top-right (w,0)
+		//2 = bottom-right (w,h)
+		//3 = bottom-left (0,h)
+		bool isNearZero = absCos < 1e-10 || absSin < 1e-10;
+		double[] cornerX = isNearZero ? null : [-halfScaledWidth, halfScaledWidth, halfScaledWidth, -halfScaledWidth],
+			cornerY = isNearZero ? null : [-halfScaledHeight, -halfScaledHeight, halfScaledHeight, halfScaledHeight];
+		if (!isNearZero)
+			for (byte cornerIndex = 0; cornerIndex < 4; cornerIndex++)
+			{
+				double unrotatedX = cornerX[cornerIndex];
+				cornerX[cornerIndex] = unrotatedX * cos - cornerY[cornerIndex] * sin + halfRotatedWidth;
+				cornerY[cornerIndex] = unrotatedX * sin + cornerY[cornerIndex] * cos + halfRotatedHeight;
+			}
+		for (ushort y = 0; y < rotatedHeight; y++)
 		{
-			offsetX = (Width >> 1) - cos * (size.X >> 1) - sin * (size.Y >> 1);
-			offsetY = (height >> 1) - cos * (size.Y >> 1) + sin * (size.X >> 1);
-			for (ushort y = 0; y < size.Y; y++)
-				for (ushort x = 0; x < size.X; x++)
-					if ((ushort)(x * cos + y * sin + offsetX) is ushort oldX
-						&& oldX >= 0 && oldX < Width
-						&& (ushort)(y * cos - x * sin + offsetY) is ushort oldY
-						&& oldY >= 0 && oldY < height)
-						renderer.Rect(
-							x: x,
-							y: y,
-							color: Pixel(
-								x: oldX,
-								y: oldY));
-			return;
-		}
-		if (scaleX < 1 || scaleY < 1)
-			throw new ArgumentException("Scaling factors must be positive.");
-		ushort scaledWidth = (ushort)(Width * scaleX),
-			scaledHeight = (ushort)(height * scaleY);
-		offsetX = (scaledWidth >> 1) - cos * (size.X >> 1) - sin * (size.Y >> 1);
-		offsetY = (scaledHeight >> 1) - cos * (size.Y >> 1) + sin * (size.X >> 1);
-		for (ushort y = 0; y < size.Y; y++)
-			for (ushort x = 0; x < size.X; x++)
-				if ((ushort)((x * cos + y * sin + offsetX) / scaleX) is ushort oldX
-					&& oldX >= 0 && oldX < Width
-					&& (ushort)((y * cos - x * sin + offsetY) / scaleY) is ushort oldY
-					&& oldY >= 0 && oldY < height)
+			ushort startX = 0, endX = (ushort)(rotatedWidth - 1);
+			if (!isNearZero)
+			{
+				double? minX = null, maxX = null;
+				for (byte cornerIndex = 0; cornerIndex < 4; cornerIndex++)
+				{//Check each edge of the rectangle
+					if (Math.Abs(cornerY[cornerIndex] - y) <= 0.5d)
+					{//If this corner is on this scanline
+						minX = minX.HasValue ? Math.Min(minX.Value, cornerX[cornerIndex]) : cornerX[cornerIndex];
+						maxX = maxX.HasValue ? Math.Max(maxX.Value, cornerX[cornerIndex]) : cornerX[cornerIndex];
+					}
+					byte nextCornerIndex = (byte)((cornerIndex + 1) % 4);
+					double currentY = cornerY[cornerIndex],
+						nextY = cornerY[nextCornerIndex];
+					if ((currentY <= y && nextY >= y) || (currentY >= y && nextY <= y))
+					{//If the edge crosses this scanline
+						if (Math.Abs(nextY - currentY) > 1e-10)
+						{//Only calculate intersection if denominator isn't zero
+							double intersectX = cornerX[cornerIndex]
+								+ (y - currentY) / (nextY - currentY)
+								* (cornerX[nextCornerIndex] - cornerX[cornerIndex]);
+							minX = minX.HasValue ? Math.Min(minX.Value, intersectX) : intersectX;
+							maxX = maxX.HasValue ? Math.Max(maxX.Value, intersectX) : intersectX;
+						}
+					}
+				}
+				if (minX.HasValue) startX = (ushort)Math.Floor(minX.Value);
+				if (maxX.HasValue) endX = (ushort)Math.Ceiling(maxX.Value);
+			}
+			for (ushort x = startX; x <= endX; x++)
+			{
+				double sourceX = (x * cos + y * sin + offsetX) / scaleX,
+					sourceY = (y * cos - x * sin + offsetY) / scaleY;
+				if (sourceX >= 0d && sourceX < Width && sourceY >= 0d && sourceY < height)
 					renderer.Rect(
 						x: x,
 						y: y,
 						color: Pixel(
-							x: oldX,
-							y: oldY));
+							x: (ushort)Math.Floor(sourceX),
+							y: (ushort)Math.Floor(sourceY)));
+			}
+		}
 	}
 	#endregion Image manipulation
 }
