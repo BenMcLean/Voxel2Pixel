@@ -1498,27 +1498,16 @@ public static class PixelDraw
 				value: palette[indices[i]]);
 		return bytes;
 	}
-	public static HashSet<T> Append<T>(this HashSet<T> hashSet, params T[] other) => hashSet.Append(other.AsEnumerable());
-	/// <summary>
-	/// I understand why they decided to name it HashSet.UnionWith instead of HashSet.AddRange.
-	/// But I do not understand why UnionWith returns void instead of returning the HashSet.
-	/// </summary>
-	public static HashSet<T> Append<T>(this HashSet<T> hashSet, IEnumerable<T> other)
+	public static uint[] PaletteFromTexture(this byte[] texture)
 	{
-		hashSet.UnionWith(other);
-		return hashSet;
+		HashSet<uint> hashSet = [0u];
+		hashSet.UnionWith(texture.Byte2UIntArray());
+		return [.. hashSet
+			.OrderBy(@uint => @uint)
+			.Take(256)];
 	}
-	public static List<T> Append<T>(this List<T> list, params T[] other) => list.Append(other.AsEnumerable());
-	public static List<T> Append<T>(this List<T> list, IEnumerable<T> other)
-	{
-		list.AddRange(other);
-		return list;
-	}
-	public static uint[] PaletteFromTexture(this byte[] texture) => [.. new HashSet<uint> {0u}
-		.Append(texture.Byte2UIntArray())
-		.OrderBy(@uint => @uint)
-		.Take(256)];
-	public static byte[] Byte2IndexArray(this byte[] bytes, uint[] palette)
+	public static uint[] Opaque(params uint[] palette) => [.. palette.Select(color => color | 0xFFu)];
+	public static byte[] Byte2IndexArray(this byte[] bytes, params uint[] palette)
 	{
 		byte[] indices = new byte[bytes.Length >> 2];
 		uint[] uints = bytes.Byte2UIntArray();
@@ -1529,7 +1518,7 @@ public static class PixelDraw
 	/// <param name="indices">Palette indices (one byte per pixel)</param>
 	/// <param name="palette">256 rgba8888 color values</param>
 	/// <returns>rgba8888 texture (one int per pixel)</returns>
-	public static uint[] Index2UIntArray(this byte[] indices, uint[] palette) => [.. indices.Select(@byte => palette[@byte])];
+	public static uint[] Index2UIntArray(this byte[] indices, params uint[] palette) => [.. indices.Select(@byte => palette[@byte])];
 	/// <param name="ints">rgba8888 color values (one int per pixel)</param>
 	/// <returns>rgba8888 texture (four bytes per pixel)</returns>
 	public static byte[] UInt2ByteArray(this uint[] uints)

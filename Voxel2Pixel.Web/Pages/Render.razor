@@ -122,7 +122,7 @@
 		if (Model is null) return;
 		ImageString = SpriteMaker
 			.Set(Model)
-			.Set(new NaiveDimmer(Palette))
+			.Set(new NaiveDimmer(PixelDraw.Opaque(Palette)))
 			.Iso8()
 			.Make()
 			.AnimatedGif()
@@ -133,7 +133,7 @@
 		if (Model is null) return;
 		ImageString = SpriteMaker
 			.Set(Model)
-			.Set(new NaiveDimmer(Palette))
+			.Set(new NaiveDimmer(PixelDraw.Opaque(Palette)))
 			.Stacks(true)
 			.Make()
 			.AnimatedGif(25)
