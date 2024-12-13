@@ -145,7 +145,7 @@ The first three data elements of a voxel are 16-bit unsigned integers for the X,
 #### Payload
 The fourth data element of a voxel is the payload of one byte for the index to reference a color or material, where 0 is reserved for an empty or absent voxel, leaving 255 usable colors or materials.
 ### Models
-Models (sets of voxels of unique coordinates) are limited by 16-bit unsigned integer bounds, so valid geometry can range from coordinate values of 0 to 65,534 inclusive. Model contents are expected to be following the MagicaVoxel convention, which is Z+up, right-handed, so X+ means right/east in width, Y+ means forwards/north in depth and Z+ means up in height. Models are expected to be aligned so that their lowest edge occupies coordinate value 0 on all three axes.
+Models (sets of voxels with unique coordinates) are limited by 16-bit unsigned integer bounds, so valid geometry can range from coordinate values of 0 to 65,534 inclusive. Models are expected to follow the [coordinate system defined above](#coordinates).
 ### Octree
 To serialize a model, geometry is structured as a sparse voxel octree for compression, so that the coordinates of the voxels are implied from their positions in the octree and empty spaces are not stored.
 
