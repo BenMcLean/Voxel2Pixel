@@ -76,7 +76,7 @@ BenVoxel binary files start with a `BENV` chunk which contains the entire file a
 
 The size of the compressed data can be determined by subtracting the size of the Version field (the content of its unsigned 1-byte length field plus 1) from the `BENV` chunk size.
 
-The global metadata chunk must be ommitted if it is empty.
+The global metadata chunk must be ommitted if it is empty. The purpose of having global metadata as an option is in order to keep the model metadata [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself), so essentially, all the global metadata should be treated as if it had been included in every model's metadata except when an individual model's metadata contains an identically-named key to override it.
 #### `DATA` chunk (Metadata)
 Corresponds to the `metadata` key in the JSON format. It contains:
 - `Properties`: One `PROP` chunk. (optional)
