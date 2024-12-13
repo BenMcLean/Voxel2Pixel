@@ -199,7 +199,7 @@ An empty model is represented by the following 18 bytes in hexadecimal:
 
 The 15 branch node headers correspond to the 15 levels of the octree needed to address a space with 16-bit integer coordinates (2^16 = 65,536, except remember to subtract one for zero-based indexing). The 16th level corresponds to the leaf node containing all empty space.
 # BenVoxel Reference Implementation
-An MIT-licensed reference implementation is provided as a .NET Standard 2.0 library written in C# 8.0 via PolySharp.
+An MIT-licensed reference implementation is provided as a [.NET Standard 2.0](https://learn.microsoft.com/en-us/dotnet/standard/net-standard) library written in [C# 13.0](https://dotnet.microsoft.com/en-us/languages/csharp) via [PolySharp](https://github.com/Sergio0694/PolySharp).
 ## Dependencies
 |Package|Liscense|Included Via|
 |---|---|---|

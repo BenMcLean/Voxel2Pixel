@@ -1,5 +1,5 @@
 # Voxel2Pixel
-Voxel2Pixel is an [MIT-licensed](LICENSE) [C# 8.0](https://dotnet.microsoft.com/en-us/languages/csharp) [.NET Standard 2.0](https://learn.microsoft.com/en-us/dotnet/standard/net-standard) library created by Ben McLean for rendering [voxel models](https://www.megavoxels.com/learn/what-is-a-voxel/) as [pixel art assets](https://2dwillneverdie.com/intro/) from a variety of fixed [camera perspectives](https://opengameart.org/content/chapter-3-perspectives) and [palette limitations](https://lospec.com/palette-list) intended for use in retro-styled video games.
+Voxel2Pixel is an [MIT-licensed](LICENSE) [C# 13.0](https://dotnet.microsoft.com/en-us/languages/csharp) [.NET Standard 2.0](https://learn.microsoft.com/en-us/dotnet/standard/net-standard) library created by Ben McLean for rendering [voxel models](https://www.megavoxels.com/learn/what-is-a-voxel/) as [pixel art assets](https://2dwillneverdie.com/intro/) from a variety of fixed [camera perspectives](https://opengameart.org/content/chapter-3-perspectives) and [palette limitations](https://lospec.com/palette-list) intended for use in retro-styled video games.
 
 Also in this repo is the [BenVoxel project](BenVoxel/README.md) to develop an open standard for interoperable voxel model file formats.
 ## Usage
