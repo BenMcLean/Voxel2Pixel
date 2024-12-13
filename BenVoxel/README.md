@@ -1,7 +1,7 @@
 # BenVoxel Specification
 BenVoxel is an open standard using sparse voxel octrees to compress voxel model geometry for file storage (with optional metadata) developed by Ben McLean. This specification is released under the [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/) license.
 
-The idea is to sacrifice processing speed to get a very small memory storage size for the geometry while keeping the implementation relatively simple and also allowing for extensive metadata to be optionally included.
+The idea is to sacrifice processing speed to get a very small storage size for the geometry while keeping the implementation relatively simple and also allowing for extensive metadata to be optionally included. Because we assume that CPU and RAM are cheap but file storage / bandwidth is expensive, it should make sense to accept the complexity of a sparse voxel octree in order to get a smaller file size.
 
 There will be no license requirements restricting usage, but this format is designed for small voxel models intended for video games, animations or other entertainment, artistic or aesthetic use cases, so its design might not be ideal for unrelated academic, scientific, medical, industrial or military applications. Also, be aware that none of this has been engineered to provide security features (such as anti-cheat, checksums or length constraints for overflow protection) so use at your own risk.
 ## Overview
