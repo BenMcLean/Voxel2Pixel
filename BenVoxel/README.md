@@ -59,9 +59,9 @@ Three string types are used:
 - `ValueString`: Starts with an unsigned 32-bit integer for length, followed by a UTF-8 string of that length.
 ### Chunks
 All chunks have:
-- 4 bytes: an ASCII identifier for this chunk (examples are "`FMT `" and "`DATA`"; note the space in "`FMT `").
-- 4 bytes: an unsigned 32-bit integer with the length of this chunk (except this field itself and the chunk identifier).
-- variable-sized field: the chunk data itself, of the size given in the previous field.
+- `FourCC`, 4 bytes: an ASCII identifier for this chunk (examples are "`FMT `" and "`DATA`"; note the space in "`FMT `").
+- `ChunkLength`, 4 bytes: an unsigned 32-bit integer with the length of this chunk (except this field itself and the chunk identifier).
+- `ChunkData`, variable-sized field: the chunk data itself, of the size given in the previous field.
 
 This applies to ***all*** chunks, so this information won't be repeated in the individual chunk type descriptions.
 #### `BENV` chunk (Root)
@@ -104,8 +104,10 @@ Named 3D points in space as `[x, y, z]` arrays. Uses 32-bit signed integers to a
 Corresponds to one or more of the `points` objects in the JSON format. It contains:
 - `Count`: One unsigned 16-bit integer for the number of points.
 - For each point:
-  - `Key`: One `KeyString` for the point key. Empty string key specifies the origin of the model. If empty string key is specified in neither the model nor global metadata then the origin should be assumed to be at the bottom center of the model calculated as `[width >> 1, depth >> 1, 0]`.
+  - `Key`: One `KeyString` for the point key.
   - `Coordinates`: Three signed 32-bit integers for the X, Y and Z coordinates.
+
+Empty string key specifies the origin of the model. The default origin is defined as `[width >> 1, depth >> 1, 0]`. (the bottom center) If the origin is equal to the default then this key should be omitted.
 #### `PALC` chunk (Palettes)
 Named color palettes.
 
@@ -128,13 +130,13 @@ Both the JSON and binary formats use the same sparse voxel octree data format, e
 3. Finally, the compressed and encoded string is stored in the `z85` property.
 
 Deserializing from the JSON format reverses the process:
-1. First, the string value of the `z85` property is decoded back into compressed data.
-1. The compressed data is then decompressed using raw DEFLATE. (RFC 1951)
-1. Finally, the decompressed data is read to deserialize the sparse voxel octree.
+1. First, the string value of the `z85` property is decoded back into compressed binary data.
+1. The compressed binary data is then decompressed using raw DEFLATE. (RFC 1951)
+1. Finally, the decompressed binary data is read to deserialize the sparse voxel octree.
 
-This ensures that the non-human-readable section of the JSON files is compressed to a minimum length while only using JSON-safe characters. Due to typical DEFLATE implementations being pseudo-non-deterministic, the compressed and encoded string is not guaranteed to match between two runs with the same uncompressed and unencoded input data. However, the decoded and decompressed output data will be binary identical to the (padded) input data because DEFLATE data compression is lossless.
+This ensures that the non-human-readable section of the JSON files is compressed to a minimum length while only using JSON-safe characters. Due to typical DEFLATE implementations being pseudo-non-deterministic across platforms, the compressed and encoded string is not guaranteed to match between two runs with the same uncompressed and unencoded input data. However, the decoded and decompressed output data will be binary identical to the (padded) input data because DEFLATE data compression is lossless.
 
-The binary format uses the raw octree data directly without any additional compression or encoding applied to it. The binary format prefixes the model size to the geometry data in the `SVOG` chunk while the JSON format includes the model size in a separate `size` property instead, omitting the model size from the compressed and encoded `z85` property.
+Unlike the JSON format, the binary format uses the raw octree data directly without any additional compression or encoding applied to it. The binary format prefixes the model size to the geometry data in the `SVOG` chunk while the JSON format includes the model size in a separate `size` property instead, omitting the model size from the compressed and encoded `z85` property.
 ### Voxels
 An individual voxel is defined as having four data elements.
 #### Coordinates
@@ -205,40 +207,19 @@ An MIT-licensed reference implementation is provided as a .NET Standard 2.0 libr
 ## Usage
 ### Read binary
 ```csharp
-BenVoxelFile benVoxelFile;
-using (FileStream binaryInputStream = new(
-	path: "filename.ben",
-	mode: FileMode.Open,
-	access: FileAccess.Read))
-{
-	benVoxelFile = new(binaryInputStream);
-}
+BenVoxelFile benVoxelFile = BenVoxelFile.Load("filename.ben");
 ```
 ### Write binary
 ```csharp
-using (FileStream binaryOutputStream = new(
-	path: "filename.ben",
-	mode: FileMode.OpenOrCreate,
-	access: FileAccess.Write))
-{
-	benVoxelFile.Write(binaryOutputStream);
-}
+benVoxelFile.Save("filename.ben");
 ```
 ### Read JSON
 ```csharp
-BenVoxelFile benVoxelFile;
-using (FileStream jsonInputStream = new(
-	path: "filename.ben.json",
-	mode: FileMode.Open,
-	access: FileAccess.Read))
-{
-	benVoxelFile = new(JsonSerializer.Deserialize<JsonObject>(jsonInputStream)
-		?? throw new NullReferenceException());
-}
+BenVoxelFile benVoxelFile = BenVoxelFile.Load("filename.ben.json");
 ```
 ### Write JSON
 ```csharp
-File.WriteAllText(path: "filename.ben.json", contents: benVoxelFile.ToJson().Tabs());
+benVoxelFile.Save("filename.ben.json");
 ```
 ### Iterate voxels
 ```csharp
