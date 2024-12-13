@@ -50,6 +50,7 @@ Both the binary and JSON formats include version information. In the binary form
 
 Implementations should rely on the `version` property/field within the file for determining BenVoxel format feature support, not the schema version.
 ## Binary Format
+The binary format was inspired by the classic [RIFF](https://en.wikipedia.org/wiki/Resource_Interchange_File_Format) structure.
 ### Type Definitions
 All types are little-endian.
 #### Strings
