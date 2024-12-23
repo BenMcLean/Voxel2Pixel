@@ -206,6 +206,7 @@
 		</MudElement>
 	</MudTabPanel>
 	<MudTabPanel Text="Export" Disabled="Model is null">
+		<MudNumericField T="ushort" @bind-Value="SpriteMaker.NumberOfSprites" Label="Number of Sprites" Variant="Variant.Text" Min="1" Max="@ushort.MaxValue" />
 		<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" name="SingleImage" @onclick="SingleImage">Generate Single Image</MudButton>
 		<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" name="Iso8TextureAtlas" @onclick="Iso8TextureAtlas">Generate 8 Isometric Directional Sprites Texture Atlas</MudButton>
 		<MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" name="Iso8" @onclick="Iso8Gif">Generate 8 Isometric Directional Sprites Animation</MudButton>
