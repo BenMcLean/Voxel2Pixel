@@ -134,7 +134,8 @@
 		ImageString = SpriteMaker
 			.Set(Model)
 			.Set(new NaiveDimmer(PixelDraw.Opaque(Palette)))
-			.Stacks(true)
+			.SetPeak(true)
+			.Stacks()
 			.Make()
 			.AnimatedGif(25)
 			.ToBase64String(GifFormat.Instance);
@@ -176,7 +177,7 @@
 				}
 			</MudElement>
 		}
-		@if (SpriteMaker.Perspective == Perspective.Stacked || SpriteMaker.Perspective == Perspective.StackedPeak)
+		@if (SpriteMaker.Perspective == Perspective.Stacked)
 		{
 			<MudSlider @bind-Value="@SpriteMaker.Radians" Min="0d" Max="@Math.Tau" Step="double.Epsilon">Radians</MudSlider>
 		}

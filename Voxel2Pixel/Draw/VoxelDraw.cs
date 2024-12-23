@@ -17,16 +17,26 @@ namespace Voxel2Pixel.Draw;
 public static class VoxelDraw
 {
 	#region Perspectives
-	public static void Draw(this IModel model, IRenderer renderer, Perspective perspective, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, double radians = 0d)
+	public static void Draw(this IModel model, IRenderer renderer, Perspective perspective, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, double radians = 0d, bool peak = false, ushort offsetX = 0, ushort offsetY = 0)
 	{
+		if (offsetX > 0 || offsetY > 0
+			|| (!perspective.IsInternallyScaled(peak) && (scaleX != 1 || scaleY != 1)))
+			renderer = new OffsetRenderer
+			{
+				RectangleRenderer = renderer,
+				OffsetX = offsetX,
+				OffsetY = offsetY,
+				ScaleX = scaleX,
+				ScaleY = scaleY,
+			};
 		switch (perspective)
 		{
 			default:
 			case Perspective.Front:
-				Front(model, renderer);
-				break;
-			case Perspective.FrontPeak:
-				FrontPeak(model, renderer, scaleX, scaleY);
+				if (peak)
+					FrontPeak(model, renderer, scaleX, scaleY);
+				else
+					Front(model, renderer);
 				break;
 			case Perspective.Overhead:
 				Overhead(model, renderer);
@@ -35,10 +45,10 @@ public static class VoxelDraw
 				Underneath(model, renderer);
 				break;
 			case Perspective.Diagonal:
-				Diagonal(model, renderer);
-				break;
-			case Perspective.DiagonalPeak:
-				DiagonalPeak(model, renderer, scaleX, scaleY);
+				if (peak)
+					DiagonalPeak(model, renderer, scaleX, scaleY);
+				else
+					Diagonal(model, renderer);
 				break;
 			case Perspective.Above:
 				Above(model, renderer);
@@ -46,74 +56,66 @@ public static class VoxelDraw
 			case Perspective.Iso:
 				Iso(model, renderer);
 				break;
-			case Perspective.IsoShadow:
-				IsoShadow(model, renderer);
+			case Perspective.IsoUnderneath:
+				IsoUnderneath(model, renderer);
 				break;
 			case Perspective.Stacked:
-			case Perspective.StackedPeak:
-				Stacked(model, renderer, radians, scaleX, scaleY, scaleZ, perspective == Perspective.StackedPeak);
+				Stacked(model, renderer, radians, scaleX, scaleY, scaleZ, peak);
 				break;
 			case Perspective.ZSlices:
-			case Perspective.ZSlicesPeak:
-				ZSlices(model, renderer, perspective == Perspective.ZSlicesPeak);
+				ZSlices(model, renderer, peak);
 				break;
 		}
 	}
-	public static Point Size(this IModel model, Perspective perspective, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, double radians = 0d)
+	public static Point Size(this IModel model, Perspective perspective, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, double radians = 0d, bool peak = false)
 	{
 		Point size = perspective switch
 		{
-			Perspective.FrontPeak => FrontPeakSize(model, scaleX, scaleY),
 			Perspective.Overhead => OverheadSize(model),
 			Perspective.Underneath => UnderneathSize(model),
-			Perspective.Diagonal => DiagonalSize(model),
-			Perspective.DiagonalPeak => DiagonalPeakSize(model, scaleX, scaleY),
+			Perspective.Diagonal => peak ? DiagonalPeakSize(model, scaleX, scaleY) : DiagonalSize(model),
 			Perspective.Above => AboveSize(model),
 			Perspective.Iso => IsoSize(model),
-			Perspective.IsoShadow => IsoShadowSize(model),
+			Perspective.IsoUnderneath => IsoUnderneathSize(model),
 			Perspective.Stacked => StackedSize(model, radians, scaleX, scaleY, scaleZ),
-			Perspective.StackedPeak => StackedSize(model, radians, scaleX, scaleY, scaleZ),
 			Perspective.ZSlices => ZSlicesSize(model),
-			Perspective.ZSlicesPeak => ZSlicesSize(model),
-			_ => FrontSize(model),
+			_ => peak ? FrontPeakSize(model, scaleX, scaleY) : FrontSize(model),
 		};
-		return perspective.IsInternallyScaled() ? size : new Point(X: size.X * scaleX, Y: size.Y * scaleY);
+		return perspective.IsInternallyScaled(peak) ? size : new Point(X: size.X * scaleX, Y: size.Y * scaleY);
 	}
-	public static Point Locate(this IModel model, Perspective perspective, Point3D point, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, double radians = 0d)
+	public static Point Locate(this IModel model, Perspective perspective, Point3D point, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, double radians = 0d, bool peak = false)
 	{
 		Point result;
 		switch (perspective)
 		{
 			default:
 			case Perspective.Front:
-			case Perspective.FrontPeak:
 				result = FrontLocate(model, point);
 				break;
 			case Perspective.Overhead:
 			case Perspective.Underneath:
 				return new Point(point.X, point.Y);
 			case Perspective.Diagonal:
-			case Perspective.DiagonalPeak:
 				result = DiagonalLocate(model, point);
 				break;
 			case Perspective.Above:
 				return AboveLocate(model, point);
 			case Perspective.Iso:
 				return IsoLocate(model, point);
-			case Perspective.IsoShadow:
-				return IsoShadowLocate(model, point);
+			case Perspective.IsoUnderneath:
+				return IsoUnderneathLocate(model, point);
 			case Perspective.Stacked:
-			case Perspective.StackedPeak:
 				return StackedLocate(model, point, radians, scaleX, scaleY, scaleZ);
 			case Perspective.ZSlices:
-			case Perspective.ZSlicesPeak:
 				return ZSlicesLocate(model, point);
 		}
-		return perspective.IsPeak() ? new()
-		{
-			X = result.X * scaleX,
-			Y = result.Y * scaleY,
-		} : result;
+		return perspective.IsInternallyScaled(peak) ?
+			result
+			: new()
+			{
+				X = result.X * scaleX,
+				Y = result.Y * scaleY,
+			};
 	}
 	#endregion Perspectives
 	#region Records
@@ -517,23 +519,22 @@ public static class VoxelDraw
 				index: triangle.Value.Index,
 				visibleFace: triangle.Value.VisibleFace);
 	}
-	public static Point IsoShadowSize(IModel model) => new(
+	public static Point IsoUnderneathSize(IModel model) => new(
 		X: 2 * (model.SizeX + model.SizeY),
 		Y: 2 * (model.SizeX + model.SizeY) - 1);
-	public static Point IsoShadowLocate(IModel model, Point3D point) => new(
+	public static Point IsoUnderneathLocate(IModel model, Point3D point) => new(
 		// To move one x+ in voxels is x + 2, y - 2 in pixels.
 		// To move one x- in voxels is x - 2, y + 2 in pixels.
 		// To move one y+ in voxels is x - 2, y - 2 in pixels.
 		// To move one y- in voxels is x + 2, y + 2 in pixels.
 		X: 2 * (model.SizeY + point.X - point.Y),
 		Y: 2 * (point.X + point.Y) - 1);
-	public static void IsoShadow(IModel model, ITriangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Top)
+	public static void IsoUnderneath(IModel model, ITriangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Top)
 	{
 		ushort width = model.SizeX,
 			height = model.SizeY;
 		VoxelZ?[] grid = new VoxelZ?[width * height];
-		foreach (Voxel voxel in model
-			.Where(voxel => voxel.Index != 0))
+		foreach (Voxel voxel in model)
 			if (width * (height - voxel.Y - 1) + voxel.X is int i
 				&& (grid[i] is not VoxelZ old
 					|| old.Index == 0
@@ -544,22 +545,20 @@ public static class VoxelDraw
 			for (ushort x = 0; x < width; x++)
 				if (grid[index++] is VoxelZ voxelZ && voxelZ.Index != 0)
 					renderer.Diamond(
-						x: (ushort)(2 * (x + y)),
-						y: (ushort)(2 * (width - x + y - 1)),
+						x: (ushort)((x + y) << 1),
+						y: (ushort)((width - x + y - 1) << 1),
 						index: voxelZ.Index,
 						visibleFace: visibleFace);
 	}
 	public static ushort IsoSlantWidth(int textureLength, ushort width = 0) => (ushort)((width < 1 ? (ushort)Math.Sqrt(textureLength >> 2) : width) << 1);
 	public static ushort IsoSlantHeight(int textureLength, ushort width = 0)
 	{
-		if (width < 1)
-			width = (ushort)Math.Sqrt(textureLength >> 2);
+		if (width < 1) width = (ushort)Math.Sqrt(textureLength >> 2);
 		return (ushort)((((textureLength >> 2) / width) << 2) + (width << 1) - 1);
 	}
 	public static void IsoSlantDown(ITriangleRenderer renderer, byte[] texture, ushort width = 0, byte threshold = 128)
 	{
-		if (width < 1)
-			width = (ushort)Math.Sqrt(texture.Length >> 2);
+		if (width < 1) width = (ushort)Math.Sqrt(texture.Length >> 2);
 		ushort height4 = (ushort)(((texture.Length >> 2) / width) << 2),
 			width2 = (ushort)(width << 1);
 		int index = 0;
@@ -582,8 +581,7 @@ public static class VoxelDraw
 	}
 	public static void IsoSlantUp(ITriangleRenderer renderer, byte[] texture, ushort width = 0, byte threshold = 128)
 	{
-		if (width < 1)
-			width = (ushort)Math.Sqrt(texture.Length >> 2);
+		if (width < 1) width = (ushort)Math.Sqrt(texture.Length >> 2);
 		ushort height4 = (ushort)(((texture.Length >> 2) / width) << 2),
 			width2 = (ushort)(width << 1);
 		int index = 0;
@@ -606,16 +604,14 @@ public static class VoxelDraw
 	}
 	public static ushort IsoTileWidth(int textureLength, ushort width = 0)
 	{
-		if (width < 1)
-			width = (ushort)Math.Sqrt(textureLength >> 2);
+		if (width < 1) width = (ushort)Math.Sqrt(textureLength >> 2);
 		ushort height = (ushort)((textureLength >> 2) / width);
 		return (ushort)((width + height) << 1);
 	}
 	public static ushort IsoTileHeight(int textureLength, ushort width = 0) => (ushort)(IsoTileWidth(textureLength, width) - 1);
 	public static void IsoTile(ITriangleRenderer renderer, byte[] texture, ushort width = 0, byte threshold = 128)
 	{
-		if (width < 1)
-			width = (ushort)Math.Sqrt(texture.Length >> 2);
+		if (width < 1) width = (ushort)Math.Sqrt(texture.Length >> 2);
 		ushort width2 = (ushort)(width << 1),
 			height2 = (ushort)(((texture.Length >> 2) / width) << 1);
 		int index = 0;

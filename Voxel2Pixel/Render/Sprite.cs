@@ -13,7 +13,7 @@ using static Voxel2Pixel.Render.TextureAtlas;
 
 namespace Voxel2Pixel.Render;
 
-public class Sprite : IDictionary<string, Point>, ISprite, IRenderer, IVoxelColor
+public class Sprite : IDictionary<string, Point>, ISprite, IColoredRenderer
 {
 	#region ISprite
 	public byte[] Texture { get; set; }
@@ -21,7 +21,7 @@ public class Sprite : IDictionary<string, Point>, ISprite, IRenderer, IVoxelColo
 	public ushort Height => (ushort)((Texture.Length >> 2) / Width);
 	#endregion ISprite
 	#region Sprite
-	public const string Origin = "Origin";
+	public const string Origin = "";
 	public const uint DefaultShadowColor = 0x88u;
 	public Sprite() { }
 	public Sprite(ushort width, ushort height) : this()

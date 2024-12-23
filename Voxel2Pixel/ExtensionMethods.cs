@@ -26,14 +26,11 @@ public static class ExtensionMethods
 		return palette;
 	}
 	public static VisibleFace VisibleFace(this byte @byte) => (VisibleFace)(@byte & 192);
-	public static bool IsPeak(this Perspective perspective) =>
-		perspective == Perspective.FrontPeak
-		|| perspective == Perspective.DiagonalPeak
-		|| perspective == Perspective.StackedPeak
-		|| perspective == Perspective.ZSlicesPeak;
-	public static bool IsInternallyScaled(this Perspective perspective) => IsPeak(perspective) || perspective == Perspective.Stacked;
-	public static bool HasScaleZ(this Perspective perspective) => perspective == Perspective.Stacked || perspective == Perspective.StackedPeak;
-	public static bool HasShadow(this Perspective perspective) => perspective == Perspective.Above || perspective == Perspective.Iso || perspective == Perspective.Stacked || perspective == Perspective.StackedPeak;
+	public static bool IsInternallyScaled(this Perspective perspective, bool peak = false) =>
+		perspective == Perspective.Stacked
+		|| (peak && (perspective == Perspective.Front || perspective == Perspective.Diagonal));
+	public static bool HasScaleZ(this Perspective perspective) => perspective == Perspective.Stacked;
+	public static bool HasShadow(this Perspective perspective) => perspective == Perspective.Above || perspective == Perspective.Iso || perspective == Perspective.Stacked;
 	#region PLINQ
 	/// <summary>
 	/// Parallelizes the execution of a Select query while preserving the order of the source sequence.

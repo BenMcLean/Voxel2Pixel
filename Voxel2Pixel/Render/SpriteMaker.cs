@@ -23,6 +23,18 @@ public class SpriteMaker
 	public bool FlipY { get; set; } = false;
 	public bool FlipZ { get; set; } = false;
 	public CuboidOrientation CuboidOrientation { get; set; } = CuboidOrientation.SOUTH0;
+	public ushort NumberOfSprites
+	{
+		get => numberOfSprites;
+		set
+		{
+			if (value < 1)
+				throw new InvalidDataException();
+			else
+				numberOfSprites = value;
+		}
+	}
+	private ushort numberOfSprites = 1;
 	public byte ScaleX
 	{
 		get => scaleX;
@@ -87,7 +99,13 @@ public class SpriteMaker
 	public IVoxelColor ShadowColor { get; set; } = DefaultShadowVoxelColor;
 	public bool Outline { get; set; } = false;
 	public uint OutlineColor { get; set; } = PixelDraw.Black;
-	public double Radians { get; set; } = 0d;
+	public double Radians
+	{
+		get => radians;
+		set => radians = value % PixelDraw.Tau;
+	}
+	private double radians = 0d;
+	public bool Peak { get; set; } = true;
 	public byte Threshold { get; set; } = PixelDraw.DefaultTransparencyThreshold;
 	public bool Crop { get; set; } = true;
 	#endregion Data
@@ -103,6 +121,7 @@ public class SpriteMaker
 		FlipY = maker.FlipY;
 		FlipZ = maker.FlipZ;
 		CuboidOrientation = maker.CuboidOrientation;
+		NumberOfSprites = maker.NumberOfSprites;
 		ScaleX = maker.ScaleX;
 		ScaleY = maker.ScaleY;
 		ScaleZ = maker.ScaleZ;
@@ -113,6 +132,7 @@ public class SpriteMaker
 		Outline = maker.Outline;
 		OutlineColor = maker.OutlineColor;
 		Radians = maker.Radians;
+		Peak = maker.Peak;
 		Threshold = maker.Threshold;
 		Crop = maker.Crop;
 	}
@@ -125,6 +145,7 @@ public class SpriteMaker
 	public SpriteMaker SetFlipY(bool flipY) { FlipY = flipY; return this; }
 	public SpriteMaker SetFlipZ(bool flipZ) { FlipZ = flipZ; return this; }
 	public SpriteMaker Set(CuboidOrientation cuboidOrientation) { CuboidOrientation = cuboidOrientation; return this; }
+	public SpriteMaker SetNumberOfSprites(ushort numberOfSprites) { NumberOfSprites = numberOfSprites; return this; }
 	public SpriteMaker SetScaleX(byte scaleX) { ScaleX = scaleX; return this; }
 	public SpriteMaker SetScaleY(byte scaleY) { ScaleY = scaleY; return this; }
 	public SpriteMaker SetScaleZ(byte scaleZ) { ScaleZ = scaleZ; return this; }
@@ -142,6 +163,7 @@ public class SpriteMaker
 	public SpriteMaker ToggleOutline() => SetOutline(!Outline);
 	public SpriteMaker SetOutlineColor(uint rgba) { OutlineColor = rgba; return this; }
 	public SpriteMaker SetRadians(double radians) { Radians = radians; return this; }
+	public SpriteMaker SetPeak(bool peak) { Peak = peak; return this; }
 	public SpriteMaker SetThreshold(byte threshold) { Threshold = threshold; return this; }
 	public SpriteMaker SetCrop(bool crop) { Crop = crop; return this; }
 	public SpriteMaker ToggleCrop() => SetCrop(!Crop);
@@ -230,22 +252,18 @@ public class SpriteMaker
 		VoxelDraw.Draw(
 			perspective: maker.Perspective,
 			model: maker.Model,
-			renderer: new OffsetRenderer
-			{
-				RectangleRenderer = sprite,
-				OffsetX = maker.Outline ? 1 : 0,
-				OffsetY = maker.Outline ? 1 : 0,
-				ScaleX = maker.Perspective.IsInternallyScaled() ? 1 : maker.ScaleX,
-				ScaleY = maker.Perspective.IsInternallyScaled() ? 1 : maker.ScaleY,
-			},
+			renderer: sprite,
 			scaleX: maker.ScaleX,
 			scaleY: maker.ScaleY,
 			scaleZ: maker.ScaleZ,
-			radians: maker.Radians);
+			radians: maker.Radians,
+			offsetX: (ushort)(maker.Outline ? 1 : 0),
+			offsetY: (ushort)(maker.Outline ? 1 : 0));
 		if (maker.Outline)
 			sprite = sprite.Outline(
 				color: maker.OutlineColor,
 				threshold: maker.Threshold);
+		/*TODO fix shadows
 		if (maker.Shadow && maker.Perspective.HasShadow())
 		{
 			Sprite insert = new(sprite);
@@ -302,6 +320,7 @@ public class SpriteMaker
 				insert: insert,
 				threshold: maker.Threshold);
 		}
+		*/
 		Dictionary<string, Point3D> points = maker.Points ?? new() { { Sprite.Origin, maker.Model.BottomCenter() }, };
 		Point Point(Point3D point3D)
 		{
@@ -379,7 +398,7 @@ public class SpriteMaker
 			cuboidOrientation = (CuboidOrientation)cuboidOrientation.Turn(Turn.CounterZ);
 			yield return new SpriteMaker(maker)
 				.Set(cuboidOrientation)
-				.Set(Perspective.IsoShadow)
+				.Set(Perspective.IsoUnderneath)
 				.SetScaleX((byte)(ScaleX << 1))
 				.SetScaleY(ScaleY);
 		}
@@ -402,13 +421,12 @@ public class SpriteMaker
 		return dictionary;
 	}
 	public const double Tau = 2d * Math.PI;
-	public IEnumerable<SpriteMaker> Stacks(bool peak = false, ushort quantity = 24)
+	public IEnumerable<SpriteMaker> Stacks()
 	{
-		SpriteMaker maker = Reoriented()
-			.Set(peak ? Perspective.StackedPeak : Perspective.Stacked);
-		for (ushort i = 0; i < quantity; i++)
+		SpriteMaker maker = Reoriented();
+		for (ushort i = 0; i < NumberOfSprites; i++)
 			yield return new SpriteMaker(maker)
-				.SetRadians(Radians + Tau * ((double)i / quantity));
+				.SetRadians(Radians + Tau * ((double)i / NumberOfSprites));
 	}
 	public Sprite StackedShadow() => Reoriented()
 		.Set(Perspective.Underneath)
@@ -417,41 +435,25 @@ public class SpriteMaker
 		.SetCrop(false)
 		.Make()
 		.Rotate(Radians);
-	public IEnumerable<Sprite> StacksShadows(ushort quantity = 24)
+	public Sprite StacksTextureAtlas(out TextureAtlas textureAtlas, string name = "SpriteStack") => new(dictionary: StacksTextureAtlas(name), textureAtlas: out textureAtlas);
+	public Dictionary<string, Sprite> StacksTextureAtlas(string name = "SpriteStack")
 	{
-		Task<Sprite>[] tasks = [.. StacksShadowsTasks(quantity)];
-		foreach (Task<Sprite> task in tasks)
-			task.Start();
-		Task.WaitAll(tasks);
-		return tasks.Select(task => task.Result);
-	}
-	public IEnumerable<Task<Sprite>> StacksShadowsTasks(ushort quantity = 24)
-	{
-		Sprite shadow = Reoriented()
-			.Set(Perspective.Underneath)
-			.Set(ShadowColor)
-			.SetCrop(true)
-			.Make();
-		return Enumerable.Range(0, quantity)
-			.Select(i => new Task<Sprite>(() =>
-			shadow.Rotate(Radians + Tau * ((double)i / quantity))));
-	}
-	public Sprite StacksTextureAtlas(out TextureAtlas textureAtlas, string name = "SpriteStack", bool peak = false, ushort quantity = 24) => new(dictionary: StacksTextureAtlas(name, peak, quantity), textureAtlas: out textureAtlas);
-	public Dictionary<string, Sprite> StacksTextureAtlas(string name = "SpriteStack", bool peak = false, ushort quantity = 24)
-	{
+		if (!name.Contains("{0}")) name += "{0}";
 		Dictionary<string, Sprite> dictionary = [];
 		byte direction = 0;
 		foreach (Sprite sprite in new SpriteMaker(this)
 			.SetShadow(false)
-			.Stacks(peak: peak, quantity: quantity)
+			.Stacks()
 			.Make())
-			dictionary.Add(name + direction++, sprite);
+			dictionary.Add(string.Format(name, direction++), sprite);
+		/*TODO fix shadows
 		direction = 0;
 		if (Shadow)
 			foreach (Sprite sprite in new SpriteMaker(this)
 				.SetOutline(false)
 				.StacksShadows(quantity))
-				dictionary.Add(name + "Shadow" + direction++, sprite);
+				dictionary.Add(string.Format(name, "Shadow" + direction++), sprite);
+		*/
 		return dictionary;
 	}
 	#endregion Makers
