@@ -419,13 +419,12 @@ public class SpriteMaker
 				dictionary.Add(name + "Shadow" + direction++, maker);
 		return dictionary;
 	}
-	public const double Tau = 2d * Math.PI;
 	public IEnumerable<SpriteMaker> Stacks()
 	{
 		SpriteMaker maker = Reoriented();
 		for (ushort i = 0; i < NumberOfSprites; i++)
 			yield return new SpriteMaker(maker)
-				.SetRadians(Radians + Tau * ((double)i / NumberOfSprites));
+				.SetRadians(Radians + PixelDraw.Tau * ((double)i / NumberOfSprites));
 	}
 	public Sprite StackedShadow() => Reoriented()
 		.Set(Perspective.Underneath)
