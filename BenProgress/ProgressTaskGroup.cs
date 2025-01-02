@@ -29,25 +29,24 @@ public sealed class ProgressTaskGroup<T>(
 				int index = Interlocked.Increment(ref _nextTaskIndex) - 1;
 				// Start executing the task immediately
 				Task<T> executingTask = task.ExecuteAsync(
-					cancellationToken,
-					new Progress<Progress>(p => UpdateTaskProgress(index, p)));
+					cancellationToken: cancellationToken,
+					progress: new Progress<Progress>(progress =>
+					{
+						lock (_progressLock)
+						{
+							if (progress.Double is double progressValue)
+								_taskProgress[index] = progressValue;
+							UpdateProgressAndReport(index, progress);
+						}
+					}));
 				_pendingResults.Enqueue((executingTask, index));
 				_taskProgress[index] = 0d;
 			}
-			UpdateProgressAndReport(-1);
+			UpdateProgressAndReport();
 		}
 		return this;
 	}
-	private void UpdateTaskProgress(int taskIndex, Progress progress)
-	{
-		lock (_progressLock)
-		{
-			if (progress.Double is double progressValue)
-				_taskProgress[taskIndex] = progressValue;
-			UpdateProgressAndReport(taskIndex, progress);
-		}
-	}
-	private void UpdateProgressAndReport(int taskIndex, Progress? taskProgress = null)
+	private void UpdateProgressAndReport(int? taskIndex = null, Progress? taskProgress = null)
 	{
 		if (progress is null) return;
 		double overallProgress = _taskProgress.Values.Average();
