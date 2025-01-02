@@ -60,52 +60,42 @@ public sealed class ProgressTaskGroup<T> : IDisposable
 						}
 					}))
 				.ContinueWith(task =>
+				{
+					lock (_errorLock)
 					{
-						HandleTaskCompletion(
-							taskIndex: taskIndex,
-							task: task,
-							cancellationToken: cancellationToken,
-							errorTaskCompletionSource: errorTaskCompletionSource);
-						return task.Result;
-					}))
+						if (_hasReportedError) return task.Result;// Only handle the first error
+						if (task.IsFaulted)
+						{
+							_hasReportedError = true;
+							Exception ex = task.Exception?.InnerExceptions.FirstOrDefault() ?? task.Exception;
+							lock (_progressLock)
+							{
+								_progress?.Report(new Progress(String: $"Task exception {ex.GetType().Name}: {ex.Message}"));
+							}
+							_internalCancellationTokenSource.Cancel();
+							errorTaskCompletionSource.TrySetException(ex);
+						}
+						else if (task.IsCanceled && cancellationToken.IsCancellationRequested)
+						{
+							_hasReportedError = true;
+							lock (_progressLock)
+							{
+								_progress?.Report(new Progress(String: "Operation cancelled by request"));
+							}
+							errorTaskCompletionSource.TrySetException(
+								new OperationCanceledException("Task group cancelled by request",
+									innerException: null, cancellationToken));
+						}
+						else if (task.IsCompleted)
+							lock (_progressLock)
+							{
+								UpdateProgressAndReport(taskIndex, new Progress(Double: 1d));
+							}
+					}
+					return task.Result;
+				}))
 			.ToArray())
 			yield return await task;
-	}
-	private void HandleTaskCompletion(int taskIndex, Task task, CancellationToken cancellationToken, TaskCompletionSource<object> errorTaskCompletionSource)
-	{
-		lock (_errorLock)
-		{
-			if (_hasReportedError) return;// Only handle the first error
-			if (task.IsFaulted)
-			{
-				_hasReportedError = true;
-				Exception ex = task.Exception?.InnerExceptions.FirstOrDefault() ?? task.Exception;
-				lock (_progressLock)
-				{
-					_progress?.Report(new Progress(String: $"Task exception {ex.GetType().Name}: {ex.Message}"));
-				}
-				_internalCancellationTokenSource.Cancel();
-				errorTaskCompletionSource.TrySetException(ex);
-			}
-			else if (task.IsCanceled && cancellationToken.IsCancellationRequested)
-			{
-				_hasReportedError = true;
-				lock (_progressLock)
-				{
-					_progress?.Report(new Progress(String: "Operation cancelled by request"));
-				}
-				errorTaskCompletionSource.TrySetException(
-					new OperationCanceledException("Task group cancelled by request",
-						innerException: null, cancellationToken));
-			}
-			else if (task.IsCompleted)
-			{
-				lock (_progressLock)
-				{
-					UpdateProgressAndReport(taskIndex, new Progress(Double: 1d));
-				}
-			}
-		}
 	}
 	public void Dispose()
 	{
