@@ -7,11 +7,15 @@ using System.Threading.Tasks;
 
 namespace BenProgress;
 
-public sealed class ProgressTaskGroup<T>
+public sealed class ProgressTaskGroup<T> : IDisposable
 {
 	private readonly List<(IProgressTask<T> Task, double Progress)> _tasks = [];
 	private readonly IProgress<Progress> _progress;
-	private readonly object _lock = new();
+	private readonly object _progressLock = new();
+	private readonly object _errorLock = new();
+	private readonly CancellationTokenSource _internalCancellationTokenSource = new();
+	private bool _isDisposed;
+	private bool _hasReportedError;
 	public ProgressTaskGroup(IProgress<Progress> progress = null, int initialCapacity = 4)
 	{
 		_progress = progress;
@@ -19,11 +23,16 @@ public sealed class ProgressTaskGroup<T>
 	}
 	public void AddTask(IProgressTask<T> task)
 	{
-		lock (_lock)
+		lock (_progressLock)
 		{
+			if (_isDisposed)
+				throw new ObjectDisposedException(nameof(ProgressTaskGroup<T>));
 			_tasks.Add((task, 0d));
 		}
 	}
+	/// <summary>
+	/// Should only be called within _progressLock
+	/// </summary>
 	private void UpdateProgressAndReport(int taskIndex, Progress? taskProgress = null)
 	{
 		if (_progress is null) return;
@@ -33,43 +42,79 @@ public sealed class ProgressTaskGroup<T>
 			Double: _tasks.Average(t => t.Progress),
 			String: string.IsNullOrWhiteSpace(taskProgress?.String) ? null : $"Task {taskIndex + 1}: {taskProgress.Value.String}"));
 	}
-	public async IAsyncEnumerable<T> ExecuteAllAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
+	public async IAsyncEnumerable<T> ExecuteAllAsync(
+	[EnumeratorCancellation] CancellationToken cancellationToken = default)
 	{
 		if (_tasks.Count == 0) yield break;
-		Task<T>[] runningTasks = new Task<T>[_tasks.Count];// Create array to track task completion and results
-		for (int i = 0; i < _tasks.Count; i++)// Start all tasks
-			runningTasks[i] = ProcessTask(
-				task: _tasks[i].Task,
-				taskIndex: i,
-				cancellationToken: cancellationToken,
-				taskProgress: _progress is null ? null :
-					new Progress<Progress>(progress =>
+		using CancellationTokenSource linkedCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _internalCancellationTokenSource.Token);
+		TaskCompletionSource<object> errorTaskCompletionSource = new();
+		foreach (Task<T> task in _tasks
+			.Select((task, taskIndex) => task.Task
+				.ExecuteAsync(
+					cancellationToken: linkedCancellationTokenSource.Token,
+					progress: _progress is null ? null : new Progress<Progress>(progress =>
 					{
-						lock (_lock)
+						lock (_progressLock)
 						{
-							UpdateProgressAndReport(i, progress);
+							UpdateProgressAndReport(taskIndex, progress);
 						}
-					}));
-		foreach (Task<T> task in runningTasks) // Yield results in order as they complete
+					}))
+				.ContinueWith(task =>
+					{
+						HandleTaskCompletion(
+							taskIndex: taskIndex,
+							task: task,
+							cancellationToken: cancellationToken,
+							errorTaskCompletionSource: errorTaskCompletionSource);
+						return task.Result;
+					}))
+			.ToArray())
 			yield return await task;
 	}
-	private async Task<T> ProcessTask(
-		IProgressTask<T> task,
-		int taskIndex,
-		CancellationToken cancellationToken,
-		IProgress<Progress> taskProgress)
+	private void HandleTaskCompletion(int taskIndex, Task task, CancellationToken cancellationToken, TaskCompletionSource<object> errorTaskCompletionSource)
 	{
-		try
+		lock (_errorLock)
 		{
-			return await task.ExecuteAsync(cancellationToken, taskProgress);
-		}
-		finally
-		{
-			lock (_lock)
+			if (_hasReportedError) return;// Only handle the first error
+			if (task.IsFaulted)
 			{
-				_tasks[taskIndex] = (_tasks[taskIndex].Task, 1d);
-				UpdateProgressAndReport(taskIndex);
+				_hasReportedError = true;
+				Exception ex = task.Exception?.InnerExceptions.FirstOrDefault() ?? task.Exception;
+				lock (_progressLock)
+				{
+					_progress?.Report(new Progress(String: $"Task exception {ex.GetType().Name}: {ex.Message}"));
+				}
+				_internalCancellationTokenSource.Cancel();
+				errorTaskCompletionSource.TrySetException(ex);
 			}
+			else if (task.IsCanceled && cancellationToken.IsCancellationRequested)
+			{
+				_hasReportedError = true;
+				lock (_progressLock)
+				{
+					_progress?.Report(new Progress(String: "Operation cancelled by request"));
+				}
+				errorTaskCompletionSource.TrySetException(
+					new OperationCanceledException("Task group cancelled by request",
+						innerException: null, cancellationToken));
+			}
+			else if (task.IsCompleted)
+			{
+				lock (_progressLock)
+				{
+					UpdateProgressAndReport(taskIndex, new Progress(Double: 1d));
+				}
+			}
+		}
+	}
+	public void Dispose()
+	{
+		lock (_progressLock)
+		{
+			if (_isDisposed) return;
+			_isDisposed = true;
+			_internalCancellationTokenSource.Cancel();
+			_internalCancellationTokenSource.Dispose();
 		}
 	}
 }
