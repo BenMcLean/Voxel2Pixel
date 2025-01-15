@@ -77,16 +77,10 @@ public sealed class ProgressTaskGroup<T>(
 				   $"Task {taskIndex + 1}: {taskProgress.Value.String}"));
 	}
 	/// <summary>
-	/// Asynchronously retrieves results from tasks in the order they were added.
 	/// This method is guaranteed to yield results from all tasks that were added
-	/// before it was called. It may also yield results from tasks added while it
-	/// is running, but will stop yielding once all currently known tasks are complete.
-	///
-	/// Multiple calls to this method are serialized to prevent concurrent enumeration.
-	/// To ensure all results are retrieved, check HasPendingResults after this method
-	/// completes and call GetResultsAsync again if it returns true.
+	/// before it was called.
 	/// </summary>
-	public async IAsyncEnumerable<T> GetResultsAsync()
+	public async IAsyncEnumerable<T> GetCurrentResultsAsync()
 	{
 		await _getResultsLock.WaitAsync();
 		try
@@ -121,6 +115,12 @@ public sealed class ProgressTaskGroup<T>(
 		{
 			_getResultsLock.Release();
 		}
+	}
+	public async IAsyncEnumerable<T> GetResultsAsync()
+	{
+		while (HasPendingResults)
+			await foreach (T result in GetCurrentResultsAsync())
+				yield return result;
 	}
 	public void Dispose()
 	{
