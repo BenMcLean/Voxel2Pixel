@@ -167,9 +167,7 @@ public sealed class ProgressTaskGroup<T>(
 			$"Task {taskIndex + 1}: {taskProgress.Value.String}";
 		_lastReportedProgress = currentProgress;
 		// Report outside lock
-		Task.Run(() => progress.Report(new Progress(
-			Double: currentProgress,
-			String: progressMessage)));
+		Task.Run(() => progress.Report(new Progress(currentProgress, progressMessage)));
 	}
 	public async IAsyncEnumerable<T> GetResultsAsync(bool includeNewTasks = false)
 	{
