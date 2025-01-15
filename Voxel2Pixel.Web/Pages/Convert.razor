@@ -95,7 +95,7 @@
 					File = new BenVoxelFile(memoryStream);
 					break;
 			}
-			Json = JsonSerializer.Serialize(File).TabsJson();
+			Json = JsonSerializer.Serialize(File, BenVoxelFile.JsonSerializerOptions);
 		}
 		catch (Exception ex)
 		{
@@ -127,7 +127,7 @@
 			if (File is null)
 				throw new NullReferenceException("No file!");
 			using MemoryStream memoryStream = new();
-			memoryStream.Write(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(File).TabsJson()));
+			memoryStream.Write(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(File, BenVoxelFile.JsonSerializerOptions)));
 			memoryStream.Position = 0;
 			using DotNetStreamReference streamRef = new(stream: memoryStream, leaveOpen: true);
 			await JS.InvokeVoidAsync(identifier: "downloadFileFromStream", ".ben.json", streamRef);

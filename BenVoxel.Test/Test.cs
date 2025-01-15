@@ -85,7 +85,7 @@ public class Test
 		svoModel[1, 1, 1] = 2;
 		File.WriteAllText(
 			path: "whatever.json",
-			contents: JsonSerializer.Serialize(svoModel).TabsJson());
+			contents: JsonSerializer.Serialize(svoModel, BenVoxelFile.JsonSerializerOptions));
 		SvoModel svoModel2 = JsonSerializer.Deserialize<SvoModel>(File.ReadAllText("whatever.json"))
 			?? throw new NullReferenceException();
 		for (ushort x = 0; x < svoModel.SizeX; x++)

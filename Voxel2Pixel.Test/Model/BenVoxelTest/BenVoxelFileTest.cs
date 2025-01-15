@@ -37,11 +37,11 @@ public class BenVoxelFileTest(Xunit.Abstractions.ITestOutputHelper output)
 			Metadata = metadata,
 			Geometry = model,
 		};
-		string s = JsonSerializer.Serialize(file).TabsJson();
+		string s = JsonSerializer.Serialize(file, BenVoxelFile.JsonSerializerOptions);
 		output.WriteLine(s);
 		Assert.Equal(
 			expected: s,
-			actual: JsonSerializer.Serialize(JsonSerializer.Deserialize<BenVoxelFile>(s)).TabsJson());
+			actual: JsonSerializer.Serialize(JsonSerializer.Deserialize<BenVoxelFile>(s), BenVoxelFile.JsonSerializerOptions));
 	}
 	//[Fact]
 	//public void RiffTest() => output.WriteLine(Convert.ToHexString(new Point3D(1, 2, 3).RIFF("PT3D").ToArray()));

@@ -319,10 +319,16 @@ public class BenVoxelFile() : IBinaryWritable
 			JsonSerializer.Deserialize<BenVoxelFile>(fileStream)
 			: new(fileStream);
 	}
+	public static readonly JsonSerializerOptions JsonSerializerOptions = new()
+	{
+		IndentCharacter = '\t',
+		IndentSize = 1,
+		WriteIndented = true,
+	};
 	public BenVoxelFile Save(string path)
 	{
 		if (".json".Equals(Path.GetExtension(path), StringComparison.InvariantCultureIgnoreCase))
-			File.WriteAllText(path: path, contents: JsonSerializer.Serialize(this).TabsJson());
+			File.WriteAllText(path: path, contents: JsonSerializer.Serialize(this, JsonSerializerOptions));
 		else
 			using (FileStream fileStream = new(
 				path: path,
