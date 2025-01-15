@@ -20,7 +20,7 @@ public static class ExtensionMethods
 		IProgress<Progress> progress = null)
 	{
 		using ProgressTaskGroup<TResult> group = new(cancellationToken, progress);
-		group.Add(source.Select(item => new DelegateProgressTask<TResult>(
+		group.Add(source.Select(item => new ProgressTask<TResult>(
 			async (ct, p) => await selector(item, ct, p))));
 		while (group.HasPendingResults)
 			await foreach (TResult result in group.GetResultsAsync())
@@ -58,7 +58,7 @@ public static class ExtensionMethods
 		IProgress<Progress> progress = null)
 	{
 		using ProgressTaskGroup<TResult> group = new(cancellationToken, progress);
-		group.Add(source.Select(item => new DelegateProgressTask<TResult>(
+		group.Add(source.Select(item => new ProgressTask<TResult>(
 			(ct, p) => selector(item, ct, p))));
 		while (group.HasPendingResults)
 			await foreach (TResult result in group.GetResultsAsync())
@@ -72,7 +72,7 @@ public static class ExtensionMethods
 	{
 		using ProgressTaskGroup<TResult> group = new(cancellationToken, progress);
 		await foreach (TSource item in source.WithCancellation(cancellationToken))
-			group.Add(new DelegateProgressTask<TResult>(
+			group.Add(new ProgressTask<TResult>(
 				(ct, p) => selector(item, ct, p)));
 		while (group.HasPendingResults)
 			await foreach (TResult result in group.GetResultsAsync())
