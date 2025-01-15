@@ -76,32 +76,25 @@ public sealed class ProgressTaskGroup<T>(
 			String: string.IsNullOrWhiteSpace(taskProgress?.String) ? null :
 				   $"Task {taskIndex + 1}: {taskProgress.Value.String}"));
 	}
-	/// <summary>
-	/// This method is guaranteed to yield results from all tasks that were added
-	/// before it was called.
-	/// </summary>
-	public async IAsyncEnumerable<T> GetCurrentResultsAsync()
+	public async IAsyncEnumerable<T> GetResultsAsync(bool includeNewTasks = false)
 	{
 		await _getResultsLock.WaitAsync();
 		try
 		{
 			Dictionary<int, T> completedResults = [];
-			int nextResultIndex = 0;
-			while (HasPendingResults)
-			{
-				if (!_pendingResults.TryPeek(out (Task<T> Task, int Index) nextTask))
-					continue;
-				T result = await nextTask.Task;
-				if (nextTask.Index == nextResultIndex)
+			int baseIndex = 0, maxStartingIndex = _nextTaskIndex - 1;
+			while (!_isDisposed
+				&& _pendingResults.TryPeek(out (Task<T> Task, int Index) nextTask)
+				&& (includeNewTasks || nextTask.Index <= maxStartingIndex)
+				&& await nextTask.Task is T result)
+				if (nextTask.Index == baseIndex)
 				{
 					_pendingResults.TryDequeue(out _);
 					yield return result;
-					nextResultIndex++;
-					while (completedResults.TryGetValue(nextResultIndex, out T bufferedResult))
+					while (completedResults.TryGetValue(++baseIndex, out T bufferedResult))
 					{
-						completedResults.Remove(nextResultIndex);
+						completedResults.Remove(baseIndex);
 						yield return bufferedResult;
-						nextResultIndex++;
 					}
 				}
 				else
@@ -109,18 +102,11 @@ public sealed class ProgressTaskGroup<T>(
 					_pendingResults.TryDequeue(out _);
 					completedResults[nextTask.Index] = result;
 				}
-			}
 		}
 		finally
 		{
 			_getResultsLock.Release();
 		}
-	}
-	public async IAsyncEnumerable<T> GetResultsAsync()
-	{
-		while (HasPendingResults)
-			await foreach (T result in GetCurrentResultsAsync())
-				yield return result;
 	}
 	public void Dispose()
 	{
