@@ -18,8 +18,9 @@ public readonly record struct Progress([StringSyntax(StringSyntaxAttribute.Compo
 		[StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format = null,
 		params object[] args)
 	{
-		progress?.Report(new Progress(@double, format, args));
 		cancellationToken?.ThrowIfCancellationRequested();
+		if (@double is not null || !string.IsNullOrWhiteSpace(format))
+			progress?.Report(new Progress(@double, format, args));
 		await Task.Yield();
 	}
 	public static async Task<DateTimeOffset> UpdateAsync(
