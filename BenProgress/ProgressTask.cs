@@ -4,10 +4,6 @@ using System.Threading;
 
 namespace BenProgress;
 
-public readonly record struct Progress(double? Double = null, string String = null)
-{
-	public Progress(string String = null, double? Double = null) : this(Double, String) { }
-}
 public interface IProgressTask<T>
 {
 	Task<T> ExecuteAsync(CancellationToken? cancellationToken = null, IProgress<Progress> progress = null);
