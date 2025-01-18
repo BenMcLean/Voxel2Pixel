@@ -151,11 +151,8 @@ public sealed class ProgressTaskGroup<T>(
 	public ProgressTaskGroup<T> Add(IEnumerable<IProgressTask<T>> tasks)
 	{
 		if (TryAdd(tasks)) return this;
-		if (_isDisposed)
-			throw new ObjectDisposedException(nameof(ProgressTaskGroup<T>));
-		if (_firstError is not null)
-			throw _firstError;
-		throw new InvalidOperationException($"Cannot add tasks in state {_currentState}.");
+		throw _isDisposed ? new ObjectDisposedException(nameof(ProgressTaskGroup<T>))
+			: _firstError ?? new InvalidOperationException($"Cannot add tasks in state {_currentState}.");
 	}
 	[RequiresLock("_stateLock")]
 	private void UpdateProgressAndReport(int? taskIndex = null, Progress? taskProgress = null)
