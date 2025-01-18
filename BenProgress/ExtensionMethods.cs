@@ -13,34 +13,6 @@ public static class ExtensionMethods
 	/// <summary>
 	/// Parallelizes the execution of a Select query while preserving the order of the source sequence.
 	/// </summary>
-	public static async IAsyncEnumerable<TResult> ParallelizeWithProgress<TSource, TResult>(
-		this IEnumerable<TSource> source,
-		Func<TSource, CancellationToken?, IProgress<Progress>, Task<TResult>> selector,
-		[EnumeratorCancellation] CancellationToken cancellationToken = default,
-		IProgress<Progress> progress = null)
-	{
-		using ProgressTaskGroup<TResult> group = new(cancellationToken, progress);
-		group.Add(source.Select(item => new ProgressTask<TResult>(
-			async (ct, p) => await selector(item, ct, p))));
-		while (group.HasPendingResults)
-			await foreach (TResult result in group.GetResultsAsync())
-				yield return result;
-	}
-	/// <summary>
-	/// Parallelizes the execution of a Select query while preserving the order of the source sequence.
-	/// </summary>
-	public static IAsyncEnumerable<TResult> ParallelizeWithProgress<TSource, TResult>(
-		this IEnumerable<TSource> source,
-		Func<TSource, TResult> selector,
-		CancellationToken cancellationToken = default,
-		IProgress<Progress> progress = null) =>
-		source.ParallelizeWithProgress(
-			(item, ct, p) => Task.FromResult(selector(item)),
-			cancellationToken,
-			progress);
-	/// <summary>
-	/// Simple PLINQ operation that maintains order without progress reporting
-	/// </summary>
 	public static List<TResult> Parallelize<TSource, TResult>(
 		this IEnumerable<TSource> source,
 		Func<TSource, TResult> selector) => [.. source
@@ -51,7 +23,7 @@ public static class ExtensionMethods
 			.AsEnumerable()
 			.Select(resultTuple => resultTuple.result)];
 	#endregion PLINQ
-	public static async IAsyncEnumerable<TResult> ToProgressResults<TSource, TResult>(
+	public static async IAsyncEnumerable<TResult> Parallelize<TSource, TResult>(
 		this IEnumerable<TSource> source,
 		Func<TSource, CancellationToken?, IProgress<Progress>, Task<TResult>> selector,
 		[EnumeratorCancellation] CancellationToken cancellationToken = default,
@@ -60,11 +32,10 @@ public static class ExtensionMethods
 		using ProgressTaskGroup<TResult> group = new(cancellationToken, progress);
 		group.Add(source.Select(item => new ProgressTask<TResult>(
 			(ct, p) => selector(item, ct, p))));
-		while (group.HasPendingResults)
-			await foreach (TResult result in group.GetResultsAsync())
-				yield return result;
+		await foreach (TResult result in group.GetResultsAsync())
+			yield return result;
 	}
-	public static async IAsyncEnumerable<TResult> ToProgressResults<TSource, TResult>(
+	public static async IAsyncEnumerable<TResult> Parallelize<TSource, TResult>(
 		this IAsyncEnumerable<TSource> source,
 		Func<TSource, CancellationToken?, IProgress<Progress>, Task<TResult>> selector,
 		[EnumeratorCancellation] CancellationToken cancellationToken = default,
@@ -74,22 +45,43 @@ public static class ExtensionMethods
 		await foreach (TSource item in source.WithCancellation(cancellationToken))
 			group.Add(new ProgressTask<TResult>(
 				(ct, p) => selector(item, ct, p)));
-		while (group.HasPendingResults)
-			await foreach (TResult result in group.GetResultsAsync())
-				yield return result;
+		await foreach (TResult result in group.GetResultsAsync())
+			yield return result;
 	}
-	public static IAsyncEnumerable<TResult> ToResults<TSource, TResult>(
+	public static IAsyncEnumerable<TResult> Parallelize<TSource, TResult>(
+		this IEnumerable<TSource> source,
+		Func<TSource, CancellationToken?, Task<TResult>> selector,
+		CancellationToken cancellationToken = default) =>
+		source.Parallelize(
+			selector: (item, ct, p) => selector(item, ct),
+			cancellationToken: cancellationToken);
+	public static IAsyncEnumerable<TResult> Parallelize<TSource, TResult>(
+		this IAsyncEnumerable<TSource> source,
+		Func<TSource, CancellationToken?, Task<TResult>> selector,
+		CancellationToken cancellationToken = default) =>
+		source.Parallelize(
+			selector: (item, ct, p) => selector(item, ct),
+			cancellationToken: cancellationToken);
+	public static IAsyncEnumerable<TResult> Parallelize<TSource, TResult>(
+		this IEnumerable<TSource> source,
+		Func<TSource, IProgress<Progress>, Task<TResult>> selector,
+		IProgress<Progress> progress = null) =>
+		source.Parallelize(
+			selector: (item, ct, p) => selector(item, p),
+			progress: progress);
+	public static IAsyncEnumerable<TResult> Parallelize<TSource, TResult>(
+		this IAsyncEnumerable<TSource> source,
+		Func<TSource, IProgress<Progress>, Task<TResult>> selector,
+		IProgress<Progress> progress = null) =>
+		source.Parallelize(
+			selector: (item, ct, p) => selector(item, p),
+			progress: progress);
+	public static IAsyncEnumerable<TResult> Parallelize<TSource, TResult>(
 		this IEnumerable<TSource> source,
 		Func<TSource, Task<TResult>> selector) =>
-		source.ToProgressResults(
-			(item, ct, p) => selector(item),
-			default,
-			null);
-	public static IAsyncEnumerable<TResult> ToResults<TSource, TResult>(
+		source.Parallelize((item, ct, p) => selector(item));
+	public static IAsyncEnumerable<TResult> Parallelize<TSource, TResult>(
 		this IAsyncEnumerable<TSource> source,
 		Func<TSource, Task<TResult>> selector) =>
-		source.ToProgressResults(
-			(item, ct, p) => selector(item),
-			default,
-			null);
+		source.Parallelize((item, ct, p) => selector(item));
 }
