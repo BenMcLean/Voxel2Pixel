@@ -23,19 +23,4 @@ public readonly record struct Progress([StringSyntax(StringSyntaxAttribute.Compo
 			progress?.Report(new Progress(@double, format, args));
 		await Task.Yield();
 	}
-	public static async Task<DateTimeOffset> UpdateAsync(
-		DateTimeOffset? lastCheck,
-		int minMillisecondsBetweenUpdates = 100,
-		CancellationToken? cancellationToken = null,
-		IProgress<Progress> progress = null,
-		double? @double = null,
-		[StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format = null,
-		params object[] args)
-	{
-		DateTimeOffset now = DateTimeOffset.UtcNow;
-		if (lastCheck.HasValue && (now - lastCheck.Value).TotalMilliseconds < minMillisecondsBetweenUpdates)
-			return lastCheck.Value;
-		await UpdateAsync(cancellationToken, progress, @double, format, args);
-		return now;
-	}
 }
