@@ -28,6 +28,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BenVoxel.Test", "BenVoxel.T
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BenProgress", "BenProgress\BenProgress.csproj", "{D8D9B8FB-EBD7-4463-B2E0-3B3B3B0BDF3D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BenVoxel.BoxelVrExample", "BenVoxel.BoxelVrExample\BenVoxel.BoxelVrExample.csproj", "{1F889D6F-526C-43BB-BCB9-70D3D51A871F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -58,6 +60,10 @@ Global
 		{D8D9B8FB-EBD7-4463-B2E0-3B3B3B0BDF3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D8D9B8FB-EBD7-4463-B2E0-3B3B3B0BDF3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D8D9B8FB-EBD7-4463-B2E0-3B3B3B0BDF3D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F889D6F-526C-43BB-BCB9-70D3D51A871F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F889D6F-526C-43BB-BCB9-70D3D51A871F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F889D6F-526C-43BB-BCB9-70D3D51A871F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F889D6F-526C-43BB-BCB9-70D3D51A871F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

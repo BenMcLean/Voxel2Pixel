@@ -339,10 +339,30 @@ public class BenVoxelFile() : IBinaryWritable
 			}
 		return this;
 	}
-	public DictionaryModel Default(out uint[] palette)
+	public Color[] GetPalette(string modelName = "", string paletteName = "") =>
+		Models.TryGetValue(modelName, out Model model)
+			&& (model.Metadata?.PalettesReadOnly?.TryGetValue(paletteName, out Color[] palette) ?? false) ? palette
+			: (Global?.PalettesReadOnly?.TryGetValue(paletteName, out palette) ?? false) ? palette
+			: null;
+	public string GetProperty(string modelName = "", string propertyName = "") =>
+		Models.TryGetValue(modelName, out Model model)
+			&& (model.Metadata?.PropertiesReadOnly?.TryGetValue(propertyName, out string property) ?? false) ? property
+			: (Global?.PropertiesReadOnly?.TryGetValue(propertyName, out property) ?? false) ? property
+			: null;
+	public Point3D? GetPoint(string modelName = "", string pointName = "") =>
+		Models.TryGetValue(modelName, out Model model)
+			&& (model.Metadata?.PointsReadOnly?.TryGetValue(pointName, out Point3D point) ?? false) ? point
+			: (Global?.PointsReadOnly?.TryGetValue(pointName, out point) ?? false) ? point
+			: null;
+	public Model DefaultModel()
 	{
 		if (!Models.TryGetValue("", out Model benVoxelFileModel))
 			benVoxelFileModel = Models.FirstOrDefault().Value;
+		return benVoxelFileModel;
+	}
+	public DictionaryModel Default(out uint[] palette)
+	{
+		Model benVoxelFileModel = DefaultModel();
 		DictionaryModel geometry = benVoxelFileModel?.Geometry;
 		if (!(benVoxelFileModel?.Metadata?.Palettes.TryGetValue("", out Color[] colors) ?? false)
 			&& !(Global?.Palettes.TryGetValue("", out colors) ?? false))
