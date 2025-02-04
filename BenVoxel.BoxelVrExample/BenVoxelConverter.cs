@@ -53,7 +53,7 @@ public static class BenVoxelConverter
 	public static IEnumerable<Voxel> Voxels(uint[] palette, BoxelData[] boxelData, int offsetX = 0, int offsetY = 0, int offsetZ = 0)
 	{
 		foreach (BoxelData boxel in boxelData)
-			if (Array.IndexOf(palette, boxel.normalColor.Uint()) is int color and > -1)
+			if (Array.IndexOf(palette, boxel.normalColor.Uint()) is int color and > 0)
 				yield return new(
 					X: (ushort)(boxel.intPosition.X + offsetX),
 					Y: (ushort)(boxel.intPosition.Y + offsetY),
