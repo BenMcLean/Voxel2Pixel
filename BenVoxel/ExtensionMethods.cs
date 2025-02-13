@@ -28,9 +28,12 @@ public static class ExtensionMethods
 	public static BinaryWriter RIFF(this BinaryWriter writer, string fourCC, Action<BinaryWriter> writeContent)
 	{
 		if (fourCC.Length != 4)
-			throw new ArgumentException("RIFF chunk identifier must be exactly 4 characters", nameof(fourCC));
+			throw new ArgumentException(message: "RIFF chunk identifier must be exactly 4 characters", paramName: nameof(fourCC));
 		using MemoryStream contentStream = new();
-		using (BinaryWriter contentWriter = new(contentStream, Encoding.UTF8, leaveOpen: true))
+		using (BinaryWriter contentWriter = new(
+			output: contentStream,
+			encoding: Encoding.UTF8,
+			leaveOpen: true))
 			writeContent(contentWriter);
 		byte[] content = contentStream.ToArray();
 		writer.Write(Encoding.ASCII.GetBytes(fourCC), 0, 4);
@@ -58,7 +61,10 @@ public static class ExtensionMethods
 		string fourCC = Encoding.ASCII.GetString(reader.ReadBytes(4));
 		uint length = reader.ReadUInt32();
 		using MemoryStream limitedStream = new(reader.ReadBytes((int)length));
-		using BinaryReader limitedReader = new(limitedStream, Encoding.UTF8, leaveOpen: true);
+		using BinaryReader limitedReader = new(
+			input: limitedStream,
+			encoding: Encoding.UTF8,
+			leaveOpen: true);
 		readContent(limitedReader, fourCC);
 		return fourCC;
 	}
@@ -68,7 +74,10 @@ public static class ExtensionMethods
 		string fourCC = Encoding.ASCII.GetString(reader.ReadBytes(4));
 		uint length = reader.ReadUInt32();
 		using MemoryStream limitedStream = new(reader.ReadBytes((int)length));
-		using BinaryReader limitedReader = new(limitedStream, Encoding.UTF8, leaveOpen: true);
+		using BinaryReader limitedReader = new(
+			input: limitedStream,
+			encoding: Encoding.UTF8,
+			leaveOpen: true);
 		if (readContent(limitedReader, fourCC))
 			return true;
 		reader.BaseStream.Position = startPosition;

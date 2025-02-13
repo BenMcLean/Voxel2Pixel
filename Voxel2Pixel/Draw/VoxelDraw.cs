@@ -1,7 +1,10 @@
-﻿using BenVoxel;
+﻿using BenProgress;
+using BenVoxel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Render;
@@ -162,6 +165,45 @@ public static class VoxelDraw
 						y: y,
 						index: voxelY.Index,
 						visibleFace: visibleFace);
+	}
+	public static async Task FrontAsync(
+		IModel model,
+		IRectangleRenderer renderer,
+		VisibleFace visibleFace = VisibleFace.Front,
+		CancellationToken? cancellationToken = null,
+		IProgress<Progress> progress = null,
+		int milliseconds = PeriodicUpdater.DefaultMilliseconds)
+	{
+		ushort width = model.SizeX,
+			height = model.SizeZ;
+		VoxelY?[] grid = new VoxelY?[width * height];
+		foreach (Voxel voxel in model
+			.Where(voxel => voxel.Index != 0))
+			if (width * (height - voxel.Z - 1) + voxel.X is int i
+				&& (grid[i] is not VoxelY old
+					|| old.Index == 0
+					|| old.Y > voxel.Y))
+				grid[i] = new VoxelY(voxel);
+		PeriodicUpdater periodicUpdater = new()
+		{
+			CancellationToken = cancellationToken,
+			Progress = progress,
+			Milliseconds = milliseconds,
+		};
+		await periodicUpdater.ForceUpdateAsync(0.5d);
+		double doubleHeight = height << 1;
+		uint index = 0;
+		for (ushort y = 0; y < height; y++)
+		{
+			for (ushort x = 0; x < width; x++)
+				if (grid[index++] is VoxelY voxelY && voxelY.Index != 0)
+					renderer.Rect(
+						x: x,
+						y: y,
+						index: voxelY.Index,
+						visibleFace: visibleFace);
+			await periodicUpdater.UpdateAsync(y / doubleHeight);
+		}
 	}
 	public static Point FrontPeakSize(IModel model, byte scaleX = 6, byte scaleY = 6) => new(model.SizeX * scaleX, model.SizeZ * scaleY);
 	public static void FrontPeak(IModel model, IRectangleRenderer renderer, byte scaleX = 6, byte scaleY = 6)

@@ -9,7 +9,8 @@ namespace BenProgress;
 public class PeriodicUpdater
 {
 	protected readonly Stopwatch Stopwatch = new();
-	public int Milliseconds { get; set; } = 100;
+	public const int DefaultMilliseconds = 100;
+	public int Milliseconds { get; set; } = DefaultMilliseconds;
 	public CancellationToken? CancellationToken { get; set; } = null;
 	public IProgress<Progress> Progress { get; set; } = null;
 	public Task UpdateAsync(
@@ -27,11 +28,25 @@ public class PeriodicUpdater
 			return;
 		else
 			sw.Reset();
-		await BenProgress.Progress.UpdateAsync(
+		await ForceUpdateAsync(
+			@double: @double,
+			format: format,
+			args: args);
+	}
+	public Task ForceUpdateAsync(
+		double? @double = null,
+		[StringSyntax(StringSyntaxAttribute.CompositeFormat)] string? format = null,
+		params object[] args) =>
+		BenProgress.Progress.UpdateAsync(
 			cancellationToken: CancellationToken,
 			progress: Progress,
 			@double: @double,
 			format: format,
 			args: args);
-	}
+	public Task ForceUpdateAsync(
+		[StringSyntax(StringSyntaxAttribute.CompositeFormat)] string? @string = null,
+		double? @double = null) =>
+		ForceUpdateAsync(
+			@double: @double,
+			format: @string);
 }
