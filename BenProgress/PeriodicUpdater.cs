@@ -1,18 +1,12 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace BenProgress;
 
-public class PeriodicUpdater
+public class PeriodicUpdater(ProgressContext? ProgressContext)
 {
 	protected readonly Stopwatch Stopwatch = new();
-	public const int DefaultMilliseconds = 100;
-	public int Milliseconds { get; set; } = DefaultMilliseconds;
-	public CancellationToken? CancellationToken { get; set; } = null;
-	public IProgress<Progress> Progress { get; set; } = null;
 	public Task UpdateAsync(
 		[StringSyntax(StringSyntaxAttribute.CompositeFormat)] string @string,
 		double? @double = null) => UpdateAsync(@double: @double, format: @string);
@@ -21,14 +15,16 @@ public class PeriodicUpdater
 		[StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format = null,
 		params object[] args)
 	{
+		if (ProgressContext is not ProgressContext context)
+			return;
 		Stopwatch sw = Stopwatch;
 		if (!sw.IsRunning)
 			sw.Start();
-		else if (sw.ElapsedMilliseconds < Milliseconds)
+		else if (sw.ElapsedMilliseconds < context.Milliseconds)
 			return;
 		else
 			sw.Reset();
-		await ForceUpdateAsync(
+		await context.UpdateAsync(
 			@double: @double,
 			format: format,
 			args: args);
@@ -37,9 +33,7 @@ public class PeriodicUpdater
 		double? @double = null,
 		[StringSyntax(StringSyntaxAttribute.CompositeFormat)] string? format = null,
 		params object[] args) =>
-		BenProgress.Progress.UpdateAsync(
-			cancellationToken: CancellationToken,
-			progress: Progress,
+		ProgressContext?.UpdateAsync(
 			@double: @double,
 			format: format,
 			args: args);

@@ -14,6 +14,7 @@ public readonly record struct Progress([StringSyntax(StringSyntaxAttribute.Compo
 	public static async Task UpdateAsync(
 		CancellationToken? cancellationToken = null,
 		IProgress<Progress> progress = null,
+		bool yield = false,
 		double? @double = null,
 		[StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format = null,
 		params object[] args)
@@ -21,6 +22,7 @@ public readonly record struct Progress([StringSyntax(StringSyntaxAttribute.Compo
 		cancellationToken?.ThrowIfCancellationRequested();
 		if (@double is not null || !string.IsNullOrWhiteSpace(format))
 			progress?.Report(new Progress(@double, format, args));
-		await Task.Yield();
+		if (yield)
+			await Task.Yield();
 	}
 }

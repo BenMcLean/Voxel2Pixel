@@ -1,6 +1,7 @@
 ﻿using BenProgress;
 using BenVoxel;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -170,9 +171,7 @@ public static class VoxelDraw
 		IModel model,
 		IRectangleRenderer renderer,
 		VisibleFace visibleFace = VisibleFace.Front,
-		CancellationToken? cancellationToken = null,
-		IProgress<Progress> progress = null,
-		int milliseconds = PeriodicUpdater.DefaultMilliseconds)
+		ProgressContext? progressContext = null)
 	{
 		ushort width = model.SizeX,
 			height = model.SizeZ;
@@ -184,12 +183,7 @@ public static class VoxelDraw
 					|| old.Index == 0
 					|| old.Y > voxel.Y))
 				grid[i] = new VoxelY(voxel);
-		PeriodicUpdater periodicUpdater = new()
-		{
-			CancellationToken = cancellationToken,
-			Progress = progress,
-			Milliseconds = milliseconds,
-		};
+		PeriodicUpdater periodicUpdater = new(progressContext);
 		await periodicUpdater.ForceUpdateAsync(0.5d);
 		double doubleHeight = height << 1;
 		uint index = 0;
@@ -202,7 +196,7 @@ public static class VoxelDraw
 						y: y,
 						index: voxelY.Index,
 						visibleFace: visibleFace);
-			await periodicUpdater.UpdateAsync(y / doubleHeight);
+			await periodicUpdater.UpdateAsync(0.5d + y / doubleHeight);
 		}
 	}
 	public static Point FrontPeakSize(IModel model, byte scaleX = 6, byte scaleY = 6) => new(model.SizeX * scaleX, model.SizeZ * scaleY);
@@ -253,6 +247,64 @@ public static class VoxelDraw
 							sizeX: scaleX,
 							sizeY: scaleY);
 	}
+	public static async Task FrontPeakAsync(
+		IModel model,
+		IRectangleRenderer renderer,
+		byte scaleX = 6,
+		byte scaleY = 6,
+		ProgressContext? progressContext = null)
+	{
+		if (scaleX < 1) throw new ArgumentOutOfRangeException(nameof(scaleX));
+		if (scaleY < 1) throw new ArgumentOutOfRangeException(nameof(scaleY));
+		ushort voxelWidth = model.SizeX,
+			voxelHeight = model.SizeZ;
+		Voxel?[] grid = new Voxel?[voxelWidth * voxelHeight];
+		foreach (Voxel voxel in model
+			.Where(voxel => voxel.Index != 0))
+			if (voxelWidth * (voxelHeight - voxel.Z - 1) + voxel.X is int i
+				&& (grid[i] is not Voxel old
+					|| old.Index == 0
+					|| old.Y > voxel.Y))
+				grid[i] = voxel;
+		PeriodicUpdater periodicUpdater = new(progressContext);
+		await periodicUpdater.ForceUpdateAsync(0.5d);
+		ushort pixelWidth = (ushort)(voxelWidth * scaleX),
+			pixelHeight = (ushort)(voxelHeight * scaleY);
+		double doubleHeight = pixelHeight << 1;
+		uint index = 0;
+		for (ushort y = 0; y < pixelHeight; y += scaleY)
+		{
+			for (ushort x = 0; x < pixelWidth; x += scaleX)
+				if (grid[index++] is Voxel voxel && voxel.Index != 0)
+					if (voxel.Z >= voxelHeight - 1
+					|| model[voxel.X, voxel.Y, (ushort)(voxel.Z + 1)] == 0)
+					{
+						renderer.Rect(
+							x: x,
+							y: y,
+							index: voxel.Index,
+							visibleFace: VisibleFace.Top,
+							sizeX: scaleX,
+							sizeY: 1);
+						renderer.Rect(
+							x: x,
+							y: (ushort)(y + 1),
+							index: voxel.Index,
+							visibleFace: VisibleFace.Front,
+							sizeX: scaleX,
+							sizeY: (ushort)(scaleY - 1));
+					}
+					else
+						renderer.Rect(
+							x: x,
+							y: y,
+							index: voxel.Index,
+							visibleFace: VisibleFace.Front,
+							sizeX: scaleX,
+							sizeY: scaleY);
+			await periodicUpdater.UpdateAsync(0.5d + y / doubleHeight);
+		}
+	}
 	public static Point OverheadSize(IModel model) => new(model.SizeX, model.SizeY);
 	public static void Overhead(IModel model, IRectangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Top)
 	{
@@ -276,6 +328,38 @@ public static class VoxelDraw
 						index: voxelZ.Index,
 						visibleFace: visibleFace);
 	}
+	public static async Task OverheadAsync(
+		IModel model,
+		IRectangleRenderer renderer,
+		VisibleFace visibleFace = VisibleFace.Top,
+		ProgressContext? progressContext = null)
+	{
+		ushort width = model.SizeX,
+			height = model.SizeY;
+		VoxelZ?[] grid = new VoxelZ?[width * height];
+		foreach (Voxel voxel in model
+			.Where(voxel => voxel.Index != 0))
+			if (width * (height - voxel.Y - 1) + voxel.X is int i
+				&& (grid[i] is not VoxelZ old
+					|| old.Index == 0
+					|| old.Z < voxel.Z))
+				grid[i] = new VoxelZ(voxel);
+		PeriodicUpdater periodicUpdater = new(progressContext);
+		await periodicUpdater.ForceUpdateAsync(0.5d);
+		double doubleHeight = height << 1;
+		uint index = 0;
+		for (ushort y = 0; y < height; y++)
+		{
+			for (ushort x = 0; x < width; x++)
+				if (grid[index++] is VoxelZ voxelZ && voxelZ.Index != 0)
+					renderer.Rect(
+						x: x,
+						y: y,
+						index: voxelZ.Index,
+						visibleFace: visibleFace);
+			await periodicUpdater.UpdateAsync(0.5d + y / doubleHeight);
+		}
+	}
 	public static Point UnderneathSize(IModel model) => new(model.SizeX, model.SizeY);
 	public static void Underneath(IModel model, IRectangleRenderer renderer, VisibleFace visibleFace = VisibleFace.Top)
 	{
@@ -298,6 +382,38 @@ public static class VoxelDraw
 						y: y,
 						index: voxelZ.Index,
 						visibleFace: visibleFace);
+	}
+	public static async Task UnderneathAsync(
+		IModel model,
+		IRectangleRenderer renderer,
+		VisibleFace visibleFace = VisibleFace.Top,
+		ProgressContext? progressContext = null)
+	{
+		ushort width = model.SizeX,
+			height = model.SizeY;
+		VoxelZ?[] grid = new VoxelZ?[width * height];
+		foreach (Voxel voxel in model
+			.Where(voxel => voxel.Index != 0))
+			if (width * (height - voxel.Y - 1) + voxel.X is int i
+				&& (grid[i] is not VoxelZ old
+					|| old.Index == 0
+					|| old.Z > voxel.Z))
+				grid[i] = new VoxelZ(voxel);
+		PeriodicUpdater periodicUpdater = new(progressContext);
+		await periodicUpdater.ForceUpdateAsync(0.5d);
+		double doubleHeight = height << 1;
+		uint index = 0;
+		for (ushort y = 0; y < height; y++)
+		{
+			for (ushort x = 0; x < width; x++)
+				if (grid[index++] is VoxelZ voxelZ && voxelZ.Index != 0)
+					renderer.Rect(
+						x: x,
+						y: y,
+						index: voxelZ.Index,
+						visibleFace: visibleFace);
+			await periodicUpdater.UpdateAsync(0.5d + y / doubleHeight);
+		}
 	}
 	#endregion Straight
 	#region Diagonal
@@ -349,6 +465,57 @@ public static class VoxelDraw
 						y: y,
 						index: rect.Index,
 						visibleFace: rect.VisibleFace);
+	}
+	public static async Task DiagonalAsync(
+		IModel model,
+		IRectangleRenderer renderer,
+		ProgressContext? progressContext = null)
+	{
+		ushort voxelWidth = model.SizeX,
+			voxelDepth = model.SizeY,
+			height = model.SizeZ,
+			pixelWidth = (ushort)(voxelWidth + voxelDepth);
+		uint index;
+		DistantShape?[] grid = new DistantShape?[pixelWidth * height];
+		foreach (Voxel voxel in model
+			.Where(voxel => voxel.Index != 0))
+		{
+			index = (uint)(pixelWidth * (height - voxel.Z - 1) + voxelDepth - voxel.Y - 1 + voxel.X);
+			uint distance = (uint)voxel.X + voxel.Y;
+			if (grid[index] is not DistantShape left
+				|| left.Index == 0
+				|| left.Distance > distance)
+				grid[index] = new DistantShape
+				{
+					Distance = distance,
+					Index = voxel.Index,
+					VisibleFace = VisibleFace.Left,
+				};
+			if (grid[++index] is not DistantShape right
+				|| right.Index == 0
+				|| right.Distance > distance)
+				grid[index] = new DistantShape
+				{
+					Distance = distance,
+					Index = voxel.Index,
+					VisibleFace = VisibleFace.Right,
+				};
+		}
+		PeriodicUpdater periodicUpdater = new(progressContext);
+		await periodicUpdater.ForceUpdateAsync(0.5d);
+		double doubleHeight = height << 1;
+		index = 0;
+		for (ushort y = 0; y < height; y++)
+		{
+			for (ushort x = 0; x < pixelWidth; x++)
+				if (grid[index++] is DistantShape rect && rect.Index != 0)
+					renderer.Rect(
+						x: x,
+						y: y,
+						index: rect.Index,
+						visibleFace: rect.VisibleFace);
+			await periodicUpdater.UpdateAsync(0.5d + y / doubleHeight);
+		}
 	}
 	public static Point DiagonalPeakSize(IModel model, byte scaleX = 6, byte scaleY = 6) => new(
 		X: (model.SizeX + model.SizeY) * scaleX,
@@ -418,6 +585,82 @@ public static class VoxelDraw
 							sizeX: scaleX,
 							sizeY: scaleY);
 	}
+	public static async Task DiagonalPeakAsync(
+		IModel model,
+		IRectangleRenderer renderer,
+		byte scaleX = 6,
+		byte scaleY = 6,
+		ProgressContext? progressContext = null)
+	{
+		if (scaleX < 1) throw new ArgumentOutOfRangeException(nameof(scaleX));
+		if (scaleY < 1) throw new ArgumentOutOfRangeException(nameof(scaleY));
+		ushort voxelWidth = model.SizeX,
+			voxelDepth = model.SizeY,
+			voxelHeight = model.SizeZ,
+			pixelWidth = (ushort)(voxelWidth + voxelDepth);
+		uint index;
+		VoxelFace?[] grid = new VoxelFace?[pixelWidth * voxelHeight];
+		foreach (Voxel voxel in model
+			.Where(voxel => voxel.Index != 0))
+		{
+			index = (uint)(pixelWidth * (voxelHeight - voxel.Z - 1) + voxelDepth - voxel.Y - 1 + voxel.X);
+			uint distance = (uint)voxel.X + voxel.Y;
+			if (grid[index] is not VoxelFace left
+				|| left.Voxel.Index == 0
+				|| left.Distance > distance)
+				grid[index] = new VoxelFace
+				{
+					Voxel = voxel,
+					VisibleFace = VisibleFace.Left,
+				};
+			if (grid[++index] is not VoxelFace right
+				|| right.Voxel.Index == 0
+				|| right.Distance > distance)
+				grid[index] = new VoxelFace
+				{
+					Voxel = voxel,
+					VisibleFace = VisibleFace.Right,
+				};
+		}
+		PeriodicUpdater periodicUpdater = new(progressContext);
+		await periodicUpdater.ForceUpdateAsync(0.5d);
+		index = 0;
+		pixelWidth *= scaleX;
+		ushort pixelHeight = (ushort)(voxelHeight * scaleY);
+		double doubleHeight = pixelHeight << 1;
+		for (ushort y = 0; y < pixelHeight; y += scaleY)
+		{
+			for (ushort x = 0; x < pixelWidth; x += scaleX)
+				if (grid[index++] is VoxelFace face && face.Voxel.Index != 0)
+					if (face.Voxel.Z >= voxelHeight - 1
+						|| model[face.Voxel.X, face.Voxel.Y, (ushort)(face.Voxel.Z + 1)] == 0)
+					{
+						renderer.Rect(
+							x: x,
+							y: y,
+							index: face.Voxel.Index,
+							visibleFace: VisibleFace.Top,
+							sizeX: scaleX,
+							sizeY: 1);
+						renderer.Rect(
+							x: x,
+							y: (ushort)(y + 1),
+							index: face.Voxel.Index,
+							visibleFace: face.VisibleFace,
+							sizeX: scaleX,
+							sizeY: (ushort)(scaleY - 1));
+					}
+					else
+						renderer.Rect(
+							x: x,
+							y: y,
+							index: face.Voxel.Index,
+							visibleFace: face.VisibleFace,
+							sizeX: scaleX,
+							sizeY: scaleY);
+			await periodicUpdater.UpdateAsync(0.5d + y / doubleHeight);
+		}
+	}
 	public static Point AboveSize(IModel model) => new(
 		X: model.SizeX,
 		Y: model.SizeY + model.SizeZ);
@@ -469,6 +712,57 @@ public static class VoxelDraw
 						index: rect.Index,
 						visibleFace: rect.VisibleFace);
 	}
+	public static async Task AboveAsync(
+		IModel model,
+		IRectangleRenderer renderer,
+		ProgressContext? progressContext = null)
+	{
+		ushort width = model.SizeX,
+			depth = model.SizeY,
+			height = model.SizeZ;
+		uint pixelHeight = (uint)(depth + height), index;
+		DistantShape?[] grid = new DistantShape?[width * pixelHeight];
+		foreach (Voxel voxel in model
+			.Where(voxel => voxel.Index != 0))
+		{
+			index = width * (pixelHeight - 2 - voxel.Y - voxel.Z) + voxel.X;
+			uint distance = (uint)(height + voxel.Y - voxel.Z - 1);
+			if (grid[index] is not DistantShape top
+				|| top.Index == 0
+				|| top.Distance > distance)
+				grid[index] = new DistantShape
+				{
+					Distance = distance,
+					Index = voxel.Index,
+					VisibleFace = VisibleFace.Top,
+				};
+			index += width;
+			if (grid[index] is not DistantShape front
+				|| front.Index == 0
+				|| front.Distance > distance)
+				grid[index] = new DistantShape
+				{
+					Distance = distance,
+					Index = voxel.Index,
+					VisibleFace = VisibleFace.Front,
+				};
+		}
+		PeriodicUpdater periodicUpdater = new(progressContext);
+		await periodicUpdater.ForceUpdateAsync(0.5d);
+		double doubleHeight = pixelHeight << 1;
+		index = 0;
+		for (ushort y = 0; y < pixelHeight; y++)
+		{
+			for (ushort x = 0; x < width; x++)
+				if (grid[index++] is DistantShape rect && rect.Index != 0)
+					renderer.Rect(
+						x: x,
+						y: y,
+						index: rect.Index,
+						visibleFace: rect.VisibleFace);
+			await periodicUpdater.UpdateAsync(0.5d + y / doubleHeight);
+		}
+	}
 	#endregion Diagonal
 	#region Isometric
 	public static Point IsoSize(IModel model) => new(
@@ -488,7 +782,7 @@ public static class VoxelDraw
 		ushort voxelWidth = model.SizeX,
 			voxelDepth = model.SizeY,
 			voxelHeight = model.SizeZ,
-			pixelHeight = (ushort)(2 * (voxelWidth + voxelDepth) + 4 * voxelHeight - 1);
+			pixelHeight = (ushort)(((voxelWidth + voxelDepth) << 1) + (voxelHeight << 2) - 1);
 		Dictionary<uint, DistantShape> dictionary = [];
 		void Tri(ushort pixelX, ushort pixelY, uint distance, byte index, VisibleFace visibleFace = VisibleFace.Front)
 		{
@@ -561,6 +855,94 @@ public static class VoxelDraw
 				index: triangle.Value.Index,
 				visibleFace: triangle.Value.VisibleFace);
 	}
+	public static async Task IsoAsync(
+		IModel model,
+		ITriangleRenderer renderer,
+		ProgressContext? progressContext = null)
+	{
+		ushort voxelWidth = model.SizeX,
+			voxelDepth = model.SizeY,
+			voxelHeight = model.SizeZ,
+			pixelHeight = (ushort)(((voxelWidth + voxelDepth) << 1) + (voxelHeight << 2) - 1);
+		Dictionary<uint, DistantShape> dictionary = [];
+		void Tri(ushort pixelX, ushort pixelY, uint distance, byte index, VisibleFace visibleFace = VisibleFace.Front)
+		{
+			if ((uint)((pixelY << 16) | pixelX) is uint key
+				&& (!dictionary.TryGetValue(key, out DistantShape old)
+					|| old.Distance > distance))
+				dictionary[key] = new DistantShape
+				{
+					Distance = distance,
+					Index = index,
+					VisibleFace = visibleFace,
+				};
+		}
+		foreach (Voxel voxel in model
+			.Where(voxel => voxel.Index != 0))
+		{
+			uint distance = (uint)voxel.X + voxel.Y + voxelHeight - voxel.Z - 1;
+			ushort pixelX = (ushort)(2 * (voxelDepth + voxel.X - voxel.Y)),
+				pixelY = (ushort)(pixelHeight - 2 * (voxel.X + voxel.Y) - 4 * voxel.Z - 1);
+			// 01
+			//0011
+			//2014
+			//2244
+			//2354
+			//3355
+			// 35
+			Tri(//0
+				pixelX: (ushort)(pixelX - 2),
+				pixelY: (ushort)(pixelY - 6),
+				distance: distance,
+				index: voxel.Index,
+				visibleFace: VisibleFace.Top);
+			Tri(//1
+				pixelX: pixelX,
+				pixelY: (ushort)(pixelY - 6),
+				distance: distance,
+				index: voxel.Index,
+				visibleFace: VisibleFace.Top);
+			Tri(//2
+				pixelX: (ushort)(pixelX - 2),
+				pixelY: (ushort)(pixelY - 4),
+				distance: distance,
+				index: voxel.Index,
+				visibleFace: VisibleFace.Left);
+			Tri(//3
+				pixelX: (ushort)(pixelX - 2),
+				pixelY: (ushort)(pixelY - 2),
+				distance: distance,
+				index: voxel.Index,
+				visibleFace: VisibleFace.Left);
+			Tri(//4
+				pixelX: pixelX,
+				pixelY: (ushort)(pixelY - 4),
+				distance: distance,
+				index: voxel.Index,
+				visibleFace: VisibleFace.Right);
+			Tri(//5
+				pixelX: pixelX,
+				pixelY: (ushort)(pixelY - 2),
+				distance: distance,
+				index: voxel.Index,
+				visibleFace: VisibleFace.Right);
+		}
+		PeriodicUpdater periodicUpdater = new(progressContext);
+		await periodicUpdater.ForceUpdateAsync(0.5d);
+		int done = 0;
+		double doubleTotal = dictionary.Count << 1;
+		byte oddWidth = (byte)(voxelWidth & 1);
+		foreach (KeyValuePair<uint, DistantShape> triangle in dictionary)
+		{
+			renderer.Tri(
+				x: (ushort)triangle.Key,
+				y: (ushort)(triangle.Key >> 16),
+				right: (((triangle.Key >> 1) ^ (triangle.Key >> 17)) & 1u) == oddWidth,
+				index: triangle.Value.Index,
+				visibleFace: triangle.Value.VisibleFace);
+			await periodicUpdater.UpdateAsync(0.5d + ++done / doubleTotal);
+		}
+	}
 	public static Point IsoUnderneathSize(IModel model) => new(
 		X: 2 * (model.SizeX + model.SizeY),
 		Y: 2 * (model.SizeX + model.SizeY) - 1);
@@ -620,6 +1002,37 @@ public static class VoxelDraw
 						right: false,
 						color: color);
 				}
+	}
+	public static async Task IsoUnderneathAsync(
+		IModel model,
+		ITriangleRenderer renderer,
+		VisibleFace visibleFace = VisibleFace.Top,
+		ProgressContext? progressContext = null)
+	{
+		ushort width = model.SizeX,
+			height = model.SizeY;
+		VoxelZ?[] grid = new VoxelZ?[width * height];
+		foreach (Voxel voxel in model)
+			if (width * (height - voxel.Y - 1) + voxel.X is int i
+				&& (grid[i] is not VoxelZ old
+					|| old.Index == 0
+					|| old.Z > voxel.Z))
+				grid[i] = new VoxelZ(voxel);
+		PeriodicUpdater periodicUpdater = new(progressContext);
+		await periodicUpdater.ForceUpdateAsync(0.5d);
+		double doubleHeight = height << 1;
+		uint index = 0;
+		for (ushort y = 0; y < height; y++)
+		{
+			for (ushort x = 0; x < width; x++)
+				if (grid[index++] is VoxelZ voxelZ && voxelZ.Index != 0)
+					renderer.Diamond(
+						x: (ushort)((x + y) << 1),
+						y: (ushort)((width - x + y - 1) << 1),
+						index: voxelZ.Index,
+						visibleFace: visibleFace);
+			await periodicUpdater.UpdateAsync(0.5d + y / doubleHeight);
+		}
 	}
 	public static void IsoSlantUp(ITriangleRenderer renderer, byte[] texture, ushort width = 0, byte threshold = 128)
 	{
