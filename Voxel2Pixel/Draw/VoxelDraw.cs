@@ -1,10 +1,8 @@
 ﻿using BenProgress;
 using BenVoxel;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
@@ -68,6 +66,56 @@ public static class VoxelDraw
 				break;
 			case Perspective.ZSlices:
 				ZSlices(model, renderer, peak);
+				break;
+		}
+	}
+	public static async Task DrawAsync(this IModel model, IRenderer renderer, Perspective perspective, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, double radians = 0d, bool peak = false, ushort offsetX = 0, ushort offsetY = 0, ProgressContext? progressContext = null)
+	{
+		if (offsetX > 0 || offsetY > 0
+			|| (!perspective.IsInternallyScaled(peak) && (scaleX != 1 || scaleY != 1)))
+			renderer = new OffsetRenderer
+			{
+				RectangleRenderer = renderer,
+				OffsetX = offsetX,
+				OffsetY = offsetY,
+				ScaleX = scaleX,
+				ScaleY = scaleY,
+			};
+		switch (perspective)
+		{
+			default:
+			case Perspective.Front:
+				if (peak)
+					await FrontPeakAsync(model, renderer, scaleX, scaleY, progressContext);
+				else
+					await FrontAsync(model, renderer, progressContext: progressContext);
+				break;
+			case Perspective.Overhead:
+				await OverheadAsync(model, renderer, progressContext: progressContext);
+				break;
+			case Perspective.Underneath:
+				await UnderneathAsync(model, renderer, progressContext: progressContext);
+				break;
+			case Perspective.Diagonal:
+				if (peak)
+					await DiagonalPeakAsync(model, renderer, scaleX, scaleY, progressContext: progressContext);
+				else
+					await DiagonalAsync(model, renderer, progressContext: progressContext);
+				break;
+			case Perspective.Above:
+				await AboveAsync(model, renderer, progressContext: progressContext);
+				break;
+			case Perspective.Iso:
+				await IsoAsync(model, renderer, progressContext: progressContext);
+				break;
+			case Perspective.IsoUnderneath:
+				await IsoUnderneathAsync(model, renderer, progressContext: progressContext);
+				break;
+			case Perspective.Stacked:
+				await StackedAsync(model, renderer, radians, scaleX, scaleY, scaleZ, peak, progressContext: progressContext);
+				break;
+			case Perspective.ZSlices:
+				await ZSlicesAsync(model, renderer, peak, progressContext: progressContext);
 				break;
 		}
 	}
@@ -1057,6 +1105,39 @@ public static class VoxelDraw
 						color: color);
 				}
 	}
+	public static async Task IsoSlantUpAsync(
+		ITriangleRenderer renderer,
+		byte[] texture,
+		ushort width = 0,
+		byte threshold = 128,
+		ProgressContext? progressContext = null)
+	{
+		if (width < 1) width = (ushort)Math.Sqrt(texture.Length >> 2);
+		ushort height4 = (ushort)(((texture.Length >> 2) / width) << 2),
+			width2 = (ushort)(width << 1);
+		int index = 0;
+		double doubleHeight = height4 * 2d;
+		PeriodicUpdater periodicUpdater = new(progressContext);
+		for (ushort y = 0; y < height4; y += 4)
+		{
+			for (ushort x = 0; x < width2; x += 2, index += 4)
+				if (texture[index + 3] is byte alpha && alpha >= threshold)
+				{
+					uint color = (uint)texture[index] << 24 | (uint)texture[index + 1] << 16 | (uint)texture[index + 2] << 8 | alpha;
+					renderer.Tri(
+						x: x,
+						y: (ushort)(width2 + y - x - 2),
+						right: false,
+						color: color);
+					renderer.Tri(
+						x: x,
+						y: (ushort)(width2 + y - x),
+						right: true,
+						color: color);
+				}
+			await periodicUpdater.UpdateAsync(0.5d + y / doubleHeight);
+		}
+	}
 	public static ushort IsoTileWidth(int textureLength, ushort width = 0)
 	{
 		if (width < 1) width = (ushort)Math.Sqrt(textureLength >> 2);
@@ -1081,6 +1162,33 @@ public static class VoxelDraw
 						x: x,
 						y: y,
 						color: (uint)texture[index] << 24 | (uint)texture[index + 1] << 16 | (uint)texture[index + 2] << 8 | alpha);
+	}
+	public static async Task IsoTileAsync(
+		ITriangleRenderer renderer,
+		byte[] texture,
+		ushort width = 0,
+		byte threshold = 128,
+		ProgressContext? progressContext = null)
+	{
+		if (width < 1) width = (ushort)Math.Sqrt(texture.Length >> 2);
+		ushort width2 = (ushort)(width << 1),
+			height2 = (ushort)(((texture.Length >> 2) / width) << 1);
+		int index = 0;
+		PeriodicUpdater periodicUpdater = new(progressContext);
+		for (ushort xStart = 0, yStart = (ushort)(width2 - 2);
+			yStart < width2 + height2 - 2;
+			xStart += 2, yStart += 2)
+		{
+			for (ushort x = xStart, y = yStart;
+				x < xStart + width2;
+				x += 2, y -= 2, index += 4)
+				if (texture[index + 3] is byte alpha && alpha >= threshold)
+					renderer.Diamond(
+						x: x,
+						y: y,
+						color: (uint)texture[index] << 24 | (uint)texture[index + 1] << 16 | (uint)texture[index + 2] << 8 | alpha);
+			await periodicUpdater.UpdateAsync();
+		}
 	}
 	#endregion Isometric
 	#region Stacked
@@ -1298,6 +1406,84 @@ public static class VoxelDraw
 				else
 					memories[z].Item1.Rect(offsetRenderer);
 	}
+	public static async Task StackedAsync(
+		IModel model,
+		IRectangleRenderer renderer,
+		double radians = 0d,
+		byte scaleX = 1,
+		byte scaleY = 1,
+		byte scaleZ = 1,
+		bool peak = false,
+		VisibleFace visibleFace = VisibleFace.Front,
+		ProgressContext? progressContext = null)
+	{
+		if (scaleX < 1) throw new ArgumentOutOfRangeException(nameof(scaleX));
+		if (scaleY < 1) throw new ArgumentOutOfRangeException(nameof(scaleY));
+		if (scaleZ < 1) throw new ArgumentOutOfRangeException(nameof(scaleZ));
+		OffsetRenderer offsetRenderer = new()
+		{
+			RectangleRenderer = renderer,
+		};
+		PeriodicUpdater periodicUpdater = new(progressContext);
+		if (scaleZ == 1)
+		{
+			offsetRenderer.OffsetY = model.SizeZ - 1;
+			for (ushort z = 0; z < model.SizeZ; z++, offsetRenderer.OffsetY--)
+			{
+				ZSlice(
+					model: model,
+					renderer: offsetRenderer,
+					radians: radians,
+					z: z,
+					scaleX: scaleX,
+					scaleY: scaleY,
+					peak: peak,
+					visibleFace: visibleFace);
+				await periodicUpdater.UpdateAsync(z / model.SizeZ);
+			}
+			return;
+		}
+		(MemoryRenderer, MemoryRenderer)[] memories = [.. Enumerable.Range(0, model.SizeZ)
+			.Parallelize(z => {
+				MemoryRenderer memoryRenderer = [];
+				ZSlice(
+					model: model,
+					renderer: memoryRenderer,
+					radians: radians,
+					z: (ushort)z,
+					scaleX: scaleX,
+					scaleY: scaleY,
+					visibleFace: visibleFace);
+				if (!peak)
+					return (memoryRenderer, memoryRenderer);
+				MemoryRenderer peakRenderer = [];
+				ZSlice(
+					model: model,
+					renderer: peakRenderer,
+					radians: radians,
+					z: (ushort)z,
+					scaleX: scaleX,
+					scaleY: scaleY,
+					peak: true,
+					visibleFace: visibleFace);
+				return (memoryRenderer, peakRenderer);
+			})];
+		offsetRenderer.OffsetY = (ushort)((model.SizeZ * scaleZ) - 1);
+		double doubleZ = model.SizeZ * 2d;
+		for (ushort z = 0; z < model.SizeZ; z++)
+		{
+			for (ushort offsetY = 0; offsetY < scaleZ; offsetY++, offsetRenderer.OffsetY--)
+				if (offsetY == scaleZ - 1)
+				{
+					memories[z].Item2.Rect(offsetRenderer);
+					if (z < model.SizeZ - 1)
+						memories[z + 1].Item1.Rect(offsetRenderer);
+				}
+				else
+					memories[z].Item1.Rect(offsetRenderer);
+			await periodicUpdater.UpdateAsync(0.5d + z / doubleZ);
+		}
+	}
 	public static Point ZSlicesSize(IModel model) => new(
 		X: model.SizeX * model.SizeZ,
 		Y: model.SizeY);
@@ -1306,17 +1492,30 @@ public static class VoxelDraw
 		Y: point.Y);
 	public static void ZSlices(IModel model, IRectangleRenderer renderer, bool peak = false, VisibleFace visibleFace = VisibleFace.Front)
 	{
-		OffsetRenderer offsetRenderer = new()
+		foreach (Voxel voxel in model)
+			renderer.Rect(
+				x: (ushort)(model.SizeX * voxel.Z + voxel.X),
+				y: voxel.Y,
+				index: voxel.Index,
+				visibleFace: peak && (voxel.Z >= model.SizeZ - 1 || model[voxel.X, voxel.Y, (ushort)(voxel.Z + 1)] == 0) ? VisibleFace.Top : visibleFace);
+	}
+	public static async Task ZSlicesAsync(
+		IModel model,
+		IRectangleRenderer renderer,
+		bool peak = false,
+		VisibleFace visibleFace = VisibleFace.Front,
+		ProgressContext? progressContext = null)
+	{
+		PeriodicUpdater periodicUpdater = new(progressContext);
+		foreach (Voxel voxel in model)
 		{
-			RectangleRenderer = renderer,
-		};
-		for (ushort z = 0; z < model.SizeZ; z++, offsetRenderer.OffsetX += model.SizeX)
-			ZSlice(
-				model: model,
-				renderer: offsetRenderer,
-				z: z,
-				visibleFace: visibleFace,
-				peak: peak);
+			renderer.Rect(
+				x: (ushort)(model.SizeX * voxel.Z + voxel.X),
+				y: voxel.Y,
+				index: voxel.Index,
+				visibleFace: peak && (voxel.Z >= model.SizeZ - 1 || model[voxel.X, voxel.Y, (ushort)(voxel.Z + 1)] == 0) ? VisibleFace.Top : visibleFace);
+			await periodicUpdater.UpdateAsync();
+		}
 	}
 	#endregion Stacked
 }
