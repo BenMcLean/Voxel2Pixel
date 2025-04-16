@@ -1,8 +1,9 @@
-﻿using BenVoxel;
-using System;
+﻿using BenProgress;
+using BenVoxel;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
@@ -230,7 +231,12 @@ public class SpriteMaker
 	#endregion Modifiers
 	#region Makers
 	public Sprite Make() => Make(this);
-	public static Sprite Make(SpriteMaker maker)
+	public static Sprite Make(SpriteMaker maker) => MakeAsync(maker)
+		.ConfigureAwait(false)
+		.GetAwaiter()
+		.GetResult();
+	public Task<Sprite> MakeAsync(ProgressContext? progressContext = null) => MakeAsync(this, progressContext);
+	public static async Task<Sprite> MakeAsync(SpriteMaker maker, ProgressContext? progressContext = null)
 	{
 		maker = maker.NeedsReorientation ? maker.Reoriented() : new(maker);
 		if (!maker.Points.ContainsKey(Sprite.Origin))
@@ -248,7 +254,7 @@ public class SpriteMaker
 		{
 			VoxelColor = maker.VoxelColor,
 		};
-		VoxelDraw.Draw(
+		await VoxelDraw.DrawAsync(
 			perspective: maker.Perspective,
 			model: maker.Model,
 			renderer: sprite,
@@ -257,7 +263,8 @@ public class SpriteMaker
 			scaleZ: maker.ScaleZ,
 			radians: maker.Radians,
 			offsetX: (ushort)(maker.Outline ? 1 : 0),
-			offsetY: (ushort)(maker.Outline ? 1 : 0));
+			offsetY: (ushort)(maker.Outline ? 1 : 0),
+			progressContext: progressContext);
 		if (maker.Outline)
 			sprite = sprite.Outline(
 				color: maker.OutlineColor,

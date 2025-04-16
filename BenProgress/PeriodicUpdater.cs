@@ -36,7 +36,7 @@ public class PeriodicUpdater(ProgressContext? ProgressContext)
 		ProgressContext?.UpdateAsync(
 			@double: @double,
 			format: format,
-			args: args);
+			args: args) ?? Task.CompletedTask;
 	public Task ForceUpdateAsync(
 		[StringSyntax(StringSyntaxAttribute.CompositeFormat)] string? @string = null,
 		double? @double = null) =>
