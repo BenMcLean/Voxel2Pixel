@@ -11,14 +11,14 @@ namespace Voxel2Pixel.Test.Draw;
 public class VoxelDrawTest(Xunit.Abstractions.ITestOutputHelper output)
 {
 	[Fact]
-	public void ZSliceTest()
+	public async Task ZSliceTest()
 	{
 		VoxFileModel voxFileModel = new(@"..\..\..\TestData\Models\NumberCube.vox");
 		Sprite sprite = new(voxFileModel.Size(Perspective.Iso))
 		{
 			VoxelColor = new NaiveDimmer(voxFileModel.Palette),
 		};
-		voxFileModel.Draw(sprite, Perspective.Iso);
+		await VoxelDraw.DrawAsync(voxFileModel, sprite, Perspective.Iso);
 		Voxel2Pixel.Model.Point dot = new(sprite.Width / 4, 3 * sprite.Height / 4);
 		sprite.DrawBoundingBox();
 		sprite.Png().SaveAsPng("ZSlice.png");

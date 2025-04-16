@@ -1,4 +1,6 @@
-﻿using BenVoxel;
+﻿using BenProgress;
+using BenVoxel;
+using System.Threading.Tasks;
 using Voxel2Pixel.Model;
 
 namespace Voxel2Pixel.Interfaces;
@@ -8,5 +10,5 @@ namespace Voxel2Pixel.Interfaces;
 /// </summary>
 public interface ISpecializedModel : IModel
 {
-	void Draw(IRenderer renderer, Perspective perspective, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, double radians = 0d);
+	Task DrawAsync(IRenderer renderer, Perspective perspective, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, double radians = 0d, ProgressContext? progressContext = null);
 }

@@ -1,7 +1,9 @@
-﻿using BenVoxel;
+﻿using BenProgress;
+using BenVoxel;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model.FileFormats;
@@ -38,7 +40,7 @@ public class SvoModel : BenVoxel.SvoModel, ISpecializedModel
 	public SvoModel(ushort sizeX = ushort.MaxValue, ushort sizeY = ushort.MaxValue, ushort sizeZ = ushort.MaxValue) : base(sizeX, sizeY, sizeZ) { }
 	#endregion SvoModel
 	#region ISpecializedModel
-	public void Draw(IRenderer renderer, Perspective perspective, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, double radians = 0d)
+	public async Task DrawAsync(IRenderer renderer, Perspective perspective, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, double radians = 0d, ProgressContext? progressContext = null)
 	{
 		switch (perspective)
 		{
@@ -52,7 +54,7 @@ public class SvoModel : BenVoxel.SvoModel, ISpecializedModel
 				Above(renderer);
 				break;
 			default:
-				VoxelDraw.Draw(this, renderer, perspective, scaleX, scaleY, scaleZ, radians);
+				await VoxelDraw.DrawAsync(this, renderer, perspective, scaleX, scaleY, scaleZ, radians, progressContext: progressContext);
 				break;
 		}
 	}
