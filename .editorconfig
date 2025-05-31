@@ -1,0 +1,64 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+# All files
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# C# files
+[*.cs]
+indent_style = tab
+indent_size = 4
+tab_width = 4
+
+# Project files
+[*.{csproj,vbproj,vcxproj,vcxproj.filters,proj,projitems,shproj}]
+indent_style = tab
+indent_size = 4
+tab_width = 4
+
+# Solution files
+[*.sln]
+indent_style = tab
+indent_size = 4
+tab_width = 4
+
+# Config files
+[*.{props,targets,ruleset,config,nuspec,resx,vsixmanifest,vsct}]
+indent_style = tab
+indent_size = 4
+tab_width = 4
+
+# JSON files
+[*.json]
+indent_style = tab
+indent_size = 4
+tab_width = 4
+
+# XML files
+[*.{xml,xaml}]
+indent_style = tab
+indent_size = 4
+tab_width = 4
+
+# YAML files
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# Markdown files
+[*.md]
+trim_trailing_whitespace = false
+
+# Batch files
+[*.{cmd,bat}]
+end_of_line = crlf
+
+# Shell scripts
+[*.sh]
+end_of_line = lf
