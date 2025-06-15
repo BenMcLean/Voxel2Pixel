@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
@@ -31,14 +31,14 @@ public class PeriodicUpdater(ProgressContext? ProgressContext)
 	}
 	public Task ForceUpdateAsync(
 		double? @double = null,
-		[StringSyntax(StringSyntaxAttribute.CompositeFormat)] string? format = null,
+		[StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format = null,
 		params object[] args) =>
 		ProgressContext?.UpdateAsync(
 			@double: @double,
 			format: format,
 			args: args) ?? Task.CompletedTask;
 	public Task ForceUpdateAsync(
-		[StringSyntax(StringSyntaxAttribute.CompositeFormat)] string? @string = null,
+		[StringSyntax(StringSyntaxAttribute.CompositeFormat)] string @string = null,
 		double? @double = null) =>
 		ForceUpdateAsync(
 			@double: @double,

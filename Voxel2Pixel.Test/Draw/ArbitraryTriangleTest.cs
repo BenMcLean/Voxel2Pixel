@@ -1,6 +1,7 @@
-﻿using SixLabors.ImageSharp;
+using SixLabors.ImageSharp;
 using Voxel2Pixel.Render;
-using static Voxel2Pixel.Web.ImageMaker;
+using Voxel2Pixel.Test.TestData;
+using static Voxel2Pixel.Test.TestData.ImageMaker;
 
 namespace Voxel2Pixel.Test.Draw;
 

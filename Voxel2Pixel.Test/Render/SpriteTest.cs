@@ -5,32 +5,14 @@ using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Model.FileFormats;
 using Voxel2Pixel.Render;
-using static Voxel2Pixel.Web.ImageMaker;
+using Voxel2Pixel.Test.TestData;
+using static Voxel2Pixel.Test.TestData.ImageMaker;
 
 namespace Voxel2Pixel.Test.Render
 {
 	public class SpriteTest(Xunit.Abstractions.ITestOutputHelper output)
 	{
 		/*
-		[Fact]
-		public void SoraGif()
-		{
-			VoxFileModel model = new(@"..\..\..\TestData\Models\Sora.vox");
-			new SpriteMaker
-			{
-				Model = model,
-				VoxelColor = new NaiveDimmer(model.Palette),
-				Outline = true,
-			}
-				.Iso8()
-				.Make()
-				.Select(sprite => sprite.DrawPoint())
-				.SameSize()
-				.AddFrameNumbers()
-				.Select(sprite => sprite.Upscale(8, 8))
-				.AnimatedGif(frameDelay: 100)
-				.SaveAsGif("Sora.gif");
-		}
 		[Fact]
 		public void ShadowGif()
 		{

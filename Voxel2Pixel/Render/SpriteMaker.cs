@@ -245,9 +245,15 @@ public class SpriteMaker
 		maker = maker.NeedsReorientation ? maker.Reoriented() : new(maker);
 		if (!maker.Points.ContainsKey(Sprite.Origin))
 			maker.Points[Sprite.Origin] = maker.Model.BottomCenter();
-		if (maker.Perspective == Perspective.IsoEight
-			|| maker.Perspective == Perspective.IsoEightUnderneath)
-			throw new NotImplementedException();
+		switch (maker.Perspective)
+		{//Replace compound perspectives with simple perspectives.
+			case Perspective.IsoEight:
+				maker.Perspective = Perspective.Iso;
+				break;
+			case Perspective.IsoEightUnderneath:
+				maker.Perspective = Perspective.IsoUnderneath;
+				break;
+		}
 		Point size = VoxelDraw.Size(
 			perspective: maker.Perspective,
 			model: maker.Model,
@@ -359,20 +365,27 @@ public class SpriteMaker
 	public IAsyncEnumerable<Sprite> MakeGroupAsync(ProgressContext? progressContext = null) => MakeGroupAsync(this, progressContext);
 	public static async IAsyncEnumerable<Sprite> MakeGroupAsync(SpriteMaker maker, ProgressContext? progressContext = null)
 	{
+		if (maker.NumberOfSprites == 1)
+		{
+			yield return await maker.MakeAsync(progressContext);
+			yield break;
+		}
 		using ProgressTaskGroup<Sprite> group = new(progressContext);
 		group.Add((maker.Perspective switch
-			{
-				Perspective.IsoEight => maker.IsoEight(),
-				Perspective.IsoEightUnderneath => maker.IsoEightUnderneath(),
-				Perspective.Stacked => maker.Stacks(),
-				Perspective.StackedUnderneath => throw new NotImplementedException(),//TODO
-				_ => maker.Z4(),
-			})
+		{
+			Perspective.IsoEight => maker.IsoEight(),
+			Perspective.IsoEightUnderneath => maker.IsoEightUnderneath(),
+			Perspective.Stacked => maker.Stacks(),
+			Perspective.StackedUnderneath => throw new NotImplementedException(),//TODO
+			_ => maker.Z4(),
+		})
 			.Take(maker.NumberOfSprites)
 			.Select<SpriteMaker, Func<ProgressContext?, Task<Sprite>>>(m => m.MakeAsync));
 		await foreach (Sprite sprite in group.GetResultsAsync())
 			yield return sprite;
 	}
+	#endregion Makers
+	#region Groups
 	public IEnumerable<SpriteMaker> Z4(Turn turn = Turn.CounterZ) => Z4(this, turn);
 	public static IEnumerable<SpriteMaker> Z4(SpriteMaker maker, Turn turn = Turn.CounterZ)
 	{
@@ -396,20 +409,29 @@ public class SpriteMaker
 		if (maker.Points is null || !maker.Points.ContainsKey(Sprite.Origin))
 			maker.Set(maker.Model.BottomCenter());
 		while (true)
-		{
-			yield return new SpriteMaker(maker)
-				.SetNumberOfSprites(1)
-				.Set(cuboidOrientation)
-				.Set(Perspective.Above)
-				.SetScaleX((byte)(5 * maker.ScaleX))
-				.SetScaleY((byte)(maker.ScaleY << 2));
-			cuboidOrientation = (CuboidOrientation)cuboidOrientation.Turn(Turn.CounterZ);
-			yield return new SpriteMaker(maker)
-				.SetNumberOfSprites(1)
-				.Set(cuboidOrientation)
-				.Set(Perspective.Iso)
-				.SetScaleX((byte)(maker.ScaleX << 1));
-		}
+			for (byte x = 0; x < 4; x++)
+			{
+				for (byte y = 0; y < 4; y++)
+				{
+					for (byte z = 0; z < 4; z++)
+					{
+						yield return new SpriteMaker(maker)
+							.SetNumberOfSprites(1)
+							.Set(cuboidOrientation)
+							.Set(Perspective.Above)
+							.SetScaleX((byte)(5 * maker.ScaleX))
+							.SetScaleY((byte)(maker.ScaleY << 2));
+						cuboidOrientation = (CuboidOrientation)cuboidOrientation.Turn(Turn.CounterZ);
+						yield return new SpriteMaker(maker)
+							.SetNumberOfSprites(1)
+							.Set(cuboidOrientation)
+							.Set(Perspective.Iso)
+							.SetScaleX((byte)(maker.ScaleX << 1));
+					}
+					cuboidOrientation = (CuboidOrientation)cuboidOrientation.Turn(Turn.CounterY);
+				}
+				cuboidOrientation = (CuboidOrientation)cuboidOrientation.Turn(Turn.CounterX);
+			}
 	}
 	public IEnumerable<SpriteMaker> IsoEightUnderneath() => IsoEightUnderneath(this);
 	public static IEnumerable<SpriteMaker> IsoEightUnderneath(SpriteMaker maker)
@@ -422,25 +444,37 @@ public class SpriteMaker
 		if (maker.Points is null || !maker.Points.ContainsKey(Sprite.Origin))
 			maker.Set(maker.Model.BottomCenter());
 		while (true)
-		{
-			yield return new SpriteMaker(maker)
-				.Set(cuboidOrientation)
-				.Set(Perspective.Underneath)
-				.SetScaleX((byte)(5 * maker.ScaleX))
-				.SetScaleY((byte)(maker.ScaleY << 2));
-			cuboidOrientation = (CuboidOrientation)cuboidOrientation.Turn(Turn.CounterZ);
-			yield return new SpriteMaker(maker)
-				.Set(cuboidOrientation)
-				.Set(Perspective.IsoUnderneath)
-				.SetScaleX((byte)(maker.ScaleX << 1));
-		}
+			for (byte x = 0; x < 4; x++)
+			{
+				for (byte y = 0; y < 4; y++)
+				{
+					for (byte z = 0; z < 4; z++)
+					{
+						yield return new SpriteMaker(maker)
+							.SetNumberOfSprites(1)
+							.Set(cuboidOrientation)
+							.Set(Perspective.Underneath)
+							.SetScaleX((byte)(5 * maker.ScaleX))
+							.SetScaleY((byte)(maker.ScaleY << 2));
+						cuboidOrientation = (CuboidOrientation)cuboidOrientation.Turn(Turn.CounterZ);
+						yield return new SpriteMaker(maker)
+							.SetNumberOfSprites(1)
+							.Set(cuboidOrientation)
+							.Set(Perspective.IsoUnderneath)
+							.SetScaleX((byte)(maker.ScaleX << 1));
+					}
+					cuboidOrientation = (CuboidOrientation)cuboidOrientation.Turn(Turn.CounterY);
+				}
+				cuboidOrientation = (CuboidOrientation)cuboidOrientation.Turn(Turn.CounterX);
+			}
 	}
-	public IEnumerable<SpriteMaker> Stacks()
+	public IEnumerable<SpriteMaker> Stacks() => Stacks(this);
+	public static IEnumerable<SpriteMaker> Stacks(SpriteMaker maker)
 	{
-		SpriteMaker maker = Reoriented();
-		for (ushort i = 0; i < NumberOfSprites; i++)
+		maker = maker.Reoriented();
+		for (ushort i = 0; i < maker.NumberOfSprites; i++)
 			yield return new SpriteMaker(maker)
-				.SetRadians(Radians + PixelDraw.Tau * ((double)i / NumberOfSprites));
+				.SetRadians(maker.Radians + PixelDraw.Tau * ((double)i / maker.NumberOfSprites));
 	}
 	public Sprite StackedShadow() => Reoriented()
 		.Set(Perspective.Underneath)
@@ -470,5 +504,5 @@ public class SpriteMaker
 		*/
 		return dictionary;
 	}
-	#endregion Makers
+	#endregion Groups
 }

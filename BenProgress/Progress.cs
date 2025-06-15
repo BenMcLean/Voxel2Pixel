@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using System.Threading;
@@ -10,7 +10,9 @@ public readonly record struct Progress([StringSyntax(StringSyntaxAttribute.Compo
 	public Progress(
 		double? @double = null,
 		[StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format = null,
-		params object[] args) : this(String: string.Format(format, args), Double: @double) { }
+		params object[] args) : this(
+			String: format is null ? null : string.Format(format, args),
+			Double: @double) { }
 	public static async Task UpdateAsync(
 		CancellationToken? cancellationToken = null,
 		IProgress<Progress> progress = null,
