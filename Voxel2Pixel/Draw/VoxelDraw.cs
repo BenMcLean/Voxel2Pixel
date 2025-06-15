@@ -93,30 +93,17 @@ public static class VoxelDraw
 	{
 		if (perspective.IsCompound())
 			throw new ArgumentException("Compound perspectives are an invalid argument for VoxelDraw.", nameof(perspective));
-		Point result;
-		switch (perspective)
+		Point result = perspective switch
 		{
-			default:
-			case Perspective.Front:
-				result = FrontLocate(model, point);
-				break;
-			case Perspective.Overhead:
-			case Perspective.Underneath:
-				return new Point(point.X, point.Y);
-			case Perspective.Diagonal:
-				result = DiagonalLocate(model, point);
-				break;
-			case Perspective.Above:
-				return AboveLocate(model, point);
-			case Perspective.Iso:
-				return IsoLocate(model, point);
-			case Perspective.IsoUnderneath:
-				return IsoUnderneathLocate(model, point);
-			case Perspective.Stacked:
-				return StackedLocate(model, point, radians, scaleX, scaleY, scaleZ);
-			case Perspective.ZSlices:
-				return ZSlicesLocate(model, point);
-		}
+			Perspective.Front => FrontLocate(model, point),
+			Perspective.Diagonal => DiagonalLocate(model, point),
+			Perspective.Above => AboveLocate(model, point),
+			Perspective.Iso => IsoLocate(model, point),
+			Perspective.IsoUnderneath => IsoUnderneathLocate(model, point),
+			Perspective.Stacked => StackedLocate(model, point, radians, scaleX, scaleY, scaleZ),
+			Perspective.ZSlices => ZSlicesLocate(model, point),
+			_ => new Point(point.X, point.Y),
+		};
 		return perspective.IsInternallyScaled(peak) ?
 			result
 			: new()
