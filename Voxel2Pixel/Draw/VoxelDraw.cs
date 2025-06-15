@@ -1,4 +1,4 @@
-﻿using BenProgress;
+using BenProgress;
 using BenVoxel;
 using System;
 using System.Collections.Generic;
@@ -21,6 +21,8 @@ public static class VoxelDraw
 	#region Perspectives
 	public static async Task DrawAsync(this IModel model, IRenderer renderer, Perspective perspective, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, double radians = 0d, bool peak = false, ushort offsetX = 0, ushort offsetY = 0, ProgressContext? progressContext = null)
 	{
+		if (perspective.IsCompound())
+			throw new ArgumentException("Compound perspectives are an invalid argument for VoxelDraw.", nameof(perspective));
 		if (offsetX > 0 || offsetY > 0
 			|| (!perspective.IsInternallyScaled(peak) && (scaleX != 1 || scaleY != 1)))
 			renderer = new OffsetRenderer
@@ -71,6 +73,8 @@ public static class VoxelDraw
 	}
 	public static Point Size(this IModel model, Perspective perspective, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, double radians = 0d, bool peak = false)
 	{
+		if (perspective.IsCompound())
+			throw new ArgumentException("Compound perspectives are an invalid argument for VoxelDraw.", nameof(perspective));
 		Point size = perspective switch
 		{
 			Perspective.Overhead => OverheadSize(model),
@@ -87,6 +91,8 @@ public static class VoxelDraw
 	}
 	public static Point Locate(this IModel model, Perspective perspective, Point3D point, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, double radians = 0d, bool peak = false)
 	{
+		if (perspective.IsCompound())
+			throw new ArgumentException("Compound perspectives are an invalid argument for VoxelDraw.", nameof(perspective));
 		Point result;
 		switch (perspective)
 		{

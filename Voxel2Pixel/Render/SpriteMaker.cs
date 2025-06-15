@@ -1,5 +1,6 @@
-﻿using BenProgress;
+using BenProgress;
 using BenVoxel;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -22,6 +23,7 @@ public class SpriteMaker
 	public bool FlipX { get; set; } = false;
 	public bool FlipY { get; set; } = false;
 	public bool FlipZ { get; set; } = false;
+	public bool Iso8 { get; set; } = false;
 	public CuboidOrientation CuboidOrientation { get; set; } = CuboidOrientation.SOUTH0;
 	public ushort NumberOfSprites
 	{
@@ -120,6 +122,7 @@ public class SpriteMaker
 		FlipX = maker.FlipX;
 		FlipY = maker.FlipY;
 		FlipZ = maker.FlipZ;
+		Iso8 = maker.Iso8;
 		CuboidOrientation = maker.CuboidOrientation;
 		NumberOfSprites = maker.NumberOfSprites;
 		ScaleX = maker.ScaleX;
@@ -144,6 +147,7 @@ public class SpriteMaker
 	public SpriteMaker SetFlipX(bool flipX) { FlipX = flipX; return this; }
 	public SpriteMaker SetFlipY(bool flipY) { FlipY = flipY; return this; }
 	public SpriteMaker SetFlipZ(bool flipZ) { FlipZ = flipZ; return this; }
+	public SpriteMaker SetIso8(bool iso8) { Iso8 = iso8; return this; }
 	public SpriteMaker Set(CuboidOrientation cuboidOrientation) { CuboidOrientation = cuboidOrientation; return this; }
 	public SpriteMaker SetNumberOfSprites(ushort numberOfSprites) { NumberOfSprites = numberOfSprites; return this; }
 	public SpriteMaker SetScaleX(byte scaleX) { ScaleX = scaleX; return this; }
@@ -241,6 +245,9 @@ public class SpriteMaker
 		maker = maker.NeedsReorientation ? maker.Reoriented() : new(maker);
 		if (!maker.Points.ContainsKey(Sprite.Origin))
 			maker.Points[Sprite.Origin] = maker.Model.BottomCenter();
+		if (maker.Perspective == Perspective.IsoEight
+			|| maker.Perspective == Perspective.IsoEightUnderneath)
+			throw new NotImplementedException();
 		Point size = VoxelDraw.Size(
 			perspective: maker.Perspective,
 			model: maker.Model,
@@ -349,82 +356,84 @@ public class SpriteMaker
 			sprite.Upscale(maker.FinalScaleX, maker.FinalScaleY)
 			: sprite;
 	}
-	public static IEnumerable<Sprite> Make(params SpriteMaker[] spriteMakers) => spriteMakers.Make();
-	public IEnumerable<SpriteMaker> Z4(Turn turn = Turn.CounterZ)
+	public IAsyncEnumerable<Sprite> MakeGroupAsync(ProgressContext? progressContext = null) => MakeGroupAsync(this, progressContext);
+	public static async IAsyncEnumerable<Sprite> MakeGroupAsync(SpriteMaker maker, ProgressContext? progressContext = null)
 	{
-		CuboidOrientation cuboidOrientation = CuboidOrientation;
-		SpriteMaker maker = Flipped().Set(CuboidOrientation.SOUTH0);
-		if (Points is null || !Points.ContainsKey(Sprite.Origin))
+		using ProgressTaskGroup<Sprite> group = new(progressContext);
+		group.Add((maker.Perspective switch
+			{
+				Perspective.IsoEight => maker.IsoEight(),
+				Perspective.IsoEightUnderneath => maker.IsoEightUnderneath(),
+				Perspective.Stacked => maker.Stacks(),
+				Perspective.StackedUnderneath => throw new NotImplementedException(),//TODO
+				_ => maker.Z4(),
+			})
+			.Take(maker.NumberOfSprites)
+			.Select<SpriteMaker, Func<ProgressContext?, Task<Sprite>>>(m => m.MakeAsync));
+		await foreach (Sprite sprite in group.GetResultsAsync())
+			yield return sprite;
+	}
+	public IEnumerable<SpriteMaker> Z4(Turn turn = Turn.CounterZ) => Z4(this, turn);
+	public static IEnumerable<SpriteMaker> Z4(SpriteMaker maker, Turn turn = Turn.CounterZ)
+	{
+		CuboidOrientation cuboidOrientation = maker.CuboidOrientation;
+		maker = maker.Flipped().Set(CuboidOrientation.SOUTH0);
+		if (maker.Points is null || !maker.Points.ContainsKey(Sprite.Origin))
 			maker.Set(maker.Model.BottomCenter());
-		for (byte angle = 0; angle < 4; angle++)
+		while (true)
 		{
 			yield return new SpriteMaker(maker)
+				.SetNumberOfSprites(1)
 				.Set(cuboidOrientation);
 			cuboidOrientation = (CuboidOrientation)cuboidOrientation.Turn(turn);
 		}
 	}
-	public IEnumerable<SpriteMaker> Iso8()
+	public IEnumerable<SpriteMaker> IsoEight() => IsoEight(this);
+	public static IEnumerable<SpriteMaker> IsoEight(SpriteMaker maker)
 	{
-		CuboidOrientation cuboidOrientation = CuboidOrientation;
-		SpriteMaker maker = Flipped().Set(CuboidOrientation.SOUTH0);
-		if (Points is null || !Points.ContainsKey(Sprite.Origin))
+		CuboidOrientation cuboidOrientation = maker.CuboidOrientation;
+		maker = maker.Flipped().Set(CuboidOrientation.SOUTH0);
+		if (maker.Points is null || !maker.Points.ContainsKey(Sprite.Origin))
 			maker.Set(maker.Model.BottomCenter());
-		for (byte angle = 0; angle < 4; angle++)
+		while (true)
 		{
 			yield return new SpriteMaker(maker)
+				.SetNumberOfSprites(1)
 				.Set(cuboidOrientation)
 				.Set(Perspective.Above)
-				.SetScaleX((byte)(5 * ScaleX))
-				.SetScaleY((byte)(ScaleY << 2));
+				.SetScaleX((byte)(5 * maker.ScaleX))
+				.SetScaleY((byte)(maker.ScaleY << 2));
 			cuboidOrientation = (CuboidOrientation)cuboidOrientation.Turn(Turn.CounterZ);
 			yield return new SpriteMaker(maker)
+				.SetNumberOfSprites(1)
 				.Set(cuboidOrientation)
 				.Set(Perspective.Iso)
-				.SetScaleX((byte)(ScaleX << 1))
-				.SetScaleY(ScaleY);
+				.SetScaleX((byte)(maker.ScaleX << 1));
 		}
 	}
-	public IEnumerable<SpriteMaker> Iso8Shadows()
+	public IEnumerable<SpriteMaker> IsoEightUnderneath() => IsoEightUnderneath(this);
+	public static IEnumerable<SpriteMaker> IsoEightUnderneath(SpriteMaker maker)
 	{
-		CuboidOrientation cuboidOrientation = CuboidOrientation;
-		SpriteMaker maker = Flipped()
+		CuboidOrientation cuboidOrientation = maker.CuboidOrientation;
+		maker = maker.Flipped()
 			.Set(CuboidOrientation.SOUTH0)
-			.Set(ShadowColor)
 			.SetOutline(false)
 			.SetShadow(false);
-		if (Points is null || !Points.ContainsKey(Sprite.Origin))
+		if (maker.Points is null || !maker.Points.ContainsKey(Sprite.Origin))
 			maker.Set(maker.Model.BottomCenter());
-		for (byte angle = 0; angle < 4; angle++)
+		while (true)
 		{
 			yield return new SpriteMaker(maker)
 				.Set(cuboidOrientation)
 				.Set(Perspective.Underneath)
-				.SetScaleX((byte)(5 * ScaleX))
-				.SetScaleY((byte)(ScaleY << 2));
+				.SetScaleX((byte)(5 * maker.ScaleX))
+				.SetScaleY((byte)(maker.ScaleY << 2));
 			cuboidOrientation = (CuboidOrientation)cuboidOrientation.Turn(Turn.CounterZ);
 			yield return new SpriteMaker(maker)
 				.Set(cuboidOrientation)
 				.Set(Perspective.IsoUnderneath)
-				.SetScaleX((byte)(ScaleX << 1))
-				.SetScaleY(ScaleY);
+				.SetScaleX((byte)(maker.ScaleX << 1));
 		}
-	}
-	public Sprite Iso8TextureAtlas(out TextureAtlas textureAtlas, string name = "Sprite") => new(dictionary: Iso8TextureAtlas(name).Make(), textureAtlas: out textureAtlas);
-	public Dictionary<string, SpriteMaker> Iso8TextureAtlas(string name = "Sprite")
-	{
-		Dictionary<string, SpriteMaker> dictionary = [];
-		byte direction = 0;
-		foreach (SpriteMaker maker in new SpriteMaker(this)
-			.SetShadow(false)
-			.Iso8())
-			dictionary.Add(name + direction++, maker);
-		direction = 0;
-		if (Shadow)
-			foreach (SpriteMaker maker in new SpriteMaker(this)
-				.SetOutline(false)
-				.Iso8Shadows())
-				dictionary.Add(name + "Shadow" + direction++, maker);
-		return dictionary;
 	}
 	public IEnumerable<SpriteMaker> Stacks()
 	{

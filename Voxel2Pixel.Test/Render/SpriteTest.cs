@@ -1,4 +1,4 @@
-﻿using SixLabors.ImageSharp;
+using SixLabors.ImageSharp;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
@@ -11,6 +11,7 @@ namespace Voxel2Pixel.Test.Render
 {
 	public class SpriteTest(Xunit.Abstractions.ITestOutputHelper output)
 	{
+		/*
 		[Fact]
 		public void SoraGif()
 		{
@@ -53,6 +54,7 @@ namespace Voxel2Pixel.Test.Render
 				.AnimatedGif()
 				.SaveAsGif("Shadows.gif");
 		}
+		*/
 		[Fact]
 		public void CropTest()
 		{

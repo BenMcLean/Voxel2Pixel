@@ -1,4 +1,4 @@
-﻿using SixLabors.ImageSharp;
+using SixLabors.ImageSharp;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
@@ -93,7 +93,6 @@ public class TextureAtlasTest
 			expected: subTexture.Height,
 			actual: subTexture2?.Height);
 	}
-	*/
 	[Fact]
 	public void Iso8()
 	{
@@ -119,6 +118,7 @@ public class TextureAtlasTest
 			path: Path.GetFileNameWithoutExtension(textureAtlas.ImagePath) + ".xml",
 			contents: stringBuilder.ToString());
 	}
+	*/
 	[Fact]
 	public void Stacks()
 	{

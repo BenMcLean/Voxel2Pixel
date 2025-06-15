@@ -1,4 +1,4 @@
-﻿using BenVoxel;
+using BenVoxel;
 
 namespace Voxel2Pixel.Model;
 
@@ -19,7 +19,7 @@ public enum VisibleFace : byte
 }
 public enum Perspective
 {//May need revision to follow the correct terms shown in this graphic: https://en.wikipedia.org/wiki/File:Comparison_of_graphical_projections.svg
-	Front, Overhead, Underneath, Diagonal, Above, Iso, IsoUnderneath, Stacked, ZSlices,
+	Front, Overhead, Underneath, Diagonal, Above, Iso, IsoUnderneath, IsoEight, IsoEightUnderneath, Stacked, StackedUnderneath, ZSlices,
 }
 public enum Turn
 {
