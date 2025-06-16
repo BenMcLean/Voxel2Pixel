@@ -26,9 +26,7 @@ public static class ExtensionMethods
 		return palette;
 	}
 	public static VisibleFace VisibleFace(this byte @byte) => (VisibleFace)(@byte & 192);
-	public static bool IsInternallyScaled(this Perspective perspective, bool peak = false) =>
-		perspective == Perspective.Stacked
-		|| (peak && (perspective == Perspective.Front || perspective == Perspective.Diagonal));
+	public static bool IsInternallyScaled(this Perspective perspective, bool peak = false) => peak && (perspective == Perspective.Front || perspective == Perspective.Diagonal);
 	public static bool IsCompound(this Perspective perspective) => perspective == Perspective.IsoEight || perspective == Perspective.IsoEightUnderneath;
 	public static bool HasScaleZ(this Perspective perspective) => perspective == Perspective.Stacked;
 	public static bool HasShadow(this Perspective perspective) => perspective == Perspective.Above || perspective == Perspective.Iso || perspective == Perspective.Stacked;

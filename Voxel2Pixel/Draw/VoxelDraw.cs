@@ -83,11 +83,11 @@ public static class VoxelDraw
 			Perspective.Above => AboveSize(model),
 			Perspective.Iso => IsoSize(model),
 			Perspective.IsoUnderneath => IsoUnderneathSize(model),
-			Perspective.Stacked => StackedSize(model, radians, scaleX, scaleY, scaleZ),
+			Perspective.Stacked => StackedSize(model: model, radians: radians, scaleX: scaleX, scaleY: scaleY, scaleZ: scaleZ),
 			Perspective.ZSlices => ZSlicesSize(model),
 			_ => peak ? FrontPeakSize(model, scaleX, scaleY) : FrontSize(model),
 		};
-		return perspective.IsInternallyScaled(peak) ? size : new Point(X: size.X * scaleX, Y: size.Y * scaleY);
+		return new Point(X: size.X * scaleX, Y: size.Y * scaleY);
 	}
 	public static Point Locate(this IModel model, Perspective perspective, Point3D point, byte scaleX = 1, byte scaleY = 1, byte scaleZ = 1, double radians = 0d, bool peak = false)
 	{

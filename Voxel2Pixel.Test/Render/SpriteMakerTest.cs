@@ -17,16 +17,20 @@ public class SpriteMakerTest
 		{
 			Model = model,
 			VoxelColor = new NaiveDimmer(model.Palette),
-			Perspective = Voxel2Pixel.Model.Perspective.IsoEight,
+			Perspective = Voxel2Pixel.Model.Perspective.Iso,
+			Peak = true,
 			Outline = true,
-			NumberOfSprites = 8,
+			NumberOfSprites = 4,
+			ScaleX = 3,
+			ScaleY = 3,
+			ScaleZ = 3,
 		}.MakeGroupAsync())
 			sprites.Add(sprite);
 		sprites.Select(sprite => sprite.DrawPoint())
 			.SameSize()
 			.AddFrameNumbers()
-			.Select(sprite => sprite.Upscale(8, 8))
-			.AnimatedGif(frameDelay: 100)
+			//.Parallelize(sprite => sprite.Upscale(8, 8))
+			.AnimatedGif(frameDelay: 25)
 			.SaveAsGif("Sora.gif");
 	}
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
@@ -352,8 +352,8 @@ public static class PixelDraw
 			throw new OverflowException("Scaled width exceeds maximum allowed size.");
 		if (height > ushort.MaxValue / scaleY)
 			throw new OverflowException("Scaled height exceeds maximum allowed size.");
-		ushort scaledWidth = (ushort)(width * scaleX),
-			scaledHeight = (ushort)(height * scaleY);
+		uint scaledWidth = (uint)(width * scaleX),
+			scaledHeight = (uint)(height * scaleY);
 		radians %= Tau;
 		double absCos = Math.Abs(Math.Cos(radians)),
 			absSin = Math.Abs(Math.Sin(radians));

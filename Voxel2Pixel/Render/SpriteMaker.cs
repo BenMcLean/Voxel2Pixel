@@ -260,7 +260,8 @@ public class SpriteMaker
 			scaleX: maker.ScaleX,
 			scaleY: maker.ScaleY,
 			scaleZ: maker.ScaleZ,
-			radians: maker.Radians);
+			radians: maker.Radians,
+			peak: maker.Peak);
 		Sprite sprite = new(
 			width: (ushort)(size.X + (maker.Outline ? 2 : 0)),
 			height: (ushort)(size.Y + (maker.Outline ? 2 : 0)))
@@ -275,6 +276,7 @@ public class SpriteMaker
 			scaleY: maker.ScaleY,
 			scaleZ: maker.ScaleZ,
 			radians: maker.Radians,
+			peak: maker.Peak,
 			offsetX: (ushort)(maker.Outline ? 1 : 0),
 			offsetY: (ushort)(maker.Outline ? 1 : 0),
 			progressContext: progressContext);
