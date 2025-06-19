@@ -63,7 +63,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Controls\" />
+	  <Page Update="Controls\SpriteMakerSettings.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
 	</ItemGroup>
 
 </Project>
