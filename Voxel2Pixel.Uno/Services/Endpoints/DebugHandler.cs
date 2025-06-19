@@ -14,7 +14,7 @@ internal class DebugHttpHandler : DelegatingHandler
         HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
-        var response = await base.SendAsync(request, cancellationToken);
+		HttpResponseMessage response = await base.SendAsync(request, cancellationToken);
 #if DEBUG
         if (!response.IsSuccessStatusCode)
         {
@@ -24,12 +24,12 @@ internal class DebugHttpHandler : DelegatingHandler
                 _logger.LogDebugMessage($"{request.RequestUri} ({request.Method})");
             }
             
-            foreach ((var key, var values) in request.Headers.ToDictionary(x => x.Key, x => string.Join(", ", x.Value)))
+            foreach ((string? key, string? values) in request.Headers.ToDictionary(x => x.Key, x => string.Join(", ", x.Value)))
             {
                 _logger.LogDebugMessage($"{key}: {values}");
             }
 
-            var content = request.Content is not null ? await request.Content.ReadAsStringAsync() : null;
+			string? content = request.Content is not null ? await request.Content.ReadAsStringAsync() : null;
             if (!string.IsNullOrEmpty(content))
             {
                 _logger.LogDebugMessage(content);

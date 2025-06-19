@@ -48,16 +48,16 @@ public class TestBase
 
 	public FileInfo TakeScreenshot(string stepName)
 	{
-		var title = $"{TestContext.CurrentContext.Test.Name}_{stepName}"
+		string title = $"{TestContext.CurrentContext.Test.Name}_{stepName}"
 			.Replace(" ", "_")
 			.Replace(".", "_");
 
-		var fileInfo = App.Screenshot(title);
+		FileInfo fileInfo = App.Screenshot(title);
 
-		var fileNameWithoutExt = Path.GetFileNameWithoutExtension(fileInfo.Name);
+		string fileNameWithoutExt = Path.GetFileNameWithoutExtension(fileInfo.Name);
 		if (fileNameWithoutExt != title && fileInfo.DirectoryName != null)
 		{
-			var destFileName = Path
+			string destFileName = Path
 				.Combine(fileInfo.DirectoryName, title + Path.GetExtension(fileInfo.Name));
 
 			if (File.Exists(destFileName))

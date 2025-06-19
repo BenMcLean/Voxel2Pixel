@@ -1,19 +1,12 @@
-using Uno.UI.Runtime.Skia;
+using Microsoft.UI.Xaml;
 
 namespace Voxel2Pixel.Uno;
+
 public class Program
 {
-    [STAThread]
-    public static void Main(string[] args)
-    {
-        var host = SkiaHostBuilder.Create()
-            .App(() => new App())
-            .UseX11()
-            .UseLinuxFrameBuffer()
-            .UseMacOS()
-            .UseWindows()
-            .Build();
-
-        host.Run();
-    }
+	[STAThread]
+	public static void Main(string[] args)
+	{
+		Microsoft.UI.Xaml.Application.Start((p) => new App());
+	}
 }

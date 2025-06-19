@@ -18,7 +18,7 @@ public sealed class WeatherCache : IWeatherCache
 
     public async ValueTask<IImmutableList<WeatherForecast>> GetForecast(CancellationToken token)
     {
-        var weatherText = await GetCachedWeather(token);
+		string? weatherText = await GetCachedWeather(token);
         if (!string.IsNullOrWhiteSpace(weatherText))
         {
             return _serializer.FromString<ImmutableArray<WeatherForecast>>(weatherText);
@@ -30,11 +30,11 @@ public sealed class WeatherCache : IWeatherCache
             throw new WebException("No internet connection", WebExceptionStatus.ConnectFailure);
         }
 
-        var response = await _api.GetWeather(token);
+		Refit.ApiResponse<IImmutableList<WeatherForecast>> response = await _api.GetWeather(token);
 
         if (response.IsSuccessStatusCode && response.Content is not null)
         {
-            var weather = response.Content;
+			IImmutableList<WeatherForecast> weather = response.Content;
             await Save(weather, token);
             return weather;
         }
@@ -54,8 +54,8 @@ public sealed class WeatherCache : IWeatherCache
 
     private async ValueTask<string?> GetCachedWeather(CancellationToken token)
     {
-        var file = await GetFile(CreationCollisionOption.OpenIfExists);
-        var properties = await file.GetBasicPropertiesAsync();
+		StorageFile file = await GetFile(CreationCollisionOption.OpenIfExists);
+		Windows.Storage.FileProperties.BasicProperties properties = await file.GetBasicPropertiesAsync();
 
         // Reuse latest cache file if offline
         // or if the file is less than 5 minutes old
@@ -69,8 +69,8 @@ public sealed class WeatherCache : IWeatherCache
 
     private async ValueTask Save(IImmutableList<WeatherForecast> weather, CancellationToken token)
     {
-        var weatherText = _serializer.ToString(weather);
-        var file = await GetFile(CreationCollisionOption.ReplaceExisting);
+		string weatherText = _serializer.ToString(weather);
+		StorageFile file = await GetFile(CreationCollisionOption.ReplaceExisting);
         await File.WriteAllTextAsync(file.Path, weatherText, token);
     }
 }
