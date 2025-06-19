@@ -53,6 +53,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <PackageReference Include="SixLabors.ImageSharp" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="..\Voxel2Pixel\Voxel2Pixel.csproj" />
 	</ItemGroup>
 
