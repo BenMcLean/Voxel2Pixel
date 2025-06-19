@@ -9,8 +9,8 @@
 			Header="Orientation"
 			SelectionChanged="OrientationComboBox_SelectionChanged">
 			<ComboBox.ItemTemplate>
-				<DataTemplate>
-					<TextBlock Text="{Binding Name}" />
+				<DataTemplate x:DataType="model:CuboidOrientation">
+					<TextBlock Text="{x:Bind Name}" />
 				</DataTemplate>
 			</ComboBox.ItemTemplate>
 		</ComboBox>
