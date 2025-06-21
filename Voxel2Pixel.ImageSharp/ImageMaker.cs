@@ -3,8 +3,12 @@ using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Render;
 using static Voxel2Pixel.Draw.PixelDraw;
 
-namespace Voxel2Pixel.Uno;
+namespace Voxel2Pixel.ImageSharp;
 
+/// <summary>
+/// Glues Voxel2Pixel to SixLabors.ImageSharp.
+/// This feature is kept out of the Voxel2Pixel library so that it can stay smaller, on .NET Standard 2.0 and MIT-licensed.
+/// </summary>
 public static class ImageMaker
 {
 	public const int DefaultFrameDelay = 100;

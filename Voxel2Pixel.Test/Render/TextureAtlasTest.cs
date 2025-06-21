@@ -3,6 +3,7 @@ using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
 using Voxel2Pixel.Color;
+using Voxel2Pixel.ImageSharp;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model.FileFormats;
 using Voxel2Pixel.Render;

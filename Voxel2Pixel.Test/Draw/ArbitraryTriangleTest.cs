@@ -1,4 +1,5 @@
 using SixLabors.ImageSharp;
+using Voxel2Pixel.ImageSharp;
 using Voxel2Pixel.Render;
 using Voxel2Pixel.Test.TestData;
 using static Voxel2Pixel.Test.TestData.ImageMaker;

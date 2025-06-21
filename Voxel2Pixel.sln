@@ -36,6 +36,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Voxel2Pixel", "Voxel2Pixel\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Voxel2Pixel.Test", "Voxel2Pixel.Test\Voxel2Pixel.Test.csproj", "{D35C3B71-4854-2FB7-953D-95DB2C622454}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Voxel2Pixel.ImageSharp", "Voxel2Pixel.ImageSharp\Voxel2Pixel.ImageSharp.csproj", "{7336ECE7-DA20-4A56-AD1C-BF6D0A34FCFF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -84,6 +86,10 @@ Global
 		{D35C3B71-4854-2FB7-953D-95DB2C622454}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D35C3B71-4854-2FB7-953D-95DB2C622454}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D35C3B71-4854-2FB7-953D-95DB2C622454}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7336ECE7-DA20-4A56-AD1C-BF6D0A34FCFF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7336ECE7-DA20-4A56-AD1C-BF6D0A34FCFF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7336ECE7-DA20-4A56-AD1C-BF6D0A34FCFF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7336ECE7-DA20-4A56-AD1C-BF6D0A34FCFF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

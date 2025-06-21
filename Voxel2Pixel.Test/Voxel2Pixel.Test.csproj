@@ -23,7 +23,9 @@
 		</PackageReference>
 	</ItemGroup>
 	<ItemGroup>
+		<ProjectReference Include="..\BenProgress\BenProgress.csproj" />
 		<ProjectReference Include="..\BenVoxel\BenVoxel.csproj" />
+		<ProjectReference Include="..\Voxel2Pixel.ImageSharp\Voxel2Pixel.ImageSharp.csproj" />
 		<ProjectReference Include="..\Voxel2Pixel\Voxel2Pixel.csproj" />
 	</ItemGroup>
 	<ItemGroup>
