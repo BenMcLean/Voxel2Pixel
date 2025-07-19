@@ -1,9 +1,9 @@
-using BenProgress;
-using BenVoxel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BenProgress;
+using BenVoxel;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
 using Voxel2Pixel.Render;

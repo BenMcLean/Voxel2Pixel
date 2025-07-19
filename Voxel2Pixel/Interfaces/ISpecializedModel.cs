@@ -1,6 +1,6 @@
-﻿using BenProgress;
-using BenVoxel;
 using System.Threading.Tasks;
+using BenProgress;
+using BenVoxel;
 using Voxel2Pixel.Model;
 
 namespace Voxel2Pixel.Interfaces;

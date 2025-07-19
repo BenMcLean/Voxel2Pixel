@@ -1,5 +1,5 @@
-﻿using BenVoxel;
 using System.Text.Json;
+using BenVoxel;
 using Voxel2Pixel.Model.FileFormats;
 using static BenVoxel.ExtensionMethods;
 

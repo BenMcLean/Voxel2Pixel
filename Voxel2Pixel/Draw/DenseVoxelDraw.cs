@@ -1,6 +1,6 @@
-﻿using BenVoxel;
 using System;
 using System.Linq;
+using BenVoxel;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
 

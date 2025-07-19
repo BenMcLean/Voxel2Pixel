@@ -1,10 +1,10 @@
-using BenProgress;
-using BenVoxel;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using BenProgress;
+using BenVoxel;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;

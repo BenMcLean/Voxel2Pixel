@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Voxel2Pixel.Uno.Services;
 
@@ -95,6 +96,7 @@ public sealed partial class MainPage : Microsoft.UI.Xaml.Controls.Page
 		}
 	}
 
+	[RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Serialize<TValue>(TValue, JsonSerializerOptions)")]
 	private static string FormatJson(string jsonContent)
 	{
 		try

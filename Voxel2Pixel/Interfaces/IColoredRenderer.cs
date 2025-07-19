@@ -1,3 +1,3 @@
-﻿namespace Voxel2Pixel.Interfaces;
+namespace Voxel2Pixel.Interfaces;
 
 public interface IColoredRenderer : IRenderer, IVoxelColor { }

@@ -1,4 +1,3 @@
-﻿using BenVoxel;
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
@@ -6,6 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Numerics;
+using BenVoxel;
 
 namespace Voxel2Pixel.Model.FileFormats;
 

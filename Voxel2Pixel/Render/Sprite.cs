@@ -1,11 +1,11 @@
-﻿using BenVoxel;
-using RectpackSharp;
 using System;
 using System.Buffers.Binary;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BenVoxel;
+using RectpackSharp;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;

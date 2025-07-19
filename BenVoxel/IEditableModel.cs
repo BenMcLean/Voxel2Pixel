@@ -1,4 +1,4 @@
-﻿namespace BenVoxel;
+namespace BenVoxel;
 
 public interface IEditableModel : IModel
 {

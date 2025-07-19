@@ -1,4 +1,4 @@
-﻿namespace Voxel2Pixel.Interfaces;
+namespace Voxel2Pixel.Interfaces;
 
 /// <summary>
 /// An IDimmer converts from the color index of a voxel to an actual color based on lighting, like a dimmer on a light switch. This converts from byte indices to RGBA8888 ints for actual colors.

@@ -1,4 +1,4 @@
-﻿using BenVoxel;
+using BenVoxel;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;
 
