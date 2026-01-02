@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36811.4
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BenVoxel", "src\BenVoxel\BenVoxel.csproj", "{837B35ED-30B7-16EB-567C-D83231EE9B75}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Voxel2Pixel", "src\Voxel2Pixel\Voxel2Pixel.csproj", "{BBC52DA6-2849-BB30-4C6D-84F7165D279B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Voxel2Pixel.ImageSharp", "src\Voxel2Pixel.ImageSharp\Voxel2Pixel.ImageSharp.csproj", "{88834941-E6D6-DD8A-88EB-96CDC6877CDC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BenVoxel.Test", "src\Tests\BenVoxel.Test\BenVoxel.Test.csproj", "{FDA816A7-67CD-F46A-81C6-75E0DF8C8B2B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Voxel2Pixel.Test", "src\Tests\Voxel2Pixel.Test\Voxel2Pixel.Test.csproj", "{97CE2224-B14F-DF3F-F7EC-69CD0E13FF7C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BenProgress", "src\BenProgress\BenProgress.csproj", "{5E287173-4560-327E-8D96-27BC44A01854}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{837B35ED-30B7-16EB-567C-D83231EE9B75}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{837B35ED-30B7-16EB-567C-D83231EE9B75}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{837B35ED-30B7-16EB-567C-D83231EE9B75}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{837B35ED-30B7-16EB-567C-D83231EE9B75}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BBC52DA6-2849-BB30-4C6D-84F7165D279B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBC52DA6-2849-BB30-4C6D-84F7165D279B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBC52DA6-2849-BB30-4C6D-84F7165D279B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBC52DA6-2849-BB30-4C6D-84F7165D279B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88834941-E6D6-DD8A-88EB-96CDC6877CDC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88834941-E6D6-DD8A-88EB-96CDC6877CDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88834941-E6D6-DD8A-88EB-96CDC6877CDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88834941-E6D6-DD8A-88EB-96CDC6877CDC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FDA816A7-67CD-F46A-81C6-75E0DF8C8B2B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FDA816A7-67CD-F46A-81C6-75E0DF8C8B2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FDA816A7-67CD-F46A-81C6-75E0DF8C8B2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FDA816A7-67CD-F46A-81C6-75E0DF8C8B2B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{97CE2224-B14F-DF3F-F7EC-69CD0E13FF7C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{97CE2224-B14F-DF3F-F7EC-69CD0E13FF7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{97CE2224-B14F-DF3F-F7EC-69CD0E13FF7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{97CE2224-B14F-DF3F-F7EC-69CD0E13FF7C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E287173-4560-327E-8D96-27BC44A01854}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E287173-4560-327E-8D96-27BC44A01854}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E287173-4560-327E-8D96-27BC44A01854}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E287173-4560-327E-8D96-27BC44A01854}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A0A8D109-540A-44E9-8BFF-94D7A587F17A}
+	EndGlobalSection
+EndGlobal

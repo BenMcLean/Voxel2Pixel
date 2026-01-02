@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<IsPackable>false</IsPackable>
+		<IsTestProject>true</IsTestProject>
+		<ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="coverlet.collector" Version="6.0.4">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Magick.NET-Q8-AnyCPU" Version="14.10.1" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+		<PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
+		<PackageReference Include="SkiaSharp" Version="3.119.1" />
+		<PackageReference Include="xunit" Version="2.9.3" />
+		<PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\..\BenVoxel\BenVoxel.csproj" />
+	  <ProjectReference Include="..\..\Voxel2Pixel.ImageSharp\Voxel2Pixel.ImageSharp.csproj" />
+	  <ProjectReference Include="..\..\Voxel2Pixel\Voxel2Pixel.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<Using Include="Xunit" />
+	</ItemGroup>
+</Project>
