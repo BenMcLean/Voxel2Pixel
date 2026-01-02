@@ -1,5 +1,5 @@
-# Created by https://www.toptal.com/developers/gitignore/api/csharp,dotnetcore,visualstudio,visualstudiocode,jetbrains,rider,eclipse
-# Edit at https://www.toptal.com/developers/gitignore?templates=csharp,dotnetcore,visualstudio,visualstudiocode,jetbrains,rider,eclipse
+# Created by https://www.toptal.com/developers/gitignore/api/csharp,dotnetcore,visualstudio,visualstudiocode,jetbrains,rider,eclipse,godot
+# Edit at https://www.toptal.com/developers/gitignore?templates=csharp,dotnetcore,visualstudio,visualstudiocode,jetbrains,rider,eclipse,godot
 
 ### Csharp ###
 ## Ignore Visual Studio temporary files, build results, and
@@ -472,6 +472,23 @@ local.properties
 # Spring Boot Tooling
 .sts4-cache/
 
+### Godot ###
+# Godot 4+ specific ignores
+.godot/
+
+# Godot-specific ignores
+.import/
+export.cfg
+export_presets.cfg
+
+# Imported translations (automatically generated from CSV files)
+*.translation
+
+# Mono-specific ignores
+.mono/
+data_*/
+mono_crash.*.json
+
 ### JetBrains ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
@@ -828,9 +845,4 @@ fabric.properties
 ### VisualStudio Patch ###
 # Additional files built by Visual Studio
 
-# End of https://www.toptal.com/developers/gitignore/api/csharp,dotnetcore,visualstudio,visualstudiocode,jetbrains,rider,eclipse
-
-# Single Target Config
-solution-config.props
-# Publish Profiles
-!**/Properties/PublishProfiles/*.pubxml
+# End of https://www.toptal.com/developers/gitignore/api/csharp,dotnetcore,visualstudio,visualstudiocode,jetbrains,rider,eclipse,godot

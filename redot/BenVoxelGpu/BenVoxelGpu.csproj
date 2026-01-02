@@ -1,0 +1,10 @@
+<Project Sdk="Redot.NET.Sdk/4.4.0">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BenVoxel\BenVoxel.csproj" />
+    <ProjectReference Include="..\..\src\Voxel2Pixel\Voxel2Pixel.csproj" />
+  </ItemGroup>
+</Project>
