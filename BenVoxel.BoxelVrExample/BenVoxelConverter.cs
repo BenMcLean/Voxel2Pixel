@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -62,7 +62,7 @@ public static class BenVoxelConverter
 	}
 	public static BoxelsData Convert(BenVoxelFile benVoxelFile, out SketchInfo sketchInfo)
 	{
-		Color[] palette = [.. (benVoxelFile.GetPalette() ?? throw new ArgumentException(message: "Couldn't get default palette.", paramName: nameof(benVoxelFile))).Take(256).Select(color => new Color(color.Rgba))];
+		Color[] palette = [.. (benVoxelFile.GetColors() ?? throw new ArgumentException(message: "Couldn't get default palette.", paramName: nameof(benVoxelFile))).Take(256).Select(color => new Color(color.Rgba))];
 		sketchInfo = new()
 		{
 			sketchName = benVoxelFile.GetProperty(modelName: null, propertyName: "BoxelVR.sketchName"),

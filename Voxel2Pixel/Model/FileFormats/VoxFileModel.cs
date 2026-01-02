@@ -1,8 +1,8 @@
-﻿using BenVoxel;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using BenVoxel;
 using Voxel2Pixel.Draw;
 
 namespace Voxel2Pixel.Model.FileFormats;

@@ -829,3 +829,8 @@ fabric.properties
 # Additional files built by Visual Studio
 
 # End of https://www.toptal.com/developers/gitignore/api/csharp,dotnetcore,visualstudio,visualstudiocode,jetbrains,rider,eclipse
+
+# Single Target Config
+solution-config.props
+# Publish Profiles
+!**/Properties/PublishProfiles/*.pubxml

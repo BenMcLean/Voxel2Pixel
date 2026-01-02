@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using Voxel2Pixel.Interfaces;
 using Voxel2Pixel.Model;

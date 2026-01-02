@@ -1,6 +1,6 @@
-﻿using BenVoxel;
 using System.Collections;
 using System.Collections.Generic;
+using BenVoxel;
 using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model;

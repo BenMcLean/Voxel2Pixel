@@ -1,7 +1,7 @@
-﻿using SixLabors.ImageSharp;
-using static Voxel2Pixel.Draw.PixelDraw;
 using System.Collections.ObjectModel;
+using SixLabors.ImageSharp;
 using Voxel2Pixel.Model;
+using static Voxel2Pixel.Draw.PixelDraw;
 
 namespace Voxel2Pixel.Test.TestData;
 

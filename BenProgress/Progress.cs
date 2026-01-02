@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace BenProgress;
 
@@ -12,7 +12,8 @@ public readonly record struct Progress([StringSyntax(StringSyntaxAttribute.Compo
 		[StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format = null,
 		params object[] args) : this(
 			String: format is null ? null : string.Format(format, args),
-			Double: @double) { }
+			Double: @double)
+	{ }
 	public static async Task UpdateAsync(
 		CancellationToken? cancellationToken = null,
 		IProgress<Progress> progress = null,

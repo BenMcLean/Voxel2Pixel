@@ -2,6 +2,7 @@
 	<PropertyGroup>
 		<TargetFramework>netstandard2.0</TargetFramework>
 		<LangVersion>13.0</LangVersion>
+		<ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="Cromulent.Encoding.Z85" Version="1.0.0" />
@@ -9,7 +10,7 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="System.Text.Json" Version="9.0.4" />
+		<PackageReference Include="System.Text.Json" Version="10.0.1" />
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\BenProgress\BenProgress.csproj" />

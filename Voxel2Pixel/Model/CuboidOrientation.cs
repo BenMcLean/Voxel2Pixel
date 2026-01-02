@@ -1,8 +1,5 @@
-﻿using BenVoxel;
 using System.Collections.ObjectModel;
-using System;
-using System.Linq;
-using System.IO;
+using BenVoxel;
 using Voxel2Pixel.Interfaces;
 
 namespace Voxel2Pixel.Model;

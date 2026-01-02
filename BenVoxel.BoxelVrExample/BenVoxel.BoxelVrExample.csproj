@@ -2,6 +2,7 @@
 	<PropertyGroup>
 		<TargetFramework>netstandard2.0</TargetFramework>
 		<LangVersion>13.0</LangVersion>
+		<ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="PolySharp" Version="1.15.0">

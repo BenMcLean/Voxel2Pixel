@@ -1,5 +1,5 @@
-﻿using BenVoxel;
 using System.Collections.Generic;
+using BenVoxel;
 
 namespace Voxel2Pixel.Model;
 

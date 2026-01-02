@@ -1,12 +1,12 @@
+using System.Text.Json;
 using BenVoxel;
 using SixLabors.ImageSharp;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Model.FileFormats;
 using Voxel2Pixel.Render;
-using static BenVoxel.SvoModel;
-using static BenVoxel.ExtensionMethods;
-using System.Text.Json;
 using Voxel2Pixel.Test.TestData;
+using static BenVoxel.ExtensionMethods;
+using static BenVoxel.SvoModel;
 
 namespace Voxel2Pixel.Test.Model.BenVoxelTest;
 

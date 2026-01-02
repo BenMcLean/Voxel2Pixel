@@ -1,8 +1,8 @@
-﻿using BenVoxel;
 using System.Linq;
 using System.Text.Json.Serialization;
 using System.Xml;
 using System.Xml.Serialization;
+using BenVoxel;
 
 namespace Voxel2Pixel.Render;
 

@@ -1,0 +1,62 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Voxel2Pixel.Uno (Desktop)" type="LaunchSettings" factoryName=".NET Launch Settings Profile">
+    <option name="LAUNCH_PROFILE_PROJECT_FILE_PATH" value="$PROJECT_DIR$/Voxel2Pixel.Uno/Voxel2Pixel.Uno.csproj" />
+    <option name="LAUNCH_PROFILE_TFM" value="net9.0-desktop" />
+    <option name="LAUNCH_PROFILE_NAME" value="Voxel2Pixel.Uno (Desktop)" />
+    <option name="USE_EXTERNAL_CONSOLE" value="0" />
+    <option name="USE_MONO" value="0" />
+    <option name="RUNTIME_ARGUMENTS" value="" />
+    <option name="GENERATE_APPLICATIONHOST_CONFIG" value="1" />
+    <option name="SHOW_IIS_EXPRESS_OUTPUT" value="0" />
+    <option name="SEND_DEBUG_REQUEST" value="1" />
+    <option name="ADDITIONAL_IIS_EXPRESS_ARGUMENTS" value="" />
+    <method v="2">
+      <option name="Build" />
+    </method>
+  </configuration>
+  <configuration default="false" name="Voxel2Pixel.Uno (WebAssembly IIS Express)" type="LaunchSettings" factoryName=".NET Launch Settings Profile">
+    <option name="LAUNCH_PROFILE_PROJECT_FILE_PATH" value="$PROJECT_DIR$/Voxel2Pixel.Uno/Voxel2Pixel.Uno.csproj" />
+    <option name="LAUNCH_PROFILE_TFM" value="net9.0-browserwasm" />
+    <option name="LAUNCH_PROFILE_NAME" value="Voxel2Pixel.Uno (WebAssembly IIS Express)" />
+    <option name="USE_EXTERNAL_CONSOLE" value="0" />
+    <option name="USE_MONO" value="0" />
+    <option name="RUNTIME_ARGUMENTS" value="" />
+    <option name="GENERATE_APPLICATIONHOST_CONFIG" value="1" />
+    <option name="SHOW_IIS_EXPRESS_OUTPUT" value="0" />
+    <option name="SEND_DEBUG_REQUEST" value="1" />
+    <option name="ADDITIONAL_IIS_EXPRESS_ARGUMENTS" value="" />
+    <method v="2">
+      <option name="Build" />
+    </method>
+  </configuration>
+  <configuration default="false" name="Voxel2Pixel.Uno (WebAssembly)" type="LaunchSettings" factoryName=".NET Launch Settings Profile">
+    <option name="LAUNCH_PROFILE_PROJECT_FILE_PATH" value="$PROJECT_DIR$/Voxel2Pixel.Uno/Voxel2Pixel.Uno.csproj" />
+    <option name="LAUNCH_PROFILE_TFM" value="net9.0-browserwasm" />
+    <option name="LAUNCH_PROFILE_NAME" value="Voxel2Pixel.Uno (WebAssembly)" />
+    <option name="USE_EXTERNAL_CONSOLE" value="0" />
+    <option name="USE_MONO" value="0" />
+    <option name="RUNTIME_ARGUMENTS" value="" />
+    <option name="GENERATE_APPLICATIONHOST_CONFIG" value="1" />
+    <option name="SHOW_IIS_EXPRESS_OUTPUT" value="0" />
+    <option name="SEND_DEBUG_REQUEST" value="1" />
+    <option name="ADDITIONAL_IIS_EXPRESS_ARGUMENTS" value="" />
+    <method v="2">
+      <option name="Build" />
+    </method>
+  </configuration>
+  <configuration default="false" name="Voxel2Pixel.Uno (WinAppSDK Unpackaged)" type="LaunchSettings" factoryName=".NET Launch Settings Profile">
+    <option name="LAUNCH_PROFILE_PROJECT_FILE_PATH" value="$PROJECT_DIR$/Voxel2Pixel.Uno/Voxel2Pixel.Uno.csproj" />
+    <option name="LAUNCH_PROFILE_TFM" value="net9.0-windows10.0.26100.0" />
+    <option name="LAUNCH_PROFILE_NAME" value="Voxel2Pixel.Uno (WinAppSDK Unpackaged)" />
+    <option name="USE_EXTERNAL_CONSOLE" value="0" />
+    <option name="USE_MONO" value="0" />
+    <option name="RUNTIME_ARGUMENTS" value="" />
+    <option name="GENERATE_APPLICATIONHOST_CONFIG" value="1" />
+    <option name="SHOW_IIS_EXPRESS_OUTPUT" value="0" />
+    <option name="SEND_DEBUG_REQUEST" value="1" />
+    <option name="ADDITIONAL_IIS_EXPRESS_ARGUMENTS" value="" />
+    <method v="2">
+      <option name="Build" />
+    </method>
+  </configuration>
+</component>

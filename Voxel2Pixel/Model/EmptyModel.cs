@@ -1,7 +1,7 @@
-﻿using BenVoxel;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using BenVoxel;
 
 namespace Voxel2Pixel.Model;
 

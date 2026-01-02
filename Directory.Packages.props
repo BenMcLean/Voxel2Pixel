@@ -1,0 +1,22 @@
+<Project ToolsVersion="15.0">
+  <!--
+To update the version of Uno, you should instead update the Sdk version in the global.json file.
+
+See https://aka.platform.uno/using-uno-sdk for more information.
+See https://aka.platform.uno/using-uno-sdk#implicit-packages for more information regarding the Implicit Packages.
+-->
+  <ItemGroup>
+    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+    <PackageVersion Include="FluentAssertions" Version="8.8.0" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.1" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+    <PackageVersion Include="NUnit" Version="4.4.0" />
+    <PackageVersion Include="NUnit3TestAdapter" Version="6.0.1" />
+    <PackageVersion Include="GitHubActionsTestLogger" Version="3.0.1" />
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageVersion Include="Refit.HttpClientFactory" Version="9.0.2" />
+    <PackageVersion Include="SixLabors.ImageSharp" Version="3.1.10" />
+    <PackageVersion Include="Uno.UITest.Helpers" Version="1.1.0-dev.70" />
+    <PackageVersion Include="Xamarin.UITest" Version="4.4.2" />
+  </ItemGroup>
+</Project>
