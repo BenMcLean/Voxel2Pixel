@@ -1367,7 +1367,7 @@ public static class PixelDraw
 	/// <param name="scaleX">horizontal scaling factor</param>
 	/// <param name="scaleY">vertical scaling factor</param>
 	/// <param name="width">width of texture or 0 to assume square texture</param>
-	/// <returns>new raw rgba8888 pixel data of newWidth = width * factorX</returns>
+	/// <returns>new raw rgba8888 pixel data of newWidth = width * scaleX</returns>
 	public static byte[] Upscale(this byte[] texture, byte scaleX = 1, byte scaleY = 1, ushort width = 0)
 	{
 		if (scaleX < 1 || scaleY < 1 || scaleX < 2 && scaleY < 2) return (byte[])texture.Clone();

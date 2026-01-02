@@ -219,7 +219,8 @@ public class BenVoxelFile() : IBinaryWritable
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		public string? Description { get; init; } = null;
 		#endregion Data
-		public static IEnumerable<Color> Colors(IEnumerable<uint> colors) => colors.Select(rgba => new Color { Rgba = rgba, });
+		public static IEnumerable<Color>? Colors(IEnumerable<uint>? colors) => colors?.Select(rgba => new Color { Rgba = rgba, });
+		public static IEnumerable<uint>? Colors(IEnumerable<Color>? colors) => colors?.Select(color => color.Rgba);
 	}
 	public class Model() : IBinaryWritable
 	{
@@ -369,11 +370,12 @@ public class BenVoxelFile() : IBinaryWritable
 			}
 		return this;
 	}
-	public Color[]? GetPalette(string modelName = "", string paletteName = "") =>
+	public Color[]? GetColors(string modelName = "", string paletteName = "") =>
 		Models.TryGetValue(modelName, out Model model)
 			&& (model.Metadata?.PalettesReadOnly?.TryGetValue(paletteName, out Color[] palette) ?? false) ? palette
 			: (Global?.PalettesReadOnly?.TryGetValue(paletteName, out palette) ?? false) ? palette
 			: null;
+	public uint[]? GetPalette(string modelName = "", string paletteName = "") => Color.Colors(GetColors(modelName, paletteName))?.ToArray();
 	public string? GetProperty(string modelName = "", string propertyName = "") =>
 		Models.TryGetValue(modelName, out Model model)
 			&& (model.Metadata?.PropertiesReadOnly?.TryGetValue(propertyName, out string property) ?? false) ? property
