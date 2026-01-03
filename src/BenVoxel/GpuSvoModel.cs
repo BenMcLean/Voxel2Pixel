@@ -4,13 +4,12 @@ using System.Collections.Generic;
 
 namespace BenVoxel;
 
-/// <summary>
-/// A flattened, shader-ready SVO data structure that implements IModel.
-/// Use GpuSvoData.FromModel(source) to create instances.
-/// </summary>
 public class GpuSvoModel : IModel
 {
-	#region static
+	#region Constants & Static
+	// Internal starts with 1. Leaves start with 0.
+	private const uint FLAG_INTERNAL = 0x80000000, // 1xxx...
+		FLAG_LEAF_TYPE = 0x40000000; // Bit 30: 0 = Uniform, 1 = Brick
 	private static readonly byte[] PopCount8;
 	static GpuSvoModel()
 	{
@@ -28,179 +27,210 @@ public class GpuSvoModel : IModel
 		}
 		return count;
 	}
-	#endregion static
-	#region instance data
-	// GPU Buffer 1: [ChildBaseIndex (24 bits) | ValidMask (8 bits)]
-	// Passed to GPU as R32_UINT
+	#endregion
+	#region Instance data
 	public uint[] Nodes { get; }
-	// GPU Buffer 2: Material indices for leaf nodes
-	// Passed to GPU as R8_UINT
-	public byte[] Payloads { get; }
-	// IModel Metadata
+	public ulong[] Payloads { get; }
 	public ushort SizeX { get; }
 	public ushort SizeY { get; }
 	public ushort SizeZ { get; }
-	#endregion instance data
+	public int MaxDepth { get; }
+	#endregion
+	#region GpuSvoModel
 	public GpuSvoModel(IModel model)
 	{
-		BuildNode root = new();
-		// 1. Build the temporary pointer-based tree
-		foreach (Voxel voxel in model)
-		{
-			if (voxel.Index == 0) continue;
-			InsertVoxel(
-				node: root,
-				x: voxel.X,
-				y: voxel.Y,
-				z: voxel.Z,
-				payload: voxel.Index);
-		}
-		// 2. Flatten into BFS layout
-		List<uint> finalNodes = [];
-		List<byte> finalPayloads = [];
-		// Queue: (Node, FlatIndex, Depth)
-		Queue<(BuildNode node, int flatIndex, int depth)> processingQueue = new();
-		// Initialize Root
-		finalNodes.Add(0);
-		processingQueue.Enqueue((root, 0, 0));
-		while (processingQueue.Count > 0)
-		{
-			(BuildNode currNode, int flatIndex, int depth) = processingQueue.Dequeue();
-			byte mask = 0;
-			int childCount = 0;
-			// A. Construct Mask
-			for (int i = 0; i < 8; i++)
-				if (currNode.Children[i] != null)
-				{
-					mask |= (byte)(1 << i);
-					childCount++;
-				}
-			// If empty internal node (shouldn't happen often with sparse build, but safe to handle)
-			if (childCount == 0 && depth < 16)
-			{
-				finalNodes[flatIndex] = 0;
-				continue;
-			}
-			// B. Determine where children go
-			uint childBaseIndex;
-			if (depth < 15)
-			{
-				// Children are internal nodes -> Index into finalNodes
-				childBaseIndex = (uint)finalNodes.Count;
-				// Reserve space
-				for (int i = 0; i < childCount; i++)
-					finalNodes.Add(0);
-				// Enqueue children
-				int currentOffset = 0;
-				for (int i = 0; i < 8; i++)
-					if (currNode.Children[i] != null)
-					{
-						processingQueue.Enqueue((currNode.Children[i], (int)(childBaseIndex + currentOffset), depth + 1));
-						currentOffset++;
-					}
-			}
-			else
-			{
-				// Children are payloads -> Index into finalPayloads
-				childBaseIndex = (uint)finalPayloads.Count;
-				for (int i = 0; i < 8; i++)
-				{
-					if (currNode.Children[i] != null)
-						finalPayloads.Add(currNode.Children[i].Payload);
-				}
-			}
-			// Safety check for the 24-bit pointer limit
-			if (childBaseIndex > 0xFFFFFF)
-				throw new InvalidOperationException("Model too complex: Node index exceeded 24 bits.");
-			// C. Pack data: [ChildBaseIndex (24 bits) | ValidMask (8 bits)]
-			finalNodes[flatIndex] = (childBaseIndex << 8) | mask;
-		}
-		Nodes = [.. finalNodes];
-		Payloads = [.. finalPayloads];
 		SizeX = model.SizeX;
 		SizeY = model.SizeY;
 		SizeZ = model.SizeZ;
-	}
-	private static void InsertVoxel(BuildNode node, ushort x, ushort y, ushort z, byte payload)
-	{
-		for (int depth = 0; depth < 16; depth++)
+		int maxDim = Math.Max(SizeX, Math.Max(SizeY, SizeZ)),
+			fullDepth = 0;
+		while ((1 << fullDepth) < maxDim) fullDepth++;
+		MaxDepth = Math.Max(1, fullDepth);
+		BuildNode root = new();
+		foreach (Voxel v in model)
 		{
-			int shift = 15 - depth,
-				bitX = (x >> shift) & 1,
-				bitY = (y >> shift) & 1,
-				bitZ = (z >> shift) & 1,
-				octant = (bitZ << 2) | (bitY << 1) | bitX;
-			if (node.Children[octant] == null)
-				node.Children[octant] = new BuildNode();
-			node = node.Children[octant];
+			if (v.Index == 0) continue;
+			InsertVoxel(root, v.X, v.Y, v.Z, v.Index, MaxDepth);
 		}
-		node.Payload = payload;
+		PruneTree(root);
+		List<uint> flatNodes = [];
+		List<ulong> flatPayloads = [];
+		Queue<(BuildNode node, int flatIdx)> queue = [];
+		flatNodes.Add(0);
+		queue.Enqueue((root, 0));
+		while (queue.Count > 0)
+		{
+			(BuildNode curr, int idx) = queue.Dequeue();
+			if (curr.IsLeaf)
+			{
+				ulong first = curr.Payload & 0xFF;
+				bool isUniform = true;
+				for (int i = 1; i < 8; i++)
+					if (((curr.Payload >> (i * 8)) & 0xFF) != first) { isUniform = false; break; }
+				if (isUniform)
+					// Schema: [ 0 | 0 (type) | ... | Material (8b) ]
+					flatNodes[idx] = (uint)first;
+				else
+				{
+					// Schema: [ 0 | 1 (type) | PayloadIdx (30b) ]
+					uint pIdx = (uint)flatPayloads.Count;
+					flatPayloads.Add(curr.Payload);
+					flatNodes[idx] = FLAG_LEAF_TYPE | pIdx;
+				}
+			}
+			else
+			{
+				byte mask = 0;
+				for (int i = 0; i < 8; i++)
+					if (curr.Children[i] != null) mask |= (byte)(1 << i);
+				if (mask == 0) { flatNodes[idx] = 0; continue; } // Entirely empty
+				uint childBase = (uint)flatNodes.Count;
+				int activeCount = PopCount8[mask];
+				for (int i = 0; i < activeCount; i++) flatNodes.Add(0);
+				int offset = 0;
+				for (int i = 0; i < 8; i++) // Morton Order
+					if (curr.Children[i] != null)
+					{
+						queue.Enqueue((curr.Children[i], (int)childBase + offset));
+						offset++;
+					}
+				// Schema: [ 1 | ChildBase (23b) | Mask (8b) ]
+				flatNodes[idx] = FLAG_INTERNAL | (childBase << 8) | mask;
+			}
+		}
+		Nodes = [.. flatNodes];
+		Payloads = [.. flatPayloads];
 	}
-	// Internal temporary structure
-	private class BuildNode
+	private static void InsertVoxel(BuildNode node, ushort x, ushort y, ushort z, byte mat, int maxDepth)
 	{
-		public BuildNode[] Children = new BuildNode[8]; // null if empty
-		public byte Payload = 0; // Only used at leaf level
+		for (int depth = 0; depth < maxDepth - 1; depth++)
+		{
+			int shift = maxDepth - 1 - depth,
+				oct = (((z >> shift) & 1) << 2) | (((y >> shift) & 1) << 1) | ((x >> shift) & 1);
+			node.Children[oct] ??= new BuildNode();
+			node = node.Children[oct];
+		}
+		int brickOct = ((z & 1) << 2) | ((y & 1) << 1) | (x & 1);
+		node.IsLeaf = true;
+		node.Payload |= (ulong)mat << (brickOct * 8);
 	}
-	#region IModel
+	private bool PruneTree(BuildNode node)
+	{
+		if (node.IsLeaf)
+		{
+			ulong first = node.Payload & 0xFF;
+			for (int i = 1; i < 8; i++)
+				if (((node.Payload >> (i * 8)) & 0xFF) != first) return false;
+			return true;
+		}
+		bool allChildrenHomo = true;
+		ulong? firstMat = null;
+		int count = 0;
+		for (int i = 0; i < 8; i++)
+		{
+			if (node.Children[i] != null)
+			{
+				count++;
+				bool childHomo = PruneTree(node.Children[i]);
+				if (!childHomo) { allChildrenHomo = false; break; }
+				ulong m = node.Children[i].Payload & 0xFF;
+				if (firstMat == null) firstMat = m;
+				else if (firstMat != m) { allChildrenHomo = false; break; }
+			}
+			else { allChildrenHomo = false; break; }
+		}
+		if (allChildrenHomo && count == 8)
+		{
+			node.IsLeaf = true;
+			ulong p = firstMat ?? 0;
+			node.Payload = p | (p << 8) | (p << 16) | (p << 24) | (p << 32) | (p << 40) | (p << 48) | (p << 56);
+			node.Children = new BuildNode[8];
+			return true;
+		}
+		return false;
+	}
+	private class BuildNode { public BuildNode[] Children = new BuildNode[8]; public bool IsLeaf; public ulong Payload; }
+	#endregion
+	#region IModel Implementation
 	public byte this[ushort x, ushort y, ushort z]
 	{
 		get
 		{
 			if (x >= SizeX || y >= SizeY || z >= SizeZ) return 0;
-			uint nodeIndex = 0;
-			for (int depth = 0; depth < 16; depth++)
+			uint nIdx = 0;
+			for (int depth = 0; depth < MaxDepth - 1; depth++)
 			{
-				uint nodeData = Nodes[nodeIndex];
-				byte mask = (byte)(nodeData & 0xFF);
-				int shift = 15 - depth,
-					octant = (((z >> shift) & 1) << 2) | (((y >> shift) & 1) << 1) | ((x >> shift) & 1);
-				if ((mask & (1 << octant)) == 0)
-					return 0;
-				int maskLower = (1 << octant) - 1,
-					childOffset = PopCount8[mask & maskLower];
-				uint childBaseIndex = nodeData >> 8,
-					nextIndex = childBaseIndex + (uint)childOffset;
-				if (depth == 15)
-					return Payloads[nextIndex];
-				nodeIndex = nextIndex;
+				uint data = Nodes[nIdx];
+				// Test bit 31 (Internal vs Leaf)
+				if ((data & FLAG_INTERNAL) == 0)
+					return GetLeafVoxel(data, x, y, z);
+				byte mask = (byte)(data & 0xFF);
+				int shift = MaxDepth - 1 - depth,
+					oct = (((z >> shift) & 1) << 2) | (((y >> shift) & 1) << 1) | ((x >> shift) & 1);
+				if ((mask & (1 << oct)) == 0) return 0;
+				uint childBase = (data & ~FLAG_INTERNAL) >> 8;
+				nIdx = childBase + PopCount8[mask & ((1 << oct) - 1)];
 			}
-			return 0;
+			return GetLeafVoxel(Nodes[nIdx], x, y, z);
 		}
+	}
+	private byte GetLeafVoxel(uint data, ushort x, ushort y, ushort z)
+	{
+		// Test bit 30 (Uniform vs Brick)
+		if ((data & FLAG_LEAF_TYPE) == 0)
+			return (byte)(data & 0xFF); // Uniform
+		int pIdx = (int)(data & ~FLAG_LEAF_TYPE),
+			oct = ((z & 1) << 2) | ((y & 1) << 1) | (x & 1);
+		return (byte)((Payloads[pIdx] >> (oct * 8)) & 0xFF);
 	}
 	public IEnumerator<Voxel> GetEnumerator()
 	{
-		Stack<(uint index, int depth, ushort x, ushort y, ushort z)> stack = new();
+		Stack<(uint idx, int depth, ushort x, ushort y, ushort z)> stack = new();
 		stack.Push((0, 0, 0, 0, 0));
 		while (stack.Count > 0)
 		{
-			(uint currIndex, int depth, ushort x, ushort y, ushort z) = stack.Pop();
-			uint nodeData = Nodes[currIndex];
-			byte mask = (byte)(nodeData & 0xFF);
-			uint childBaseIndex = nodeData >> 8;
-			for (int i = 0; i < 8; i++)
+			(uint cIdx, int depth, ushort x, ushort y, ushort z) = stack.Pop();
+			uint data = Nodes[cIdx];
+			if ((data & FLAG_INTERNAL) == 0)
 			{
-				if ((mask & (1 << i)) != 0)
+				int totalSize = 1 << (MaxDepth - depth),
+					unitSize = totalSize >> 1;
+				ulong p;
+				if ((data & FLAG_LEAF_TYPE) == 0)
 				{
-					int shift = 15 - depth;
-					ushort nextX = (ushort)(x | ((i & 1) << shift)),
-						nextY = (ushort)(y | (((i >> 1) & 1) << shift)),
-						nextZ = (ushort)(z | (((i >> 2) & 1) << shift));
-					int maskLower = (1 << i) - 1,
-						offset = PopCount8[mask & maskLower];
-					uint nextIndex = childBaseIndex + (uint)offset;
-					if (depth == 15)
-					{
-						byte payload = Payloads[nextIndex];
-						if (nextX < SizeX && nextY < SizeY && nextZ < SizeZ)
-							yield return new Voxel(nextX, nextY, nextZ, payload);
-					}
-					else
-						stack.Push((nextIndex, depth + 1, nextX, nextY, nextZ));
+					ulong n = data & 0xFF;
+					p = n | (n << 8) | (n << 16) | (n << 24) | (n << 32) | (n << 40) | (n << 48) | (n << 56);
 				}
+				else p = Payloads[data & ~FLAG_LEAF_TYPE];
+				for (int i = 0; i < 8; i++)
+				{
+					byte mat = (byte)((p >> (i * 8)) & 0xFF);
+					if (mat == 0)
+						continue;
+					ushort ox = (ushort)(x | ((i & 1) * unitSize)),
+						oy = (ushort)(y | (((i >> 1) & 1) * unitSize)),
+						oz = (ushort)(z | (((i >> 2) & 1) * unitSize));
+					for (int dz = 0; dz < unitSize; dz++) for (int dy = 0; dy < unitSize; dy++) for (int dx = 0; dx < unitSize; dx++)
+						{
+							ushort fx = (ushort)(ox + dx),
+								fy = (ushort)(oy + dy),
+								fz = (ushort)(oz + dz);
+							if (fx < SizeX && fy < SizeY && fz < SizeZ)
+								yield return new Voxel(fx, fy, fz, mat);
+						}
+				}
+				continue;
 			}
+			byte m = (byte)(data & 0xFF);
+			uint baseIdx = (data & ~FLAG_INTERNAL) >> 8;
+			int off = PopCount8[m] - 1;
+			for (int i = 7; i >= 0; i--) if ((m & (1 << i)) != 0)
+				{
+					int s = MaxDepth - 1 - depth;
+					stack.Push((baseIdx + (uint)off--, depth + 1, (ushort)(x | ((i & 1) << s)), (ushort)(y | (((i >> 1) & 1) << s)), (ushort)(z | (((i >> 2) & 1) << s))));
+				}
 		}
 	}
 	IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-	#endregion IModel
+	#endregion
 }
