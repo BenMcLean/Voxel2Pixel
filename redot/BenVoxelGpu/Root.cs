@@ -1,4 +1,5 @@
 using System;
+using System.Buffers.Binary;
 using BenVoxel;
 using Godot;
 using Voxel2Pixel.Model.FileFormats;
@@ -12,6 +13,7 @@ shader_type spatial;
 render_mode unshaded;
 
 uniform sampler2D svo_texture : filter_nearest;
+uniform sampler2D palette_texture : filter_nearest;
 uniform int texture_width;
 uniform vec3 ray_dir;
 uniform float scale;
@@ -150,7 +152,8 @@ void fragment() {
 				vec3 light_dir = normalize(vec3(0.5, 1.0, 0.7));
 				float diff = max(dot(normal, light_dir), 0.0);
 
-				vec3 base_color = vec3(float(mat) / 255.0);
+				// Look up color from palette (mat is the palette index)
+				vec3 base_color = texelFetch(palette_texture, ivec2(int(mat), 0), 0).rgb;
 				color = vec4(base_color * (diff + 0.2), 1.0);
 				break;
 			}
@@ -183,7 +186,9 @@ void fragment() {
 	public override void _Ready()
 	{
 		// Load model and create texture
-		GpuSvoModel gpuModel = new(new VoxFileModel(@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\Sora.vox"));
+		VoxFileModel vox = new(@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\Sora.vox");
+		GpuSvoModel gpuModel = new(vox);
+		uint[] palette = vox.Palette; // 256 RGBA8888 colors, ignore index 0, 0x00FF00FF is blue.
 		GpuSvoModelTexture modelTexture = new(gpuModel);
 		_modelSize = new Vector3I(modelTexture.SizeX, modelTexture.SizeY, modelTexture.SizeZ);
 		_maxDepth = modelTexture.MaxDepth;
@@ -191,12 +196,22 @@ void fragment() {
 		// Create ImageTexture from the model texture data
 		Image image = Image.CreateFromData(_textureWidth, _textureWidth, false, Image.Format.Rgba8, modelTexture.Data);
 		_svoTexture = ImageTexture.CreateFromImage(image);
+
+		// Create palette texture (256x1 RGBA8)
+		// Use the same pipeline as the rest of the codebase: WriteUInt32BigEndian
+		byte[] paletteBytes = new byte[256 * 4];
+		for (int i = 0; i < 256; i++)
+			BinaryPrimitives.WriteUInt32BigEndian(paletteBytes.AsSpan(i << 2, 4), palette[i]);
+		Image paletteImage = Image.CreateFromData(256, 1, false, Image.Format.Rgba8, paletteBytes);
+		ImageTexture paletteTexture = ImageTexture.CreateFromImage(paletteImage);
+
 		// Create shader material
 		_material = new ShaderMaterial
 		{
 			Shader = new Shader { Code = SpatialShader, },
 		};
 		_material.SetShaderParameter("svo_texture", _svoTexture);
+		_material.SetShaderParameter("palette_texture", paletteTexture);
 		_material.SetShaderParameter("texture_width", _textureWidth);
 		_material.SetShaderParameter("scale", 4f);
 		AddChild(_camera = new Camera3D
