@@ -15,6 +15,9 @@ render_mode unshaded;
 uniform sampler2D svo_texture : filter_nearest;
 uniform sampler2D palette_texture : filter_nearest;
 uniform int texture_width;
+uniform uint svo_nodes_count;
+uniform uvec3 svo_model_size;
+uniform uint svo_max_depth;
 uniform vec3 ray_dir;
 uniform float scale;
 uniform vec3 step_dir;
@@ -34,26 +37,13 @@ uint read_uint(int pixel_idx) {
 	return uint(pixel.r * 255.0) | (uint(pixel.g * 255.0) << 8u) | (uint(pixel.b * 255.0) << 16u) | (uint(pixel.a * 255.0) << 24u);
 }
 
-// Read header info
-uvec3 read_model_size() {
-	uint packed_xy = read_uint(2);
-	uint packed_zd = read_uint(3);
-	return uvec3(packed_xy & 0xFFFFu, packed_xy >> 16u, packed_zd & 0xFFFFu);
-}
-
-uint read_max_depth() {
-	uint packed_zd = read_uint(3);
-	return packed_zd >> 16u;
-}
-
 uint read_node(uint idx) {
-	return read_uint(int(4u + idx));
+	return read_uint(int(idx));
 }
 
 uint read_payload_byte(uint payload_idx, int octant) {
-	// Payloads start after header (4 pixels) and nodes array
-	uint nodes_count = read_uint(0);
-	int base_pixel = int(4u + nodes_count + payload_idx * 2u);
+	// Payloads start after nodes array
+	int base_pixel = int(svo_nodes_count + payload_idx * 2u);
 
 	// Each uint64 payload is stored as 2 uint32s (little-endian)
 	// octant 0-3 are in first uint32, 4-7 in second
@@ -64,11 +54,11 @@ uint read_payload_byte(uint payload_idx, int octant) {
 	return (pixel_data >> uint(byte_in_pixel * 8)) & 0xFFu;
 }
 
-uint sample_svo(uvec3 pos, uvec3 model_size, uint max_depth) {
-	if (any(greaterThanEqual(pos, model_size))) return 0u;
+uint sample_svo(uvec3 pos) {
+	if (any(greaterThanEqual(pos, svo_model_size))) return 0u;
 	uint node_idx = 0u;
 
-	for(int depth = 0; depth < int(max_depth) - 1; depth++) {
+	for(int depth = 0; depth < int(svo_max_depth) - 1; depth++) {
 		uint node_data = read_node(node_idx);
 
 		// Check if this is an internal node (bit 31)
@@ -87,7 +77,7 @@ uint sample_svo(uvec3 pos, uvec3 model_size, uint max_depth) {
 
 		// Internal node - traverse to child
 		uint mask = node_data & 0xFFu;
-		uint shift = uint(int(max_depth) - 1 - depth);
+		uint shift = uint(int(svo_max_depth) - 1 - depth);
 		uint octant = (((pos.z >> shift) & 1u) << 2u) | (((pos.y >> shift) & 1u) << 1u) | ((pos.x >> shift) & 1u);
 
 		if (((mask >> octant) & 1u) == 0u) return 0u;
@@ -117,15 +107,11 @@ void fragment() {
 	// 1. Calculate ray origin in "Camera Space"
 	vec2 p = (uv_screen - render_size * 0.5) / scale;
 
-	// Read model metadata from texture
-	uvec3 model_size = read_model_size();
-	uint max_depth = read_max_depth();
-
 	// Ray starts far away at +Z (orthographic camera)
 	vec3 ro_view = vec3(p.x, p.y, 500.0);
 
 	// 2. Transform ray origin to "Model Space"
-	vec3 ro = (rotation_matrix * vec4(ro_view, 1.0)).xyz + (vec3(model_size) * 0.5);
+	vec3 ro = (rotation_matrix * vec4(ro_view, 1.0)).xyz + (vec3(svo_model_size) * 0.5);
 
 	// Ray direction is pre-calculated and passed as uniform
 	vec3 rd = ray_dir;
@@ -140,8 +126,8 @@ void fragment() {
 	// Use a large enough step count to cross the bounding box from any angle
 	for (int i = 0; i < 1000; i++) {
 		// Only sample if we are inside the actual grid
-		if (all(greaterThanEqual(pos, vec3(0.0))) && all(lessThan(pos, vec3(model_size)))) {
-			uint mat = sample_svo(uvec3(pos), model_size, max_depth);
+		if (all(greaterThanEqual(pos, vec3(0.0))) && all(lessThan(pos, vec3(svo_model_size)))) {
+			uint mat = sample_svo(uvec3(pos));
 			if (mat > 0u) {
 				// --- DIRECTIONAL LIGHTING ---
 				vec3 normal = vec3(0.0);
@@ -168,7 +154,7 @@ void fragment() {
 		}
 
 		// Safety break if we leave the "danger zone" around the model
-		if (any(greaterThan(abs(pos - vec3(model_size)*0.5), vec3(600.0)))) break;
+		if (any(greaterThan(abs(pos - vec3(svo_model_size)*0.5), vec3(600.0)))) break;
 	}
 
 	ALBEDO = color.rgb;
@@ -218,7 +204,10 @@ void fragment() {
 		_material.SetShaderParameter("svo_texture", _svoTexture);
 		_material.SetShaderParameter("palette_texture", paletteTexture);
 		_material.SetShaderParameter("texture_width", _textureWidth);
-		_material.SetShaderParameter("scale", 4f);
+		_material.SetShaderParameter("svo_nodes_count", (uint)modelTexture.NodesCount);
+		_material.SetShaderParameter("svo_model_size", _modelSize);
+		_material.SetShaderParameter("svo_max_depth", (uint)_maxDepth);
+		_material.SetShaderParameter("scale", 16f);
 		AddChild(_camera = new Camera3D
 		{
 			Projection = Camera3D.ProjectionType.Orthogonal,
