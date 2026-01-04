@@ -18,12 +18,15 @@ uniform int texture_width;
 uniform uint svo_nodes_count;
 uniform uvec3 svo_model_size;
 uniform uint svo_max_depth;
+uniform int max_steps;
 uniform vec3 ray_dir;
 uniform float scale;
 uniform vec3 step_dir;
 uniform vec3 t_delta;
 uniform mat4 rotation_matrix;
 uniform vec3 light_dir;
+uniform float ray_start_distance;
+uniform float safety_distance;
 
 const uint FLAG_INTERNAL = 0x80000000u;
 const uint FLAG_LEAF_TYPE = 0x40000000u;
@@ -108,7 +111,7 @@ void fragment() {
 	vec2 p = (uv_screen - render_size * 0.5) / scale;
 
 	// Ray starts far away at +Z (orthographic camera)
-	vec3 ro_view = vec3(p.x, p.y, 500.0);
+	vec3 ro_view = vec3(p.x, p.y, ray_start_distance);
 
 	// 2. Transform ray origin to "Model Space"
 	vec3 ro = (rotation_matrix * vec4(ro_view, 1.0)).xyz + (vec3(svo_model_size) * 0.5);
@@ -124,7 +127,7 @@ void fragment() {
 	int last_axis = 0;
 
 	// Use a large enough step count to cross the bounding box from any angle
-	for (int i = 0; i < 1000; i++) {
+	for (int i = 0; i < max_steps; i++) {
 		// Only sample if we are inside the actual grid
 		if (all(greaterThanEqual(pos, vec3(0.0))) && all(lessThan(pos, vec3(svo_model_size)))) {
 			uint mat = sample_svo(uvec3(pos));
@@ -154,7 +157,7 @@ void fragment() {
 		}
 
 		// Safety break if we leave the "danger zone" around the model
-		if (any(greaterThan(abs(pos - vec3(svo_model_size)*0.5), vec3(600.0)))) break;
+		if (any(greaterThan(abs(pos - vec3(svo_model_size)*0.5), vec3(safety_distance)))) break;
 	}
 
 	ALBEDO = color.rgb;
@@ -174,6 +177,10 @@ void fragment() {
 	private int _maxDepth;
 	private int _textureWidth;
 	private float _rotationAngle = 0f;
+
+	// Configurable rendering parameters
+	private float _rayStartDistance = 500f;  // Distance camera starts from model
+	private float _safetyDistance = 600f;    // Maximum ray travel distance from model center
 	public override void _Ready()
 	{
 		// Load model and create texture
@@ -246,6 +253,10 @@ void fragment() {
 				Math.Abs(1f / rdModel.X),
 				Math.Abs(1f / rdModel.Y),
 				Math.Abs(1f / rdModel.Z));
+		// Calculate max steps based on configurable geometry parameters
+		// Maximum distance = ray start distance + safety break distance + model traversal
+		int modelDiagonal = _modelSize.X + _modelSize.Y + _modelSize.Z;
+		int maxSteps = (int)(_rayStartDistance + _safetyDistance) + modelDiagonal + 50; // Buffer for edge cases
 		// Light direction in view space (camera-relative), then transform to model space
 		Vector3 lightDirView = new(0.5f, -1.0f, 0.7f),
 			lightDirModel = (rotation * lightDirView).Normalized();
@@ -253,7 +264,10 @@ void fragment() {
 		_material.SetShaderParameter("ray_dir", rdModel);
 		_material.SetShaderParameter("step_dir", stepDir);
 		_material.SetShaderParameter("t_delta", tDelta);
+		_material.SetShaderParameter("max_steps", maxSteps);
 		_material.SetShaderParameter("rotation_matrix", rotationMatrix);
 		_material.SetShaderParameter("light_dir", lightDirModel);
+		_material.SetShaderParameter("ray_start_distance", _rayStartDistance);
+		_material.SetShaderParameter("safety_distance", _safetyDistance);
 	}
 }
