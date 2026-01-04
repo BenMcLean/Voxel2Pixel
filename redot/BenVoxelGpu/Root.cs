@@ -10,36 +10,73 @@ public partial class Root : Node3D
 {
 	public const string ComputeShader = """
 #version 450
-#extension GL_EXT_shader_explicit_arithmetic_types_int8 : require
+#extension GL_EXT_shader_explicit_arithmetic_types_int64 : require
 
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 layout(rgba8, set = 0, binding = 0) uniform image2D out_tex;
 layout(set = 1, binding = 0, std430) buffer Nodes { uint data[]; } nodes;
-layout(set = 1, binding = 1, std430) buffer Payloads { uint8_t data[]; } payloads;
+layout(set = 1, binding = 1, std430) buffer Payloads { uint64_t data[]; } payloads;
 
 layout(push_constant) uniform Constants {
 	uvec3 model_size;
+	uint max_depth;
+	vec3 ray_dir;
 	float scale;
+	vec3 step_dir;
+	float _pad1;
+	vec3 t_delta;
+	float _pad2;
 	mat4 rotation;
 } params;
+
+const uint FLAG_INTERNAL = 0x80000000u;
+const uint FLAG_LEAF_TYPE = 0x40000000u;
 
 uint sample_svo(uvec3 pos) {
 	if (any(greaterThanEqual(pos, params.model_size))) return 0u;
 	uint node_idx = 0;
-	for(int depth = 0; depth < 16; depth++) {
+
+	for(int depth = 0; depth < int(params.max_depth) - 1; depth++) {
 		uint node_data = nodes.data[node_idx];
+
+		// Check if this is an internal node (bit 31)
+		if ((node_data & FLAG_INTERNAL) == 0u) {
+			// Leaf node - check type (bit 30)
+			if ((node_data & FLAG_LEAF_TYPE) == 0u) {
+				// Uniform leaf - material is in lower 8 bits
+				return node_data & 0xFFu;
+			} else {
+				// Brick leaf - get payload index and extract voxel
+				uint payload_idx = node_data & ~FLAG_LEAF_TYPE;
+				int octant = ((int(pos.z) & 1) << 2) | ((int(pos.y) & 1) << 1) | (int(pos.x) & 1);
+				uint64_t payload = payloads.data[payload_idx];
+				return uint((payload >> (octant * 8)) & 0xFFul);
+			}
+		}
+
+		// Internal node - traverse to child
 		uint mask = node_data & 0xFFu;
-		int shift = 15 - depth;
+		int shift = int(params.max_depth) - 1 - depth;
 		uint octant = (((pos.z >> shift) & 1u) << 2) | (((pos.y >> shift) & 1u) << 1) | ((pos.x >> shift) & 1u);
+
 		if (((mask >> octant) & 1u) == 0u) return 0u;
-		uint child_base = node_data >> 8;
+
+		uint child_base = (node_data & ~FLAG_INTERNAL) >> 8;
 		uint offset = uint(bitCount(mask & ((1u << octant) - 1u)));
-		uint next_idx = child_base + offset;
-		if (depth == 15) return uint(payloads.data[next_idx]);
-		node_idx = next_idx;
+		node_idx = child_base + offset;
 	}
-	return 0u;
+
+	// Final level - must be a leaf
+	uint node_data = nodes.data[node_idx];
+	if ((node_data & FLAG_LEAF_TYPE) == 0u) {
+		return node_data & 0xFFu;
+	} else {
+		uint payload_idx = node_data & ~FLAG_LEAF_TYPE;
+		int octant = ((int(pos.z) & 1) << 2) | ((int(pos.y) & 1) << 1) | (int(pos.x) & 1);
+		uint64_t payload = payloads.data[payload_idx];
+		return uint((payload >> (octant * 8)) & 0xFFul);
+	}
 }
 
 void main() {
@@ -47,27 +84,26 @@ void main() {
 	ivec2 tex_size = imageSize(out_tex);
 	if (uv.x >= tex_size.x || uv.y >= tex_size.y) return;
 
-	// 1. Calculate ray in "Camera Space"
+	// 1. Calculate ray origin in "Camera Space"
 	// We center the pixels and apply scale
 	vec2 p = (vec2(uv) - vec2(tex_size) * 0.5) / params.scale;
 
-	// Ray starts far away at +Z and looks towards -Z
+	// Ray starts far away at +Z (orthographic camera)
 	vec3 ro_view = vec3(p.x, p.y, 500.0);
-	vec3 rd_view = vec3(0.0, 0.0, -1.0);
 
-	// 2. Transform Ray to "Model Space"
+	// 2. Transform ray origin to "Model Space"
 	// We use the rotation matrix to turn the camera around the model
 	// We add half the model size to keep the rotation centered on the model's middle
 	vec3 ro = (params.rotation * vec4(ro_view, 1.0)).xyz + (vec3(params.model_size) * 0.5);
-	vec3 rd = normalize((params.rotation * vec4(rd_view, 0.0)).xyz);
+
+	// Ray direction, step_dir, and t_delta are pre-calculated and passed as uniforms!
+	vec3 rd = params.ray_dir;
 
 	vec4 color = vec4(0.03, 0.03, 0.05, 1.0); // Dark background
 
-	// 3. DDA Traversal
+	// 3. DDA Traversal with pre-calculated constants
 	vec3 pos = floor(ro);
-	vec3 step_dir = sign(rd);
-	vec3 t_delta = abs(1.0 / rd);
-	vec3 t_max = (floor(ro) + max(step_dir, 0.0) - ro) / rd;
+	vec3 t_max = (floor(ro) + max(params.step_dir, 0.0) - ro) / rd;
 	int last_axis = 0;
 
 	// Use a large enough step count to cross the bounding box from any angle
@@ -78,9 +114,9 @@ void main() {
 			if (mat > 0u) {
 				// --- DIRECTIONAL LIGHTING ---
 				vec3 normal = vec3(0.0);
-				if (last_axis == 0) normal.x = -step_dir.x;
-				else if (last_axis == 1) normal.y = -step_dir.y;
-				else if (last_axis == 2) normal.z = -step_dir.z;
+				if (last_axis == 0) normal.x = -params.step_dir.x;
+				else if (last_axis == 1) normal.y = -params.step_dir.y;
+				else if (last_axis == 2) normal.z = -params.step_dir.z;
 
 				// Light from top-right-front
 				vec3 light_dir = normalize(vec3(0.5, 1.0, 0.7));
@@ -92,13 +128,13 @@ void main() {
 			}
 		}
 
-		// Advance DDA
+		// Advance DDA using pre-calculated t_delta
 		if (t_max.x < t_max.y) {
-			if (t_max.x < t_max.z) { t_max.x += t_delta.x; pos.x += step_dir.x; last_axis = 0; }
-			else { t_max.z += t_delta.z; pos.z += step_dir.z; last_axis = 2; }
+			if (t_max.x < t_max.z) { t_max.x += params.t_delta.x; pos.x += params.step_dir.x; last_axis = 0; }
+			else { t_max.z += params.t_delta.z; pos.z += params.step_dir.z; last_axis = 2; }
 		} else {
-			if (t_max.y < t_max.z) { t_max.y += t_delta.y; pos.y += step_dir.y; last_axis = 1; }
-			else { t_max.z += t_delta.z; pos.z += step_dir.z; last_axis = 2; }
+			if (t_max.y < t_max.z) { t_max.y += params.t_delta.y; pos.y += params.step_dir.y; last_axis = 1; }
+			else { t_max.z += params.t_delta.z; pos.z += params.step_dir.z; last_axis = 2; }
 		}
 
 		// Safety break if we leave the "danger zone" around the model
@@ -119,6 +155,7 @@ void main() {
 		_payloadsBuffer,
 		_dataUniformSet;
 	private Vector3I _modelSize;
+	private int _maxDepth;
 	private float _rotationAngle = 0f;
 
 	public override void _Ready()
@@ -126,6 +163,7 @@ void main() {
 		// Load model and store size metadata
 		GpuSvoModel model = new(new VoxFileModel(@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\Sora.vox"));
 		_modelSize = new Vector3I(model.SizeX, model.SizeY, model.SizeZ);
+		_maxDepth = model.MaxDepth;
 
 		_rd = RenderingServer.GetRenderingDevice();
 
@@ -133,7 +171,7 @@ void main() {
 
 		// Create buffers using the model data
 		_nodesBuffer = _rd.StorageBufferCreate((uint)(model.Nodes.Length * 4), model.Nodes.ToByteArray());
-		_payloadsBuffer = _rd.StorageBufferCreate((uint)model.Payloads.Length, model.Payloads);
+		_payloadsBuffer = _rd.StorageBufferCreate((uint)(model.Payloads.Length * 8), model.Payloads.ToByteArray());
 
 		// Compile and check for errors
 		RDShaderSource shaderSource = new RDShaderSource { Language = RenderingDevice.ShaderLanguage.Glsl, SourceCompute = ComputeShader };
@@ -171,12 +209,18 @@ void main() {
 		});
 	}
 
-	[StructLayout(LayoutKind.Explicit, Size = 80)] // 12 (uvec3) + 4 (float) + 64 (mat4)
+	[StructLayout(LayoutKind.Explicit, Size = 128)]
 	public struct ShaderConstants
 	{
 		[FieldOffset(0)] public Vector3I ModelSize;
-		[FieldOffset(12)] public float Scale;
-		[FieldOffset(16)] public System.Numerics.Matrix4x4 Rotation;
+		[FieldOffset(12)] public uint MaxDepth;
+		[FieldOffset(16)] public Vector3 RayDir;
+		[FieldOffset(28)] public float Scale;
+		[FieldOffset(32)] public Vector3 StepDir;
+		[FieldOffset(44)] public float _pad1;
+		[FieldOffset(48)] public Vector3 TDelta;
+		[FieldOffset(60)] public float _pad2;
+		[FieldOffset(64)] public System.Numerics.Matrix4x4 Rotation;
 	}
 
 	public override void _Process(double delta)
@@ -194,17 +238,46 @@ void main() {
 		System.Numerics.Matrix4x4 rotation =
 			System.Numerics.Matrix4x4.CreateRotationY(_rotationAngle) * System.Numerics.Matrix4x4.CreateRotationX(Mathf.DegToRad(30));
 
+		// Transpose once for GLSL column-major format
+		System.Numerics.Matrix4x4 rotationTransposed = System.Numerics.Matrix4x4.Transpose(rotation);
+
+		// Pre-calculate DDA constants for orthographic camera
+		// Ray direction in view space is always (0, 0, -1) for orthographic
+		System.Numerics.Vector3 rdView = new(0, 0, -1);
+		// Transform using the transposed matrix to match what the shader does
+		System.Numerics.Vector4 rdView4 = new(rdView.X, rdView.Y, rdView.Z, 0);
+		System.Numerics.Vector4 rdModel4 = System.Numerics.Vector4.Transform(rdView4, rotationTransposed);
+		System.Numerics.Vector3 rdModel = new(rdModel4.X, rdModel4.Y, rdModel4.Z);
+		rdModel = System.Numerics.Vector3.Normalize(rdModel);
+
+		// Calculate step_dir and t_delta once for all rays
+		System.Numerics.Vector3 stepDir = new(
+			Math.Sign(rdModel.X),
+			Math.Sign(rdModel.Y),
+			Math.Sign(rdModel.Z)
+		);
+
+		System.Numerics.Vector3 tDelta = new(
+			Math.Abs(1.0f / rdModel.X),
+			Math.Abs(1.0f / rdModel.Y),
+			Math.Abs(1.0f / rdModel.Z)
+		);
+
 		ShaderConstants constants = new()
 		{
 			ModelSize = _modelSize,
+			MaxDepth = (uint)_maxDepth,
+			RayDir = new Vector3(rdModel.X, rdModel.Y, rdModel.Z),
 			Scale = 4f,
-			Rotation = System.Numerics.Matrix4x4.Transpose(rotation), // Transpose for GLSL column-major
+			StepDir = new Vector3(stepDir.X, stepDir.Y, stepDir.Z),
+			TDelta = new Vector3(tDelta.X, tDelta.Y, tDelta.Z),
+			Rotation = rotationTransposed,
 		};
 
 		byte[] pushData = MemoryMarshal.AsBytes(MemoryMarshal.CreateSpan(ref constants, 1)).ToArray();
-		_rd.ComputeListSetPushConstant(list, pushData, (uint)pushData.Length); //
+		_rd.ComputeListSetPushConstant(list, pushData, (uint)pushData.Length);
 
-		_rd.ComputeListDispatch(list, 512 / 8, 512 / 8, 1); //
+		_rd.ComputeListDispatch(list, 512 / 8, 512 / 8, 1);
 		_rd.ComputeListEnd();
 	}
 
