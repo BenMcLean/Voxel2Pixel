@@ -233,8 +233,16 @@ void fragment() {
 	{
 		// Accumulate rotation over time
 		_rotationAngle += (float)delta;
-		// Create a spinning rotation matrix
-		Basis rotation = Basis.FromEuler(new Vector3(Mathf.DegToRad(30), _rotationAngle, 0));
+		// Convert from Y-up (Godot view) to Z-up (MagicaVoxel model)
+		Basis viewToModel = Basis.FromEuler(new Vector3(Mathf.DegToRad(90), 0, 0)),
+			// Flip to correct Z+ orientation
+			zFlip = Basis.FromEuler(new Vector3(Mathf.DegToRad(180), 0, 0)),
+			// Spin around model's Z axis (up in MagicaVoxel coordinates)
+			modelSpin = Basis.FromEuler(new Vector3(0, 0, _rotationAngle)),
+			// Tilt camera view for better perspective (in model space)
+			viewTilt = Basis.FromEuler(new Vector3(Mathf.DegToRad(30), 0, 0)),
+			// Combine: convert to model space, flip Z, tilt, then spin (applied right to left)
+			rotation = modelSpin * viewTilt * zFlip * viewToModel;
 		Projection rotationMatrix = new(new Transform3D(rotation, Vector3.Zero));
 		// Pre-calculate DDA constants for orthographic camera
 		Vector3 rdView = new(0f, 0f, -1f),
