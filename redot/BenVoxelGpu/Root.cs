@@ -101,6 +101,49 @@ uint sample_svo(uvec3 pos) {
 	}
 }
 
+// Query octree at a specific depth, returns node data and index
+// Returns: node_data in .x, node_idx in .y, 0 if out of bounds or empty child
+uvec2 query_svo_at_depth(uvec3 pos, int target_depth) {
+	if (any(greaterThanEqual(pos, svo_model_size))) return uvec2(0u);
+
+	uint node_idx = 0u;
+	uint cell_size = 1u << uint(int(svo_max_depth) - 1);
+
+	for(int depth = 0; depth <= target_depth && depth < int(svo_max_depth) - 1; depth++) {
+		uint node_data = read_node(node_idx);
+
+		if (depth == target_depth) {
+			return uvec2(node_data, node_idx);
+		}
+
+		// Check if this is an internal node
+		if ((node_data & FLAG_INTERNAL) == 0u) {
+			// Hit a leaf before reaching target depth
+			return uvec2(node_data, node_idx);
+		}
+
+		// Internal node - traverse to child
+		uint mask = node_data & 0xFFu;
+		uint shift = uint(int(svo_max_depth) - 1 - depth);
+		uint octant = (((pos.z >> shift) & 1u) << 2u) | (((pos.y >> shift) & 1u) << 1u) | ((pos.x >> shift) & 1u);
+
+		// Check if child exists
+		if (((mask >> octant) & 1u) == 0u) {
+			// Empty child - return special marker
+			return uvec2(0u);
+		}
+
+		uint child_base = (node_data & ~FLAG_INTERNAL) >> 8u;
+		uint offset = uint(bitCount(mask & ((1u << octant) - 1u)));
+		node_idx = child_base + offset;
+		cell_size >>= 1u;
+	}
+
+	// If we reach here, we're at max depth
+	uint node_data = read_node(node_idx);
+	return uvec2(node_data, node_idx);
+}
+
 void fragment() {
 	// Use mesh UV coordinates (0-1 range)
 	// Convert to centered pixel coordinates (-256 to 256 for a 512x512 equivalent)
@@ -121,43 +164,88 @@ void fragment() {
 
 	vec4 color = vec4(0.03, 0.03, 0.05, 1.0); // Dark background
 
-	// 3. DDA Traversal with pre-calculated constants
+	// 3. Hierarchical DDA Traversal
+	// Strategy: Use coarse steps through empty space, switch to voxel-level DDA near geometry
+	int hierarchy_depth = max(0, int(svo_max_depth) - 6); // Hierarchical test depth
+	int max_depth = int(svo_max_depth) - 1;
+
 	vec3 pos = floor(ro);
 	vec3 t_max = (floor(ro) + max(step_dir, 0.0) - ro) / rd;
 	int last_axis = 0;
 
-	// Use a large enough step count to cross the bounding box from any angle
 	for (int i = 0; i < max_steps; i++) {
-		// Only sample if we are inside the actual grid
-		if (all(greaterThanEqual(pos, vec3(0.0))) && all(lessThan(pos, vec3(svo_model_size)))) {
-			uint mat = sample_svo(uvec3(pos));
-			if (mat > 0u) {
-				// --- DIRECTIONAL LIGHTING ---
-				vec3 normal = vec3(0.0);
-				if (last_axis == 0) normal.x = -step_dir.x;
-				else if (last_axis == 1) normal.y = -step_dir.y;
-				else if (last_axis == 2) normal.z = -step_dir.z;
+		// Check bounds
+		if (any(lessThan(pos, vec3(0.0))) || any(greaterThanEqual(pos, vec3(svo_model_size)))) {
+			// Outside grid - advance to next voxel
+			if (any(greaterThan(abs(pos - vec3(svo_model_size)*0.5), vec3(safety_distance)))) break;
 
-				float diff = max(dot(normal, light_dir), 0.0);
+			// Standard DDA step
+			if (t_max.x < t_max.y) {
+				if (t_max.x < t_max.z) { t_max.x += t_delta.x; pos.x += step_dir.x; last_axis = 0; }
+				else { t_max.z += t_delta.z; pos.z += step_dir.z; last_axis = 2; }
+			} else {
+				if (t_max.y < t_max.z) { t_max.y += t_delta.y; pos.y += step_dir.y; last_axis = 1; }
+				else { t_max.z += t_delta.z; pos.z += step_dir.z; last_axis = 2; }
+			}
+			continue;
+		}
 
-				// Look up color from palette (mat is the palette index)
-				vec3 base_color = texelFetch(palette_texture, ivec2(int(mat), 0), 0).rgb;
-				color = vec4(base_color * (diff + 0.2), 1.0);
-				break;
+		// Sample at voxel level for exact geometry
+		uint mat = sample_svo(uvec3(pos));
+
+		if (mat > 0u) {
+			// Hit solid voxel - render it
+			vec3 normal = vec3(0.0);
+			if (last_axis == 0) normal.x = -step_dir.x;
+			else if (last_axis == 1) normal.y = -step_dir.y;
+			else if (last_axis == 2) normal.z = -step_dir.z;
+
+			float diff = max(dot(normal, light_dir), 0.0);
+			vec3 base_color = texelFetch(palette_texture, ivec2(int(mat), 0), 0).rgb;
+			color = vec4(base_color * (diff + 0.2), 1.0);
+			break;
+		}
+
+		// Empty voxel - check if we can skip ahead using hierarchy
+		// Align to coarse grid
+		uint cell_shift = uint(max_depth - hierarchy_depth);
+		uint cell_size = 1u << cell_shift;
+		float cell_size_f = float(cell_size);
+		vec3 grid_pos = floor(pos / cell_size_f) * cell_size_f;
+
+		// Query at coarse level
+		uvec2 node_info = query_svo_at_depth(uvec3(grid_pos), hierarchy_depth);
+		uint node_data = node_info.x;
+
+		if (node_data == 0u && cell_size > 1u) {
+			// Entire coarse cell is empty - skip across it
+			vec3 cell_min = grid_pos;
+			vec3 cell_max = grid_pos + vec3(cell_size_f);
+
+			// Calculate t values for cell boundaries
+			vec3 t_near = (cell_min - pos) / rd;
+			vec3 t_far = (cell_max - pos) / rd;
+
+			// Get the exit point (maximum of entry t values)
+			vec3 t_exit = max(t_near, t_far);
+			float t_exit_min = min(min(t_exit.x, t_exit.y), t_exit.z);
+
+			// Skip to just past cell boundary
+			pos += rd * (t_exit_min + 0.01);
+
+			// Recalculate t_max for DDA at new position
+			vec3 pos_floor = floor(pos);
+			t_max = (pos_floor + max(step_dir, 0.0) - pos) / rd;
+		} else {
+			// Near geometry or small cell - do normal voxel DDA step
+			if (t_max.x < t_max.y) {
+				if (t_max.x < t_max.z) { t_max.x += t_delta.x; pos.x += step_dir.x; last_axis = 0; }
+				else { t_max.z += t_delta.z; pos.z += step_dir.z; last_axis = 2; }
+			} else {
+				if (t_max.y < t_max.z) { t_max.y += t_delta.y; pos.y += step_dir.y; last_axis = 1; }
+				else { t_max.z += t_delta.z; pos.z += step_dir.z; last_axis = 2; }
 			}
 		}
-
-		// Advance DDA using pre-calculated t_delta
-		if (t_max.x < t_max.y) {
-			if (t_max.x < t_max.z) { t_max.x += t_delta.x; pos.x += step_dir.x; last_axis = 0; }
-			else { t_max.z += t_delta.z; pos.z += step_dir.z; last_axis = 2; }
-		} else {
-			if (t_max.y < t_max.z) { t_max.y += t_delta.y; pos.y += step_dir.y; last_axis = 1; }
-			else { t_max.z += t_delta.z; pos.z += step_dir.z; last_axis = 2; }
-		}
-
-		// Safety break if we leave the "danger zone" around the model
-		if (any(greaterThan(abs(pos - vec3(svo_model_size)*0.5), vec3(safety_distance)))) break;
 	}
 
 	ALBEDO = color.rgb;
