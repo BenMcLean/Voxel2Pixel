@@ -34,7 +34,7 @@ public class GpuSvoModel : IModel
 	public ushort SizeX { get; }
 	public ushort SizeY { get; }
 	public ushort SizeZ { get; }
-	public int MaxDepth { get; }
+	public byte MaxDepth { get; }
 	#endregion
 	#region GpuSvoModel
 	public GpuSvoModel(IModel model)
@@ -42,10 +42,10 @@ public class GpuSvoModel : IModel
 		SizeX = model.SizeX;
 		SizeY = model.SizeY;
 		SizeZ = model.SizeZ;
-		int maxDim = Math.Max(SizeX, Math.Max(SizeY, SizeZ)),
+		ushort maxDim = Math.Max(SizeX, Math.Max(SizeY, SizeZ)),
 			fullDepth = 0;
 		while ((1 << fullDepth) < maxDim) fullDepth++;
-		MaxDepth = Math.Max(1, fullDepth);
+		MaxDepth = (byte)Math.Max(1, (int)fullDepth);
 		BuildNode root = new();
 		foreach (Voxel v in model)
 		{
@@ -210,14 +210,16 @@ public class GpuSvoModel : IModel
 					ushort ox = (ushort)(x | ((i & 1) * unitSize)),
 						oy = (ushort)(y | (((i >> 1) & 1) * unitSize)),
 						oz = (ushort)(z | (((i >> 2) & 1) * unitSize));
-					for (int dz = 0; dz < unitSize; dz++) for (int dy = 0; dy < unitSize; dy++) for (int dx = 0; dx < unitSize; dx++)
-						{
-							ushort fx = (ushort)(ox + dx),
-								fy = (ushort)(oy + dy),
-								fz = (ushort)(oz + dz);
-							if (fx < SizeX && fy < SizeY && fz < SizeZ)
-								yield return new Voxel(fx, fy, fz, mat);
-						}
+					for (int dz = 0; dz < unitSize; dz++)
+						for (int dy = 0; dy < unitSize; dy++)
+							for (int dx = 0; dx < unitSize; dx++)
+							{
+								ushort fx = (ushort)(ox + dx),
+									fy = (ushort)(oy + dy),
+									fz = (ushort)(oz + dz);
+								if (fx < SizeX && fy < SizeY && fz < SizeZ)
+									yield return new Voxel(fx, fy, fz, mat);
+							}
 				}
 				continue;
 			}
