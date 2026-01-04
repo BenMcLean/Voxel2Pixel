@@ -175,6 +175,12 @@ void fragment() {
 	ALBEDO = color.rgb;
 }
 """;
+	/// <summary>
+	/// Coordinate system transformation from Godot (Y-up, right-handed) to MagicaVoxel (Z-up, right-handed).
+	/// A -90° rotation around X converts: Godot +Y (up) → Model +Z (up), Godot +Z (forward) → Model +Y (forward).
+	/// This maintains Z+ as up in the model while displaying correctly in Godot's Y-up viewport.
+	/// </summary>
+	private static readonly Basis CoordTransform = Basis.FromEuler(new Vector3(Mathf.DegToRad(-90), 0, 0));
 	private Camera3D _camera;
 	private MeshInstance3D _screenQuad;
 	private ImageTexture _svoTexture;
@@ -233,16 +239,12 @@ void fragment() {
 	{
 		// Accumulate rotation over time
 		_rotationAngle += (float)delta;
-		// Convert from Y-up (Godot view) to Z-up (MagicaVoxel model)
-		Basis viewToModel = Basis.FromEuler(new Vector3(Mathf.DegToRad(90), 0, 0)),
-			// Flip to correct Z+ orientation
-			zFlip = Basis.FromEuler(new Vector3(Mathf.DegToRad(180), 0, 0)),
-			// Spin around model's Z axis (up in MagicaVoxel coordinates)
-			modelSpin = Basis.FromEuler(new Vector3(0, 0, _rotationAngle)),
+		// Spin around model's Z axis (up in MagicaVoxel coordinates)
+		Basis modelSpin = Basis.FromEuler(new Vector3(0, 0, _rotationAngle)),
 			// Tilt camera view for better perspective (in model space)
 			viewTilt = Basis.FromEuler(new Vector3(Mathf.DegToRad(30), 0, 0)),
-			// Combine: convert to model space, flip Z, tilt, then spin (applied right to left)
-			rotation = modelSpin * viewTilt * zFlip * viewToModel;
+			// Combine: convert to model space, tilt, then spin (applied right to left)
+			rotation = modelSpin * viewTilt * CoordTransform;
 		Projection rotationMatrix = new(new Transform3D(rotation, Vector3.Zero));
 		// Pre-calculate DDA constants for orthographic camera
 		Vector3 rdView = new(0f, 0f, -1f),
