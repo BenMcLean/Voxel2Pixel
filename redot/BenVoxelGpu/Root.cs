@@ -20,6 +20,7 @@ uniform float scale;
 uniform vec3 step_dir;
 uniform vec3 t_delta;
 uniform mat4 rotation_matrix;
+uniform vec3 light_dir;
 
 const uint FLAG_INTERNAL = 0x80000000u;
 const uint FLAG_LEAF_TYPE = 0x40000000u;
@@ -148,8 +149,6 @@ void fragment() {
 				else if (last_axis == 1) normal.y = -step_dir.y;
 				else if (last_axis == 2) normal.z = -step_dir.z;
 
-				// Light from top-right-front
-				vec3 light_dir = normalize(vec3(0.5, 1.0, 0.7));
 				float diff = max(dot(normal, light_dir), 0.0);
 
 				// Look up color from palette (mat is the palette index)
@@ -258,10 +257,14 @@ void fragment() {
 				Math.Abs(1f / rdModel.X),
 				Math.Abs(1f / rdModel.Y),
 				Math.Abs(1f / rdModel.Z));
+		// Light direction in view space (camera-relative), then transform to model space
+		Vector3 lightDirView = new(0.5f, -1.0f, 0.7f),
+			lightDirModel = (rotation * lightDirView).Normalized();
 		// Update shader parameters
 		_material.SetShaderParameter("ray_dir", rdModel);
 		_material.SetShaderParameter("step_dir", stepDir);
 		_material.SetShaderParameter("t_delta", tDelta);
 		_material.SetShaderParameter("rotation_matrix", rotationMatrix);
+		_material.SetShaderParameter("light_dir", lightDirModel);
 	}
 }
