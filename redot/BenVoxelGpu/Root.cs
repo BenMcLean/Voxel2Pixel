@@ -27,6 +27,7 @@ uniform mat4 rotation_matrix;
 uniform vec3 light_dir;
 uniform float ray_start_distance;
 uniform float safety_distance;
+uniform float target_resolution;
 
 const uint FLAG_INTERNAL = 0x80000000u;
 const uint FLAG_LEAF_TYPE = 0x40000000u;
@@ -145,13 +146,12 @@ uvec2 query_svo_at_depth(uvec3 pos, int target_depth) {
 }
 
 void fragment() {
-	// Use mesh UV coordinates (0-1 range)
-	// Convert to centered pixel coordinates (-256 to 256 for a 512x512 equivalent)
-	float render_size = 512.0;
-	vec2 uv_screen = UV * render_size;
+	// Since we're rendering to exact low-res viewport, use UVs directly
+	// Each fragment corresponds to exactly one low-res pixel
+	vec2 uv_screen = UV * target_resolution;
 
 	// 1. Calculate ray origin in "Camera Space"
-	vec2 p = (uv_screen - render_size * 0.5) / scale;
+	vec2 p = (uv_screen - target_resolution * 0.5) / scale;
 
 	// Ray starts far away at +Z (orthographic camera)
 	vec3 ro_view = vec3(p.x, p.y, ray_start_distance);
@@ -194,7 +194,7 @@ void fragment() {
 		uint mat = sample_svo(uvec3(pos));
 
 		if (mat > 0u) {
-			// Hit solid voxel - render it
+			// Hit solid voxel - render it with simple diffuse lighting
 			vec3 normal = vec3(0.0);
 			if (last_axis == 0) normal.x = -step_dir.x;
 			else if (last_axis == 1) normal.y = -step_dir.y;
@@ -259,16 +259,18 @@ void fragment() {
 	private static readonly Basis CoordTransform = Basis.FromEuler(new Vector3(Mathf.DegToRad(-90), 0, 0));
 	private Camera3D _camera;
 	private MeshInstance3D _screenQuad;
+	private SubViewport _lowResViewport;
 	private ImageTexture _svoTexture;
 	private ShaderMaterial _material;
 	private Vector3I _modelSize;
 	private int _maxDepth;
 	private int _textureWidth;
 	private float _rotationAngle = 0f;
-
 	// Configurable rendering parameters
 	private float _rayStartDistance = 500f;  // Distance camera starts from model
 	private float _safetyDistance = 600f;    // Maximum ray travel distance from model center
+	private int _targetResolution = 240;     // Render resolution for pixel-perfect look (try 160, 240, 320, etc.)
+	private float _pixelsPerVoxel = 4f;      // How many screen pixels per voxel (1=tiny, 2=small, 4=medium, 8=large, etc.)
 	public override void _Ready()
 	{
 		// Load model and create texture
@@ -282,7 +284,6 @@ void fragment() {
 		// Create ImageTexture from the model texture data
 		Image image = Image.CreateFromData(_textureWidth, _textureWidth, false, Image.Format.Rgba8, modelTexture.Data);
 		_svoTexture = ImageTexture.CreateFromImage(image);
-
 		// Create palette texture (256x1 RGBA8)
 		// Use the same pipeline as the rest of the codebase: WriteUInt32BigEndian
 		byte[] paletteBytes = new byte[256 * 4];
@@ -290,8 +291,7 @@ void fragment() {
 			BinaryPrimitives.WriteUInt32BigEndian(paletteBytes.AsSpan(i << 2, 4), palette[i]);
 		Image paletteImage = Image.CreateFromData(256, 1, false, Image.Format.Rgba8, paletteBytes);
 		ImageTexture paletteTexture = ImageTexture.CreateFromImage(paletteImage);
-
-		// Create shader material
+		// Create shader material for voxel rendering
 		_material = new ShaderMaterial
 		{
 			Shader = new Shader { Code = SpatialShader, },
@@ -302,30 +302,68 @@ void fragment() {
 		_material.SetShaderParameter("svo_nodes_count", (uint)modelTexture.NodesCount);
 		_material.SetShaderParameter("svo_model_size", _modelSize);
 		_material.SetShaderParameter("svo_max_depth", (uint)_maxDepth);
-		_material.SetShaderParameter("scale", 16f);
-		AddChild(_camera = new Camera3D
+		_material.SetShaderParameter("scale", _pixelsPerVoxel);
+		_material.SetShaderParameter("target_resolution", (float)_targetResolution);
+		// Create low-res SubViewport for pixel-perfect rendering
+		_lowResViewport = new SubViewport
+		{
+			Size = new Vector2I(_targetResolution, _targetResolution),
+			RenderTargetUpdateMode = SubViewport.UpdateMode.Always,
+			TransparentBg = false,
+		};
+		AddChild(_lowResViewport);
+		// Create camera inside the viewport
+		_camera = new Camera3D
 		{
 			Projection = Camera3D.ProjectionType.Orthogonal,
 			Size = 2f,
-			Position = new Vector3(0f, 0f, 1f),
-		});
-		_camera.LookAt(Vector3.Zero);
-
-		AddChild(_screenQuad = new MeshInstance3D
+			Position = new Vector3(0f, 0f, 1f), // Proper position
+			Rotation = Vector3.Zero, // Looking in -Z direction (default)
+			Current = true,
+		};
+		_lowResViewport.AddChild(_camera);
+		// Add WorldEnvironment to viewport
+		WorldEnvironment env = new()
+		{
+			Environment = new Godot.Environment()
+			{
+				BackgroundMode = Godot.Environment.BGMode.Color,
+				BackgroundColor = new Color(0.03f, 0.03f, 0.05f),
+			}
+		};
+		_lowResViewport.AddChild(env);
+		// Create screen quad inside viewport for voxel rendering
+		_screenQuad = new MeshInstance3D
 		{
 			Mesh = new QuadMesh { Size = new Vector2(2f, 2f) },
 			MaterialOverride = _material,
 			Position = Vector3.Zero,
-		});
+		};
+		_lowResViewport.AddChild(_screenQuad);
+		// Use 2D CanvasLayer to display the viewport - no 3D geometry issues!
+		CanvasLayer canvas = new();
+		AddChild(canvas);
+		TextureRect display = new()
+		{
+			Texture = _lowResViewport.GetTexture(),
+			ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+			StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered, // Maintain square aspect ratio
+			TextureFilter = CanvasItem.TextureFilterEnum.Nearest, // Pixel-perfect upscaling
+			AnchorLeft = 0,
+			AnchorTop = 0,
+			AnchorRight = 1,
+			AnchorBottom = 1,
+		};
+		canvas.AddChild(display);
+		// Initialize shader parameters before first render
+		UpdateShaderParameters();
 	}
-	public override void _Process(double delta)
+	private void UpdateShaderParameters()
 	{
-		// Accumulate rotation over time
-		_rotationAngle += (float)delta;
 		// Spin around model's Z axis (up in MagicaVoxel coordinates)
 		Basis modelSpin = Basis.FromEuler(new Vector3(0, 0, _rotationAngle)),
 			// Tilt camera view for better perspective (in model space)
-			viewTilt = Basis.FromEuler(new Vector3(Mathf.DegToRad(30), 0, 0)),
+			viewTilt = Basis.FromEuler(new Vector3(Mathf.DegToRad(45), 0, 0)),
 			// Combine: convert to model space, tilt, then spin (applied right to left)
 			rotation = modelSpin * viewTilt * CoordTransform;
 		Projection rotationMatrix = new(new Transform3D(rotation, Vector3.Zero));
@@ -345,8 +383,8 @@ void fragment() {
 		// Maximum distance = ray start distance + safety break distance + model traversal
 		int modelDiagonal = _modelSize.X + _modelSize.Y + _modelSize.Z;
 		int maxSteps = (int)(_rayStartDistance + _safetyDistance) + modelDiagonal + 50; // Buffer for edge cases
-		// Light direction in view space (camera-relative), then transform to model space
-		Vector3 lightDirView = new(0.5f, -1.0f, 0.7f),
+		// Light direction: front upper right
+		Vector3 lightDirView = new(1.0f, -1.0f, 1.0f), // Right(+X), Upper(-Y), Front(+Z)
 			lightDirModel = (rotation * lightDirView).Normalized();
 		// Update shader parameters
 		_material.SetShaderParameter("ray_dir", rdModel);
@@ -357,5 +395,41 @@ void fragment() {
 		_material.SetShaderParameter("light_dir", lightDirModel);
 		_material.SetShaderParameter("ray_start_distance", _rayStartDistance);
 		_material.SetShaderParameter("safety_distance", _safetyDistance);
+	}
+	public override void _Process(double delta)
+	{
+		// Allow experimenting with different settings at runtime
+		// Up/Down: Adjust render resolution
+		if (Input.IsActionJustPressed("ui_up"))
+		{
+			_targetResolution += 20;
+			_lowResViewport.Size = new Vector2I(_targetResolution, _targetResolution);
+			_material.SetShaderParameter("target_resolution", (float)_targetResolution);
+			GD.Print($"Resolution: {_targetResolution}, Pixels/Voxel: {_pixelsPerVoxel}");
+		}
+		if (Input.IsActionJustPressed("ui_down"))
+		{
+			_targetResolution = Math.Max(80, _targetResolution - 20);
+			_lowResViewport.Size = new Vector2I(_targetResolution, _targetResolution);
+			_material.SetShaderParameter("target_resolution", (float)_targetResolution);
+			GD.Print($"Resolution: {_targetResolution}, Pixels/Voxel: {_pixelsPerVoxel}");
+		}
+		// Left/Right: Adjust pixels per voxel (zoom)
+		if (Input.IsActionJustPressed("ui_right"))
+		{
+			_pixelsPerVoxel = Mathf.Min(16f, _pixelsPerVoxel + 1f);
+			_material.SetShaderParameter("scale", _pixelsPerVoxel);
+			GD.Print($"Resolution: {_targetResolution}, Pixels/Voxel: {_pixelsPerVoxel}");
+		}
+		if (Input.IsActionJustPressed("ui_left"))
+		{
+			_pixelsPerVoxel = Mathf.Max(1f, _pixelsPerVoxel - 1f);
+			_material.SetShaderParameter("scale", _pixelsPerVoxel);
+			GD.Print($"Resolution: {_targetResolution}, Pixels/Voxel: {_pixelsPerVoxel}");
+		}
+		// Accumulate rotation over time
+		_rotationAngle += (float)delta;
+		// Update all shader parameters
+		UpdateShaderParameters();
 	}
 }
