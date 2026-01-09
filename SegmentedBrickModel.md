@@ -263,6 +263,23 @@ Translates SegmentedBrickModel changes into Godot GPU resources for raymarching.
 - Segment textures: Incremental updates on brick edits, full upload on load
 - Segment directory: Full rebuild/upload on segment load/unload (<1 KB, cheap)
 
+### GPU Texture Persistence (Critical Constraint)
+
+**Architectural Requirement:** GPU textures must persist across multiple frames without re-upload.
+
+**Why This Matters:**
+- Re-uploading 8 segments × 256 KB × 72 fps = 147 MB/sec bandwidth (unacceptable)
+- Incremental updates (8 bytes per brick edit) only work if base texture persists
+- Directory changes are rare (segment load/unload), not per-frame
+
+**Godot 4 Implementation:**
+- Uses `RenderingServer.Texture3DCreate()` to create persistent GPU textures
+- Textures remain bound to shader uniforms across frames automatically
+- `RenderingServer.Texture3DUpdate()` for incremental region updates
+- Textures destroyed only on explicit `Free()` call or segment unload
+
+**Note:** This requires Godot 4's RenderingDevice/RenderingServer API. The older Godot 3 immediate-mode rendering API is incompatible with this architecture.
+
 ### Dependencies
 
 - References: SegmentedBrickModel (core), Godot.RenderingServer (engine API)
