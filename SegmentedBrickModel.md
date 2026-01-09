@@ -131,152 +131,164 @@ This ordering:
 * Independent X/Y/Z addressing simplifies raymarch math
 * Avoids Morton complexity
 
+## 3.7 Architectural Layers
+
+The system maintains strict separation between engine-agnostic core logic and engine-specific integration.
+
+### Core Layer (Engine Agnostic)
+
+**Responsibility:** Manage voxel data in system memory using sparse segments.
+
+**Key Component:** `SegmentedBrickModel`
+- Storage: `Dictionary<uint, ulong[]>` maps segment IDs to brick arrays
+- Interface: Implements `IBrickModel` for serialization compatibility
+- API: `GetBrick()`, `SetBrick()` for brick-level access
+- Lifecycle: `UnloadSegment()`, `LoadSegment()`, `SaveSegment()` for segment management
+- Events: Fires `OnBrickDirty`, `OnSegmentLoaded`, `OnSegmentUnloaded` for change notification
+
+**No Dependencies:** Core has zero knowledge of Godot, GPU, textures, or rendering.
+
+### Integration Layer (Engine Specific)
+
+**Responsibility:** Bridge CPU voxel data to GPU textures for rendering.
+
+**Key Component:** `GodotVoxelBridge` (or `UnityVoxelBridge`, etc.)
+- Storage: `Dictionary<uint, Texture3D>` maps segment IDs to GPU textures
+- Subscriptions: Listens to core events (`OnBrickDirty`, `OnSegmentLoaded`, `OnSegmentUnloaded`)
+- Upload Logic: Converts segment brick arrays to GPU texture formats
+- Directory Management: Rebuilds GPU segment directory when active segments change
+
+**Engine Dependencies:** This layer depends on Godot's RenderingServer (or Unity's Graphics API, etc.)
+
+### Communication Flow
+
+```
+Core (CPU)                          Bridge                       GPU
+─────────                          ────────                     ─────
+Dictionary<uint, ulong[]>    →    Events    →    Dictionary<uint, Texture3D>
+    ↓                                                             ↓
+SetBrick() modifies                                    Rebuild Directory
+    ↓                                                             ↓
+OnBrickDirty event         →    Update Texture    →    Upload Array<SegmentEntry>
+```
+
+**Key Insight:** Core uses `Dictionary` for O(1) voxel access. Bridge converts this to GPU-friendly formats:
+- Segment textures uploaded individually
+- Directory rebuilt as contiguous array for GPU linear search
+
 # 4. Data Structure Specification
 
-## 4.1 Core Architecture
+## 4.1 SegmentedBrickModel (Core Layer)
 
-The system uses **sparse segments with dense brick storage**:
+### Purpose
 
-- **World level:** Segments are allocated on-demand (sparse)
-- **Segment level:** Each segment stores a dense 64³ array of bricks
-- **No indirection:** Direct indexing from coordinates to brick data
+Provides engine-agnostic voxel storage and editing with the following characteristics:
+- Sparse segment allocation (only occupied regions consume memory)
+- Dense brick storage within segments (no brick-level indirection)
+- Deterministic coordinate-to-data mapping via bit-slicing
+- IBrickModel compatibility for serialization and interoperability
 
-### 4.1.1 Segment Storage
+### Storage Model
 
-```csharp
-// Primary storage: sparse segment map
-Dictionary<uint, ulong[]> segments;
+**Primary Storage:**
+- `Dictionary<uint, ulong[]>` mapping segment IDs to brick arrays
+- Each segment: 64³ bricks = 262,144 ulongs = 2 MB
+- Segment IDs: 27-bit packed coordinates (stored as uint for alignment)
 
-// Each segment contains:
-// - 64³ = 262,144 bricks
-// - Each brick = 1 ulong = 8 bytes
-// - Total per segment = 262,144 × 8 bytes = 2,097,152 bytes (2 MB)
+**Segment ID Format:**
+```
+Bits 0-8:   Segment Z coordinate (0-511)
+Bits 9-17:  Segment Y coordinate (0-511)
+Bits 18-26: Segment X coordinate (0-511)
+Bits 27-31: Unused
 ```
 
-**Segment ID Calculation:**
+### API Surface
 
-```csharp
-uint ComputeSegmentId(ushort sx, ushort sy, ushort sz)
-{
-	return ((uint)sx << 18) | ((uint)sy << 9) | (uint)sz;
-}
-```
+**Voxel Access:**
+- `GetBrick(x, y, z) → ulong`: Retrieve brick at world coordinates (snaps to brick origin)
+- `SetBrick(x, y, z, payload)`: Write brick, allocating segment on-demand if needed
 
-**Note:** Segment IDs use only 27 bits (9+9+9) but are stored in `uint` (32 bits) for alignment and efficiency.
+**Segment Lifecycle:**
+- `UnloadSegment(sx, sy, sz)`: Remove segment from memory
+- `LoadSegment(segmentId, filePath)`: Load segment from disk
+- `SaveSegment(segmentId, filePath)`: Persist segment to disk
 
-## 4.2 SegmentedBrickModel (The Orchestrator)
+**Change Notification:**
+- `event OnBrickDirty(uint segmentId, int brickIndex, ulong payload)`: Fired when brick modified
+- `event OnSegmentLoaded(uint segmentId)`: Fired when segment allocated or loaded
+- `event OnSegmentUnloaded(uint segmentId)`: Fired when segment removed
 
-> **Note on Naming:** The class is called `SegmentedBrickModel` because it implements **architectural segmentation with direct brick storage**, not generic data partitioning. Each "segment" is a precisely defined 64³ brick region (128³ voxels) that enables:
-> - **Sparse allocation**: Only active segments consume memory
-> - **Direct addressing**: World coordinates map to segment → brick via bit-slicing
-> - **Fast bulk I/O**: Bricks are stored as ulongs for efficient copying
->
-> This differs from arbitrary chunking schemes where divisions are primarily for spatial organization rather than memory management and API compatibility (`IBrickModel`).
+### Addressing Algorithm
 
-### Implementation
+**World Coordinate → Brick:**
+1. Snap coordinates to brick origin (clear bit 0)
+2. Extract segment coordinates (bits 7-15)
+3. Pack segment ID (27 bits)
+4. Lookup segment in dictionary (returns null if not allocated)
+5. Extract brick coordinates within segment (bits 1-6)
+6. Linearize brick index (X-major ordering)
+7. Index into segment's brick array
 
-```csharp
-public class SegmentedBrickModel : IBrickModel
-{
-	private Dictionary<uint, ulong[]> segments = new();
+### Design Constraints
 
-	public ulong GetBrick(ushort x, ushort y, ushort z)
-	{
-		// 1. Snap to brick origin
-		x = (ushort)(x & ~1);
-		y = (ushort)(y & ~1);
-		z = (ushort)(z & ~1);
+- **No allocation during edits:** After segment allocated, SetBrick performs no allocations
+- **No engine dependencies:** Zero references to rendering, GPU, or game engine APIs
+- **Deterministic behavior:** Same coordinates always map to same segment and brick index
 
-		// 2. Compute segment coordinates
-		ushort sx = (ushort)(x >> 7);
-		ushort sy = (ushort)(y >> 7);
-		ushort sz = (ushort)(z >> 7);
-		uint segmentId = ((uint)sx << 18) | ((uint)sy << 9) | (uint)sz;
+## 4.2 GodotVoxelBridge (Integration Layer)
 
-		// 3. Check if segment exists
-		if (!segments.TryGetValue(segmentId, out ulong[] bricks))
-			return 0UL;  // Empty segment
+### Purpose
 
-		// 4. Compute brick index within segment
-		int bx = (x >> 1) & 0x3F;
-		int by = (y >> 1) & 0x3F;
-		int bz = (z >> 1) & 0x3F;
-		int brickIndex = bx | (by << 6) | (bz << 12);
+Translates SegmentedBrickModel changes into Godot GPU resources for raymarching.
 
-		// 5. Return brick
-		return bricks[brickIndex];
-	}
+### Responsibilities
 
-	public void SetBrick(ushort x, ushort y, ushort z, ulong brickPayload)
-	{
-		// 1-2. Same as GetBrick
-		x = (ushort)(x & ~1);
-		y = (ushort)(y & ~1);
-		z = (ushort)(z & ~1);
+**Texture Management:**
+- Maintains `Dictionary<uint, Texture3D>` mapping segment IDs to GPU textures
+- Creates 256 KB texture per segment (64×64×32 RG8 format)
+- Releases textures when segments unload
 
-		ushort sx = (ushort)(x >> 7);
-		ushort sy = (ushort)(y >> 7);
-		ushort sz = (ushort)(z >> 7);
-		uint segmentId = ((uint)sx << 18) | ((uint)sy << 9) | (uint)sz;
+**Event Subscriptions:**
+- Subscribes to `OnBrickDirty` → updates texture region (8 bytes)
+- Subscribes to `OnSegmentLoaded` → uploads full segment texture (256 KB)
+- Subscribes to `OnSegmentUnloaded` → releases GPU texture
 
-		// 3. Get or create segment
-		if (!segments.TryGetValue(segmentId, out ulong[] bricks))
-		{
-			bricks = new ulong[64 * 64 * 64];  // 2 MB allocation
-			segments[segmentId] = bricks;
-		}
+**Directory Management:**
+- Converts `Dictionary<uint, Texture3D>` to `Array<SegmentEntry>` for GPU
+- Uploads directory whenever active segment set changes
+- Maps segment coordinates to texture indices for shader lookup
 
-		// 4-5. Same as GetBrick
-		int bx = (x >> 1) & 0x3F;
-		int by = (y >> 1) & 0x3F;
-		int bz = (z >> 1) & 0x3F;
-		int brickIndex = bx | (by << 6) | (bz << 12);
+**Upload Strategy:**
+- Segment textures: Incremental updates on brick edits, full upload on load
+- Segment directory: Full rebuild/upload on segment load/unload (<1 KB, cheap)
 
-		bricks[brickIndex] = brickPayload;
+### Dependencies
 
-		// 6. Notify GPU of change
-		OnBrickDirty?.Invoke(segmentId, brickIndex, brickPayload);
-	}
+- References: SegmentedBrickModel (core), Godot.RenderingServer (engine API)
+- No direct voxel manipulation (read-only access via events)
 
-	public event Action<uint, int, ulong> OnBrickDirty;
-}
-```
-
-## 4.3 Integration Layer (Engine Specific)
-
-### 4.3.1 GodotVoxelBridge (The Renderer)
-
-* **Purpose:** Listens to the Core and updates GPU textures.
-* **Dependencies:** Reference to SegmentedBrickModel and Godot's RenderingServer.
-* **Key Behavior:**
-  * **Initialization:** Creates GPU textures for active segments.
-  * **Event Handling:** Subscribes to `OnBrickDirty`.
-  * **Update:** Uploads modified bricks to appropriate GPU texture.
-
-## 4.4 Success Metrics
+## 4.3 Success Metrics
 
 The implementation is successful only if:
 
-1. **Fixed VRAM per segment:** Segments use consistent 2 MB each regardless of content.
-2. **No Lag:** SetBrick/GetBrick generate **zero garbage collection** pressure during edits.
-3. **Correctness:** A brick modification in C# reflects instantly on the GPU.
+1. **Separation maintained:** Core has zero engine dependencies
+2. **Memory efficiency:** CPU 2 MB per segment, GPU 256 KB per segment
+3. **No GC pressure:** SetBrick/GetBrick cause no allocations after segment creation
+4. **Immediate sync:** Brick modifications visible on GPU within same frame
 
-# 5. Segment Management
+# 5. Segment Management (Core Layer)
+
+This section describes segment lifecycle management in **SegmentedBrickModel** (engine-agnostic core).
 
 ## 5.1 Allocation Policy
 
-Segments are allocated **on-demand** when the first brick within them is written:
+**On-Demand Allocation:**
+- Segments allocated automatically on first `SetBrick()` call to that region
+- Allocation creates 2 MB `ulong[]` array initialized to zeros
+- Triggers `OnSegmentLoaded` event for bridge notification
 
-```csharp
-// In SetBrick implementation
-if (!segments.TryGetValue(segmentId, out ulong[] bricks))
-{
-	bricks = new ulong[64 * 64 * 64];  // 2 MB allocation
-	segments[segmentId] = bricks;
-}
-```
-
-**Key properties:**
+**Key Properties:**
 * Each segment is **self-contained** (no cross-segment dependencies)
 * Segments are **independent** (can be loaded/unloaded individually)
 * No brick-level cache management (entire segment loaded or not)
@@ -285,83 +297,45 @@ if (!segments.TryGetValue(segmentId, out ulong[] bricks))
 
 ### Policy: Explicit Region-Based Management
 
-The core does **not** autonomously unload segments.
+**Core Principle:** SegmentedBrickModel does **not** autonomously unload segments.
 
-Instead:
+**Explicit Deallocation:**
+- Application code calls `UnloadSegment(sx, sy, sz)` to remove segment
+- Removes entry from internal dictionary, allowing GC to reclaim memory
+- Triggers `OnSegmentUnloaded` event for bridge notification
 
-* The **editor tool** defines an *active region* (typically around the camera/cursor)
-* Segments outside this region are explicitly unloaded via:
+**Benefits:**
+* **Predictable** memory usage (no hidden eviction)
+* **Deterministic** behavior (no surprise stalls)
+* **Application control** over what stays resident
 
-```csharp
-public void UnloadSegment(ushort sx, ushort sy, ushort sz)
-{
-	uint segmentId = ((uint)sx << 18) | ((uint)sy << 9) | (uint)sz;
-	segments.Remove(segmentId);
+### Typical Application Pattern
 
-	// Notify GPU to release textures for this segment
-	OnSegmentUnloaded?.Invoke(segmentId);
-}
-```
+**Editor-driven management:**
+1. Application tracks camera/cursor position
+2. Determines "active region" (e.g., 256-512 voxel radius)
+3. Calls `UnloadSegment()` for segments outside active region
+4. Segments inside region auto-load on first `SetBrick()` call
 
-This approach ensures:
-* **Predictable** memory usage
-* **Deterministic** behavior (no hidden eviction heuristics)
-* **No surprise stalls** during editing
-* **No GC pressure** from automatic management
-
-### Typical Editor Workflow
-
-```csharp
-// Every frame or on camera move:
-void UpdateActiveRegion(Vector3 cameraPos)
-{
-	// 1. Determine segments within edit radius (e.g., 256-512 voxels)
-	HashSet<uint> desiredSegments = ComputeNearbySegments(cameraPos, editRadius);
-
-	// 2. Unload segments far from camera
-	foreach (var segId in segments.Keys.ToList())
-	{
-		if (!desiredSegments.Contains(segId))
-		{
-			// Unpack segment ID to coordinates
-			ushort sx = (ushort)(segId & 0x1FF);
-			ushort sy = (ushort)((segId >> 9) & 0x1FF);
-			ushort sz = (ushort)((segId >> 18) & 0x1FF);
-			UnloadSegment(sx, sy, sz);
-		}
-	}
-
-	// 3. Segments within radius are automatically loaded on first edit
-}
-```
+**This pattern typically lives in application/editor code, not in SegmentedBrickModel itself.**
 
 ## 5.3 Persistence and Serialization
 
-Segments remain in memory until explicitly unloaded. For persistence:
+**Segment Persistence:**
+- `SaveSegment(segmentId, filePath)`: Writes 2 MB raw brick array to disk
+- `LoadSegment(segmentId, filePath)`: Reads 2 MB from disk, allocates segment
+- Triggers `OnSegmentLoaded` event after load completes
 
-```csharp
-// Save to disk
-public void SaveSegment(uint segmentId, string filePath)
-{
-	if (segments.TryGetValue(segmentId, out ulong[] bricks))
-	{
-		// Write 2 MB segment to disk
-		File.WriteAllBytes(filePath,
-			MemoryMarshal.AsBytes(bricks.AsSpan()).ToArray());
-	}
-}
+**File Format:**
+- Raw binary dump of `ulong[]` array (no header, no compression)
+- 262,144 ulongs × 8 bytes = 2,097,152 bytes per file
+- Brick order: X-major linearization matching memory layout
+- Direct memory mapping possible for efficient I/O
 
-// Load from disk
-public void LoadSegment(uint segmentId, string filePath)
-{
-	byte[] data = File.ReadAllBytes(filePath);
-	ulong[] bricks = new ulong[64 * 64 * 64];
-	MemoryMarshal.Cast<byte, ulong>(data).CopyTo(bricks);
-	segments[segmentId] = bricks;
-
-	OnSegmentLoaded?.Invoke(segmentId);
-}
-```
+**Design Rationale:**
+- Simplicity over space efficiency (compression can be added externally)
+- Fast save/load for editor auto-save workflows
+- Memory-mappable format for future optimization
 
 ## 5.4 Why Not LRU or Automatic Eviction?
 
@@ -566,7 +540,7 @@ void RebuildAndUploadDirectory()
 
 ### The Challenge
 
-The CPU has a sparse `Dictionary<uint, ulong[]>` where only active segments exist. The GPU raymarcher needs to:
+The Core has a sparse `Dictionary<uint, ulong[]>` where only active segments exist. The GPU raymarcher needs to:
 1. Determine which segment a world coordinate belongs to
 2. Access that segment's brick data texture
 3. Fetch the specific brick and voxel
@@ -574,22 +548,29 @@ The CPU has a sparse `Dictionary<uint, ulong[]>` where only active segments exis
 
 ### Solution: Active Segment Directory
 
-Upload a small **directory** of active segments to the GPU, mapping each to its texture resource.
+The **Bridge** uploads a small directory of active segments to the GPU, mapping each to its texture resource.
 
-#### CPU-Side Structure
+#### Bridge Internal Structure
 
+**Purpose:** Convert Core's Dictionary to GPU-friendly array format.
+
+The bridge maintains:
+- `Dictionary<uint, Texture3D>` mapping segment IDs to textures
+- When active segments change, rebuilds array of `SegmentEntry` structures
+- Uploads this array to GPU as uniform buffer
+
+**SegmentEntry Format (sent to GPU):**
 ```csharp
-// Compact list of currently active segments
-struct ActiveSegment
+struct SegmentEntry
 {
-	public ushort segmentX;  // 0-511
+	public ushort segmentX;  // 0-511 (unpacked from segment ID)
 	public ushort segmentY;
 	public ushort segmentZ;
-	public int textureIndex;  // Index into texture array or texture ID
+	public uint textureIndex;  // Index into GPU texture array
 }
-
-List<ActiveSegment> activeSegments;  // Typically 8-64 segments
 ```
+
+**Note:** The bridge builds this array from the Core's Dictionary, not the Core itself.
 
 #### GPU-Side Structures
 
