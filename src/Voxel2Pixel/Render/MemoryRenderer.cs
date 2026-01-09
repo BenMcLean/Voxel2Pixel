@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using BenVoxel.Structs;
 using Voxel2Pixel.Interfaces;
-using Voxel2Pixel.Model;
 
 namespace Voxel2Pixel.Render;
 

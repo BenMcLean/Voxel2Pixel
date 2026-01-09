@@ -1,7 +1,8 @@
 using System.Text.Json;
 using BenVoxel;
-using Voxel2Pixel.Model.FileFormats;
-using static BenVoxel.ExtensionMethods;
+using BenVoxel.FileToVoxCore;
+using BenVoxel.Models;
+using BenVoxel.Structs;
 
 namespace Voxel2Pixel.Test.Model.BenVoxelTest;
 

@@ -23,6 +23,7 @@
 		</PackageReference>
 	</ItemGroup>
 	<ItemGroup>
+	  <ProjectReference Include="..\..\BenVoxel.FileToVoxCore\BenVoxel.FileToVoxCore.csproj" />
 	  <ProjectReference Include="..\..\BenVoxel\BenVoxel.csproj" />
 	  <ProjectReference Include="..\..\Voxel2Pixel.ImageSharp\Voxel2Pixel.ImageSharp.csproj" />
 	  <ProjectReference Include="..\..\Voxel2Pixel\Voxel2Pixel.csproj" />

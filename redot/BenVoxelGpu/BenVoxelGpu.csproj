@@ -4,7 +4,7 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\BenVoxel.FileToVoxCore\BenVoxel.FileToVoxCore.csproj" />
     <ProjectReference Include="..\..\src\BenVoxel\BenVoxel.csproj" />
-    <ProjectReference Include="..\..\src\Voxel2Pixel\Voxel2Pixel.csproj" />
   </ItemGroup>
 </Project>

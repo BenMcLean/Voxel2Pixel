@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
-using Voxel2Pixel.Model;
 using Voxel2Pixel.Render;
 
 namespace Voxel2Pixel;

@@ -5,10 +5,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BenVoxel;
+using BenVoxel.Structs;
 using RectpackSharp;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.Interfaces;
-using Voxel2Pixel.Model;
 using static Voxel2Pixel.Render.TextureAtlas;
 
 namespace Voxel2Pixel.Render;

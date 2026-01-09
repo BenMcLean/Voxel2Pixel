@@ -1,8 +1,8 @@
 using System;
 using System.Buffers.Binary;
-using BenVoxel;
+using BenVoxel.FileToVoxCore;
+using BenVoxel.Models;
 using Godot;
-using Voxel2Pixel.Model.FileFormats;
 
 namespace BenVoxelGpu;
 

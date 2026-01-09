@@ -8,6 +8,9 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using BenVoxel.Interfaces;
+using BenVoxel.Models;
+using BenVoxel.Structs;
 
 namespace BenVoxel;
 
@@ -23,7 +26,7 @@ public class BenVoxelFile() : IBinaryWritable
 		public SanitizedKeyDictionary<string> Properties { get; set; } = [];
 		[JsonPropertyName("properties")]
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-		public IReadOnlyDictionary<string, string>? PropertiesReadOnly
+		public IReadOnlyDictionary<string, string> PropertiesReadOnly
 		{
 			get => Properties.Any() ? new ReadOnlyDictionary<string, string>(Properties) : null;
 			set
@@ -38,7 +41,7 @@ public class BenVoxelFile() : IBinaryWritable
 		public SanitizedKeyDictionary<Point3D> Points { get; set; } = [];
 		[JsonPropertyName("points")]
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-		public IReadOnlyDictionary<string, Point3D>? PointsReadOnly
+		public IReadOnlyDictionary<string, Point3D> PointsReadOnly
 		{
 			get => Points.Any() ? new ReadOnlyDictionary<string, Point3D>(Points) : null;
 			set
@@ -53,7 +56,7 @@ public class BenVoxelFile() : IBinaryWritable
 		public SanitizedKeyDictionary<Color[]> Palettes { get; set; } = [];
 		[JsonPropertyName("palettes")]
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-		public IReadOnlyDictionary<string, Color[]>? PalettesReadOnly
+		public IReadOnlyDictionary<string, Color[]> PalettesReadOnly
 		{
 			get => Palettes.Any() ? new ReadOnlyDictionary<string, Color[]>(Palettes) : null;
 			set
@@ -68,7 +71,7 @@ public class BenVoxelFile() : IBinaryWritable
 		public SanitizedKeyDictionary<JsonElement> Json { get; set; } = [];
 		[JsonPropertyName("json")]
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-		public IReadOnlyDictionary<string, JsonElement>? JsonReadOnly
+		public IReadOnlyDictionary<string, JsonElement> JsonReadOnly
 		{
 			get => Json.Any() ? new ReadOnlyDictionary<string, JsonElement>(Json) : null;
 			set
@@ -221,19 +224,19 @@ public class BenVoxelFile() : IBinaryWritable
 		}
 		[JsonPropertyName("description")]
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-		public string? Description { get; init; } = null;
+		public string Description { get; init; } = null;
 		#endregion Data
-		public static IEnumerable<Color>? Colors(IEnumerable<uint>? colors) => colors?.Select(rgba => new Color { Rgba = rgba, });
-		public static IEnumerable<uint>? Colors(IEnumerable<Color>? colors) => colors?.Select(color => color.Rgba);
+		public static IEnumerable<Color> Colors(IEnumerable<uint> colors) => colors?.Select(rgba => new Color { Rgba = rgba, });
+		public static IEnumerable<uint> Colors(IEnumerable<Color> colors) => colors?.Select(color => color.Rgba);
 	}
 	public class Model() : IBinaryWritable
 	{
 		#region Data
 		[JsonPropertyName("metadata")]
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-		public Metadata? Metadata { get; set; } = null;
+		public Metadata Metadata { get; set; } = null;
 		[JsonIgnore]
-		public DictionaryModel? Geometry { get; set; } = null;
+		public DictionaryModel Geometry { get; set; } = null;
 		[JsonPropertyName("geometry")]
 		public SvoModel SvoModel
 		{
@@ -290,7 +293,7 @@ public class BenVoxelFile() : IBinaryWritable
 	#region Data
 	[JsonPropertyName("metadata")]
 	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public Metadata? Global { get; set; } = null;
+	public Metadata Global { get; set; } = null;
 	[JsonPropertyName("models")]
 	public SanitizedKeyDictionary<Model> Models { get; set; } = [];
 	#endregion Data
@@ -360,7 +363,7 @@ public class BenVoxelFile() : IBinaryWritable
 		IndentSize = 1,
 		WriteIndented = true,
 	};
-	public BenVoxelFile Save(string path, JsonSerializerOptions? jsonSerializerOptions = null)
+	public BenVoxelFile Save(string path, JsonSerializerOptions jsonSerializerOptions = null)
 	{
 		if (".json".Equals(Path.GetExtension(path), StringComparison.InvariantCultureIgnoreCase))
 			File.WriteAllText(path: path, contents: JsonSerializer.Serialize(this, jsonSerializerOptions ?? JsonSerializerOptions));
@@ -374,26 +377,26 @@ public class BenVoxelFile() : IBinaryWritable
 			}
 		return this;
 	}
-	public Color[]? GetColors(string modelName = "", string paletteName = "") =>
+	public Color[] GetColors(string modelName = "", string paletteName = "") =>
 		Models.TryGetValue(modelName, out Model model)
 			&& (model.Metadata?.PalettesReadOnly?.TryGetValue(paletteName, out Color[] palette) ?? false) ? palette
-			: (Global?.PalettesReadOnly?.TryGetValue(paletteName, out palette) ?? false) ? palette
+			: Global?.PalettesReadOnly?.TryGetValue(paletteName, out palette) ?? false ? palette
 			: null;
-	public uint[]? GetPalette(string modelName = "", string paletteName = "") => Color.Colors(GetColors(modelName, paletteName))?.ToArray();
-	public string? GetProperty(string modelName = "", string propertyName = "") =>
+	public uint[] GetPalette(string modelName = "", string paletteName = "") => Color.Colors(GetColors(modelName, paletteName))?.ToArray();
+	public string GetProperty(string modelName = "", string propertyName = "") =>
 		Models.TryGetValue(modelName, out Model model)
 			&& (model.Metadata?.PropertiesReadOnly?.TryGetValue(propertyName, out string property) ?? false) ? property
-			: (Global?.PropertiesReadOnly?.TryGetValue(propertyName, out property) ?? false) ? property
+			: Global?.PropertiesReadOnly?.TryGetValue(propertyName, out property) ?? false ? property
 			: null;
 	public Point3D? GetPoint(string modelName = "", string pointName = "") =>
 		Models.TryGetValue(modelName, out Model model)
 			&& (model.Metadata?.PointsReadOnly?.TryGetValue(pointName, out Point3D point) ?? false) ? point
-			: (Global?.PointsReadOnly?.TryGetValue(pointName, out point) ?? false) ? point
+			: Global?.PointsReadOnly?.TryGetValue(pointName, out point) ?? false ? point
 			: null;
 	public JsonElement? GetJson(string modelName = "", string jsonName = "") =>
 		Models.TryGetValue(modelName, out Model model)
 			&& (model.Metadata?.JsonReadOnly?.TryGetValue(jsonName, out JsonElement json) ?? false) ? json
-			: (Global?.JsonReadOnly?.TryGetValue(jsonName, out json) ?? false) ? json
+			: Global?.JsonReadOnly?.TryGetValue(jsonName, out json) ?? false ? json
 			: null;
 	public Model DefaultModel()
 	{
@@ -401,11 +404,11 @@ public class BenVoxelFile() : IBinaryWritable
 			benVoxelFileModel = Models.FirstOrDefault().Value;
 		return benVoxelFileModel;
 	}
-	public DictionaryModel? Default(out uint[]? palette)
+	public DictionaryModel Default(out uint[] palette)
 	{
 		Model benVoxelFileModel = DefaultModel();
-		DictionaryModel? geometry = benVoxelFileModel?.Geometry;
-		if (!(benVoxelFileModel?.Metadata?.Palettes.TryGetValue("", out Color[]? colors) ?? false)
+		DictionaryModel geometry = benVoxelFileModel?.Geometry;
+		if (!(benVoxelFileModel?.Metadata?.Palettes.TryGetValue("", out Color[] colors) ?? false)
 			&& !(Global?.Palettes.TryGetValue("", out colors) ?? false))
 			colors = benVoxelFileModel?.Metadata?.Palettes?.Any() ?? false ?
 				benVoxelFileModel.Metadata.Palettes.First().Value

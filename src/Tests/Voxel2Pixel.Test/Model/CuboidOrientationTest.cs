@@ -1,4 +1,4 @@
-using BenVoxel;
+using BenVoxel.Structs;
 using Voxel2Pixel.Model;
 
 namespace Voxel2Pixel.Test.Model;

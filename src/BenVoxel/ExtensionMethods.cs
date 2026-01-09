@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using System.Text;
+using BenVoxel.Interfaces;
+using BenVoxel.Structs;
 
 namespace BenVoxel;
 

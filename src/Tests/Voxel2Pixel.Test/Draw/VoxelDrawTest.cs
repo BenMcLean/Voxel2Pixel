@@ -1,9 +1,11 @@
+using BenVoxel.FileToVoxCore;
+using BenVoxel.Models;
+using BenVoxel.Structs;
 using SixLabors.ImageSharp;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.ImageSharp;
-using Voxel2Pixel.Model;
-using Voxel2Pixel.Model.FileFormats;
+using Voxel2Pixel.Models;
 using Voxel2Pixel.Render;
 using Voxel2Pixel.Test.TestData;
 using static Voxel2Pixel.Test.TestData.ImageMaker;
@@ -21,7 +23,7 @@ public class VoxelDrawTest(Xunit.Abstractions.ITestOutputHelper output)
 			VoxelColor = new NaiveDimmer(voxFileModel.Palette),
 		};
 		await VoxelDraw.DrawAsync(voxFileModel, sprite, Perspective.Iso);
-		Voxel2Pixel.Model.Point dot = new(sprite.Width / 4, 3 * sprite.Height / 4);
+		Point dot = new(sprite.Width / 4, 3 * sprite.Height / 4);
 		sprite.DrawBoundingBox();
 		sprite.Png().SaveAsPng("ZSlice.png");
 		TextureModel textureModel = new(sprite);

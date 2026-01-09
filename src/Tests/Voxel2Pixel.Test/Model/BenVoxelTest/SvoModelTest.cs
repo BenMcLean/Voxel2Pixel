@@ -1,12 +1,15 @@
 using System.Text.Json;
 using BenVoxel;
+using BenVoxel.FileToVoxCore;
+using BenVoxel.Interfaces;
+using BenVoxel.Models;
+using BenVoxel.Structs;
 using SixLabors.ImageSharp;
 using Voxel2Pixel.Color;
-using Voxel2Pixel.Model.FileFormats;
 using Voxel2Pixel.Render;
 using Voxel2Pixel.Test.TestData;
 using static BenVoxel.ExtensionMethods;
-using static BenVoxel.SvoModel;
+using static BenVoxel.Models.SvoModel;
 
 namespace Voxel2Pixel.Test.Model.BenVoxelTest;
 
@@ -67,7 +70,7 @@ public class SvoModelTest(Xunit.Abstractions.ITestOutputHelper output)
 		}
 		Assert.Equal(
 			expected: model.Count(),
-			actual: svo.Count());
+			actual: ((IModel)svo).Count());
 		for (ushort x = 0; x < model.SizeX; x++)
 			for (ushort y = 0; y < model.SizeY; y++)
 				for (ushort z = 0; z < model.SizeZ; z++)
@@ -90,7 +93,7 @@ public class SvoModelTest(Xunit.Abstractions.ITestOutputHelper output)
 			Z: ushort.MaxValue - 1,
 			Material: 1);
 		svoModel.Set(voxel);
-		Voxel voxel2 = svoModel.First();
+		Voxel voxel2 = ((IModel)svoModel).First();
 		output.WriteLine("X:");
 		CompareBinary(voxel.X, voxel2.X);
 		output.WriteLine("Y:");
@@ -156,8 +159,8 @@ public class SvoModelTest(Xunit.Abstractions.ITestOutputHelper output)
 				actual: voxel.Material);
 		}
 		Assert.Equal(
-			expected: svo.Count(),
-			actual: svo2.Count());
+			expected: ((IModel)svo).Count(),
+			actual: ((IModel)svo2).Count());
 		for (ushort x = 0; x < model.SizeX; x++)
 			for (ushort y = 0; y < model.SizeY; y++)
 				for (ushort z = 0; z < model.SizeZ; z++)

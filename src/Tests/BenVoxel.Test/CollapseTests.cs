@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using BenVoxel.Models;
 using Xunit.Abstractions;
 
 namespace BenVoxel.Test;

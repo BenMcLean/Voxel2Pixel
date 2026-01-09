@@ -1,4 +1,4 @@
-using Voxel2Pixel.Model;
+using BenVoxel.Structs;
 
 namespace Voxel2Pixel.Interfaces;
 

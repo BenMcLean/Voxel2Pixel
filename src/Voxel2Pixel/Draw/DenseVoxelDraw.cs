@@ -1,8 +1,9 @@
 using System;
 using System.Linq;
 using BenVoxel;
+using BenVoxel.Interfaces;
+using BenVoxel.Structs;
 using Voxel2Pixel.Interfaces;
-using Voxel2Pixel.Model;
 
 namespace Voxel2Pixel.Draw;
 

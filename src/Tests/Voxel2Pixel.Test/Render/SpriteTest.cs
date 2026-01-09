@@ -1,10 +1,11 @@
+using BenVoxel.FileToVoxCore;
+using BenVoxel.Models;
+using BenVoxel.Structs;
 using SixLabors.ImageSharp;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;
 using Voxel2Pixel.ImageSharp;
 using Voxel2Pixel.Interfaces;
-using Voxel2Pixel.Model;
-using Voxel2Pixel.Model.FileFormats;
 using Voxel2Pixel.Render;
 using Voxel2Pixel.Test.TestData;
 using static Voxel2Pixel.Test.TestData.ImageMaker;
@@ -66,7 +67,7 @@ public class SpriteTest(Xunit.Abstractions.ITestOutputHelper output)
 	}
 	public static Sprite Origin0(Sprite sprite)
 	{
-		sprite[Sprite.Origin] = new Voxel2Pixel.Model.Point(0, 0);
+		sprite[Sprite.Origin] = new Point(0, 0);
 		return sprite;
 	}
 	[Fact]
@@ -78,7 +79,7 @@ public class SpriteTest(Xunit.Abstractions.ITestOutputHelper output)
 			VoxelColor = new NaiveDimmer(voxFileModel.Palette),
 		};
 		//voxFileModel.Draw(sprite, Perspective.Iso);
-		sprite["dot"] = new Voxel2Pixel.Model.Point(sprite.Width / 4, 3 * sprite.Height / 4);
+		sprite["dot"] = new Point(sprite.Width / 4, 3 * sprite.Height / 4);
 		sprite.DrawBoundingBox();
 		int numSprites = 64;
 		List<Sprite> frames = [.. Enumerable.Range(0, numSprites)
