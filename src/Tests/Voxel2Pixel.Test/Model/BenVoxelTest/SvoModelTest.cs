@@ -56,14 +56,14 @@ public class SvoModelTest(Xunit.Abstractions.ITestOutputHelper output)
 		foreach (Voxel voxel in model)
 		{
 			Assert.Equal(
-				expected: voxel.Index,
+				expected: voxel.Material,
 				actual: svo[voxel.X, voxel.Y, voxel.Z]);
 		}
 		foreach (Voxel voxel in svo)
 		{
 			Assert.Equal(
 				expected: model[voxel.X, voxel.Y, voxel.Z],
-				actual: voxel.Index);
+				actual: voxel.Material);
 		}
 		Assert.Equal(
 			expected: model.Count(),
@@ -88,7 +88,7 @@ public class SvoModelTest(Xunit.Abstractions.ITestOutputHelper output)
 			X: ushort.MaxValue - 1,
 			Y: ushort.MaxValue - 1,
 			Z: ushort.MaxValue - 1,
-			Index: 1);
+			Material: 1);
 		svoModel.Set(voxel);
 		Voxel voxel2 = svoModel.First();
 		output.WriteLine("X:");
@@ -98,7 +98,7 @@ public class SvoModelTest(Xunit.Abstractions.ITestOutputHelper output)
 		output.WriteLine("Z:");
 		CompareBinary(voxel.Z, voxel2.Z);
 		output.WriteLine("Index:");
-		CompareBinary(voxel.Index, voxel2.Index);
+		CompareBinary(voxel.Material, voxel2.Material);
 		Assert.Equal(
 			expected: voxel,
 			actual: voxel2);
@@ -146,14 +146,14 @@ public class SvoModelTest(Xunit.Abstractions.ITestOutputHelper output)
 		foreach (Voxel voxel in svo)
 		{
 			Assert.Equal(
-				expected: voxel.Index,
+				expected: voxel.Material,
 				actual: svo2[voxel.X, voxel.Y, voxel.Z]);
 		}
 		foreach (Voxel voxel in svo2)
 		{
 			Assert.Equal(
 				expected: svo[voxel.X, voxel.Y, voxel.Z],
-				actual: voxel.Index);
+				actual: voxel.Material);
 		}
 		Assert.Equal(
 			expected: svo.Count(),

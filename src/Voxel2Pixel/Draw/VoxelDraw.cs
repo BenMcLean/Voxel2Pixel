@@ -116,11 +116,11 @@ public static class VoxelDraw
 	#region Records
 	private readonly record struct VoxelY(ushort Y, byte Index)
 	{
-		public VoxelY(Voxel voxel) : this(Y: voxel.Y, Index: voxel.Index) { }
+		public VoxelY(Voxel voxel) : this(Y: voxel.Y, Index: voxel.Material) { }
 	}
 	private readonly record struct VoxelZ(ushort Z, byte Index)
 	{
-		public VoxelZ(Voxel voxel) : this(Z: voxel.Z, Index: voxel.Index) { }
+		public VoxelZ(Voxel voxel) : this(Z: voxel.Z, Index: voxel.Material) { }
 	}
 	private readonly record struct DistantShape(uint Distance, byte Index, VisibleFace VisibleFace);
 	private readonly record struct VoxelFace(Voxel Voxel, VisibleFace VisibleFace)
@@ -146,7 +146,7 @@ public static class VoxelDraw
 			height = model.SizeZ;
 		VoxelY?[] grid = new VoxelY?[width * height];
 		foreach (Voxel voxel in model
-			.Where(voxel => voxel.Index != 0))
+			.Where(voxel => voxel.Material != 0))
 			if (width * (height - voxel.Z - 1) + voxel.X is int i
 				&& (grid[i] is not VoxelY old
 					|| old.Index == 0
@@ -182,10 +182,10 @@ public static class VoxelDraw
 			voxelHeight = model.SizeZ;
 		Voxel?[] grid = new Voxel?[voxelWidth * voxelHeight];
 		foreach (Voxel voxel in model
-			.Where(voxel => voxel.Index != 0))
+			.Where(voxel => voxel.Material != 0))
 			if (voxelWidth * (voxelHeight - voxel.Z - 1) + voxel.X is int i
 				&& (grid[i] is not Voxel old
-					|| old.Index == 0
+					|| old.Material == 0
 					|| old.Y > voxel.Y))
 				grid[i] = voxel;
 		PeriodicUpdater periodicUpdater = new(progressContext);
@@ -197,21 +197,21 @@ public static class VoxelDraw
 		for (ushort y = 0; y < pixelHeight; y += scaleY)
 		{
 			for (ushort x = 0; x < pixelWidth; x += scaleX)
-				if (grid[index++] is Voxel voxel && voxel.Index != 0)
+				if (grid[index++] is Voxel voxel && voxel.Material != 0)
 					if (voxel.Z >= voxelHeight - 1
 					|| model[voxel.X, voxel.Y, (ushort)(voxel.Z + 1)] == 0)
 					{
 						renderer.Rect(
 							x: x,
 							y: y,
-							index: voxel.Index,
+							index: voxel.Material,
 							visibleFace: VisibleFace.Top,
 							sizeX: scaleX,
 							sizeY: 1);
 						renderer.Rect(
 							x: x,
 							y: (ushort)(y + 1),
-							index: voxel.Index,
+							index: voxel.Material,
 							visibleFace: VisibleFace.Front,
 							sizeX: scaleX,
 							sizeY: (ushort)(scaleY - 1));
@@ -220,7 +220,7 @@ public static class VoxelDraw
 						renderer.Rect(
 							x: x,
 							y: y,
-							index: voxel.Index,
+							index: voxel.Material,
 							visibleFace: VisibleFace.Front,
 							sizeX: scaleX,
 							sizeY: scaleY);
@@ -238,7 +238,7 @@ public static class VoxelDraw
 			height = model.SizeY;
 		VoxelZ?[] grid = new VoxelZ?[width * height];
 		foreach (Voxel voxel in model
-			.Where(voxel => voxel.Index != 0))
+			.Where(voxel => voxel.Material != 0))
 			if (width * (height - voxel.Y - 1) + voxel.X is int i
 				&& (grid[i] is not VoxelZ old
 					|| old.Index == 0
@@ -271,7 +271,7 @@ public static class VoxelDraw
 			height = model.SizeY;
 		VoxelZ?[] grid = new VoxelZ?[width * height];
 		foreach (Voxel voxel in model
-			.Where(voxel => voxel.Index != 0))
+			.Where(voxel => voxel.Material != 0))
 			if (width * (height - voxel.Y - 1) + voxel.X is int i
 				&& (grid[i] is not VoxelZ old
 					|| old.Index == 0
@@ -314,7 +314,7 @@ public static class VoxelDraw
 		uint index;
 		DistantShape?[] grid = new DistantShape?[pixelWidth * height];
 		foreach (Voxel voxel in model
-			.Where(voxel => voxel.Index != 0))
+			.Where(voxel => voxel.Material != 0))
 		{
 			index = (uint)(pixelWidth * (height - voxel.Z - 1) + voxelDepth - voxel.Y - 1 + voxel.X);
 			uint distance = (uint)voxel.X + voxel.Y;
@@ -324,7 +324,7 @@ public static class VoxelDraw
 				grid[index] = new DistantShape
 				{
 					Distance = distance,
-					Index = voxel.Index,
+					Index = voxel.Material,
 					VisibleFace = VisibleFace.Left,
 				};
 			if (grid[++index] is not DistantShape right
@@ -333,7 +333,7 @@ public static class VoxelDraw
 				grid[index] = new DistantShape
 				{
 					Distance = distance,
-					Index = voxel.Index,
+					Index = voxel.Material,
 					VisibleFace = VisibleFace.Right,
 				};
 		}
@@ -372,12 +372,12 @@ public static class VoxelDraw
 		uint index;
 		VoxelFace?[] grid = new VoxelFace?[pixelWidth * voxelHeight];
 		foreach (Voxel voxel in model
-			.Where(voxel => voxel.Index != 0))
+			.Where(voxel => voxel.Material != 0))
 		{
 			index = (uint)(pixelWidth * (voxelHeight - voxel.Z - 1) + voxelDepth - voxel.Y - 1 + voxel.X);
 			uint distance = (uint)voxel.X + voxel.Y;
 			if (grid[index] is not VoxelFace left
-				|| left.Voxel.Index == 0
+				|| left.Voxel.Material == 0
 				|| left.Distance > distance)
 				grid[index] = new VoxelFace
 				{
@@ -385,7 +385,7 @@ public static class VoxelDraw
 					VisibleFace = VisibleFace.Left,
 				};
 			if (grid[++index] is not VoxelFace right
-				|| right.Voxel.Index == 0
+				|| right.Voxel.Material == 0
 				|| right.Distance > distance)
 				grid[index] = new VoxelFace
 				{
@@ -402,21 +402,21 @@ public static class VoxelDraw
 		for (ushort y = 0; y < pixelHeight; y += scaleY)
 		{
 			for (ushort x = 0; x < pixelWidth; x += scaleX)
-				if (grid[index++] is VoxelFace face && face.Voxel.Index != 0)
+				if (grid[index++] is VoxelFace face && face.Voxel.Material != 0)
 					if (face.Voxel.Z >= voxelHeight - 1
 						|| model[face.Voxel.X, face.Voxel.Y, (ushort)(face.Voxel.Z + 1)] == 0)
 					{
 						renderer.Rect(
 							x: x,
 							y: y,
-							index: face.Voxel.Index,
+							index: face.Voxel.Material,
 							visibleFace: VisibleFace.Top,
 							sizeX: scaleX,
 							sizeY: 1);
 						renderer.Rect(
 							x: x,
 							y: (ushort)(y + 1),
-							index: face.Voxel.Index,
+							index: face.Voxel.Material,
 							visibleFace: face.VisibleFace,
 							sizeX: scaleX,
 							sizeY: (ushort)(scaleY - 1));
@@ -425,7 +425,7 @@ public static class VoxelDraw
 						renderer.Rect(
 							x: x,
 							y: y,
-							index: face.Voxel.Index,
+							index: face.Voxel.Material,
 							visibleFace: face.VisibleFace,
 							sizeX: scaleX,
 							sizeY: scaleY);
@@ -452,7 +452,7 @@ public static class VoxelDraw
 		uint pixelHeight = (uint)(depth + height), index;
 		DistantShape?[] grid = new DistantShape?[width * pixelHeight];
 		foreach (Voxel voxel in model
-			.Where(voxel => voxel.Index != 0))
+			.Where(voxel => voxel.Material != 0))
 		{
 			index = width * (pixelHeight - 2 - voxel.Y - voxel.Z) + voxel.X;
 			uint distance = (uint)(height + voxel.Y - voxel.Z - 1);
@@ -462,7 +462,7 @@ public static class VoxelDraw
 				grid[index] = new DistantShape
 				{
 					Distance = distance,
-					Index = voxel.Index,
+					Index = voxel.Material,
 					VisibleFace = VisibleFace.Top,
 				};
 			index += width;
@@ -472,7 +472,7 @@ public static class VoxelDraw
 				grid[index] = new DistantShape
 				{
 					Distance = distance,
-					Index = voxel.Index,
+					Index = voxel.Material,
 					VisibleFace = VisibleFace.Front,
 				};
 		}
@@ -529,7 +529,7 @@ public static class VoxelDraw
 				};
 		}
 		foreach (Voxel voxel in model
-			.Where(voxel => voxel.Index != 0))
+			.Where(voxel => voxel.Material != 0))
 		{
 			uint distance = (uint)voxel.X + voxel.Y + voxelHeight - voxel.Z - 1;
 			ushort pixelX = (ushort)(2 * (voxelDepth + voxel.X - voxel.Y)),
@@ -545,37 +545,37 @@ public static class VoxelDraw
 				pixelX: (ushort)(pixelX - 2),
 				pixelY: (ushort)(pixelY - 6),
 				distance: distance,
-				index: voxel.Index,
+				index: voxel.Material,
 				visibleFace: VisibleFace.Top);
 			Tri(//1
 				pixelX: pixelX,
 				pixelY: (ushort)(pixelY - 6),
 				distance: distance,
-				index: voxel.Index,
+				index: voxel.Material,
 				visibleFace: VisibleFace.Top);
 			Tri(//2
 				pixelX: (ushort)(pixelX - 2),
 				pixelY: (ushort)(pixelY - 4),
 				distance: distance,
-				index: voxel.Index,
+				index: voxel.Material,
 				visibleFace: VisibleFace.Left);
 			Tri(//3
 				pixelX: (ushort)(pixelX - 2),
 				pixelY: (ushort)(pixelY - 2),
 				distance: distance,
-				index: voxel.Index,
+				index: voxel.Material,
 				visibleFace: VisibleFace.Left);
 			Tri(//4
 				pixelX: pixelX,
 				pixelY: (ushort)(pixelY - 4),
 				distance: distance,
-				index: voxel.Index,
+				index: voxel.Material,
 				visibleFace: VisibleFace.Right);
 			Tri(//5
 				pixelX: pixelX,
 				pixelY: (ushort)(pixelY - 2),
 				distance: distance,
-				index: voxel.Index,
+				index: voxel.Material,
 				visibleFace: VisibleFace.Right);
 		}
 		PeriodicUpdater periodicUpdater = new(progressContext);
@@ -994,7 +994,7 @@ public static class VoxelDraw
 			renderer.Rect(
 				x: (ushort)(model.SizeX * voxel.Z + voxel.X),
 				y: voxel.Y,
-				index: voxel.Index,
+				index: voxel.Material,
 				visibleFace: peak && (voxel.Z >= model.SizeZ - 1 || model[voxel.X, voxel.Y, (ushort)(voxel.Z + 1)] == 0) ? VisibleFace.Top : visibleFace);
 			await periodicUpdater.UpdateAsync();
 		}

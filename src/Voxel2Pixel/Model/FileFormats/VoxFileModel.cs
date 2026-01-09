@@ -68,7 +68,7 @@ public class VoxFileModel : DictionaryModel
 			x: voxel.X,
 			y: voxel.Y,
 			z: voxel.Z,
-			color: palette[voxel.Index].Rgba2argb()));
+			color: palette[voxel.Material].Rgba2argb()));
 	public static bool Write(string absolutePath, uint[] palette, IModel model) =>
 		new FileToVoxCore.Vox.VoxWriter().WriteModel(
 			absolutePath: absolutePath,

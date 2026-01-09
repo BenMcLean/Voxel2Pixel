@@ -15,7 +15,7 @@ namespace BenVoxel;
 /// SVO stands for "Sparse Voxel Octree"
 /// </summary>
 [JsonConverter(typeof(SvoModelConverter))]
-public class SvoModel() : IEditableModel, IBinaryWritable
+public class SvoModel() : IEditableModel, IBinaryWritable, IBrickModel
 {
 	#region Nested classes
 	public abstract class Node : IBinaryWritable
@@ -206,9 +206,10 @@ public class SvoModel() : IEditableModel, IBinaryWritable
 				return TryCollapse(TryCollapseGetColor());
 			if (color.Value == 0)
 				return 0;
+			ulong expectedData = color.Value * 0x0101010101010101UL;
 			foreach (Node child in Children)
 				if (child is null
-					|| (child is Leaf leaf && leaf.Values.Any(value => value != color.Value))
+					|| (child is Leaf leaf && leaf.Data != expectedData)
 					|| (child is Branch branch && branch.TryCollapse(color.Value) == 0))
 					return 0;
 			return color.Value;
@@ -224,19 +225,28 @@ public class SvoModel() : IEditableModel, IBinaryWritable
 	public class Leaf : Node, IBinaryWritable, IEnumerable<Voxel>, IEnumerable
 	{
 		public override byte Header => (byte)(0b11000000 | Octant & 7);
-		protected byte[] Data = new byte[8];
-		public override void Clear() => Data = new byte[8];
+		internal ulong Data = 0;
+		public override void Clear() => Data = 0;
 		public byte this[byte octant]
 		{
-			get => Data[octant];
+			get => (byte)((Data >> (octant << 3)) & 0xFF);
 			set
 			{
-				Data[octant] = value;
-				if (!Data.Any(@byte => @byte != 0) && Parent is Branch parent)
+				int shift = octant << 3;
+				ulong mask = 0xFFUL << shift;
+				Data = (Data & ~mask) | ((ulong)value << shift);
+				if (Data == 0 && Parent is Branch parent)
 					parent[Octant] = null;
 			}
 		}
-		public IEnumerable<byte> Values => Data;
+		public IEnumerable<byte> Values
+		{
+			get
+			{
+				for (byte i = 0; i < 8; i++)
+					yield return (byte)((Data >> (i << 3)) & 0xFF);
+			}
+		}
 		public override byte Depth => 16;
 		public override ushort Size => 1;
 		public Leaf() { }
@@ -248,9 +258,9 @@ public class SvoModel() : IEditableModel, IBinaryWritable
 		public Leaf(Node parent, byte octant, byte color) : this(parent, octant)
 		{
 			if (color == 0)
-				Data[0] = 0;//trigger removal
+				Data = 0;//trigger removal
 			else
-				Data = [.. Enumerable.Repeat(color, 8)];
+				Data = color * 0x0101010101010101UL;
 		}
 		public Leaf(Stream stream, Node parent = null) : this()
 		{
@@ -273,12 +283,18 @@ public class SvoModel() : IEditableModel, IBinaryWritable
 						foreground = reader.ReadByte(),
 						background = reader.ReadByte();
 					if (foreground == 0 && background == 0)
-						Data[0] = 0;//trigger removal
+						Data = 0;//trigger removal
 					else
-						Data = [.. Enumerable.Range(0, 8).Select(i => i == where ? foreground : background)];
+					{
+						// Fill with background, then overwrite one byte with foreground
+						Data = background * 0x0101010101010101UL;
+						int shift = where << 3;
+						ulong mask = 0xFFUL << shift;
+						Data = (Data & ~mask) | ((ulong)foreground << shift);
+					}
 					break;
 				case 0b11://8-byte payload leaf
-					Data = reader.ReadBytes(8);
+					Data = reader.ReadUInt64();
 					break;
 				default:
 					throw new IOException("Invalid node type in leaf header.");
@@ -295,27 +311,56 @@ public class SvoModel() : IEditableModel, IBinaryWritable
 		}
 		public override void Write(BinaryWriter writer)
 		{
-			(byte, byte)[] occurrences = [.. Data
-				.GroupBy(b => b)
-				.Select(g => (g.Key, (byte)g.Count()))
-				.OrderBy(t => t.Item2)];
-			if (occurrences.Length == 1)
+			// Fast uniform check
+			byte first = (byte)(Data & 0xFF);
+			if (Data == first * 0x0101010101010101UL)
 			{//Single color - use 2-byte payload leaf with same color for both bytes
 				writer.Write((byte)(0b10000000 | Octant & 7));//Header
-				writer.Write(Data[0]); // Foreground color
-				writer.Write(Data[0]); // Background color (same)
+				writer.Write(first); // Foreground color
+				writer.Write(first); // Background color (same)
+				return;
 			}
-			else if (occurrences.Length == 2 && occurrences[0].Item2 == 1)
-			{//Two colors with one unique - use 2-byte payload leaf
-				writer.Write((byte)(0b10000000 | (Array.IndexOf(Data, occurrences[0].Item1) & 7) << 3 | Octant & 7));//Header
-				writer.Write(occurrences[0].Item1);//Foreground color (the unique one)
-				writer.Write(occurrences[1].Item1);//Background color (the repeated one)
+			// Not uniform - count unique colors
+			Dictionary<byte, byte> counts = new();
+			for (byte i = 0; i < 8; i++)
+			{
+				byte val = (byte)((Data >> (i << 3)) & 0xFF);
+				if (counts.TryGetValue(val, out byte count))
+					counts[val] = (byte)(count + 1);
+				else
+					counts[val] = 1;
 			}
-			else
-			{//Multiple colors - use 8-byte payload leaf
-				writer.Write(Header);
-				writer.Write(Data);
+			// Check for 2-color compression (one unique voxel)
+			if (counts.Count == 2)
+			{
+				byte foreground = 0, background = 0;
+				foreach (KeyValuePair<byte, byte> kvp in counts)
+					if (kvp.Value == 1)
+						foreground = kvp.Key;
+					else if (kvp.Value == 7)
+						background = kvp.Key;
+				if (background != 0 || foreground != 0)
+				{//Two colors with one unique - use 2-byte payload leaf
+				 // Find position using XOR trick
+					ulong backgroundPattern = background * 0x0101010101010101UL,
+						diff = Data ^ backgroundPattern;
+					// Find first non-zero byte position
+					byte uniquePos = 0;
+					for (byte i = 0; i < 8; i++)
+						if (((diff >> (i << 3)) & 0xFF) != 0)
+						{
+							uniquePos = i;
+							break;
+						}
+					writer.Write((byte)(0b10000000 | (uniquePos & 7) << 3 | Octant & 7));//Header
+					writer.Write(foreground);//Foreground color (the unique one)
+					writer.Write(background);//Background color (the repeated one)
+					return;
+				}
 			}
+			//Multiple colors - use 8-byte payload leaf
+			writer.Write(Header);
+			writer.Write(Data); // BinaryWriter.Write(ulong) writes little-endian
 		}
 		#endregion IBinaryWritable
 		public Voxel Voxel(byte octant)
@@ -325,13 +370,13 @@ public class SvoModel() : IEditableModel, IBinaryWritable
 				X: (ushort)(x | octant & 1),
 				Y: (ushort)(y | octant >> 1 & 1),
 				Z: (ushort)(z | octant >> 2 & 1),
-				Index: this[octant]);
+				Material: this[octant]);
 		}
 		#region IEnumerable<Voxel>
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 		public IEnumerator<Voxel> GetEnumerator()
 		{
-			if (!Data.Any(@byte => @byte != 0))
+			if (Data == 0)
 				yield break;
 			Position(out ushort x, out ushort y, out ushort z);
 			for (byte octant = 0; octant < 8; octant++)
@@ -340,7 +385,7 @@ public class SvoModel() : IEditableModel, IBinaryWritable
 						X: (ushort)(x | octant & 1),
 						Y: (ushort)(y | octant >> 1 & 1),
 						Z: (ushort)(z | octant >> 2 & 1),
-						Index: index);
+						Material: index);
 		}
 		#endregion IEnumerable<Voxel>
 	}
@@ -572,6 +617,80 @@ public class SvoModel() : IEditableModel, IBinaryWritable
 		}
 	}
 	#endregion IEditableModel
+	#region IBrickModel
+	/// <summary>
+	/// Gets a 2x2x2 brick at the specified coordinates.
+	/// IBrickModel convention: Only return non-zero bricks (this is a SPARSE voxel octree).
+	/// The tree structure automatically removes leaves that become all zeros, so if a leaf
+	/// exists in the tree, it should always have at least one non-zero voxel.
+	/// </summary>
+	public ulong GetBrick(ushort x, ushort y, ushort z)
+	{
+		ushort brickX = (ushort)(x & ~1),
+			brickY = (ushort)(y & ~1),
+			brickZ = (ushort)(z & ~1);
+		if (this.IsOutside(brickX, brickY, brickZ))
+			return 0;
+		Branch branch = Root;
+		for (byte level = 15; level > 1; level--)
+		{
+			byte octant = (byte)((brickZ >> level & 1) << 2 |
+				(brickY >> level & 1) << 1 |
+				brickX >> level & 1);
+			if (branch[octant] is Branch child)
+				branch = child;
+			else
+				return 0; // No branch = no data (sparse)
+		}
+		byte leafOctant = (byte)((brickZ >> 1 & 1) << 2 |
+			(brickY >> 1 & 1) << 1 |
+			brickX >> 1 & 1);
+		if (branch[leafOctant] is Leaf leaf)
+		{
+			// Defensive check: sparse tree should never contain all-zero leaves
+			// (they get removed automatically by the indexer setter)
+			return leaf.Data != 0 ? leaf.Data : 0;
+		}
+		return 0; // No leaf = no data (sparse)
+	}
+	IEnumerator<VoxelBrick> IEnumerable<VoxelBrick>.GetEnumerator()
+	{
+		Stack<(Branch branch, ushort x, ushort y, ushort z)> stack = new();
+		stack.Push((Root, 0, 0, 0));
+
+		while (stack.Count > 0)
+		{
+			(Branch branch, ushort baseX, ushort baseY, ushort baseZ) = stack.Pop();
+			byte depth = branch.Depth;
+			if (depth == 15)
+			{
+				// Parent of leaves - yield bricks
+				for (byte octant = 0; octant < 8; octant++)
+					if (branch[octant] is Leaf leaf && leaf.Data != 0)
+					{
+						ushort brickX = (ushort)(baseX | ((octant & 1) << 1)),
+							brickY = (ushort)(baseY | ((octant >> 1 & 1) << 1)),
+							brickZ = (ushort)(baseZ | ((octant >> 2 & 1) << 1));
+						if (brickX < SizeX && brickY < SizeY && brickZ < SizeZ)
+							yield return new VoxelBrick(brickX, brickY, brickZ, leaf.Data);
+					}
+			}
+			else
+			{
+				// Recurse into child branches
+				int shift = 16 - depth;
+				for (byte octant = 0; octant < 8; octant++)
+					if (branch[octant] is Branch child)
+					{
+						ushort childX = (ushort)(baseX | ((octant & 1) << shift)),
+							childY = (ushort)(baseY | ((octant >> 1 & 1) << shift)),
+							childZ = (ushort)(baseZ | ((octant >> 2 & 1) << shift));
+						stack.Push((child, childX, childY, childZ));
+					}
+			}
+		}
+	}
+	#endregion IBrickModel
 	#region JSON
 	public class SvoModelConverter : JsonConverter<SvoModel>
 	{

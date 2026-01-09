@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace BenVoxel;
 
-public class GpuSvoModel : IModel
+public class GpuSvoModel : IBrickModel
 {
 	#region Constants & Static
 	// Internal starts with 1. Leaves start with 0.
@@ -47,12 +47,20 @@ public class GpuSvoModel : IModel
 		while ((1 << fullDepth) < maxDim) fullDepth++;
 		MaxDepth = (byte)Math.Max(1, (int)fullDepth);
 		BuildNode root = new();
-		foreach (Voxel v in model)
-		{
-			if (v.Index == 0) continue;
-			InsertVoxel(root, v.X, v.Y, v.Z, v.Index, MaxDepth);
-		}
+		// Optimize: if model implements IBrickModel, use brick-based construction
+		if (model is IBrickModel brickModel)
+			foreach (VoxelBrick brick in (IEnumerable<VoxelBrick>)brickModel)
+				InsertBrick(root, brick.X, brick.Y, brick.Z, brick.Payload, MaxDepth);
+		else
+			foreach (Voxel voxel in model)
+				InsertVoxel(root, voxel.X, voxel.Y, voxel.Z, voxel.Material, MaxDepth);
 		PruneTree(root);
+		FlattenTree(root, out uint[] nodes, out ulong[] payloads);
+		Nodes = nodes;
+		Payloads = payloads;
+	}
+	private void FlattenTree(BuildNode root, out uint[] nodes, out ulong[] payloads)
+	{
 		List<uint> flatNodes = [];
 		List<ulong> flatPayloads = [];
 		Queue<(BuildNode node, int flatIdx)> queue = [];
@@ -63,10 +71,9 @@ public class GpuSvoModel : IModel
 			(BuildNode curr, int idx) = queue.Dequeue();
 			if (curr.IsLeaf)
 			{
+				// Fast uniform check using magic number pattern
 				ulong first = curr.Payload & 0xFF;
-				bool isUniform = true;
-				for (int i = 1; i < 8; i++)
-					if (((curr.Payload >> (i * 8)) & 0xFF) != first) { isUniform = false; break; }
+				bool isUniform = curr.Payload == first * 0x0101010101010101UL;
 				if (isUniform)
 					// Schema: [ 0 | 0 (type) | ... | Material (8b) ]
 					flatNodes[idx] = (uint)first;
@@ -98,10 +105,24 @@ public class GpuSvoModel : IModel
 				flatNodes[idx] = FLAG_INTERNAL | (childBase << 8) | mask;
 			}
 		}
-		Nodes = [.. flatNodes];
-		Payloads = [.. flatPayloads];
+		nodes = [.. flatNodes];
+		payloads = [.. flatPayloads];
 	}
-	private static void InsertVoxel(BuildNode node, ushort x, ushort y, ushort z, byte mat, int maxDepth)
+	private static void InsertBrick(BuildNode node, ushort x, ushort y, ushort z, ulong payload, int maxDepth)
+	{
+		// Navigate to parent of leaf level (maxDepth - 1)
+		for (int depth = 0; depth < maxDepth - 1; depth++)
+		{
+			int shift = maxDepth - 1 - depth,
+				oct = (((z >> shift) & 1) << 2) | (((y >> shift) & 1) << 1) | ((x >> shift) & 1);
+			node.Children[oct] ??= new BuildNode();
+			node = node.Children[oct];
+		}
+		// Insert entire brick at leaf level
+		node.IsLeaf = true;
+		node.Payload = payload;
+	}
+	private static void InsertVoxel(BuildNode node, ushort x, ushort y, ushort z, byte material, int maxDepth)
 	{
 		for (int depth = 0; depth < maxDepth - 1; depth++)
 		{
@@ -112,16 +133,15 @@ public class GpuSvoModel : IModel
 		}
 		int brickOct = ((z & 1) << 2) | ((y & 1) << 1) | (x & 1);
 		node.IsLeaf = true;
-		node.Payload |= (ulong)mat << (brickOct * 8);
+		node.Payload |= (ulong)material << (brickOct * 8);
 	}
 	private bool PruneTree(BuildNode node)
 	{
 		if (node.IsLeaf)
 		{
+			// Fast uniform check using magic number pattern
 			ulong first = node.Payload & 0xFF;
-			for (int i = 1; i < 8; i++)
-				if (((node.Payload >> (i * 8)) & 0xFF) != first) return false;
-			return true;
+			return node.Payload == first * 0x0101010101010101UL;
 		}
 		bool allChildrenHomo = true;
 		ulong? firstMat = null;
@@ -234,5 +254,81 @@ public class GpuSvoModel : IModel
 		}
 	}
 	IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+	#endregion
+	#region IBrickModel
+	/// <summary>
+	/// Gets a 2x2x2 brick at the specified coordinates.
+	/// IBrickModel convention: Only return non-zero bricks (this is a SPARSE voxel octree).
+	/// </summary>
+	public ulong GetBrick(ushort x, ushort y, ushort z)
+	{
+		ushort brickX = (ushort)(x & ~1);
+		ushort brickY = (ushort)(y & ~1);
+		ushort brickZ = (ushort)(z & ~1);
+		if (brickX >= SizeX || brickY >= SizeY || brickZ >= SizeZ)
+			return 0;
+		uint nIdx = 0;
+		for (int depth = 0; depth < MaxDepth - 1; depth++)
+		{
+			uint data = Nodes[nIdx];
+			// Test bit 31 (Internal vs Leaf)
+			if ((data & FLAG_INTERNAL) == 0)
+				return GetLeafBrick(data);
+			byte mask = (byte)(data & 0xFF);
+			int shift = MaxDepth - 1 - depth,
+				oct = (((brickZ >> shift) & 1) << 2) | (((brickY >> shift) & 1) << 1) | ((brickX >> shift) & 1);
+			if ((mask & (1 << oct)) == 0)
+				return 0; // No data (sparse)
+			uint childBase = (data & ~FLAG_INTERNAL) >> 8;
+			nIdx = childBase + PopCount8[mask & ((1 << oct) - 1)];
+		}
+		return GetLeafBrick(Nodes[nIdx]);
+	}
+
+	private ulong GetLeafBrick(uint data)
+	{
+		// Test bit 30 (Uniform vs Brick)
+		if ((data & FLAG_LEAF_TYPE) == 0)
+		{
+			// Uniform leaf - all 8 voxels same color
+			ulong mat = data & 0xFF;
+			return mat | (mat << 8) | (mat << 16) | (mat << 24) |
+			       (mat << 32) | (mat << 40) | (mat << 48) | (mat << 56);
+		}
+		// Brick leaf - return payload directly
+		int pIdx = (int)(data & ~FLAG_LEAF_TYPE);
+		return Payloads[pIdx];
+	}
+	IEnumerator<VoxelBrick> IEnumerable<VoxelBrick>.GetEnumerator()
+	{
+		Stack<(uint idx, int depth, ushort x, ushort y, ushort z)> stack = new();
+		stack.Push((0, 0, 0, 0, 0));
+		while (stack.Count > 0)
+		{
+			(uint cIdx, int depth, ushort x, ushort y, ushort z) = stack.Pop();
+			uint data = Nodes[cIdx];
+			if ((data & FLAG_INTERNAL) == 0)
+			{
+				// Leaf node - yield as brick
+				ulong payload = GetLeafBrick(data);
+				if (payload != 0 && x < SizeX && y < SizeY && z < SizeZ)
+					yield return new VoxelBrick(x, y, z, payload);
+				continue;
+			}
+			// Internal node - recurse into children
+			byte mask = (byte)(data & 0xFF);
+			uint baseIdx = (data & ~FLAG_INTERNAL) >> 8;
+			int off = PopCount8[mask] - 1;
+			for (int i = 7; i >= 0; i--)
+				if ((mask & (1 << i)) != 0)
+				{
+					int shift = MaxDepth - 1 - depth;
+					ushort childX = (ushort)(x | ((i & 1) << shift));
+					ushort childY = (ushort)(y | (((i >> 1) & 1) << shift));
+					ushort childZ = (ushort)(z | (((i >> 2) & 1) << shift));
+					stack.Push((baseIdx + (uint)off--, depth + 1, childX, childY, childZ));
+				}
+		}
+	}
 	#endregion
 }

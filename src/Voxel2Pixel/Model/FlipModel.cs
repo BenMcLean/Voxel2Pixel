@@ -36,6 +36,6 @@ public class FlipModel : ContainerModel
 			X: FlipX ? (ushort)(SizeX - 1 - voxel.X) : voxel.X,
 			Y: FlipY ? (ushort)(SizeY - 1 - voxel.Y) : voxel.Y,
 			Z: FlipZ ? (ushort)(SizeZ - 1 - voxel.Z) : voxel.Z,
-			Index: voxel.Index))
+			Material: voxel.Material))
 		.GetEnumerator();
 }

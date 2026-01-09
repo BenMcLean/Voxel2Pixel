@@ -12,7 +12,7 @@ public class ArrayModel(byte[][][] voxels) : IEditableModel, ITurnable
 	public ArrayModel(IModel model) : this(model.SizeX, model.SizeY, model.SizeZ)
 	{
 		foreach (Voxel voxel in model)
-			Array[voxel.X][voxel.Y][voxel.Z] = voxel.Index;
+			Array[voxel.X][voxel.Y][voxel.Z] = voxel.Material;
 	}
 	public byte[][][] Array { get; set; } = voxels;
 	#region IEditableModel

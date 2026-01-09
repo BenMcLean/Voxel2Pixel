@@ -33,7 +33,7 @@ public class DictionaryModel : IEditableModel
 			}
 		}
 		foreach (Voxel voxel in voxels)
-			this[voxel.X, voxel.Y, voxel.Z] = voxel.Index;
+			this[voxel.X, voxel.Y, voxel.Z] = voxel.Material;
 	}
 	#endregion DictionaryModel
 	#region IEditableModel
@@ -43,7 +43,7 @@ public class DictionaryModel : IEditableModel
 			X: (ushort)voxel.Key,
 			Y: (ushort)(voxel.Key >> 16),
 			Z: (ushort)(voxel.Key >> 32),
-			Index: voxel.Value))
+			Material: voxel.Value))
 		.GetEnumerator();
 	public ushort SizeX { get; set; } = 0;
 	public ushort SizeY { get; set; } = 0;

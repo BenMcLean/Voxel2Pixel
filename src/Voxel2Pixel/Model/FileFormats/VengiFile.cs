@@ -299,7 +299,7 @@ public static class VengiFile
 								X: (ushort)(UpperX - x - LowerX),
 								Y: (ushort)(z - LowerZ),
 								Z: (ushort)(y - LowerY),
-								Index: (byte)(voxel.Color + 1));
+								Material: (byte)(voxel.Color + 1));
 		}
 		public Point3D Size => new(
 			x: UpperX - LowerX + 1,

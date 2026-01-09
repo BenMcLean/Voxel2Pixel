@@ -30,7 +30,7 @@ public class TurnModel : ContainerModel, ITurnable
 		foreach (Voxel voxel in Model)
 		{
 			Point3D point = ReverseRotate(new Point3D(voxel.X, voxel.Y, voxel.Z));
-			yield return new Voxel((ushort)point.X, (ushort)point.Y, (ushort)point.Z, voxel.Index);
+			yield return new Voxel((ushort)point.X, (ushort)point.Y, (ushort)point.Z, voxel.Material);
 		}
 	}
 	#endregion ContainerModel
