@@ -1,24 +1,21 @@
-### **I. Program Objective**
+# 1. Program Objective
 
-To build a **C\# Voxel Engine Core** that enables the editing and rendering of a massive $65,536^3$ coordinate space using a fixed, low-memory footprint. The system must emulate virtual memory: keeping the full dataset on the "disk" (RAM) while only loading the active viewing area into the "cache" (GPU VRAM).
+To build a **C# Voxel Engine Core** that enables the editing and rendering of a massive 65,536³ coordinate space using a fixed, low-memory footprint. The system must emulate virtual memory: keeping the full dataset on the "disk" (RAM) while only loading the active viewing area into the "cache" (GPU VRAM).
 
----
+# 2. Core Technical Requirements
 
-### **II. Core Technical Requirements**
+* **Coordinate Space:** 16-bit Unsigned Integer 0 to 65,535.
+* **Coordinate System:** Right-handed, Z-up.
+* **Voxel Unit:** 8-bit value (0 = Empty, 1–255 = Material).
+* **Atomic Data Unit:** The "Brick" (2x2x2 voxels = 8 bytes).
+* **Performance:** Zero memory allocation during the update loop; reliance on bit-shifting over division.
+* **Dependency:** The Core library must be Engine-Agnostic (No references to Godot/Unity).
 
-* **Coordinate Space:** 16-bit Unsigned Integer ($0$ to $65,535$).  
-* **Coordinate System:** Right-handed, Z-up.  
-* **Voxel Unit:** 8-bit value (0 \= Empty, 1–255 \= Material).  
-* **Atomic Data Unit:** The "Brick" ($2 \\times 2 \\times 2$ voxels \= 8 bytes).  
-* **Performance:** Zero memory allocation during the update loop; reliance on bit-shifting over division.  
-* **Dependency:** The Core library must be Engine-Agnostic (No references to Godot/Unity).  
-  ---
+# 3. Algorithmic Strategy: Virtual Address Mapping
 
-  ### **III. Algorithmic Strategy: The "Virtual Address"**
+## 3.1 Bit-Sliced Addressing Scheme
 
-III. Algorithmic Strategy: The "Virtual Address"
-
-The system utilizes a Bit-Sliced Addressing Scheme to map a world coordinate $(x, y, z)$ into a physical memory address.
+The system utilizes a Bit-Sliced Addressing Scheme to map a world coordinate `(x, y, z)` into a physical memory address.
 
 * **Bits 8–15 (8 bits):** **Segment ID**. Maps to the SegmentedDictionary. (256 Segments per axis).
 * **Bits 1–7 (7 bits):** **Brick Index**. Position of brick within segment. (128 Bricks per Segment dimension).
@@ -26,116 +23,107 @@ The system utilizes a Bit-Sliced Addressing Scheme to map a world coordinate $(x
 
 **Total Coordinate Reach:** 256 segments times 128 bricks times 2 voxels/brick \= 65,536 voxels per axis.
 
----
+# 4. Data Structure Specification
 
-### **IV. Class-Level Specification**
-
-#### **A. Core Data Structures (Engine Agnostic)**
+## 4.1 Core Data Structures (Engine Agnostic)
 
 These classes manage the raw data and memory virtualization.
 
-**1\. BrickPool (The Physical Memory)**
+### 4.1.1 `BrickPool` (The Physical Memory)
 
 * **Purpose:** Emulates VRAM in system RAM using a pre-allocated flat array.  
 * **Data Structure:**  
-  * byte\[\] Data: A massive flat array storing bricks.  
-  * Stack\<int\> FreeSlots: Tracks reusable Slot IDs to ensure zero-allocation.  
+  * `byte[] Data`: A massive flat array storing bricks.  
+  * `Stack<int> FreeSlots`: Tracks reusable Slot IDs to ensure zero-allocation.  
 * **Key Behavior:**  
-  * Stores data in **RG8 format** (Interleaved). Every 2 bytes represent a vertical pair of voxels ($Z=0$ and $Z=1$) to align with GPU texture formats.  
+  * Stores data in **RG8 format** (Interleaved). Every 2 bytes represent a vertical pair of voxels (`Z=0` and `Z=1`) to align with GPU texture formats.  
   * **Capacity:** Fixed size (Window) defining the maximum "active" geometry.
 
-**2\. BrickTable (The Address Translator)**
+### 4.1.2 `BrickTable` (The Address Translator)
 
 * **Purpose:** Maps World Coordinates to BrickPool Slot IDs.
 * **Data Structure:**
-  * Dictionary\<ulong, uint\[\]\>: A sparse map where the key is the Segment ID and the value is a dense $128^3$ array of Slot IDs.
+  * `Dictionary<ulong, uint[]>`: A sparse map where the key is the Segment ID and the value is a dense `128³` array of Slot IDs.
 * **Key Behavior:**
   * **Lookup:** Takes the brick coordinates (bits 1-7 of x, y, z) to find the Slot ID.
   * **Output:** Effectively generates the data required for an R32\_UI texture lookup on the GPU.
   * **Slot Mapping:** Value 0 = unmapped (brick not in cache). Value N (N ≥ 1) maps to BrickPool slot (N-1).
 
-**3\. SegmentedDictionary (The Persistent Store)**
+### 4.1.3 `SegmentedDictionary` (The Persistent Store)
 
 * **Purpose:** The "Hard Drive." Holds the entire universe, including parts not currently visible.
 * **Data Structure:**
-  * Dictionary\<ulong, byte\[\]\>: Sparse storage where each key uniquely identifies one brick in the world, and each value is 8 bytes.
-  * **Key Format:** Packed (segmentId, brickIndex) - See Section 1.1 for packing formula.
+  * `Dictionary<ulong, byte[]>`: Sparse storage where each key uniquely identifies one brick in the world, and each value is 8 bytes.
+  * **Key Format:** Packed (segmentId, brickIndex) - See Section 3.6 for packing formula.
 * **Key Behavior:**
   * **Sparse:** Only stores non-empty bricks. Empty/air bricks are omitted entirely.
   * Handles "brick faults" by retrieving data when the BrickTable requests a brick that isn't currently cached.
   * On eviction, receives dirty bricks written back from BrickPool.
 
-  ---
+## 4.2 Controller (Engine Agnostic)
 
-  #### **B. The Controller (Engine Agnostic)**
-
-**4\. PagedBrickModel (The Orchestrator)**
+### 4.2.1 `SegmentedBrickModel` (The Orchestrator)
 
 * **Purpose:** The public API for the voxel system. It coordinates the "Read/Write" cycle.
 * **Methods:**
-  * SetVoxel(x, y, z, value):
-    1. **Check Cache:** Queries BrickTable for a Slot ID.
-    2. **Miss (Brick Fault):** If value is 0 (unmapped), fetch 8 bytes from SegmentedDictionary (or create empty brick if not found), allocate a new Slot ID from BrickPool, and update BrickTable.
-    3. **Hit:** Write the new voxel value directly into the BrickPool byte\[\].
-    4. **Sync:** Push a DirtyEvent (Slot ID \+ New Data) to the observer.
+  * `SetVoxel(x, y, z, value)`:
+	1. **Check Cache:** Queries BrickTable for a Slot ID.
+	2. **Miss (Brick Fault):** If value is 0 (unmapped), fetch 8 bytes from SegmentedDictionary (or create empty brick if not found), allocate a new Slot ID from BrickPool, and update BrickTable.
+	3. **Hit:** Write the new voxel value directly into the BrickPool byte\[\].
+	4. **Sync:** Push a DirtyEvent (Slot ID \+ New Data) to the observer.
 * **Events:**
-  * OnBrickDirty(int slotId, byte\[\] new8Bytes): Signals that the GPU needs to update specific pixels.
+	* `OnBrickDirty(int slotId, byte[] new8Bytes)`: Signals that the GPU needs to update specific pixels.
 
-  ---
+**Note on Naming:** The class is called SegmentedBrickModel because it implements architectural segmentation with virtual address translation, not simply generic data splitting. Each "segment" is a precisely defined 128³ brick region (256³ voxels) with its own address space. The segmentation enables:
+- Virtual memory paging: Only active segments are mapped to the BrickPool cache
+- Sparse storage: Segments are allocated on-demand in SegmentedDictionary
+- Deterministic addressing: World coordinates map directly to segment IDs via bit-slicing
 
-  #### **C. The Integration Layer (Engine Specific)**
+This differs from arbitrary chunking or partitioning schemes where divisions are primarily for spatial organization rather than virtual memory management.
+
+## 4.3 Integration Layer (Engine Specific)
 
 This class bridges the pure C\# logic with the specific game engine (e.g., Godot).
 
-**5\. GodotVoxelBridge (The Renderer)**
+### 4.3.1 GodotVoxelBridge (The Renderer)
 
 * **Purpose:** Listens to the Core and updates the GPU Texture.  
-* **Dependencies:** Reference to PagedBrickModel and the Engine's Rendering Server.  
+* **Dependencies:** Reference to SegmentedBrickModel and the Engine's Rendering Server.  
 * **Key Behavior:**  
   * **Initialization:** Creates the Texture2DArray (The Mirror) on the GPU.  
   * **Event Handling:** Subscribes to OnBrickDirty.  
-  * **Texture Packing:** Converts the linear SlotID into $(u, v, w)$ texture coordinates.  
-  * **Update:** Calls the engine command (e.g., RenderingServer.TextureUpdate) to replace exactly 4 pixels (8 bytes) on the GPU.
+  * **Texture Packing:** Converts the linear SlotID into `(u, v, w)` texture coordinates.  
+  * **Update:** Calls the engine command (e.g., `RenderingServer.TextureUpdate`) to replace exactly 4 pixels (8 bytes) on the GPU.
 
-  ---
-
-  ### **V. Success Metrics**
+## 4.4 Success Metrics
 
 The implementation is successful only if:
 
-1. **Fixed VRAM:** You can edit voxels at $(0,0,0)$ and $(65000, 65000, 65000)$ without the GPU texture growing in size.  
-2. **No Lag:** The SetVoxel method generates **zero garbage collection** pressure (no new keywords in the loop).  
+1. **Fixed VRAM:** You can edit voxels at `(0,0,0)` and `(65000, 65000, 65000)` without the GPU texture growing in size.
+2. **No Lag:** The SetVoxel method generates **zero garbage collection** pressure (no new keywords in the loop).
 3. **Correctness:** A modification in C\# reflects instantly on the GPU Mirror.
 
-# **1\. Canonical Virtual Address Mapping**
-
-### **Design Goals**
+## 3.2 Design Goals
 
 * Deterministic
-
 * GPU-friendly
-
 * Easy bit extraction
-
-* Compatible with `256³` persistent regions and `128³` cache pages
-
+* Compatible with `256³` persistent regions and `128³` cache bricks
 * Avoids Morton complexity unless truly needed
 
-### **Brick Coordinates**
+## 3.3 Brick Coordinates
 
 Each voxel coordinate `(x, y, z)` is first snapped to a brick origin:
 
-`bx = x & ~1;`
-
-`by = y & ~1;`
-
-`bz = z & ~1;`
+```csharp
+bx = x & ~1;
+by = y & ~1;
+bz = z & ~1;
+```
 
 Each brick occupies a `2×2×2` region.
 
----
-
-### **Brick-Space Decomposition**
+## 3.4 Brick-Space Decomposition
 
 Each axis is decomposed as:
 
@@ -147,19 +135,15 @@ Each axis is decomposed as:
 
 Thus:
 
-`World axis (16 bits)`
+```
+World axis (16 bits)
+┌───────────────┬───────────────┬───────┐
+│ Segment (8)   │ Brick (7)     │ Voxel │
+│ bits 8–15     │ bits 1–7      │ bit 0 │
+└───────────────┴───────────────┴───────┘
+```
 
-`┌───────────────┬───────────────┬───────┐`
-
-`│ Segment (8)   │ Brick (7)     │ Voxel │`
-
-`│ bits 8–15     │ bits 1–7      │ bit 0 │`
-
-`└───────────────┴───────────────┴───────┘`
-
----
-
-### **Segment ID (Persistent Store Key)**
+## 3.5 Segment ID (Persistent Store Key)
 
 Segments are **128×128×128 bricks**, i.e. **256³ voxels**.
 
@@ -167,21 +151,20 @@ All segmentation and paging operates in **brick space**; voxel space is derived.
 
 Segment coordinates:
 
-`sx = x >> 8;`
-
-`sy = y >> 8;`
-
-`sz = z >> 8;`
+```csharp
+sx = x >> 8;
+sy = y >> 8;
+sz = z >> 8;
+```
 
 Packed into a 64-bit key:
 
-`ulong segmentId =`
-
-    `((ulong)sx << 32) |`
-
-    `((ulong)sy << 16) |`
-
-    `(ulong)sz;`
+```csharp
+ulong segmentId =
+	((ulong)sx << 32) |
+	((ulong)sy << 16) |
+	(ulong)sz;
+```
 
 This directly indexes:
 
@@ -189,91 +172,81 @@ This directly indexes:
 
 Each segment contains a volume of 128x128x128 bricks.
 
----
-
-### **Brick Index (Cache-Level Address)**
+## 3.6 Brick Index Within Segment
 
 Each segment contains **128×128×128 bricks**.
 
 Brick coordinates within segment:
 
-`px = (x >> 1) & 0x7F;`
-
-`py = (y >> 1) & 0x7F;`
-
-`pz = (z >> 1) & 0x7F;`
+```csharp
+px = (x >> 1) & 0x7F;
+py = (y >> 1) & 0x7F;
+pz = (z >> 1) & 0x7F;
+```
 
 These index into the BrickTable entry for that segment.
 
----
-
-### **Why this mapping is correct**
+### Why This Mapping is Correct
 
 * **Bitwise only** (no division/modulo)
-
 * Segment boundaries align with large streaming regions
-
 * Brick-level addressing aligns with GPU cache locality
-
 * Independent X/Y/Z addressing simplifies raymarch math
-
 * Avoids Morton cost unless later required
 
----
+## 3.7 Brick Key Packing (SegmentedDictionary)
 
-# **1.1. Brick Key Packing (SegmentedDictionary)**
-
-### **Purpose**
+### Purpose
 
 The SegmentedDictionary uses a flat sparse structure where each brick in the world has a unique 64-bit key. This section defines the canonical packing format.
 
-### **Key Composition**
+### Key Composition
 
 A brick is uniquely identified by:
 * **Segment coordinates:** `(sx, sy, sz)` - 8 bits each, derived from bits 8-15 of world coordinates
 * **Brick index:** Linear index within segment - 21 bits (128³ = 2,097,152 values)
 
-### **Packing Formula**
+### Packing Formula
 
 ```csharp
 // Pack segment and brick coordinates into a 64-bit key
 ulong MakeBrickKey(ushort sx, ushort sy, ushort sz, int brickIndex)
 {
-    // Segment ID: 24 bits (8 bits per axis)
-    ulong segmentId = ((ulong)sx << 16) | ((ulong)sy << 8) | (ulong)sz;
+	// Segment ID: 24 bits (8 bits per axis)
+	ulong segmentId = ((ulong)sx << 16) | ((ulong)sy << 8) | (ulong)sz;
 
-    // Pack: high 43 bits for segmentId, low 21 bits for brickIndex
-    return (segmentId << 21) | (ulong)brickIndex;
+	// Pack: high 43 bits for segmentId, low 21 bits for brickIndex
+	return (segmentId << 21) | (ulong)brickIndex;
 }
 
 // Convenience: Compute from world coordinates
 ulong MakeBrickKey(ushort x, ushort y, ushort z)
 {
-    ushort sx = (ushort)(x >> 8);
-    ushort sy = (ushort)(y >> 8);
-    ushort sz = (ushort)(z >> 8);
+	ushort sx = (ushort)(x >> 8);
+	ushort sy = (ushort)(y >> 8);
+	ushort sz = (ushort)(z >> 8);
 
-    int px = (x >> 1) & 0x7F;
-    int py = (y >> 1) & 0x7F;
-    int pz = (z >> 1) & 0x7F;
-    int brickIndex = px | (py << 7) | (pz << 14);
+	int px = (x >> 1) & 0x7F;
+	int py = (y >> 1) & 0x7F;
+	int pz = (z >> 1) & 0x7F;
+	int brickIndex = px | (py << 7) | (pz << 14);
 
-    return MakeBrickKey(sx, sy, sz, brickIndex);
+	return MakeBrickKey(sx, sy, sz, brickIndex);
 }
 ```
 
-### **Unpacking (for debugging)**
+### Unpacking (for debugging)
 
 ```csharp
 (uint segmentId, int brickIndex) UnpackBrickKey(ulong key)
 {
-    int brickIndex = (int)(key & 0x1FFFFF);  // Low 21 bits
-    uint segmentId = (uint)(key >> 21);       // High 43 bits (24 used)
-    return (segmentId, brickIndex);
+	int brickIndex = (int)(key & 0x1FFFFF);  // Low 21 bits
+	uint segmentId = (uint)(key >> 21);       // High 43 bits (24 used)
+	return (segmentId, brickIndex);
 }
 ```
 
-### **Usage**
+### Usage
 
 ```csharp
 // Store brick
@@ -283,69 +256,63 @@ segmentedDictionary[key] = brickData; // 8 bytes
 // Retrieve brick
 if (segmentedDictionary.TryGetValue(key, out byte[] data))
 {
-    // Brick exists
+	// Brick exists
 }
 else
 {
-    // Brick is empty/air
+	// Brick is empty/air
 }
 ```
 
----
-
-# **2\. BrickTable Layout**
+## 3.8 BrickTable Layout Details
 
 Each segment has exactly **one brick table**:
 
-`Dictionary<ulong, uint[]> BrickTable;`
+```csharp
+Dictionary<ulong, uint[]> BrickTable;
+```
 
-### **Brick Table Entry**
+### Brick Table Entry
 
-`uint[] bricks = new uint[128 * 128 * 128];`
+```csharp
+uint[] bricks = new uint[128 * 128 * 128];
+```
 
-* `0` \= unmapped (brick fault - brick not in cache)
-
-* `>0` \= BrickPool SlotID \+ 1
-   (avoids ambiguity with default zero-initialized memory)
+* `0` = unmapped (brick fault - brick not in cache)
+* `>0`= BrickPool SlotID \+ 1 (avoids ambiguity with default zero-initialized memory)
 
 A BrickTable value of N corresponds to BrickPool slot (N - 1). All slots from 0 to Capacity-1 are usable.
 
----
-
-### **Brick Index Linearization**
+### Brick Index Linearization
 
 Canonical layout (X-major, then Y, then Z):
 
-`brickIndex = px + (py << 7) + (pz << 14);`
+```csharp
+brickIndex = px + (py << 7) + (pz << 14);
+```
 
 Equivalently:
 
-`brickIndex = px | (py << 7) | (pz << 14);`
+```csharp
+brickIndex = px | (py << 7) | (pz << 14);
+```
 
 This ordering:
 
 * Matches natural memory traversal
-
 * Is cache-friendly on CPU
-
 * Is trivial to replicate in GPU code if needed
 
----
-
-### **GPU Compatibility Note**
+### GPU Compatibility Note
 
 This linear index can be uploaded **directly** to an `R32_UINT` texture if you ever want a GPU-side brick table.
 
----
+# 5. Cache Management & Eviction
 
-# **3\. Cache Eviction & Persistence Policy**
-
-## **BrickPool Invariants**
+## 5.1 BrickPool Invariants
 
 * BrickPool has **fixed capacity**
-
 * Slot IDs are reused
-
 * No allocation during updates
 
 **Initialization Logic:**
@@ -353,163 +320,119 @@ This linear index can be uploaded **directly** to an `R32_UINT` texture if you e
 * Upon instantiation, the `FreeSlots` stack **must be pre-populated** with all integers from `Capacity - 1` down to `0`.
 * **All slots are usable:** Slot 0 through Capacity-1 are all valid cache slots. The +1 offset in BrickTable handles the zero-initialization issue.
 
----
+## 5.2 Eviction Strategy (Normative)
 
-## **Eviction Strategy (Normative)**
-
-### **Policy: Explicit Region-Based Eviction**
+### Policy: Explicit Region-Based Eviction
 
 The core does **not** autonomously evict bricks.
 
 Instead:
 
 * The **editor camera / tool** defines an *active region*
-
 * Bricks outside this region are explicitly released
 
 This matches an editor \+ raymarcher workflow:
 
 * Predictable
-
 * Deterministic
-
 * No surprise stalls
-
 * No hidden GC or heuristics
 
----
-
-### **Eviction Procedure**
+## 5.3 Eviction Procedure
 
 When a slot is evicted:
 
 1. Read the 8-byte payload from `BrickPool`
-
 2. Write it back to `SegmentedDictionary` using packed key (segmentId, brickIndex)
-
 3. Clear the BrickTable entry (set to 0)
-
 4. Return SlotID to `FreeSlots`
 
 Dirty tracking is implicit — **all cached bricks are authoritative**.
 
----
-
-### **Why not LRU?**
+## 5.4 Why not LRU?
 
 * LRU requires metadata updates per access
-
 * LRU introduces branching & GC risk
-
 * Editor tools know spatial intent better than heuristics
 
----
+# 6. GPU Integration
 
-# **6\. Godot 4 GPU Raymarcher Integration**
+## 6.1 GPU Resources
 
----
+### Brick Data Texture (Primary)
 
-## **GPU Resources**
+**Texture2DArray**
 
-### **Brick Data Texture (Primary)**
-
-* **Texture2DArray**
-
-* Format: `RG8_UNORM`
-
+Format: `RG8_UNORM`
 * Each layer \= one BrickPool slot
-
 * Each brick \= **2×2 pixels**
-
 * Each pixel \= `(voxelZ0, voxelZ1)`
 
 Layout:
 
-`Pixel (x,y):`
+```
+Pixel (x,y):
+R = voxel (x,y,z=0)
+G = voxel (x,y,z=1)
+```
 
-`R = voxel (x,y,z=0)`
-
-`G = voxel (x,y,z=1)`
-
----
-
-### **SlotID → Texture Coordinates**
+### SlotID → Texture Coordinates
 
 Given `slotId`:
 
-`layer = slotId;`
-
-`u = localX;`
-
-`v = localY;`
+```
+layer = slotId;
+u = localX;
+v = localY;
+```
 
 GPU-side:
 
-`vec2 uv = (vec2(localX, localY) + 0.5) / 2.0;`
+```
+vec2 uv = (vec2(localX, localY) + 0.5) / 2.0;
+uint voxelPair = texelFetch(brickTexture, ivec3(localX, localY, layer), 0).rg;
+```
 
-`uint voxelPair = texelFetch(brickTexture, ivec3(localX, localY, layer), 0).rg;`
-
----
-
-## **GPU Addressing Flow (Raymarcher)**
+## 6.2 GPU Addressing Flow (Raymarcher)
 
 For each ray step:
 
 1. Compute `(x, y, z)` in voxel space
-
 2. Snap to brick
-
 3. Compute `segmentId` (or region ID)
-
 4. Lookup brick table (CPU-uploaded or implicit)
-
 5. Fetch SlotID
-
 6. Fetch RG8 brick data
-
 7. Extract voxel via bit logic
 
----
-
-## **CPU → GPU Sync**
+## 6.3 CPU → GPU Sync
 
 `OnBrickDirty(slotId, byte[8])` results in:
 
-`RenderingServer.TextureUpdate(`
-
-    `textureRid,`
-
-    `layer: slotId,`
-
-    `rect: new Rect2I(0, 0, 2, 2),`
-
-    `data: new byte[8]`
-
-`);`
+```csharp
+RenderingServer.TextureUpdate(
+	textureRid,
+	layer: slotId,
+	rect: new Rect2I(0, 0, 2, 2),
+	data: new byte[8]
+);
+```
 
 Exactly **4 pixels updated** — minimal bandwidth.
 
-## **7\. BrickPool Memory Layout & GPU Texture Packing**
+## 6.4 BrickPool Memory Layout & GPU Texture Packing
 
-### **Design Goals**
+### Design Goals
 
 * Exact byte-for-byte agreement between:
-
   * CPU BrickPool storage
-
   * GPU Texture2DArray representation
-
 * Minimal bandwidth for updates
-
 * Zero per-voxel GPU indirection
-
 * Brick-local spatial coherence
-
 * Compatibility with `VoxelBrick` bit layout
 
----
-
-## **7.1 Brick Definition (Canonical)**
+### Brick Definition (Canonical)
 
 A **Brick** represents a `2×2×2` voxel cube:
 
@@ -523,95 +446,76 @@ Voxel payload is an **8-bit material ID**.
 
 A brick therefore occupies **exactly 8 bytes**.
 
----
-
-## **7.2 BrickPool CPU Memory Layout**
+### BrickPool CPU Memory Layout
 
 `BrickPool.Data` is a flat byte array:
 
-`byte[] Data;`
+```csharp
+byte[] Data;
+```
 
 Each brick occupies a **contiguous 8-byte region**:
 
-`int baseOffset = slotId * 8;`
+```csharp
+int baseOffset = slotId * 8;
+```
 
-### **Canonical Byte Order**
+#### Canonical Byte Order
 
 The bytes are ordered as:
 
-`byte 0: (x=0, y=0, z=0)`
-
-`byte 1: (x=0, y=0, z=1)`
-
-`byte 2: (x=1, y=0, z=0)`
-
-`byte 3: (x=1, y=0, z=1)`
-
-`byte 4: (x=0, y=1, z=0)`
-
-`byte 5: (x=0, y=1, z=1)`
-
-`byte 6: (x=1, y=1, z=0)`
-
-`byte 7: (x=1, y=1, z=1)`
+```
+byte 0: (x=0, y=0, z=0)
+byte 1: (x=0, y=0, z=1)
+byte 2: (x=1, y=0, z=0)
+byte 3: (x=1, y=0, z=1)
+byte 4: (x=0, y=1, z=0)
+byte 5: (x=0, y=1, z=1)
+byte 6: (x=1, y=1, z=0)
+byte 7: (x=1, y=1, z=1)
+```
 
 Or equivalently:
 
-`int byteIndex =`
-
-    `((localY << 1) | localX) * 2 + localZ;`
+```csharp
+int byteIndex = ((localY << 1) | localX) * 2 + localZ;
+```
 
 This mapping is **isomorphic** to the bit layout used by `VoxelBrick`.
 
----
-
-## **7.3 BrickPool ↔ VoxelBrick Equivalence**
+### BrickPool ↔ VoxelBrick Equivalence
 
 A brick stored in `BrickPool` is bitwise equivalent to a `VoxelBrick.Payload`:
 
-`ulong payload =`
-
-    `(ulong)Data[offset + 0] << 0  |`
-
-    `(ulong)Data[offset + 1] << 8  |`
-
-    `(ulong)Data[offset + 2] << 16 |`
-
-    `(ulong)Data[offset + 3] << 24 |`
-
-    `(ulong)Data[offset + 4] << 32 |`
-
-    `(ulong)Data[offset + 5] << 40 |`
-
-    `(ulong)Data[offset + 6] << 48 |`
-
-    `(ulong)Data[offset + 7] << 56;`
+```csharp
+ulong payload =
+	(ulong)Data[offset + 0] << 0  |
+	(ulong)Data[offset + 1] << 8  |
+	(ulong)Data[offset + 2] << 16 |
+	(ulong)Data[offset + 3] << 24 |
+	(ulong)Data[offset + 4] << 32 |
+	(ulong)Data[offset + 5] << 40 |
+	(ulong)Data[offset + 6] << 48 |
+	(ulong)Data[offset + 7] << 56;
+```
 
 This guarantees:
 
 * CPU editing logic
-
 * Serialization logic
-
 * GPU texture updates
 
 all observe **exactly the same voxel ordering**.
 
----
+## 6.5 GPU Texture Layout
 
-## **7.4 GPU Texture Layout**
-
-### **Texture Type**
+### Texture Type
 
 * `Texture2DArray`
-
 * Format: `RG8_UNORM`
-
 * Dimensions: `2 × 2 × BrickPoolCapacity`
 
----
-
-### **Brick → Texture Mapping**
+### Brick → Texture Mapping
 
 Each **BrickPool slot** maps to **one texture layer**.
 
@@ -626,423 +530,295 @@ Within that layer:
 
 This corresponds exactly to the CPU byte order:
 
-`pixelX = localX;`
+```csharp
+pixelX = localX;
+pixelY = localY;
+channel = localZ; // R = 0, G = 1
+```
 
-`pixelY = localY;`
-
-`channel = localZ; // R = 0, G = 1`
-
----
-
-## **7.5 GPU Access Formula (Raymarcher)**
+## 6.6 GPU Access Formula (Raymarcher)
 
 Given:
 
 * `slotId`
-
 * `localX, localY, localZ`
 
 GPU fetch:
 
-`uvec2 voxelPair =`
-
-    `texelFetch(brickTexture, ivec3(localX, localY, slotId), 0).rg;`
-
-`uint voxel =`
-
-    `(localZ == 0) ? voxelPair.r : voxelPair.g;`
+```
+uvec2 voxelPair = texelFetch(brickTexture, ivec3(localX, localY, slotId), 0).rg;
+uint voxel = (localZ == 0) ? voxelPair.r : voxelPair.g;
+```
 
 This requires:
 
 * One texture fetch
-
 * One conditional select
-
 * No bit shifts on GPU
 
----
-
-## **7.6 Brick Update Invariant**
+## 6.7 Brick Update Invariant
 
 When `OnBrickDirty(slotId, byte[8])` is raised:
 
 * Exactly **4 pixels** are updated
-
 * Exactly **8 bytes** are transferred
-
 * No format conversion is required
 
 This guarantees:
 
 * Minimal bandwidth
-
 * Stable performance
-
 * No CPU-side swizzling
 
-# 8\. Compatibility
+# 7. Compatibility & Interfaces
 
-To remain capable of effective serialization and deserialization, PagedBrickModel must implement IBrickModel:
+To remain capable of effective serialization and deserialization, SegmentedBrickModel must implement `IBrickModel`.
 
-/// \<summary\>
+## 7.1 `IBrickModel` Interface
 
+```csharp
+/// <summary>
 /// The VoxelBrick enumeration is sparse: it includes only all the non-empty bricks in an undefined order.
-
-/// \</summary\>
-
-public interface IBrickModel : IModel, IEnumerable\<VoxelBrick\>
-
+/// </summary>
+public interface IBrickModel : IModel, IEnumerable<VoxelBrick>
 {
-
 	// Default implementation of the IModel byte-access
-
-	// This makes any IBrickModel automatically compliant with IModel\!
-
-	// byte IModel.this\[ushort x, ushort y, ushort z\] \=\> VoxelBrick.GetVoxel(GetBrick(x, y, z), x & 1, y & 1, z & 1);
-
-	/// \<summary\>
-
-	/// Implementation should snap x,y,z to the nearest multiple of 2
-
-	/// internally using: x & ~1, y & ~1, z & ~1
-
-	/// \</summary\>
-
+	// This makes any IBrickModel automatically compliant with IModel!
+	// byte IModel.this[ushort x, ushort y, ushort z] => VoxelBrick.GetVoxel(GetBrick(x, y, z), x & 1, y & 1, z & 1);
+	/// <summary>
+	/// Implementation should snap x,y,z to the nearest multiple of 2 
+	/// internally using: x & -1, y & -1, z & -1
+	/// </summary>
 	ulong GetBrick(ushort x, ushort y, ushort z);
-
 }
+```
 
+## 7.2 `VoxelBrick` Structure
+
+```csharp
 public readonly record struct VoxelBrick(ushort X, ushort Y, ushort Z, ulong Payload)
-
 {
-
-	/// \<summary\>
-
+	/// <summary>
 	/// Extracts a single voxel byte from the 2x2x2 payload.
-
-	/// localX, localY, localZ must be 0 or 1\.
-
-	/// \</summary\>
-
-	public byte GetVoxel(int localX, int localY, int localZ) \=\> GetVoxel(Payload, localX, localY, localZ);
-
-	public static byte GetVoxel(ulong payload, int localX, int localY, int localZ) \=\>
-
-		(byte)((payload \>\> ((((localZ & 1\) \<\< 2\) | ((localY & 1\) \<\< 1\) | (localX & 1)) \<\< 3)) & 0xFF);
-
-	/// \<summary\>
-
+	/// localX, localY, localZ must be 0 or 1.
+	/// </summary>
+	public byte GetVoxel(int localX, int localY, int localZ) => GetVoxel(Payload, localX, localY, localZ);
+	public static byte GetVoxel(ulong payload, int localX, int localY, int localZ) =>
+		(byte)((payload >> ((((localZ & 1) << 2) | ((localY & 1) << 1) | (localX & 1)) << 3)) & 0xFF);
+	/// <summary>
 	/// A helper to "edit" a brick by returning a new one with one voxel changed
-
-	/// localX, localY, localZ must be 0 or 1\.
-
-	/// \</summary\>
-
+	/// localX, localY, localZ must be 0 or 1.
+	/// </summary>
 	public VoxelBrick WithVoxel(int localX, int localY, int localZ, byte material)
-
 	{
-
-		int shift \= ((localZ \<\< 2\) | (localY \<\< 1\) | localX) \<\< 3;
-
-		ulong mask \= 0xFFUL \<\< shift,
-
-			newPayload \= (Payload & \~mask) | ((ulong)material \<\< shift);
-
-		return this with { Payload \= newPayload };
-
+		int shift = ((localZ << 2) | (localY << 1) | localX) << 3;
+		ulong mask = 0xFFUL << shift,
+			newPayload = (Payload & ~mask) | ((ulong)material << shift);
+		return this with { Payload = newPayload };
 	}
-
 }
+```
 
-/// \<summary\>
+## 7.3 `IModel` Interface
 
+```csharp
+/// <summary>
 /// The Voxel enumeration is sparse: it includes only all the non-zero voxels in an undefined order.
-
-/// \</summary\>
-
-public interface IModel : IEnumerable\<Voxel\>, IEnumerable
-
+/// </summary>
+public interface IModel : IEnumerable<Voxel>, IEnumerable
 {
-
-	byte this\[ushort x, ushort y, ushort z\] { get; }
-
+	byte this[ushort x, ushort y, ushort z] { get; }
 	ushort SizeX { get; }
-
 	ushort SizeY { get; }
-
 	ushort SizeZ { get; }
-
 }
+```
 
+## 7.4 `Voxel` Structure
+
+```csharp
 public readonly record struct Voxel(ushort X, ushort Y, ushort Z, byte Material)
+```
 
-{
+# 8. Implementation Plan & Validation Stages
 
-	public static implicit operator Point3D(Voxel voxel) \=\> new()
+The implementation of `SegmentedBrickModel` should proceed in **clearly defined stages**, each producing a runnable, testable artifact. This reduces risk and ensures correctness before GPU integration.
 
-	{
-
-		X \= voxel.X,
-
-		Y \= voxel.Y,
-
-		Z \= voxel.Z,
-
-	};
-
-}
-
-# 9\. Explicit Non-Goals
-
-The `PagedBrickModel` data structure is intentionally **narrow in scope**. It exists to solve one specific problem: **low-latency, mutable voxel editing over a massive address space with fixed GPU memory usage**.
-
-The following features are **explicitly out of scope** for this structure and are handled by other specialized data structures in the ecosystem:
-
-* **Sparse Voxel Octrees (SVOs)**  
-   This system does not implement hierarchical voxel storage, pointer-based trees, or multi-resolution traversal. Separate SVO implementations are used for:
-
-  * Lossless compressed storage and network transmission
-
-  * Read-only, Morton-ordered GPU raymarching in runtime/game contexts
-
-* **Automatic Cache Eviction or Replacement Policies**  
-   The core does not perform LRU, LFU, or heuristic-driven eviction. All cache residency decisions are driven explicitly by editor tools and camera-defined active regions.
-
-* **GPU-Driven Page Faulting or Streaming**  
-   Page faults are handled entirely on the CPU. The GPU is treated as a consumer of already-resident brick data, not as a participant in memory management.
-
-* **Compression or Entropy Encoding**  
-   Brick data in this structure is stored uncompressed to guarantee constant-time random access and minimal update latency.
-
-* **Runtime Rendering Optimization**  
-   This structure is not intended to be used directly in shipping game runtimes. Its purpose is to support *authoring*, not final-frame performance. Runtime rendering is handled by a separate, baked representation.
-
-* **Spatial Ordering Guarantees**  
-   Neither `SlotID` assignment nor brick enumeration order has spatial meaning. Any spatial ordering (including Morton/Z-order) is delegated to downstream conversion steps.
-
-By excluding these concerns, `PagedBrickModel` remains:
-
-* Deterministic
-
-* Editor-friendly
-
-* Easy to reason about
-
-* Compatible with multiple downstream voxel representations
-
-# 10\. Implementation Plan & Validation Stages
-
-The implementation of `PagedBrickModel` should proceed in **clearly defined stages**, each producing a runnable, testable artifact. This reduces risk and ensures correctness before GPU integration.
-
----
-
-### **Stage 1: Core Brick Primitives (CPU-Only)**
+## 8.1 Stage 1: Core Brick Primitives (CPU-Only)
 
 **Goal:** Establish byte-exact correctness of brick representation.
 
 Deliverables:
 
 * `VoxelBrick` implementation
-
 * Brick byte ↔ payload conversion utilities
-
 * Unit tests verifying:
-
   * Correct voxel extraction
-
   * Correct voxel mutation
-
   * Byte-order invariants
 
 Validation:
 
 * Given a brick payload, all 8 voxel values round-trip correctly
-
 * CPU byte layout matches spec exactly
 
----
-
-### **Stage 2: BrickPool Implementation**
+## 8.2 Stage 2: BrickPool Implementation
 
 **Goal:** Implement fixed-capacity physical storage with zero allocations during updates.
 
 Deliverables:
 
 * `BrickPool`
-
   * Flat `byte[] Data`
-
   * Slot allocation and reuse
-
 * Unit tests verifying:
-
   * Slot reuse correctness
-
   * No memory allocation during steady-state edits
-
   * Correct offset math (`slotId * 8`)
 
 Validation:
 
 * Brick writes and reads are byte-exact
-
 * Capacity limits are enforced deterministically
 
----
-
-### **Stage 3: SegmentedDictionary (Persistent Store)**
+## 8.3 Stage 3: SegmentedDictionary (Persistent Store)
 
 **Goal:** Implement sparse, infinite backing storage.
 
 Deliverables:
 
 * `SegmentedDictionary`
-
   * `Dictionary<ulong, byte[]>`
-
   * Lazy segment creation
-
 * Unit tests verifying:
-
   * Segment key correctness
-
   * Brick read/write persistence across eviction
 
 Validation:
 
 * Evicted bricks reappear with identical payloads when reloaded
 
----
-
-### **Stage 4: BrickTable Implementation**
+## 8.4 Stage 4: BrickTable Implementation
 
 **Goal:** Implement deterministic address translation.
 
 Deliverables:
 
 * `BrickTable`
-
   * `Dictionary<ulong, uint[]>`
-
   * Brick index computation
-
 * Unit tests verifying:
-
   * Correct mapping from `(x,y,z)` → brick index
-
   * Correct slot lookup behavior
-
   * Brick fault detection (value = 0)
 
 Validation:
 
 * BrickTable mapping matches spec for known coordinates
-
 * SlotID \+ 1 invariant holds (value N maps to slot N-1)
 
----
-
-### **Stage 5: PagedBrickModel Orchestration**
+## 8.5 Stage 5: SegmentedBrickModel Orchestration
 
 **Goal:** Integrate all core components into a usable editing API.
 
 Deliverables:
 
-* `PagedBrickModel`
-
+* `SegmentedBrickModel`
   * `SetVoxel`
-
   * `GetBrick`
-
   * `IBrickModel` implementation
-
 * Event dispatch for `OnBrickDirty`
 
 Validation:
 
 * Editing voxels updates the correct brick
-
 * Brick faults correctly allocate and populate bricks
-
 * No allocations during edit loop
 
----
-
-### **Stage 6: Enumeration & Serialization Validation**
+## 8.6 Stage 6: Enumeration & Serialization Validation
 
 **Goal:** Ensure compatibility with downstream voxel representations.
 
 Deliverables:
 
 * `IEnumerable<VoxelBrick>` implementation
-
 * Serialization test harness
 
 Validation:
 
 * Enumeration yields only non-empty bricks
-
 * Enumeration order is undefined but stable per snapshot
-
 * Data round-trips into other `IBrickModel` implementations
 
----
-
-### **Stage 7: Godot 4 GPU Integration**
+## 8.7 Stage 7: Godot 4 GPU Integration
 
 **Goal:** Validate CPU ↔ GPU correctness.
 
 Deliverables:
 
 * `GodotVoxelBridge`
-
 * Texture2DArray allocation
-
 * Brick upload logic
 
 Validation:
 
 * Single brick edits appear immediately on GPU
-
 * Only 4 pixels are updated per brick change
-
 * Texture memory size remains constant
 
----
-
-### **Stage 8: GPU Raymarcher Demo**
+## 8.8 Stage 8: GPU Raymarcher Demo
 
 **Goal:** End-to-end proof of concept.
 
 Deliverables:
 
 * Simple Godot 4 scene
-
 * Camera-driven active region management
-
 * GPU raymarch shader consuming brick texture
 
 Validation:
 
 * Interactive voxel editing
-
 * Large coordinate jumps without GPU memory growth
-
 * Stable frame rate under typical editor usage
 
----
+# 9. Explicit Non-Goals
 
-# 11. Hardware Considerations & Scalability
+The `SegmentedBrickModel` data structure is intentionally **narrow in scope**. It exists to solve one specific problem: **low-latency, mutable voxel editing over a massive address space with fixed GPU memory usage**.
 
-### **Design Philosophy**
+The following features are **explicitly out of scope** for this structure and are handled by other specialized data structures in the ecosystem:
 
-The `PagedBrickModel` is designed to scale gracefully from mobile VR headsets to high-end desktop workstations without imposing artificial limits in the data structure itself. The system will naturally hit hardware boundaries based on available memory and GPU capabilities, allowing users to create models as large as their hardware can support.
+* **Sparse Voxel Octrees (SVOs)**
+   This system does not implement hierarchical voxel storage, pointer-based trees, or multi-resolution traversal. Separate SVO implementations are used for:
+  * Lossless compressed storage and network transmission
+  * Read-only, Morton-ordered GPU raymarching in runtime/game contexts
+* **Automatic Cache Eviction or Replacement Policies**
+   The core does not perform LRU, LFU, or heuristic-driven eviction. All cache residency decisions are driven explicitly by editor tools and camera-defined active regions.
+* **GPU-Driven Page Faulting or Streaming**
+   Page faults are handled entirely on the CPU. The GPU is treated as a consumer of already-resident brick data, not as a participant in memory management.
+* **Compression or Entropy Encoding**
+   Brick data in this structure is stored uncompressed to guarantee constant-time random access and minimal update latency.
+* **Runtime Rendering Optimization**
+   This structure is not intended to be used directly in shipping game runtimes. Its purpose is to support *authoring*, not final-frame performance. Runtime rendering is handled by a separate, baked representation.
+* **Spatial Ordering Guarantees**
+   Neither `SlotID` assignment nor brick enumeration order has spatial meaning. Any spatial ordering (including Morton/Z-order) is delegated to downstream conversion steps.
 
----
+By excluding these concerns, `SegmentedBrickModel` remains:
 
-### **Memory Scaling Characteristics**
+* Deterministic
+* Editor-friendly
+* Easy to reason about
+* Compatible with multiple downstream voxel representations
 
-#### **BrickTable Memory (CPU RAM)**
+# 10. Hardware Considerations & Scalability
+
+## 10.1 Design Philosophy
+
+The `SegmentedBrickModel` is designed to scale gracefully from mobile VR headsets to high-end desktop workstations without imposing artificial limits in the data structure itself. The system will naturally hit hardware boundaries based on available memory and GPU capabilities, allowing users to create models as large as their hardware can support.
+
+## 10.2 Memory Scaling Characteristics
+
+### BrickTable Memory (CPU RAM)
 
 Each active segment requires a BrickTable:
 * **Size per segment:** 128³ entries × 4 bytes = **8 MB**
@@ -1054,7 +830,7 @@ Each active segment requires a BrickTable:
 
 The system will naturally limit itself based on available RAM. Users working with extremely large models will need proportionally more system memory.
 
-#### **BrickPool Memory (GPU VRAM)**
+### BrickPool Memory (GPU VRAM)
 
 The BrickPool is a fixed-capacity cache of active bricks:
 * **Size per brick:** 8 bytes
@@ -1064,19 +840,17 @@ The BrickPool is a fixed-capacity cache of active bricks:
 
 The BrickPool size is configurable at initialization and determines the maximum "active" editing region before eviction is required.
 
----
-
-### **GPU Texture Implementation Strategies**
+## 10.3 GPU Texture Implementation Strategies
 
 The specification describes a Texture2DArray approach, but implementations may choose alternatives based on hardware:
 
-#### **Option 1: Texture2DArray (Reference Implementation)**
+### Option 1: Texture2DArray (Reference Implementation)
 * Format: RG8, 2×2 pixels per layer
 * **Limitation:** Max layers typically 2048-16384 depending on GPU
 * **Suitable for:** Smaller editing windows, prototyping
 * **Mobile compatibility:** Good (native format support)
 
-#### **Option 2: Texture3D (High-Capacity Alternative)**
+### Option 2: Texture3D (High-Capacity Alternative)
 * Format: R8, one voxel per texel
 * **Advantages:**
   * No layer limit
@@ -1085,7 +859,7 @@ The specification describes a Texture2DArray approach, but implementations may c
 * **Suitable for:** Large editing volumes, production use
 * **Mobile compatibility:** Excellent
 
-#### **Option 3: Compute Buffer (Maximum Flexibility)**
+### Option 3: Compute Buffer (Maximum Flexibility)
 * Format: Raw SSBO/UBO
 * **Advantages:**
   * No size limits beyond VRAM
@@ -1094,9 +868,7 @@ The specification describes a Texture2DArray approach, but implementations may c
 * **Suitable for:** High-end implementations, research
 * **Mobile compatibility:** Good (Vulkan/Metal)
 
----
-
-### **Mobile VR Considerations (Meta Quest 3)**
+## 10.4 Mobile VR Considerations (Meta Quest 3)
 
 **Target specifications:**
 * **Available RAM:** ~6 GB (shared CPU/GPU)
@@ -1111,9 +883,7 @@ The specification describes a Texture2DArray approach, but implementations may c
 
 This configuration provides ample space for typical VR sculpting and building applications while leaving headroom for engine overhead and other game assets.
 
----
-
-### **Graceful Degradation**
+## 10.5 Graceful Degradation
 
 The system is designed to fail gracefully when hardware limits are reached:
 
@@ -1133,4 +903,3 @@ The system is designed to fail gracefully when hardware limits are reached:
    * Use compute shader alternative
 
 **No artificial limits are imposed.** The system will use available hardware to its fullest extent and fail with clear error messages when physical limitations are reached, allowing users to make informed decisions about their workflows.
-
