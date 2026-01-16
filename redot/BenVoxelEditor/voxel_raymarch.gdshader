@@ -6,20 +6,23 @@ uniform int active_segment_count = 0;
 uniform sampler2D segment_directory; // RGBAF: (segX, segY, segZ, texIndex) as floats
 uniform sampler3D segment_bricks[64]; // RGBAF: each texel = one brick (RG channels contain uint data as floats)
 
+// Palette
+uniform sampler2D palette; // 256x1 RGBA8 texture
+
 // Raymarch parameters
 uniform float max_distance = 200.0;
 uniform int max_steps = 512;
 
-// Simple palette for visualization
+// Get color from palette using material ID
 vec3 get_material_color(uint material_id) {
     if (material_id == 0u) return vec3(0.0);
 
-    // Generate pseudo-random color from material ID
-    float r = fract(sin(float(material_id) * 12.9898) * 43758.5453);
-    float g = fract(sin(float(material_id) * 78.233) * 43758.5453);
-    float b = fract(sin(float(material_id) * 45.164) * 43758.5453);
+    // Look up color in palette texture
+    // Material IDs are 1-255, but palette is indexed 0-255
+    float u = (float(material_id) + 0.5) / 256.0; // Center of texel
+    vec4 color = texture(palette, vec2(u, 0.5));
 
-    return vec3(r, g, b);
+    return color.rgb;
 }
 
 // Find which segment contains this world coordinate

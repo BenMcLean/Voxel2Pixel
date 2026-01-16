@@ -1,3 +1,6 @@
+using System;
+using System.Buffers.Binary;
+using System.Runtime.InteropServices;
 using BenVoxel.FileToVoxCore;
 using BenVoxel.Models;
 using BenVoxelEditor;
@@ -8,15 +11,17 @@ public partial class Root : Node3D
 	private VoxelBridge _voxelBridge;
 	private ShaderMaterial _raymarchMaterial;
 	private FreeLookCamera _camera;
+	private ImageTexture _paletteTexture;
 
 	private SegmentedBrickModel _model;
+	private uint[] _palette;
 
 	public override void _Ready()
 	{
 		// Load voxel model
 		GD.Print("Loading voxel model...");
 		VoxFileModel vox = new(@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\Sora.vox");
-		uint[] palette = vox.Palette; // 256 RGBA8888 colors
+		_palette = vox.Palette; // 256 RGBA8888 colors
 
 		// Create VoxelBridge to upload to GPU
 		GD.Print("Creating VoxelBridge...");
@@ -148,6 +153,34 @@ public partial class Root : Node3D
 		_raymarchMaterial.SetShaderParameter("segment_bricks", textureArray);
 
 		GD.Print($"Bound {textureArray.Count} segment brick textures to shader array");
+
+		// Create and bind palette texture
+		SetupPaletteTexture();
+	}
+
+	private void SetupPaletteTexture()
+	{
+		// Convert palette with endianness reversal
+		// Process whole colors at a time (4 bytes per uint)
+		uint[] convertedPalette = new uint[256];
+
+		for (int i = 0; i < 256; i++)
+		{
+			// Reverse endianness: 0xAABBGGRR -> 0xRRGGBBAA
+			convertedPalette[i] = BinaryPrimitives.ReverseEndianness(_palette[i]);
+		}
+
+		// Direct memory copy: uint[] -> byte[]
+		byte[] paletteData = MemoryMarshal.AsBytes(convertedPalette.AsSpan()).ToArray();
+
+		// Create 256x1 RGBA8 texture
+		var image = Image.CreateFromData(256, 1, false, Image.Format.Rgba8, paletteData);
+		_paletteTexture = ImageTexture.CreateFromImage(image);
+
+		// Bind to shader
+		_raymarchMaterial.SetShaderParameter("palette", _paletteTexture);
+
+		GD.Print("Palette texture created and bound (256 colors)");
 	}
 
 	public override void _Process(double delta)
