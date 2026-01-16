@@ -42,9 +42,13 @@ int find_segment(ivec3 world_pos) {
 }
 
 // Fetch voxel from brick texture
-uint fetch_voxel(ivec3 world_pos) {
+// world_pos is in Godot Y-up coordinates
+uint fetch_voxel(ivec3 world_pos_yup) {
+    // Convert from Godot Y-up to voxel Z-up: (x, y, z)_yup -> (x, z, y)_zup
+    ivec3 voxel_pos = ivec3(world_pos_yup.x, world_pos_yup.z, world_pos_yup.y);
+
     // Find segment
-    int seg_idx = find_segment(world_pos);
+    int seg_idx = find_segment(voxel_pos);
     if (seg_idx < 0) return 0u; // Segment not loaded
 
     // Get texture index
@@ -52,8 +56,8 @@ uint fetch_voxel(ivec3 world_pos) {
     int tex_idx = int(entry.w);
 
     // Extract brick coordinates (bits 1-6) and voxel offset (bit 0)
-    ivec3 brick_coord = (world_pos >> 1) & ivec3(0x3F); // 0-63 per axis
-    ivec3 voxel_offset = world_pos & ivec3(1);           // 0 or 1 per axis
+    ivec3 brick_coord = (voxel_pos >> 1) & ivec3(0x3F); // 0-63 per axis
+    ivec3 voxel_offset = voxel_pos & ivec3(1);           // 0 or 1 per axis
 
     // Fetch entire brick (stored as RGBAF, RG channels contain uint data as floats)
     vec4 brick_data = texelFetch(segment_bricks[tex_idx], brick_coord, 0);
@@ -71,8 +75,10 @@ uint fetch_voxel(ivec3 world_pos) {
 }
 
 // DDA Raymarching
+// Operates in Godot Y-up world space
+// Coordinate conversion to voxel Z-up space happens inside fetch_voxel()
 vec4 raymarch(vec3 ray_origin, vec3 ray_dir) {
-    // Initialize DDA
+    // Initialize DDA (in Godot Y-up coordinates)
     ivec3 voxel_pos = ivec3(floor(ray_origin));
     vec3 delta_dist = abs(vec3(1.0) / ray_dir);
     ivec3 ray_step = ivec3(sign(ray_dir));
@@ -88,7 +94,7 @@ vec4 raymarch(vec3 ray_origin, vec3 ray_dir) {
             break;
         }
 
-        // Fetch voxel
+        // Fetch voxel (converts Y-up to Z-up internally)
         uint material = fetch_voxel(voxel_pos);
 
         if (material > 0u) {

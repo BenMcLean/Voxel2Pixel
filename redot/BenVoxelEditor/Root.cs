@@ -30,13 +30,13 @@ public partial class Root : Node3D
 		GD.Print($"Active segments: {_voxelBridge.ActiveSegmentCount}");
 		GD.Print($"Model bounds: ({_model.SizeX}, {_model.SizeY}, {_model.SizeZ})");
 
-		// Print segment positions to see where voxels are
+		// Print segment positions to see where voxels are (in voxel Z-up space)
 		foreach (var entry in _voxelBridge.Directory)
 		{
-			int worldX = entry.X * 128;
-			int worldY = entry.Y * 128;
-			int worldZ = entry.Z * 128;
-			GD.Print($"  Segment at world coords: ({worldX}, {worldY}, {worldZ})");
+			int voxelX = entry.X * 128;
+			int voxelY = entry.Y * 128;
+			int voxelZ = entry.Z * 128;
+			GD.Print($"  Segment at voxel coords (Z-up): ({voxelX}, {voxelY}, {voxelZ})");
 		}
 
 		// Create full-screen quad for raymarching
@@ -53,15 +53,19 @@ public partial class Root : Node3D
 
 	private void SetupCamera()
 	{
-		// Calculate model center
-		Vector3 modelCenter = new Vector3(_model.SizeX / 2f, _model.SizeY / 2f, _model.SizeZ / 2f);
+		// Model center in voxel space (Z-up)
+		float voxelCenterX = _model.SizeX / 2f;
+		float voxelCenterY = _model.SizeY / 2f;
+		float voxelCenterZ = _model.SizeZ / 2f;
 
-		// Position camera at a distance where we can see the whole model
-		// Calculate a good viewing distance based on model size
+		// Convert to Godot world space (Y-up): (x, y, z)_zup -> (x, z, y)_yup
+		Vector3 modelCenter = new Vector3(voxelCenterX, voxelCenterZ, voxelCenterY);
+
+		// Calculate viewing distance based on model size in Godot space
 		float maxDimension = Mathf.Max(_model.SizeX, Mathf.Max(_model.SizeY, _model.SizeZ));
 		float viewDistance = maxDimension * 2.5f; // 2.5x the largest dimension
 
-		// Position camera in front and slightly above the model
+		// Position camera in front and slightly above the model (in Godot Y-up space)
 		Vector3 cameraPos = modelCenter + new Vector3(0, maxDimension * 0.5f, viewDistance);
 
 		_camera = new FreeLookCamera
@@ -77,17 +81,26 @@ public partial class Root : Node3D
 
 	private void SetupRaymarchQuad()
 	{
-		// Use actual model size instead of segment size
-		// The model starts at (0,0,0) and extends to (SizeX, SizeY, SizeZ)
+		// Voxel data is in Z-up right-handed (MagicaVoxel convention)
+		// Godot uses Y-up right-handed
+		// Conversion: (X, Y, Z)_zup -> (X, Z, Y)_yup
+
+		// Model bounds in voxel space (Z-up)
+		float voxelSizeX = _model.SizeX;
+		float voxelSizeY = _model.SizeY;
+		float voxelSizeZ = _model.SizeZ;
+
+		// Convert to Godot world space (Y-up)
 		Vector3 min = new Vector3(0, 0, 0);
-		Vector3 max = new Vector3(_model.SizeX, _model.SizeY, _model.SizeZ);
+		Vector3 max = new Vector3(voxelSizeX, voxelSizeZ, voxelSizeY); // Swap Y and Z
 
 		Vector3 center = (min + max) / 2;
 		Vector3 size = max - min;
 
-		GD.Print($"Voxel bounds: min={min}, max={max}, center={center}, size={size}");
+		GD.Print($"Voxel bounds (Z-up): ({voxelSizeX}, {voxelSizeY}, {voxelSizeZ})");
+		GD.Print($"Godot bounds (Y-up): min={min}, max={max}, center={center}, size={size}");
 
-		// Create a box mesh sized to the actual voxel model
+		// Create a box mesh sized to the actual voxel model (in Godot Y-up space)
 		BoxMesh boxMesh = new BoxMesh();
 		boxMesh.Size = size;
 
