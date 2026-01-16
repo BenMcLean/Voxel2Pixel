@@ -254,23 +254,23 @@ public sealed class VoxelBridge : IDisposable
 	private void UpdateBrickInTexture(ImageTexture3D texture, int bx, int by, int bz, ulong brick)
 	{
 		// Find which segment this texture belongs to
-		uint segmentId = 0;
+		uint? foundSegmentId = null;
 		foreach (KeyValuePair<uint, ImageTexture3D> kvp in _textures)
 		{
 			if (kvp.Value == texture)
 			{
-				segmentId = kvp.Key;
+				foundSegmentId = kvp.Key;
 				break;
 			}
 		}
 
-		if (segmentId == 0 || !_model.TryGetSegment(segmentId, out ulong[] bricks))
+		if (!foundSegmentId.HasValue || !_model.TryGetSegment(foundSegmentId.Value, out ulong[] bricks))
 			return;
 
 		// Re-create the texture with updated data (same as CreateSegmentTexture)
 		// This is inefficient but simple for now
 		ImageTexture3D newTexture = CreateSegmentTexture(bricks);
-		_textures[segmentId] = newTexture;
+		_textures[foundSegmentId.Value] = newTexture;
 	}
 
 	public void Dispose()

@@ -16,6 +16,11 @@ public partial class Root : Node3D
 	private SegmentedBrickModel _model;
 	private uint[] _palette;
 
+	// Toggling voxel demo state
+	private double _toggleTimer;
+	private bool _voxelPresent;
+	private int _lastSegmentCount;
+
 	public override void _Ready()
 	{
 		// Load voxel model
@@ -48,7 +53,13 @@ public partial class Root : Node3D
 		// Set up shader uniforms
 		SetupShaderUniforms();
 
+		// Subscribe to model changes to update shader when data changes
+		_model.OnSegmentLoaded += _ => UpdateShaderSegments();
+		_model.OnSegmentUnloaded += _ => UpdateShaderSegments();
+		_model.OnBrickDirty += (_, _, _) => UpdateShaderSegments();
+
 		GD.Print("Demo ready! Use right-click + WASDQE to fly around.");
+		GD.Print("Toggling voxel at (0,0,0) every second to demonstrate real-time editing.");
 	}
 
 	private void SetupCamera()
@@ -204,6 +215,52 @@ public partial class Root : Node3D
 
 	public override void _Process(double delta)
 	{
-		// Could update shader parameters here if needed
+		// Toggle voxel at (0,0,0) every second to demonstrate real-time editing
+		_toggleTimer += delta;
+		if (_toggleTimer >= 1.0)
+		{
+			_toggleTimer -= 1.0;
+			_voxelPresent = !_voxelPresent;
+
+			// Set or clear the voxel at (0,0,0) with color index 1
+			_model[0, 0, 0] = _voxelPresent ? (byte)1 : (byte)0;
+
+			GD.Print($"Voxel at (0,0,0): {(_voxelPresent ? "ADDED" : "REMOVED")}");
+		}
+	}
+
+	/// <summary>
+	/// Updates shader uniforms when segments are added or removed.
+	/// Called via OnSegmentLoaded/OnSegmentUnloaded events.
+	/// </summary>
+	private void UpdateShaderSegments()
+	{
+		if (_raymarchMaterial == null || _voxelBridge == null)
+			return;
+
+		// Update active segment count
+		_raymarchMaterial.SetShaderParameter("active_segment_count", _voxelBridge.ActiveSegmentCount);
+
+		// Update directory texture
+		if (_voxelBridge.DirectoryTexture != null)
+			_raymarchMaterial.SetShaderParameter("segment_directory", _voxelBridge.DirectoryTexture);
+
+		// Rebuild texture array in directory order
+		Godot.Collections.Array<Texture3D> textureArray = new Godot.Collections.Array<Texture3D>();
+		foreach (VoxelBridge.SegmentEntry entry in _voxelBridge.Directory)
+		{
+			uint segmentId = ((uint)entry.X << 18) | ((uint)entry.Y << 9) | (uint)entry.Z;
+			if (_voxelBridge.Textures.TryGetValue(segmentId, out ImageTexture3D texture))
+				textureArray.Add(texture);
+		}
+
+		_raymarchMaterial.SetShaderParameter("segment_bricks", textureArray);
+
+		// Only log when segment count changes to avoid spam
+		if (_voxelBridge.ActiveSegmentCount != _lastSegmentCount)
+		{
+			_lastSegmentCount = _voxelBridge.ActiveSegmentCount;
+			GD.Print($"Shader updated: {_voxelBridge.ActiveSegmentCount} segments");
+		}
 	}
 }
