@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace BenVoxel.Models;
 
-public class SegmentedBrickModel : IBrickModel
+public class SegmentedBrickModel : IEditableBrickModel
 {
 	private const byte SegmentSizeBricks = 64,
 		ShiftSegment = 7, // Bits 7-15
@@ -158,7 +158,20 @@ public class SegmentedBrickModel : IBrickModel
 		_segments.TryGetValue(GetSegmentId(x, y, z), out ulong[] bricks)
 			? bricks[GetBrickIndex(x, y, z)]
 			: 0ul;
-	byte IModel.this[ushort x, ushort y, ushort z] => VoxelBrick.GetVoxel(GetBrick(x, y, z), x & 1, y & 1, z & 1);
+	public byte this[ushort x, ushort y, ushort z]
+	{
+		get => VoxelBrick.GetVoxel(GetBrick(x, y, z), x & 1, y & 1, z & 1);
+		set
+		{
+			// Read-modify-write pattern
+			ulong brick = GetBrick(x, y, z);
+			int localX = x & 1, localY = y & 1, localZ = z & 1;
+			int shift = ((localZ << 2) | (localY << 1) | localX) << 3;
+			ulong mask = 0xFFUL << shift;
+			ulong newBrick = (brick & ~mask) | ((ulong)value << shift);
+			SetBrick(x, y, z, newBrick);
+		}
+	}
 	public IEnumerator<VoxelBrick> GetEnumerator()
 	{
 		foreach ((ulong[] bricks, uint sz, uint sy, uint sx) in

@@ -25,13 +25,13 @@ public partial class Root : Node3D
 
 		// Create VoxelBridge to upload to GPU
 		GD.Print("Creating VoxelBridge...");
-		_model = new SegmentedBrickModel(new SvoModel(vox));
+		_model = new SegmentedBrickModel(vox);
 		_voxelBridge = new(_model);
 		GD.Print($"Active segments: {_voxelBridge.ActiveSegmentCount}");
 		GD.Print($"Model bounds: ({_model.SizeX}, {_model.SizeY}, {_model.SizeZ})");
 
 		// Print segment positions to see where voxels are (in voxel Z-up space)
-		foreach (var entry in _voxelBridge.Directory)
+		foreach (VoxelBridge.SegmentEntry entry in _voxelBridge.Directory)
 		{
 			int voxelX = entry.X * 128;
 			int voxelY = entry.Y * 128;
@@ -101,16 +101,22 @@ public partial class Root : Node3D
 		GD.Print($"Godot bounds (Y-up): min={min}, max={max}, center={center}, size={size}");
 
 		// Create a box mesh sized to the actual voxel model (in Godot Y-up space)
-		BoxMesh boxMesh = new BoxMesh();
-		boxMesh.Size = size;
+		BoxMesh boxMesh = new()
+		{
+			Size = size
+		};
 
-		MeshInstance3D boxInstance = new MeshInstance3D();
-		boxInstance.Mesh = boxMesh;
+		MeshInstance3D boxInstance = new()
+		{
+			Mesh = boxMesh
+		};
 
 		// Load shader
 		Shader raymarchShader = GD.Load<Shader>("res://voxel_raymarch.gdshader");
-		_raymarchMaterial = new ShaderMaterial();
-		_raymarchMaterial.Shader = raymarchShader;
+		_raymarchMaterial = new ShaderMaterial
+		{
+			Shader = raymarchShader
+		};
 
 		boxInstance.MaterialOverride = _raymarchMaterial;
 
@@ -146,8 +152,8 @@ public partial class Root : Node3D
 
 		// Set segment brick textures
 		// Build texture array in the same order as the directory entries
-		var textureArray = new Godot.Collections.Array<Texture3D>();
-		foreach (var entry in _voxelBridge.Directory)
+		Godot.Collections.Array<Texture3D> textureArray = new Godot.Collections.Array<Texture3D>();
+		foreach (VoxelBridge.SegmentEntry entry in _voxelBridge.Directory)
 		{
 			// Find the texture for this segment
 			uint segmentId = ((uint)entry.X << 18) | ((uint)entry.Y << 9) | (uint)entry.Z;
@@ -187,7 +193,7 @@ public partial class Root : Node3D
 		byte[] paletteData = MemoryMarshal.AsBytes(convertedPalette.AsSpan()).ToArray();
 
 		// Create 256x1 RGBA8 texture
-		var image = Image.CreateFromData(256, 1, false, Image.Format.Rgba8, paletteData);
+		Image image = Image.CreateFromData(256, 1, false, Image.Format.Rgba8, paletteData);
 		_paletteTexture = ImageTexture.CreateFromImage(image);
 
 		// Bind to shader

@@ -88,8 +88,8 @@ public sealed class VoxelBridge : IDisposable
 	private void UploadExistingSegments()
 	{
 		// Enumerate all existing bricks to find which segments exist
-		var seenSegments = new HashSet<uint>();
-		foreach (var brick in _model)
+		HashSet<uint> seenSegments = new HashSet<uint>();
+		foreach (BenVoxel.Structs.VoxelBrick brick in _model)
 		{
 			// Calculate segment ID from brick coordinates
 			uint segmentId = ((uint)(brick.X >> 7) << 18) | ((uint)(brick.Y >> 7) << 9) | (uint)(brick.Z >> 7);
@@ -195,7 +195,7 @@ public sealed class VoxelBridge : IDisposable
 		// Already zeroed by default allocation
 
 		// Create directory texture using ImageTexture
-		var image = Image.CreateFromData(MaxSegments, 1, false, Image.Format.Rgbaf, textureData);
+		Image image = Image.CreateFromData(MaxSegments, 1, false, Image.Format.Rgbaf, textureData);
 		_directoryTexture = ImageTexture.CreateFromImage(image);
 
 		GD.Print($"Directory texture created, {_directory.Count} segments");
@@ -227,7 +227,7 @@ public sealed class VoxelBridge : IDisposable
 		}
 
 		// Create array of Z-slice images for 3D texture
-		var images = new Godot.Collections.Array<Image>();
+		Godot.Collections.Array<Image> images = new Godot.Collections.Array<Image>();
 		int bytesPerSlice = BricksPerAxis * BricksPerAxis * 16;
 
 		for (int z = 0; z < BricksPerAxis; z++)
@@ -237,7 +237,7 @@ public sealed class VoxelBridge : IDisposable
 			images.Add(Image.CreateFromData(BricksPerAxis, BricksPerAxis, false, Image.Format.Rgbaf, sliceData));
 		}
 
-		var texture = new ImageTexture3D();
+		ImageTexture3D texture = new ImageTexture3D();
 		texture.Create(Image.Format.Rgbaf, BricksPerAxis, BricksPerAxis, BricksPerAxis, false, images);
 		GD.Print($"Created 3D brick texture: {BricksPerAxis}³ RGBAF");
 		return texture;
@@ -255,7 +255,7 @@ public sealed class VoxelBridge : IDisposable
 	{
 		// Find which segment this texture belongs to
 		uint segmentId = 0;
-		foreach (var kvp in _textures)
+		foreach (KeyValuePair<uint, ImageTexture3D> kvp in _textures)
 		{
 			if (kvp.Value == texture)
 			{

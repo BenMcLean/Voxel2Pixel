@@ -286,7 +286,7 @@ void fragment() {
 		_svoTexture = ImageTexture.CreateFromImage(image);
 		// Create palette texture (256x1 RGBA8)
 		// Use the same pipeline as the rest of the codebase: WriteUInt32BigEndian
-		byte[] paletteBytes = new byte[256 * 4];
+		byte[] paletteBytes = new byte[256 << 2];
 		for (int i = 0; i < 256; i++)
 			BinaryPrimitives.WriteUInt32BigEndian(paletteBytes.AsSpan(i << 2, 4), palette[i]);
 		Image paletteImage = Image.CreateFromData(256, 1, false, Image.Format.Rgba8, paletteBytes);

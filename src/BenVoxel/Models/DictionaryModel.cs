@@ -7,12 +7,13 @@ using BenVoxel.Structs;
 
 namespace BenVoxel.Models;
 
-public class DictionaryModel : IEditableModel
+public class DictionaryModel : IEditableBrickModel
 {
 	#region DictionaryModel
-	private readonly Dictionary<ulong, byte> Dictionary = [];
+	private readonly Dictionary<ulong, ulong> Dictionary = [];
 	public void Clear() => Dictionary.Clear();
 	public static ulong Encode(ushort x, ushort y, ushort z) => (ulong)z << 32 | (uint)y << 16 | x;
+	public static ulong EncodeBrick(ushort x, ushort y, ushort z) => Encode((ushort)(x & ~1), (ushort)(y & ~1), (ushort)(z & ~1));
 	public static void Decode(ulong @ulong, out ushort x, out ushort y, out ushort z)
 	{
 		x = (ushort)@ulong;
@@ -38,30 +39,79 @@ public class DictionaryModel : IEditableModel
 			this[voxel.X, voxel.Y, voxel.Z] = voxel.Material;
 	}
 	#endregion DictionaryModel
-	#region IEditableModel
-	IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-	public IEnumerator<Voxel> GetEnumerator() => Dictionary
-		.Select(voxel => new Voxel(
-			X: (ushort)voxel.Key,
-			Y: (ushort)(voxel.Key >> 16),
-			Z: (ushort)(voxel.Key >> 32),
-			Material: voxel.Value))
-		.GetEnumerator();
+	#region IModel
 	public ushort SizeX { get; set; } = 0;
 	public ushort SizeY { get; set; } = 0;
 	public ushort SizeZ { get; set; } = 0;
+	IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+	IEnumerator<Voxel> IEnumerable<Voxel>.GetEnumerator()
+	{
+		foreach (KeyValuePair<ulong, ulong> brick in Dictionary)
+		{
+			ushort bx = (ushort)brick.Key,
+				by = (ushort)(brick.Key >> 16),
+				bz = (ushort)(brick.Key >> 32);
+			ulong payload = brick.Value;
+			for (int lz = 0; lz < 2; lz++)
+				for (int ly = 0; ly < 2; ly++)
+					for (int lx = 0; lx < 2; lx++)
+					{
+						byte material = VoxelBrick.GetVoxel(payload, lx, ly, lz);
+						if (material != 0)
+							yield return new Voxel(
+								X: (ushort)(bx + lx),
+								Y: (ushort)(by + ly),
+								Z: (ushort)(bz + lz),
+								Material: material);
+					}
+		}
+	}
+	#endregion IModel
+	#region IBrickModel
+	public ulong GetBrick(ushort x, ushort y, ushort z)
+	{
+		ulong key = EncodeBrick(x, y, z);
+		return Dictionary.TryGetValue(key, out ulong payload) ? payload : 0UL;
+	}
+	public IEnumerator<VoxelBrick> GetEnumerator() => Dictionary
+		.Select(brick => new VoxelBrick(
+			X: (ushort)brick.Key,
+			Y: (ushort)(brick.Key >> 16),
+			Z: (ushort)(brick.Key >> 32),
+			Payload: brick.Value))
+		.GetEnumerator();
+	#endregion IBrickModel
+	#region IEditableModel
 	public byte this[ushort x, ushort y, ushort z]
 	{
-		get => Dictionary.TryGetValue(Encode(x, y, z), out byte @byte) ? @byte : (byte)0;
+		get => VoxelBrick.GetVoxel(GetBrick(x, y, z), x & 1, y & 1, z & 1);
 		set
 		{
-			if (value == 0)
-				Dictionary.Remove(Encode(x, y, z));
-			else if (this.IsOutside(x, y, z))
+			if (this.IsOutside(x, y, z))
 				throw new IndexOutOfRangeException("[" + string.Join(", ", x, y, z) + "] is outside [" + string.Join(", ", SizeX, SizeY, SizeZ) + "]");
+			ulong key = EncodeBrick(x, y, z),
+				brick = Dictionary.TryGetValue(key, out ulong b) ? b : 0UL;
+			// Update the specific voxel within the brick
+			int localX = x & 1, localY = y & 1, localZ = z & 1,
+				shift = ((localZ << 2) | (localY << 1) | localX) << 3;
+			ulong mask = 0xFFUL << shift,
+				newBrick = (brick & ~mask) | ((ulong)value << shift);
+			// Store or remove the brick
+			if (newBrick == 0)
+				Dictionary.Remove(key);
 			else
-				Dictionary[Encode(x, y, z)] = value;
+				Dictionary[key] = newBrick;
 		}
 	}
 	#endregion IEditableModel
+	#region IEditableBrickModel
+	public void SetBrick(ushort x, ushort y, ushort z, ulong payload)
+	{
+		ulong key = EncodeBrick(x, y, z);
+		if (payload == 0)
+			Dictionary.Remove(key);
+		else
+			Dictionary[key] = payload;
+	}
+	#endregion IEditableBrickModel
 }
