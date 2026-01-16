@@ -152,11 +152,11 @@ The system maintains strict separation between engine-agnostic core logic and en
 
 **Responsibility:** Bridge CPU voxel data to GPU textures for rendering.
 
-**Key Component:** `GodotVoxelBridge` (or `UnityVoxelBridge`, etc.)
-- Storage: `Dictionary<uint, Texture3D>` maps segment IDs to GPU textures
+**Key Component:** `VoxelBridge` (or engine-specific variants)
+- Storage: `Dictionary<uint, Rid>` maps segment IDs to GPU texture RIDs
 - Subscriptions: Listens to core events (`OnBrickDirty`, `OnSegmentLoaded`, `OnSegmentUnloaded`)
-- Upload Logic: Converts segment brick arrays to GPU texture formats
-- Directory Management: Rebuilds GPU segment directory when active segments change
+- Upload Logic: Direct memory cast of brick arrays to RG32UI textures (64³, NO conversion!)
+- Directory Management: Rebuilds GPU segment directory texture when active segments change
 
 **Engine Dependencies:** This layer depends on Godot's RenderingServer (or Unity's Graphics API, etc.)
 
@@ -236,7 +236,7 @@ Bits 27-31: Unused
 - **No engine dependencies:** Zero references to rendering, GPU, or game engine APIs
 - **Deterministic behavior:** Same coordinates always map to same segment and brick index
 
-## 4.2 GodotVoxelBridge (Integration Layer)
+## 4.2 VoxelBridge (Integration Layer)
 
 ### Purpose
 
@@ -245,30 +245,30 @@ Translates SegmentedBrickModel changes into Godot GPU resources for raymarching.
 ### Responsibilities
 
 **Texture Management:**
-- Maintains `Dictionary<uint, Texture3D>` mapping segment IDs to GPU textures
-- Creates 256 KB texture per segment (64×64×32 RG8 format)
+- Maintains `Dictionary<uint, Rid>` mapping segment IDs to GPU texture RIDs
+- Creates 2 MB brick texture per segment (64×64×64 RG32UI format)
 - Releases textures when segments unload
 
 **Event Subscriptions:**
-- Subscribes to `OnBrickDirty` → updates texture region (8 bytes)
-- Subscribes to `OnSegmentLoaded` → uploads full segment texture (256 KB)
+- Subscribes to `OnBrickDirty` → re-uploads segment texture (trivial memory cast, 2 MB)
+- Subscribes to `OnSegmentLoaded` → uploads full segment texture (trivial memory cast, 2 MB)
 - Subscribes to `OnSegmentUnloaded` → releases GPU texture
 
 **Directory Management:**
-- Converts `Dictionary<uint, Texture3D>` to `Array<SegmentEntry>` for GPU
-- Uploads directory whenever active segment set changes
+- Converts `Dictionary<uint, Rid>` to RGBA32UI texture for GPU
+- Uploads directory texture whenever active segment set changes
 - Maps segment coordinates to texture indices for shader lookup
 
 **Upload Strategy:**
-- Segment textures: Incremental updates on brick edits, full upload on load
-- Segment directory: Full rebuild/upload on segment load/unload (<1 KB, cheap)
+- Segment textures: Direct `MemoryMarshal.AsBytes()` cast - NO conversion loop!
+- Segment directory: Full rebuild/upload as RGBA32UI texture (<1 KB, cheap)
 
 ### GPU Texture Persistence (Critical Constraint)
 
 **Architectural Requirement:** GPU textures must persist across multiple frames without re-upload.
 
 **Why This Matters:**
-- Re-uploading 8 segments × 256 KB × 72 fps = 147 MB/sec bandwidth (unacceptable)
+- Re-uploading 8 segments × 2 MB × 72 fps = 1.15 GB/sec bandwidth (completely unacceptable)
 - Incremental updates (8 bytes per brick edit) only work if base texture persists
 - Directory changes are rare (segment load/unload), not per-frame
 
@@ -290,7 +290,7 @@ Translates SegmentedBrickModel changes into Godot GPU resources for raymarching.
 The implementation is successful only if:
 
 1. **Separation maintained:** Core has zero engine dependencies
-2. **Memory efficiency:** CPU 2 MB per segment, GPU 256 KB per segment
+2. **Memory efficiency:** CPU 2 MB per segment, GPU 2 MB per segment
 3. **No GC pressure:** SetBrick/GetBrick cause no allocations after segment creation
 4. **Immediate sync:** Brick modifications visible on GPU within same frame
 
@@ -410,45 +410,45 @@ This mapping is **isomorphic** to `VoxelBrick.Payload` bit layout, ensuring CPU/
 
 ## 6.3 GPU Texture Options
 
-### Option A: Texture3D Per Segment (Recommended)
+### Option A: Texture3D Brick-Order (Recommended)
 
-Upload each segment as a separate `Texture3D`:
+Upload each segment's brick array directly with NO conversion:
 
-- Format: RG8_UNORM
-- Dimensions: 64 × 64 × 32
-  - X: 64 bricks
-  - Y: 64 bricks
-  - Z: 32 layers (each layer stores 2 Z-slices of bricks via RG channels)
-- Size: 64 × 64 × 32 × 2 bytes = 262,144 bytes = 256 KB per segment texture
+- Format: RG32UI (2×32-bit unsigned integers = 8 bytes per texel)
+- Dimensions: 64 × 64 × 64 (one texel per brick)
+  - Each texel stores one complete brick (8 voxels as ulong)
+- Size: 64 × 64 × 64 × 8 bytes = 2,097,152 bytes = 2 MB per segment texture
 
 **Advantages:**
-* Natural 3D indexing
-* Good cache coherence
-* No layer limits
-* Direct brick coordinate mapping
+* ✨ **TRIVIAL upload** - direct memory cast, no conversion loop!
+* Natural brick-order indexing matches CPU layout
+* Good cache coherence (fetch entire brick, extract multiple voxels)
+* Simple implementation (no complex packing logic)
+* Same memory size as voxel-order approaches
 
 **Upload:**
 ```csharp
 void UploadSegment(uint segmentId, ulong[] bricks)
 {
-	byte[] textureData = new byte[64 * 64 * 32 * 2];  // 256 KB
+	// ONE operation - just cast the brick array to bytes!
+	byte[] textureData = MemoryMarshal.AsBytes(bricks.AsSpan()).ToArray();
 
-	for (int bz = 0; bz < 64; bz++)
-	for (int by = 0; by < 64; by++)
-	for (int bx = 0; bx < 64; bx++)
-	{
-		int brickIndex = bx | (by << 6) | (bz << 12);
-		ulong brick = bricks[brickIndex];
-
-		// Pack into RG8: each Z-pair of voxels per pixel
-		int texelIndex = (bx + by * 64 + (bz / 2) * 64 * 64) * 2;
-		// Store 4 voxels in RG format based on Z parity
-		// (Detailed packing logic here)
-	}
-
-	Texture3D texture = CreateTexture3D(64, 64, 32, RG8_UNORM, textureData);
+	// Upload as RG32UI texture (64³, 8 bytes per texel)
+	Texture3D texture = CreateTexture3D(64, 64, 64, RG32UI, textureData);
 	segmentTextures[segmentId] = texture;
 }
+```
+
+**Shader voxel extraction:**
+```gdshader
+// Fetch brick
+uvec2 brick = texelFetch(segmentBricks, brick_coord, 0).rg;  // 8 bytes as 2×uint
+
+// Extract specific voxel byte (0-7)
+int byte_idx = (voxel_z << 2) | (voxel_y << 1) | voxel_x;
+uint voxel = (byte_idx < 4)
+    ? (brick.x >> (byte_idx * 8)) & 0xFFu      // Bytes 0-3 in .r
+    : (brick.y >> ((byte_idx - 4) * 8)) & 0xFFu; // Bytes 4-7 in .g
 ```
 
 ### Option B: Single Large Texture3D (High Capacity)
@@ -502,19 +502,19 @@ void OnBrickModified(uint segmentId, int brickIndex, ulong brick)
 {
 	if (!segmentTextures.TryGetValue(segmentId, out Texture3D texture))
 	{
-		// First brick in segment: create texture and upload entire segment (256 KB)
+		// First brick in segment: create texture and upload entire segment (2 MB)
 		UploadSegment(segmentId, model.GetSegmentData(segmentId));
 		RebuildAndUploadDirectory();  // Re-upload entire directory (<1 KB)
 		return;
 	}
 
-	// Incremental update: compute texture coordinates from brickIndex
+	// Incremental update: compute brick coordinates from brickIndex
 	int bx = brickIndex & 0x3F;
 	int by = (brickIndex >> 6) & 0x3F;
 	int bz = (brickIndex >> 12) & 0x3F;
 
-	// Update small texel region (8 bytes worth of data)
-	UpdateTextureRegion(texture, bx, by, bz, brick);
+	// Update 2×2×2 voxel region (8 bytes worth of data)
+	UpdateTextureRegion(texture, bx * 2, by * 2, bz * 2, brick);
 	// Directory unchanged - no upload needed
 }
 
@@ -569,14 +569,14 @@ The **Bridge** uploads a small directory of active segments to the GPU, mapping 
 
 #### Bridge Internal Structure
 
-**Purpose:** Convert Core's Dictionary to GPU-friendly array format.
+**Purpose:** Convert Core's Dictionary to GPU-friendly texture format.
 
 The bridge maintains:
-- `Dictionary<uint, Texture3D>` mapping segment IDs to textures
-- When active segments change, rebuilds array of `SegmentEntry` structures
-- Uploads this array to GPU as uniform buffer
+- `Dictionary<uint, Rid>` mapping segment IDs to GPU texture RIDs
+- When active segments change, rebuilds directory texture
+- Uploads directory as RGBA32UI texture for spatial shader access
 
-**SegmentEntry Format (sent to GPU):**
+**SegmentEntry Format (C# side):**
 ```csharp
 struct SegmentEntry
 {
@@ -587,34 +587,37 @@ struct SegmentEntry
 }
 ```
 
-**Note:** The bridge builds this array from the Core's Dictionary, not the Core itself.
+**GPU Texture Format:**
+- Type: 2D Texture, RGBA32UI
+- Dimensions: 256×1 (max 256 segments)
+- Each texel: uvec4(segmentX, segmentY, segmentZ, textureIndex)
+
+**Note:** The bridge builds this texture from the Core's Dictionary, not the Core itself. Storage buffers (SSBOs) are not available in Godot 4 spatial shaders, requiring the texture-based approach.
 
 #### GPU-Side Structures
 
-**Upload Format (Godot 4):**
+**Upload Format (Godot 4 Spatial Shaders):**
+
+Note: Godot 4 spatial shaders do not support storage buffers (SSBOs). The directory is uploaded as a texture.
 
 ```gdshader
-// Small uniform buffer - list of active segments
-struct SegmentEntry {
-	uvec3 segmentCoord;      // (sx, sy, sz)
-	uint textureIndex;       // Which texture contains this segment's data
-};
-
+// Segment directory as RGBA32UI texture (256×1 max)
+// Each texel: (segmentX, segmentY, segmentZ, textureIndex)
 uniform int activeSegmentCount;
-uniform SegmentEntry segmentDirectory[MAX_ACTIVE_SEGMENTS];  // e.g., 64 entries
+uniform usampler2D segmentDirectory;  // RGBA32UI format
 
 // Segment brick data - one of:
-// Option A: Array of Texture3D (one per segment)
-uniform sampler3D segmentTextures[MAX_ACTIVE_SEGMENTS];  // RG8, 64×64×32 each
+// Option A: Array of Texture3D brick textures (one per segment)
+uniform usampler3D segmentBricks[MAX_ACTIVE_SEGMENTS];  // RG32UI, 64×64×64 each (brick-order)
 
 // Option B: Single large Texture3D with packed segments
-uniform sampler3D packedSegmentTexture;  // Larger dimensions, multiple segments
+uniform usampler3D packedSegmentTexture;  // Larger dimensions, multiple segments
 ```
 
 **Memory Usage (Option A - typical Quest 3):**
 - Segment directory: 64 segments × 16 bytes = **1 KB**
-- Segment textures: 8 active × 256 KB = **2 MB**
-- Total: **~2 MB** for 8 active segments
+- Segment textures: 8 active × 2 MB = **16 MB**
+- Total: **~16 MB** for 8 active segments
 
 **Memory Usage (Option B - larger scenes):**
 - Segment directory: 64 segments × 16 bytes = **1 KB**
@@ -627,67 +630,39 @@ uniform sampler3D packedSegmentTexture;  // Larger dimensions, multiple segments
 int findSegment(ivec3 worldPos) {
 	ivec3 segCoord = worldPos >> 7;  // Bits 7-15 = segment coordinates
 
-	// Linear search (fast for small N)
+	// Linear search through directory texture (fast for small N)
 	for (int i = 0; i < activeSegmentCount; i++) {
-		if (all(equal(segmentDirectory[i].segmentCoord, uvec3(segCoord)))) {
+		uvec4 entry = texelFetch(segmentDirectory, ivec2(i, 0), 0);
+		if (entry.xyz == uvec3(segCoord)) {
 			return i;
 		}
 	}
 	return -1;  // Segment not loaded
 }
 
-// Step 2: Fetch voxel directly from segment texture
+// Step 2: Fetch voxel from brick texture
 uint fetchVoxel(ivec3 worldPos) {
 	// Find segment
 	int segIdx = findSegment(worldPos);
 	if (segIdx < 0) return 0u;  // Segment not loaded
 
-	// Extract brick coordinates within segment (bits 1-6)
-	ivec3 brickCoord = (worldPos >> 1) & 0x3F;  // 0-63 on each axis
+	// Get texture index
+	uvec4 entry = texelFetch(segmentDirectory, ivec2(segIdx, 0), 0);
+	int texIdx = int(entry.w);
 
-	// Extract voxel offset within brick (bit 0)
-	ivec3 voxelOffset = worldPos & 1;  // 0 or 1 on each axis
+	// Extract brick coordinates (bits 1-6) and voxel offset (bit 0)
+	ivec3 brickCoord = (worldPos >> 1) & 0x3F;  // 0-63 per axis
+	ivec3 voxelOffset = worldPos & 1;            // 0 or 1 per axis
 
-	// Option A: Fetch from segment's dedicated Texture3D
-	int texIndex = int(segmentDirectory[segIdx].textureIndex);
+	// Fetch entire brick (8 bytes as uvec2)
+	uvec2 brick = texelFetch(segmentBricks[texIdx], brickCoord, 0).rg;
 
-	// Brick coords map to texture coords
-	// Z is packed: 64 Z-layers → 32 texture layers (2 per layer via RG)
-	ivec3 texCoord = ivec3(brickCoord.x, brickCoord.y, brickCoord.z / 2);
-	uvec2 voxelPair = texelFetch(segmentTextures[texIndex], texCoord, 0).rg * 255.0;
-
-	// Select R or G channel based on brick Z parity and voxel Z offset
-	bool useGreen = ((brickCoord.z & 1) == 1);
-	uint brick_z0_z1 = useGreen ? voxelPair.g : voxelPair.r;
-
-	// Now we have 4 voxels packed in brick_z0_z1 based on X,Y
-	// Extract specific voxel using X,Y,Z offset
-	// (Detailed bit extraction here based on canonical layout)
-
-	return brick_z0_z1;  // Simplified - full impl would unpack properly
-}
-```
-
-**Simplified Direct Voxel Fetch (Alternative):**
-
-```gdshader
-uint fetchVoxel(ivec3 worldPos) {
-	int segIdx = findSegment(worldPos);
-	if (segIdx < 0) return 0u;
-
-	// Brick and voxel coordinates
-	ivec3 brickCoord = (worldPos >> 1) & 0x3F;
-	ivec3 localVoxel = worldPos & 1;
-
-	// Fetch brick from texture (implementation dependent on packing)
-	int texIdx = int(segmentDirectory[segIdx].textureIndex);
-
-	// Direct 3D texture fetch at voxel resolution (if using R8 format)
-	// worldPos within segment = worldPos - (segmentCoord << 7)
-	ivec3 segmentCoord = ivec3(segmentDirectory[segIdx].segmentCoord);
-	ivec3 voxelInSegment = worldPos - (segmentCoord << 7);
-
-	return uint(texelFetch(segmentTextures[texIdx], voxelInSegment, 0).r * 255.0);
+	// Extract specific voxel byte
+	// Brick byte layout: [v000, v100, v010, v110, v001, v101, v011, v111]
+	int byteIdx = (voxelOffset.z << 2) | (voxelOffset.y << 1) | voxelOffset.x;
+	return (byteIdx < 4)
+		? (brick.x >> (byteIdx * 8)) & 0xFFu      // Bytes 0-3 in R channel
+		: (brick.y >> ((byteIdx - 4) * 8)) & 0xFFu; // Bytes 4-7 in G channel
 }
 ```
 
@@ -860,28 +835,33 @@ vec3 getMaterialColor(uint materialId) {
 
 **Per Segment Upload:**
 1. **Segment Directory Entry:** 16 bytes (segment coordinates + texture index)
-2. **Segment Texture:** 256 KB (64³ bricks × 8 bytes, packed as 64×64×32 RG8 texture)
+2. **Segment Brick Texture:** 2 MB (64³ bricks in RG32UI format - direct upload from CPU!)
 
 **Typical Quest 3 Session:**
 - Active segments: 8-16
 - Segment directory: <1 KB
-- Segment textures: 8 × 256 KB = **2 MB**
-- **Total GPU Memory: ~2-4 MB** (vs 270+ MB in old architecture!)
+- Segment textures: 8 × 2 MB = **16 MB**
+- **Total GPU Memory: ~16-32 MB** (excellent vs 270+ MB in old architecture!)
 
-**Lookup Chain Per Voxel (Simplified):**
+**Lookup Chain Per Voxel:**
 ```
 World Coordinate (x,y,z)
 	↓
-Segment Lookup (linear search, ~20 cycles)
+Segment Lookup (linear search through directory texture, ~20 cycles)
 	↓
-Brick Index Calculation (bit shifts, 3 cycles)
+Brick Coordinate Calculation (bit shifts, 3 cycles)
 	↓
-Texture Fetch (cached read, ~50-100 cycles)
+Brick Texture Fetch (cached read, ~50-100 cycles, fetches 8 voxels)
+	↓
+Voxel Byte Extraction (bit shifts & mask, 5 cycles)
 	↓
 Voxel Material (8-bit value)
 ```
 
-**Total latency per voxel:** ~100-150 GPU cycles
+**Total latency per voxel:** ~80-130 GPU cycles
+
+**Performance Note:** Fetching entire bricks (8 bytes) provides good spatial locality.
+Adjacent voxel fetches within the same brick are essentially free after the first fetch (register reuse).
 
 # 7. Compatibility & Interfaces
 
@@ -1060,26 +1040,28 @@ Validation:
 
 ## 8.6 Stage 6: Godot 4 GPU Integration
 
-**Goal:** Validate CPU ↔ GPU correctness with direct segment texture uploads.
+**Goal:** Validate CPU ↔ GPU correctness with trivial brick-order texture uploads.
 
 Deliverables:
 
-* `GodotVoxelBridge` class
-  * Segment directory management
-  * Texture3D allocation per segment (or packed approach)
-  * Segment upload: `ulong[]` → GPU texture
-  * Incremental brick updates
+* `VoxelBridge` class (engine-specific implementation)
+  * Segment directory management (RGBA32UI texture for spatial shaders)
+  * Texture3D allocation per segment (RG32UI format, 64³ brick-order)
+  * **Trivial upload:** Direct `MemoryMarshal.AsBytes()` cast - NO conversion!
+  * Brick updates: Same trivial cast and re-upload (2 MB)
 * GPU shader setup:
-  * Segment directory uniform buffer
-  * Texture3D array or packed texture
+  * Segment directory as RGBA32UI 2D texture
+  * Brick textures as usampler3D array (RG32UI format)
+  * Voxel extraction logic (byte shifts from uvec2)
 * Subscribe to `OnBrickDirty` and `OnSegmentLoaded`/`OnSegmentUnloaded` events
 
 Validation:
 
-* Segment uploads contain correct brick data
-* Individual brick edits update GPU immediately
+* Segment uploads are trivial (one-line memory cast)
+* Brick data is byte-identical on GPU
+* Shader correctly extracts voxel bytes from bricks
 * Segment unload releases GPU textures
-* GPU memory usage = (active segments × 256 KB)
+* GPU memory usage = (active segments × 2 MB) + directory texture (<4 KB)
 
 ## 8.7 Stage 7: GPU Raymarcher Shader
 
@@ -1173,37 +1155,43 @@ The system will naturally limit itself based on available RAM. Users working wit
 ### GPU Memory (VRAM)
 
 Each uploaded segment becomes a GPU texture:
-* **Size per segment texture:** 64³ bricks packed as 64×64×32 RG8 = **256 KB**
+* **Size per segment texture:** 128³ voxels as R8 = **2 MB**
 * **Overhead:** Segment directory ~1 KB (negligible)
 * **Scaling:** Linear with active segments
 * **Typical configurations:**
-  * Mobile VR (Quest 3): 8-16 segments = **2-4 MB** (extremely efficient!)
-  * Desktop GPU: 32-128 segments = **8-32 MB** (room for large editing regions)
+  * Mobile VR (Quest 3): 8-16 segments = **16-32 MB** (very efficient!)
+  * Desktop GPU: 32-128 segments = **64-256 MB** (room for large editing regions)
 
 **Memory comparison vs old architecture:**
 - Old: 256 MB BrickPool + 8 MB BrickTables = **264 MB**
-- New: 8 segments × 256 KB = **2 MB** (130× reduction!)
+- New: 8 segments × 2 MB = **16 MB** (16× reduction!)
 
 The new architecture uses GPU memory proportional to active editing area, not a fixed cache size.
 
 ## 10.3 GPU Texture Implementation Strategies
 
-The specification describes a Texture2DArray approach, but implementations may choose alternatives based on hardware:
+The specification describes a Texture3D approach with direct voxel storage, but implementations may choose alternatives based on hardware:
 
-### Option 1: Texture2DArray (Reference Implementation)
-* Format: RG8, 2×2 pixels per layer
-* **Limitation:** Max layers typically 2048-16384 depending on GPU
-* **Suitable for:** Smaller editing windows, prototyping
-* **Mobile compatibility:** Good (native format support)
-
-### Option 2: Texture3D (High-Capacity Alternative)
+### Option 1: Texture3D with R8 (Recommended Implementation)
 * Format: R8, one voxel per texel
+* Dimensions: 128³ per segment
 * **Advantages:**
-  * No layer limit
-  * Better cache coherence for raymarching
-  * Can pack bricks in 3D space efficiently
-* **Suitable for:** Large editing volumes, production use
+  * Direct 1:1 voxel mapping (no packing complexity)
+  * No layer limits
+  * Excellent cache coherence for raymarching
+  * Simple shader code
+* **Suitable for:** All use cases, production-ready
 * **Mobile compatibility:** Excellent
+
+### Option 2: Texture3D with Compression (Space-Optimized Alternative)
+* Format: BC4/ETC2_R11 compressed R8
+* Dimensions: 128³ per segment (compressed)
+* **Advantages:**
+  * 4:1 compression ratio (~512 KB per segment)
+  * GPU hardware decompression
+  * Same access patterns as uncompressed
+* **Suitable for:** Memory-constrained platforms
+* **Mobile compatibility:** Good (format support varies)
 
 ### Option 3: Compute Buffer (Maximum Flexibility)
 * Format: Raw SSBO/UBO
@@ -1223,13 +1211,13 @@ The specification describes a Texture2DArray approach, but implementations may c
 
 **Recommended configuration:**
 * CPU: 8-16 active segments = **16-32 MB** RAM
-* GPU: 8-16 segment textures = **2-4 MB** VRAM
+* GPU: 8-16 segment textures = **16-32 MB** VRAM
 * Editing window: 256-384 voxels per axis (2-4 segments per axis)
-* Total memory footprint: **<40 MB** (extremely efficient!)
+* Total memory footprint: **32-64 MB** (very efficient!)
 
-**This represents a massive improvement over the old architecture:**
+**This represents a significant improvement over the old architecture:**
 - Old: 264+ MB minimum footprint
-- New: <40 MB typical usage
+- New: 32-64 MB typical usage
 - **Result:** Quest 3 can handle much larger editing sessions or allocate memory to other features
 
 This configuration provides ample space for typical VR sculpting and building applications while leaving substantial headroom for engine overhead, gameplay assets, and physics simulation.

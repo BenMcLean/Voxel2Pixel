@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BenVoxelGpu", "redot\BenVox
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BenVoxel.FileToVoxCore", "src\BenVoxel.FileToVoxCore\BenVoxel.FileToVoxCore.csproj", "{10EE4E99-4D30-1EEB-B3B3-75050361DA6A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BenVoxelEditor", "redot\BenVoxelEditor\BenVoxelEditor.csproj", "{7CA842BA-2D69-C381-5B27-560B306EC6BF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -57,6 +59,10 @@ Global
 		{10EE4E99-4D30-1EEB-B3B3-75050361DA6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{10EE4E99-4D30-1EEB-B3B3-75050361DA6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{10EE4E99-4D30-1EEB-B3B3-75050361DA6A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7CA842BA-2D69-C381-5B27-560B306EC6BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7CA842BA-2D69-C381-5B27-560B306EC6BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7CA842BA-2D69-C381-5B27-560B306EC6BF}.Release|Any CPU.ActiveCfg = ExportDebug|Any CPU
+		{7CA842BA-2D69-C381-5B27-560B306EC6BF}.Release|Any CPU.Build.0 = ExportDebug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,19 @@
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BenVoxelEditor", "BenVoxelEditor.csproj", "{EF9DA1F6-B6B9-4019-8E65-D66E6642160B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+	Debug|Any CPU = Debug|Any CPU
+	ExportDebug|Any CPU = ExportDebug|Any CPU
+	ExportRelease|Any CPU = ExportRelease|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EF9DA1F6-B6B9-4019-8E65-D66E6642160B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF9DA1F6-B6B9-4019-8E65-D66E6642160B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF9DA1F6-B6B9-4019-8E65-D66E6642160B}.ExportDebug|Any CPU.ActiveCfg = ExportDebug|Any CPU
+		{EF9DA1F6-B6B9-4019-8E65-D66E6642160B}.ExportDebug|Any CPU.Build.0 = ExportDebug|Any CPU
+		{EF9DA1F6-B6B9-4019-8E65-D66E6642160B}.ExportRelease|Any CPU.ActiveCfg = ExportRelease|Any CPU
+		{EF9DA1F6-B6B9-4019-8E65-D66E6642160B}.ExportRelease|Any CPU.Build.0 = ExportRelease|Any CPU
+	EndGlobalSection
+EndGlobal
