@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://chpv2083ur61l"
+path="res://.godot/imported/bounds_reduction.glsl-c38f9fd876c24b0706160a71008a9571.res"
+
+[deps]
+
+source_file="res://bounds_reduction.glsl"
+dest_files=["res://.godot/imported/bounds_reduction.glsl-c38f9fd876c24b0706160a71008a9571.res"]
+
+[params]
+

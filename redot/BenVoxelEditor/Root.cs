@@ -16,6 +16,10 @@ public partial class Root : Node3D
 	private SegmentedBrickModel _model;
 	private uint[] _palette;
 
+	// Bounding box mesh for raymarching
+	private MeshInstance3D _boundingBox;
+	private BoxMesh _boxMesh;
+
 	// Toggling voxel demo state
 	private double _toggleTimer;
 	private bool _voxelPresent;
@@ -57,6 +61,7 @@ public partial class Root : Node3D
 		_model.OnSegmentLoaded += _ => UpdateShaderSegments();
 		_model.OnSegmentUnloaded += _ => UpdateShaderSegments();
 		_model.OnBrickDirty += (_, _, _) => UpdateShaderSegments();
+		_model.OnBoundsChanged += HandleBoundsChanged;
 
 		GD.Print("Demo ready! Use right-click + WASDQE to fly around.");
 		GD.Print("Toggling voxel at (0,0,0) every second to demonstrate real-time editing.");
@@ -92,34 +97,22 @@ public partial class Root : Node3D
 
 	private void SetupRaymarchQuad()
 	{
-		// Voxel data is in Z-up right-handed (MagicaVoxel convention)
-		// Godot uses Y-up right-handed
-		// Conversion: (X, Y, Z)_zup -> (X, Z, Y)_yup
+		// Get bounds and calculate box dimensions
+		SegmentedBrickModel.Bounds? bounds = _model.CurrentBounds;
+		(Vector3 center, Vector3 size) = CalculateBoundingBox(bounds);
 
-		// Model bounds in voxel space (Z-up)
-		float voxelSizeX = _model.SizeX;
-		float voxelSizeY = _model.SizeY;
-		float voxelSizeZ = _model.SizeZ;
-
-		// Convert to Godot world space (Y-up)
-		Vector3 min = new Vector3(0, 0, 0);
-		Vector3 max = new Vector3(voxelSizeX, voxelSizeZ, voxelSizeY); // Swap Y and Z
-
-		Vector3 center = (min + max) / 2;
-		Vector3 size = max - min;
-
-		GD.Print($"Voxel bounds (Z-up): ({voxelSizeX}, {voxelSizeY}, {voxelSizeZ})");
-		GD.Print($"Godot bounds (Y-up): min={min}, max={max}, center={center}, size={size}");
+		GD.Print($"Model bounds: {bounds}");
+		GD.Print($"Godot bounds (Y-up): center={center}, size={size}");
 
 		// Create a box mesh sized to the actual voxel model (in Godot Y-up space)
-		BoxMesh boxMesh = new()
+		_boxMesh = new BoxMesh
 		{
 			Size = size
 		};
 
-		MeshInstance3D boxInstance = new()
+		_boundingBox = new MeshInstance3D
 		{
-			Mesh = boxMesh
+			Mesh = _boxMesh
 		};
 
 		// Load shader
@@ -129,16 +122,58 @@ public partial class Root : Node3D
 			Shader = raymarchShader
 		};
 
-		boxInstance.MaterialOverride = _raymarchMaterial;
+		_boundingBox.MaterialOverride = _raymarchMaterial;
 
 		// Position box at voxel volume center
-		boxInstance.Position = center;
+		_boundingBox.Position = center;
 
 		// Disable casting shadows (this is a raymarched volume, not geometry)
-		boxInstance.CastShadow = GeometryInstance3D.ShadowCastingSetting.Off;
+		_boundingBox.CastShadow = GeometryInstance3D.ShadowCastingSetting.Off;
 
-		AddChild(boxInstance);
+		AddChild(_boundingBox);
 		GD.Print($"Created bounding box at {center} with size {size}");
+	}
+
+	/// <summary>
+	/// Calculates bounding box center and size in Godot world space (Y-up) from model bounds (Z-up).
+	/// </summary>
+	private static (Vector3 Center, Vector3 Size) CalculateBoundingBox(SegmentedBrickModel.Bounds? bounds)
+	{
+		if (!bounds.HasValue)
+			return (Vector3.Zero, Vector3.Zero);
+
+		// Voxel data is in Z-up right-handed (MagicaVoxel convention)
+		// Godot uses Y-up right-handed
+		// Conversion: (X, Y, Z)_zup -> (X, Z, Y)_yup
+
+		SegmentedBrickModel.Bounds b = bounds.Value;
+
+		// Min/max in voxel space (Z-up), +2 to include the brick size
+		Vector3 min = new Vector3(b.MinX, b.MinZ, b.MinY);
+		Vector3 max = new Vector3(b.MaxX + 2, b.MaxZ + 2, b.MaxY + 2);
+
+		Vector3 center = (min + max) / 2;
+		Vector3 size = max - min;
+
+		return (center, size);
+	}
+
+	/// <summary>
+	/// Handles bounds changes by resizing and repositioning the raymarching bounding box.
+	/// </summary>
+	private void HandleBoundsChanged(SegmentedBrickModel.Bounds? oldBounds, SegmentedBrickModel.Bounds newBounds)
+	{
+		if (_boundingBox == null || _boxMesh == null)
+			return;
+
+		(Vector3 center, Vector3 size) = CalculateBoundingBox(newBounds);
+
+		// Update the box mesh size and position
+		_boxMesh.Size = size;
+		_boundingBox.Position = center;
+
+		GD.Print($"Bounds expanded: {oldBounds} -> {newBounds}");
+		GD.Print($"  New bounding box: center={center}, size={size}");
 	}
 
 	private void SetupShaderUniforms()
@@ -215,6 +250,9 @@ public partial class Root : Node3D
 
 	public override void _Process(double delta)
 	{
+		// Poll for async GPU bounds computation results
+		_voxelBridge?.Poll();
+
 		// Toggle voxel at (0,0,0) every second to demonstrate real-time editing
 		_toggleTimer += delta;
 		if (_toggleTimer >= 1.0)

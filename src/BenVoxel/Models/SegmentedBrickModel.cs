@@ -23,11 +23,32 @@ public class SegmentedBrickModel : IEditableBrickModel
 	private bool _isEmpty = true;
 	#region Public API
 	/// <summary>
+	/// Represents the bounding box of the model.
+	/// </summary>
+	public readonly record struct Bounds(
+		ushort MinX, ushort MaxX,
+		ushort MinY, ushort MaxY,
+		ushort MinZ, ushort MaxZ)
+	{
+		public ushort SizeX => (ushort)(MaxX - MinX + 2);
+		public ushort SizeY => (ushort)(MaxY - MinY + 2);
+		public ushort SizeZ => (ushort)(MaxZ - MinZ + 2);
+	}
+	/// <summary>
 	/// segmentId, brickIndex, payload
 	/// </summary>
 	public event Action<uint, int, ulong> OnBrickDirty;
 	public event Action<uint> OnSegmentLoaded;
 	public event Action<uint> OnSegmentUnloaded;
+	/// <summary>
+	/// Fired when the model bounds expand due to a voxel/brick being set outside the current bounds.
+	/// Parameters: (oldBounds, newBounds). oldBounds is null if model was previously empty.
+	/// </summary>
+	public event Action<Bounds?, Bounds> OnBoundsChanged;
+	/// <summary>
+	/// Gets the current bounding box of the model, or null if the model is empty.
+	/// </summary>
+	public Bounds? CurrentBounds => _isEmpty ? null : new Bounds(_minX, _maxX, _minY, _maxY, _minZ, _maxZ);
 	public SegmentedBrickModel(IBrickModel source)
 	{
 		if (source is null)
@@ -104,7 +125,7 @@ public class SegmentedBrickModel : IEditableBrickModel
 		RecalculateBounds();
 	}
 	/// <summary>
-	/// Forces a recalculation of the bounding box. 
+	/// Forces a recalculation of the bounding box.
 	/// Useful after performing many deletions.
 	/// </summary>
 	public void RecalculateBounds()
@@ -115,6 +136,43 @@ public class SegmentedBrickModel : IEditableBrickModel
 		_isEmpty = true;
 		foreach (VoxelBrick brick in this)
 			UpdateBounds(brick.X, brick.Y, brick.Z);
+	}
+	/// <summary>
+	/// Applies externally-computed bounds (e.g., from GPU compute shader).
+	/// Only shrinks bounds, never expands. Fires OnBoundsChanged if bounds changed.
+	/// </summary>
+	/// <param name="computedBounds">The bounds computed externally, or null if model is empty.</param>
+	public void ApplyTrimmedBounds(Bounds? computedBounds)
+	{
+		Bounds? oldBounds = CurrentBounds;
+
+		if (!computedBounds.HasValue)
+		{
+			// Model is empty
+			if (!_isEmpty)
+			{
+				_minX = ushort.MaxValue; _maxX = 0;
+				_minY = ushort.MaxValue; _maxY = 0;
+				_minZ = ushort.MaxValue; _maxZ = 0;
+				_isEmpty = true;
+				OnBoundsChanged?.Invoke(oldBounds, new Bounds(0, 0, 0, 0, 0, 0));
+			}
+			return;
+		}
+
+		Bounds newBounds = computedBounds.Value;
+
+		// Only allow shrinking, not expansion (expansion happens via SetBrick)
+		bool changed = false;
+		if (newBounds.MinX > _minX) { _minX = newBounds.MinX; changed = true; }
+		if (newBounds.MaxX < _maxX) { _maxX = newBounds.MaxX; changed = true; }
+		if (newBounds.MinY > _minY) { _minY = newBounds.MinY; changed = true; }
+		if (newBounds.MaxY < _maxY) { _maxY = newBounds.MaxY; changed = true; }
+		if (newBounds.MinZ > _minZ) { _minZ = newBounds.MinZ; changed = true; }
+		if (newBounds.MaxZ < _maxZ) { _maxZ = newBounds.MaxZ; changed = true; }
+
+		if (changed)
+			OnBoundsChanged?.Invoke(oldBounds, CurrentBounds!.Value);
 	}
 	public bool TryGetSegment(uint segmentId, out ulong[] bricks) => _segments.TryGetValue(segmentId, out bricks);
 	public void LoadSegment(uint segmentId, ulong[] bricks)
@@ -224,15 +282,32 @@ public class SegmentedBrickModel : IEditableBrickModel
 			_minY = _maxY = y;
 			_minZ = _maxZ = z;
 			_isEmpty = false;
+			OnBoundsChanged?.Invoke(null, new Bounds(_minX, _maxX, _minY, _maxY, _minZ, _maxZ));
 		}
 		else
 		{
+			// Capture old bounds
+			ushort oldMinX = _minX, oldMaxX = _maxX,
+				oldMinY = _minY, oldMaxY = _maxY,
+				oldMinZ = _minZ, oldMaxZ = _maxZ;
+
+			// Update bounds
 			if (x < _minX) _minX = x;
 			if (x > _maxX) _maxX = x;
 			if (y < _minY) _minY = y;
 			if (y > _maxY) _maxY = y;
 			if (z < _minZ) _minZ = z;
 			if (z > _maxZ) _maxZ = z;
+
+			// Fire event if bounds changed
+			if (_minX != oldMinX || _maxX != oldMaxX ||
+				_minY != oldMinY || _maxY != oldMaxY ||
+				_minZ != oldMinZ || _maxZ != oldMaxZ)
+			{
+				OnBoundsChanged?.Invoke(
+					new Bounds(oldMinX, oldMaxX, oldMinY, oldMaxY, oldMinZ, oldMaxZ),
+					new Bounds(_minX, _maxX, _minY, _maxY, _minZ, _maxZ));
+			}
 		}
 	}
 	private uint GetSegmentId(ushort x, ushort y, ushort z) => PackSegmentId(

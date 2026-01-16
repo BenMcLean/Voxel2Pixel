@@ -73,6 +73,10 @@ public sealed class VoxelBridge : IDisposable
 
 	private const int MaxSegments = 256; // Max directory size
 
+	// GPU bounds computation
+	private BoundsCompute _boundsCompute;
+	private bool _boundsPotentiallyOversized;
+
 	public VoxelBridge(SegmentedBrickModel model)
 	{
 		_model = model ?? throw new ArgumentNullException(nameof(model));
@@ -80,6 +84,9 @@ public sealed class VoxelBridge : IDisposable
 		_model.OnSegmentLoaded += HandleSegmentLoaded;
 		_model.OnSegmentUnloaded += HandleSegmentUnloaded;
 		_model.OnBrickDirty += HandleBrickDirty;
+
+		// Initialize GPU bounds compute
+		_boundsCompute = new BoundsCompute();
 
 		// Upload any segments that were already loaded before we subscribed to events
 		UploadExistingSegments();
@@ -135,6 +142,28 @@ public sealed class VoxelBridge : IDisposable
 		int bz = (brickIndex >> 12) & 0x3F;
 
 		UpdateBrickInTexture(texture, bx, by, bz, payload);
+
+		// If any voxels were cleared, bounds might need shrinking
+		// We detect this by checking if the new payload has any zero bytes where it didn't before
+		// For simplicity, mark as potentially oversized if payload is 0 or has any zero bytes
+		if (payload == 0 || HasClearedVoxels(payload))
+		{
+			_boundsPotentiallyOversized = true;
+		}
+	}
+
+	/// <summary>
+	/// Checks if a brick payload might have cleared voxels (contains zero bytes).
+	/// </summary>
+	private static bool HasClearedVoxels(ulong payload)
+	{
+		// Check each byte of the payload
+		for (int i = 0; i < 8; i++)
+		{
+			if (((payload >> (i * 8)) & 0xFF) == 0)
+				return true;
+		}
+		return false;
 	}
 
 	private void HandleSegmentUnloaded(uint segmentId)
@@ -273,11 +302,65 @@ public sealed class VoxelBridge : IDisposable
 		_textures[foundSegmentId.Value] = newTexture;
 	}
 
+	#region Bounds Trimming
+
+	/// <summary>
+	/// Whether bounds might be larger than necessary due to voxel removals.
+	/// </summary>
+	public bool BoundsPotentiallyOversized => _boundsPotentiallyOversized;
+
+	/// <summary>
+	/// Call this every frame to check if bounds need trimming.
+	/// Uses GPU compute with throttling (max once per 100ms).
+	/// </summary>
+	public void Poll()
+	{
+		if (!_boundsPotentiallyOversized)
+			return;
+
+		// Try to compute bounds (will be throttled if called too frequently)
+		SegmentedBrickModel.Bounds? result = _boundsCompute?.ComputeBounds(_textures, _directory);
+
+		if (result.HasValue)
+		{
+			_model.ApplyTrimmedBounds(result);
+			_boundsPotentiallyOversized = false;
+			GD.Print($"VoxelBridge: Bounds trimmed to {result}");
+		}
+	}
+
+	/// <summary>
+	/// Forces an immediate bounds recalculation via GPU compute shader.
+	/// Bypasses throttling. Use for save/export operations.
+	/// </summary>
+	public void TrimBounds()
+	{
+		if (_boundsCompute == null || !_boundsCompute.IsAvailable)
+		{
+			// Fallback to CPU recalculation
+			_model.RecalculateBounds();
+			_boundsPotentiallyOversized = false;
+			GD.Print("VoxelBridge: Bounds trimmed via CPU fallback");
+			return;
+		}
+
+		SegmentedBrickModel.Bounds? result = _boundsCompute.ComputeBounds(_textures, _directory, force: true);
+		_model.ApplyTrimmedBounds(result);
+		_boundsPotentiallyOversized = false;
+
+		GD.Print($"VoxelBridge: Bounds trimmed to {result}");
+	}
+
+	#endregion
+
 	public void Dispose()
 	{
 		_model.OnSegmentLoaded -= HandleSegmentLoaded;
 		_model.OnSegmentUnloaded -= HandleSegmentUnloaded;
 		_model.OnBrickDirty -= HandleBrickDirty;
+
+		_boundsCompute?.Dispose();
+		_boundsCompute = null;
 
 		// ImageTexture3D and ImageTexture will be garbage collected automatically
 		_textures.Clear();
