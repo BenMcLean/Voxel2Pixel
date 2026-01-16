@@ -17,7 +17,7 @@ namespace BenVoxel.Models;
 /// SVO stands for "Sparse Voxel Octree"
 /// </summary>
 [JsonConverter(typeof(SvoModelConverter))]
-public class SvoModel() : IEditableModel, IBinaryWritable, IBrickModel
+public class SvoModel() : IEditableBrickModel, IBinaryWritable
 {
 	#region Nested classes
 	public abstract class Node : IBinaryWritable
@@ -323,7 +323,7 @@ public class SvoModel() : IEditableModel, IBinaryWritable, IBrickModel
 				return;
 			}
 			// Not uniform - count unique colors
-			Dictionary<byte, byte> counts = new();
+			Dictionary<byte, byte> counts = [];
 			for (byte i = 0; i < 8; i++)
 			{
 				byte val = (byte)(Data >> (i << 3) & 0xFF);
@@ -655,11 +655,53 @@ public class SvoModel() : IEditableModel, IBinaryWritable, IBrickModel
 		}
 		return 0; // No leaf = no data (sparse)
 	}
+	/// <summary>
+	/// Sets a 2x2x2 brick at the specified coordinates.
+	/// Coordinates are snapped to brick origin (multiple of 2).
+	/// </summary>
+	public void SetBrick(ushort x, ushort y, ushort z, ulong payload)
+	{
+		// Snap to brick origin
+		ushort brickX = (ushort)(x & ~1),
+			brickY = (ushort)(y & ~1),
+			brickZ = (ushort)(z & ~1);
+		if (this.IsOutside(brickX, brickY, brickZ))
+			throw new IndexOutOfRangeException("[" + string.Join(", ", brickX, brickY, brickZ) + "] is not within size [" + string.Join(", ", SizeX, SizeY, SizeZ) + "]!");
+		Branch branch = Root;
+		byte octant;
+		// Navigate/create branches down to depth 15 (parent of leaves)
+		for (byte level = 15; level > 1; level--)
+		{
+			octant = (byte)((brickZ >> level & 1) << 2 | (brickY >> level & 1) << 1 | brickX >> level & 1);
+			if (branch[octant] is Branch child)
+				branch = child;
+			else
+			{
+				if (payload == 0ul)
+					return; // No need to create structure for empty brick
+				branch = (Branch)(branch[octant] = new Branch(branch, octant));
+			}
+		}
+		// At depth 15, children are leaves
+		octant = (byte)((brickZ >> 1 & 1) << 2 | (brickY >> 1 & 1) << 1 | brickX >> 1 & 1);
+		if (payload == 0ul)
+		{
+			// Remove the leaf if it exists
+			if (branch[octant] is Leaf)
+				branch[octant] = null;
+		}
+		else
+		{
+			// Create or update the leaf
+			if (branch[octant] is not Leaf leaf)
+				leaf = (Leaf)(branch[octant] = new Leaf(branch, octant));
+			leaf.Data = payload;
+		}
+	}
 	IEnumerator<VoxelBrick> IEnumerable<VoxelBrick>.GetEnumerator()
 	{
 		Stack<(Branch branch, ushort x, ushort y, ushort z)> stack = new();
 		stack.Push((Root, 0, 0, 0));
-
 		while (stack.Count > 0)
 		{
 			(Branch branch, ushort baseX, ushort baseY, ushort baseZ) = stack.Pop();

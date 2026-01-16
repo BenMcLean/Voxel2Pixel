@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using BenProgress;
 using BenVoxel;
 using BenVoxel.Interfaces;
+using BenVoxel.Models;
 using BenVoxel.Structs;
 using Voxel2Pixel.Color;
 using Voxel2Pixel.Draw;

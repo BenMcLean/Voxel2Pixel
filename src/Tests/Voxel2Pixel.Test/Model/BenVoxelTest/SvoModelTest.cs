@@ -56,20 +56,16 @@ public class SvoModelTest(Xunit.Abstractions.ITestOutputHelper output)
 	{
 		VoxFileModel model = new(@"..\..\..\TestData\Models\Sora.vox");
 		SvoModel svo = new(model);
-		foreach (Voxel voxel in model)
-		{
+		foreach (Voxel voxel in (IModel)model)
 			Assert.Equal(
 				expected: voxel.Material,
 				actual: svo[voxel.X, voxel.Y, voxel.Z]);
-		}
 		foreach (Voxel voxel in svo)
-		{
 			Assert.Equal(
 				expected: model[voxel.X, voxel.Y, voxel.Z],
 				actual: voxel.Material);
-		}
 		Assert.Equal(
-			expected: model.Count(),
+			expected: ((IModel)model).Count(),
 			actual: ((IModel)svo).Count());
 		for (ushort x = 0; x < model.SizeX; x++)
 			for (ushort y = 0; y < model.SizeY; y++)

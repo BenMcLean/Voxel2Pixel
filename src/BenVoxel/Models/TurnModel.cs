@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using BenVoxel.Interfaces;
 using BenVoxel.Structs;
+using Voxel2Pixel.Model;
 
-namespace Voxel2Pixel.Model;
+namespace BenVoxel.Models;
 
 /// <summary>
 /// Rotates models at 90 degree angles, including their sizes
@@ -61,22 +62,12 @@ public class TurnModel : ContainerModel, ITurnable
 	/// </summary>
 	/// <param name="index">index 0 or -1 for x, 1 or -2 for y, or 2 or -3 for z; negative index values have the same size, but different starts and directions</param>
 	/// <returns>the size of the specified dimension</returns>
-	public ushort ModelSize(int index)
+	public ushort ModelSize(int index) => index switch
 	{
-		switch (index)
-		{
-			case CuboidOrientation.xPlus:
-			case CuboidOrientation.xMinus:
-				return Model.SizeX;
-			case CuboidOrientation.yPlus:
-			case CuboidOrientation.yMinus:
-				return Model.SizeY;
-			case CuboidOrientation.zPlus:
-			case CuboidOrientation.zMinus:
-				return Model.SizeZ;
-			default:
-				throw new ArgumentException("Invalid index: \"" + index + "\"");
-		}
-	}
+		CuboidOrientation.xPlus or CuboidOrientation.xMinus => Model.SizeX,
+		CuboidOrientation.yPlus or CuboidOrientation.yMinus => Model.SizeY,
+		CuboidOrientation.zPlus or CuboidOrientation.zMinus => Model.SizeZ,
+		_ => throw new ArgumentException("Invalid index: \"" + index + "\""),
+	};
 	#endregion Size
 }
