@@ -8,17 +8,24 @@ The description below is derived directly from `GpuSvoModel.cs` and should be tr
 
 ## 1. Coordinate System and Input Assumptions
 
-* **Coordinate space**: right‑handed, **Y‑up**
+* **Coordinate space**: right‑handed, **Z‑up**
 * **Voxel coordinates**: `(x, y, z)` are **unsigned 16‑bit integers** (`ushort`)
+	* **Voxel coordinate values** are limited to 16-bit unsigned integers. Derived quantities such as dimensions, counts, depths, and offsets are not constrained to 16-bit and may use wider integer types.
 * **Voxel values**:
   * `0` → empty
   * `1–255` → material index
 * **Model bounds**:
   * All voxels satisfy:
-    * `0 ≤ x < SizeX`
-    * `0 ≤ y < SizeY`
-    * `0 ≤ z < SizeZ`
+	* `0 ≤ x < SizeX`
+	* `0 ≤ y < SizeY`
+	* `0 ≤ z < SizeZ`
   * The model’s minimum corner is always aligned to `(0,0,0)`
+
+This coordinate system conforms to the Magicavoxel (.vox) standard.
+All voxel data is assumed to be authored and baked in Z-up space.
+
+If the host engine uses a different up-axis (e.g., Y-up),
+conversion MUST occur outside the GpuSvoModel baker.
 
 ---
 
@@ -50,6 +57,8 @@ octant = (z_bit << 2) | (y_bit << 1) | x_bit
 
 Where each bit is extracted from the voxel coordinate at the current depth.
 
+The bit at position (MaxDepth - 1) determines the octant for the Root node (Depth 0). Traversal proceeds by shifting right toward the Least Significant Bit.
+
 Octant index meaning:
 
 | Index | x | y | z |
@@ -62,6 +71,11 @@ Octant index meaning:
 | 5 | 1 | 0 | 1 |
 | 6 | 0 | 1 | 1 |
 | 7 | 1 | 1 | 1 |
+
+Where:
+* x → local +X (east)
+* y → local +Y (north)
+* z → local +Z (up)
 
 This ordering is used consistently:
 * During voxel insertion
@@ -78,6 +92,8 @@ During construction, nodes are represented as:
 * `IsLeaf` – marks a brick node
 * `Payload` – 64‑bit value storing **8 materials × 8 bits**
 
+Payloads can also be stored as RG32_UINT, where the shader reads a uvec2 and bit-shifts to reconstruct the material indices. This increases compatibility significantly without changing the "bit-exact" requirement.
+
 ### 4.1 Voxel Insertion
 
 For each non‑zero voxel:
@@ -93,6 +109,43 @@ payload[octant] = material
 ```
 
 Multiple voxels may contribute to the same leaf brick.
+
+### 4.2 Packing rule
+
+Packing rule (canonical, little-endian):
+
+`payload_u64 = Σ_{i=0..7} (uint64(material[i]) << (i*8)).`
+
+I.e.
+
+- octant 0 → least-significant byte
+- octant 7 → most-significant byte.
+
+If using uvec2 (two u32s):
+
+```
+low = uint(payload_u64 & 0xFFFFFFFF);
+high = uint(payload_u64 >> 32).
+```
+
+When reading in shader reconstruct:
+
+```
+uvec2 p = payloads[payloadIndex];
+uint64_p_low = p.x;
+uint64_p_high = p.y;
+```
+
+To extract material: `material = ((uint64)phigh << 32 | p_low ) >> (octant8) & 0xFF` — or simpler, if you only need one byte, choose:
+
+```
+if (octant < 4)
+	byte = (p.x >> (octant8)) & 0xFF
+else
+	byte = (p.y >> ((octant-4)*8)) & 0xFF.
+```
+
+Uniform leaf material stored in node low bits (bits 7..0) is the same 8-bit material index.
 
 ---
 
@@ -216,6 +269,8 @@ This avoids storing null pointers and enables compact traversal.
 
 ## 9. Traversal Algorithm (Shader‑Ready)
 
+Traversal coordinates (x, y, z) are 16-bit voxel indices in canonical Z-up voxel space promoted to wider integer types for traversal arithmetic.
+
 Given `(x,y,z)`:
 
 1. Start at `nodeIndex = 0`
@@ -236,7 +291,149 @@ This traversal requires:
 
 ---
 
-## 10. Guarantees for GPU Implementation
+## 10. GpuSvoModel Output Contract (Model-Local)
+
+`GpuSvoModel` is responsible **only** for baking a *single voxel model*
+into a GPU-traversable Sparse Voxel Octree.
+
+It does **not** define GPU texture layout, inter-model packing, or resource
+management.
+
+The output of `GpuSvoModel` is a *model-local SVO description* that may be
+embedded into larger GPU resources by a separate system.
+
+### 10.1 Required Outputs
+
+A completed `GpuSvoModel` bake produces the following logical outputs:
+
+* `uint[] Nodes`
+* `ulong[] Payloads`
+* `uint MaxDepth`
+* `uint3 VoxelDimensions`
+* `uint RootSize` — length of one edge of the cubic root volume
+
+Where:
+
+* `Nodes` and `Payloads` are indexed **starting at zero**
+* Index `0` in `Nodes` is always the root node
+* All internal child indices are **relative to this local array**
+* No offsets are applied at this stage
+
+### 10.2 Root Volume Definition
+
+The SVO root represents a cube of size:
+
+`RootSize = 2 ^ MaxDepth`
+
+This cube is aligned to (0,0,0) in canonical Z-up voxel space.
+
+Voxel coordinates outside VoxelDimensions are implicitly empty.
+
+---
+
+## 11. Multi-Model Packing (Out of Scope for GpuSvoModel)
+
+`GpuSvoModel` does **not** define how multiple voxel models are stored
+together in GPU memory.
+
+When multiple models are used simultaneously, their SVO data **must**
+be packed into shared GPU buffers or textures by a higher-level system.
+
+That system is referred to normatively as **GpuSvoModelTexture**.
+
+`GpuSvoModelTexture` consumes one or more completed `GpuSvoModel` outputs
+and produces GPU-ready byte streams and per-model descriptors.
+
+This separation is intentional and required.
+
+---
+
+## 12. Atlas-Safe Indexing Guarantees
+
+To allow multiple `GpuSvoModel` instances to coexist in shared GPU memory,
+the following guarantees are provided by this specification:
+
+1. All node indices stored in `Nodes[]` are relative to the start of that model’s `Nodes[]`
+2. All payload indices stored in brick leaf nodes are relative to the start of that model’s `Payloads[]`
+3. No absolute GPU addresses are ever embedded in node data
+4. Node traversal logic remains valid when a constant offset is added externally
+
+### 12.1 Offset Application Rule
+
+When embedded into a larger buffer, traversal **must** begin at:
+
+`nodeIndex = NodeOffset`
+
+Where NodeOffset is supplied externally.
+
+When resolving a brick payload:
+
+`payloadIndex = PayloadOffset + LocalPayloadIndex`
+
+No other modification to traversal logic is permitted.
+
+---
+
+## 13. GPU Texture Encoding Requirements
+
+When SVO data is uploaded to the GPU:
+
+* `Nodes` are 32-bit unsigned integers
+* `Payloads` are two 32-bit unsigned integers per payload (uvec2) — GPU format RG32_UINT (or SSBO of uvec2). Define canonical mapping of the 64 payload bits into the two u32s (see packing rules below).
+* Data **must** be tightly packed with no padding
+* Endianness must match native GPU endianness
+
+The intended GPU formats are:
+
+| Data     | GPU Format   |
+|---------:|--------------|
+| Nodes    | R32_UINT     |
+| Payloads | R32_UINT     |
+
+Alternate formats may be used only if bit-exact behavior is preserved.
+
+---
+
+## 14. Dynamic Texture Sizing
+
+When multiple models are packed together:
+
+* The total number of nodes is the sum of all `Nodes.Length`
+* The total number of payloads is the sum of all `Payloads.Length`
+
+Textures may be sized dynamically to fit this data.
+
+### 14.1 Linear Addressing Model
+
+SVO data is conceptually addressed linearly.
+
+If a 2D texture is used, the mapping from linear index `i` is:
+
+```
+x = i % TextureWidth
+y = i / TextureWidth
+```
+
+No padding rows or per-model alignment gaps are permitted.
+
+---
+
+## 15. Per-Model Descriptor (Reference)
+
+When using packed SVO data, each model instance should provide:
+
+* `uint NodeOffset`
+* `uint PayloadOffset`
+* `uint MaxDepth`
+* `uint3 VoxelDimensions`
+
+These values are not stored in the SVO itself and must be supplied to traversal code externally (e.g., via uniforms or buffers).
+
+Offsets are expressed in element units, not bytes.
+
+---
+
+## 16. Guarantees for GPU Implementation
 
 * Deterministic layout
 * No dynamic allocation
@@ -253,7 +450,7 @@ The structure is **directly suitable** for:
 
 ---
 
-## 11. Notes and Design Rationale
+## 17. Notes and Design Rationale
 
 * 2×2×2 bricks minimize tree depth while keeping payloads cache‑friendly
 * Morton ordering ensures spatial locality
@@ -262,7 +459,7 @@ The structure is **directly suitable** for:
 
 ---
 
-## 12. Summary
+## 18. Summary
 
 `GpuSvoModel` encodes a **compact, GPU‑friendly sparse voxel octree** with:
 
@@ -272,4 +469,3 @@ The structure is **directly suitable** for:
 * Minimal memory fetches during traversal
 
 This document can be used as the authoritative reference when implementing GPU shaders or alternative builders.
-
