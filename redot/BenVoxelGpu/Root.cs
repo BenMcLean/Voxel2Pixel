@@ -31,10 +31,8 @@ uniform uint node_offset;
 uniform uint payload_offset;
 
 // Volumetric impostor parameters
-uniform vec3 camera_pos_local;    // Camera position in model local space
-uniform vec3 ray_dir_local;       // Ray direction in model local space (normalized)
-uniform vec3 camera_right_local;  // Camera right (U) in model local space
-uniform vec3 camera_up_local;     // Camera up (V) in model local space
+uniform vec3 ray_dir_local;       // Camera forward in voxel space (normalized)
+uniform vec3 camera_up_local;     // Camera up (V) in voxel space (normalized)
 uniform float voxel_size;         // World-space size of one voxel
 uniform float sigma;              // Virtual pixels per voxel
 uniform vec3 voxel_offset;        // Offset from box origin to voxel origin
@@ -201,6 +199,9 @@ vec4 trace_ray(vec3 ro, vec3 rd, vec3 box_min, vec3 box_max, out int last_axis) 
 const int DEBUG_MODE = 0;
 
 void fragment() {
+	// Derive camera right from forward and up (standard graphics convention)
+	vec3 camera_right_local = cross(ray_dir_local, camera_up_local);
+
 	// Virtual pixel size in voxel units
 	float delta_px = 1.0 / sigma;
 
@@ -247,8 +248,13 @@ void fragment() {
 	float v_snapped = round(v_coord / delta_px) * delta_px;
 
 	// === Parallel Ray Origin ===
-	// Fire parallel ray from quantized sprite position, starting behind the model
-	vec3 ro_voxel = model_center + u_snapped * camera_right_local + v_snapped * camera_up_local
+	// Fire parallel ray from quantized sprite position.
+	// Offset along U (right) and V (up) in the sprite plane, then back up along
+	// the ray direction so the ray starts in front of the model (toward camera)
+	// and can properly intersect the voxel volume from its front face.
+	vec3 ro_voxel = model_center
+				  + u_snapped * camera_right_local
+				  + v_snapped * camera_up_local
 				  - max_dim * 2.0 * rd;
 
 	// For debug modes
@@ -525,17 +531,13 @@ void fragment() {
 		// Godot: X=right, Y=up, Z=towards viewer (camera looks at -Z)
 		// Voxel: X=right, Y=forward (into screen), Z=up
 		// Transformation: voxel.X = godot.X, voxel.Y = -godot.Z, voxel.Z = godot.Y
-		Vector3 camPosVoxel = new Vector3(camPos.X, -camPos.Z, camPos.Y) / _voxelSize;
 		Vector3 camForwardVoxel = new Vector3(camForward.X, -camForward.Z, camForward.Y).Normalized();
-		Vector3 camRightVoxel = new Vector3(camRight.X, -camRight.Z, camRight.Y).Normalized();
 		Vector3 camUpVoxel = new Vector3(camUp.X, -camUp.Z, camUp.Y).Normalized();
 		// Light direction (from upper left in view space)
 		Vector3 lightDirWorld = (-camRight + camUp * 0.5f - camForward).Normalized();
 		Vector3 lightDirVoxel = new Vector3(lightDirWorld.X, -lightDirWorld.Z, lightDirWorld.Y).Normalized();
-		// Update shader uniforms
-		_material.SetShaderParameter("camera_pos_local", camPosVoxel);
+		// Update shader uniforms (camera_right derived in shader from cross product)
 		_material.SetShaderParameter("ray_dir_local", camForwardVoxel);
-		_material.SetShaderParameter("camera_right_local", camRightVoxel);
 		_material.SetShaderParameter("camera_up_local", camUpVoxel);
 		_material.SetShaderParameter("light_dir", lightDirVoxel);
 		_material.SetShaderParameter("camera_distance", camPos.Length());
