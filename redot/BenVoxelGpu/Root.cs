@@ -18,7 +18,7 @@ public partial class Root : Node3D
 {
 	public const string SpatialShader = """
 shader_type spatial;
-render_mode unshaded, depth_draw_always;
+render_mode unshaded, depth_draw_always, cull_disabled;
 
 // SVO data
 uniform sampler2D svo_texture : filter_nearest;
@@ -214,28 +214,52 @@ void fragment() {
 	// === Ray direction (same for all fragments - orthographic internal projection) ===
 	vec3 rd = normalize(ray_dir_local);
 
-	// === BILLBOARD APPROACH ===
-	// The quad is a billboard facing the camera.
-	// local_vertex.xy gives us the position on the quad directly.
-	// We use these as U/V coordinates on the sprite plane.
+	// === SCREEN-BASED SPRITE PIXEL ===
+	// Use screen coordinates to determine sprite pixel, making it independent of box geometry.
+	// All fragments at the same screen position compute the same sprite pixel.
 
-	// Quad local coordinates are in world units, centered at origin
-	// Convert to voxel units for the sprite plane
-	float u_coord = local_vertex.x / voxel_size;
-	float v_coord = local_vertex.y / voxel_size;
+	// Get world position of model center for reference
+	vec4 center_clip = PROJECTION_MATRIX * VIEW_MATRIX * MODEL_MATRIX * vec4(0.0, 0.0, 0.0, 1.0);
+	vec2 center_ndc = center_clip.xy / center_clip.w;
+
+	// Current fragment's NDC position
+	vec2 frag_ndc = (FRAGCOORD.xy / VIEWPORT_SIZE) * 2.0 - 1.0;
+
+	// Offset from center in NDC
+	vec2 offset_ndc = frag_ndc - center_ndc;
+
+	// Convert NDC offset to world units at the model's distance
+	// The model center is at distance |cam_to_center| from camera
+	// At that distance, NDC range [-1,1] maps to a certain world size based on FOV
+	float dist_to_center = length(camera_pos_local - model_center);
+
+	// For perspective projection: world_size = 2 * dist * tan(fov/2)
+	// We can derive the scale from the projection matrix
+	// P[0][0] = 1/(aspect * tan(fov/2)), P[1][1] = 1/tan(fov/2)
+	// So tan(fov/2) = 1/P[1][1], and at distance d, vertical extent = 2*d/P[1][1]
+	float proj_scale_y = 1.0 / PROJECTION_MATRIX[1][1];
+	float proj_scale_x = 1.0 / PROJECTION_MATRIX[0][0];
+
+	// World-space offset at the sprite plane distance
+	float world_offset_x = offset_ndc.x * dist_to_center * proj_scale_x;
+	float world_offset_y = offset_ndc.y * dist_to_center * proj_scale_y;
+
+	// Convert to voxel units
+	float u_coord = world_offset_x / voxel_size;
+	float v_coord = world_offset_y / voxel_size;
 
 	// Quantize to virtual pixel grid
 	float u_snapped = round(u_coord / delta_px) * delta_px;
 	float v_snapped = round(v_coord / delta_px) * delta_px;
 
 	// === Parallel Ray Origin ===
-	// Ray origin is on the sprite plane at the quantized position,
-	// pushed back along -rd to start behind the model
+	// Fire parallel ray from quantized sprite position, starting behind the model
 	vec3 ro_voxel = model_center + u_snapped * camera_right_local + v_snapped * camera_up_local
 				  - max_dim * 2.0 * rd;
 
-	// For debug modes, compute frag_pos as the point on the sprite plane
-	vec3 frag_pos = model_center + u_coord * camera_right_local + v_coord * camera_up_local;
+	// For debug modes
+	vec3 frag_voxel = vec3(local_vertex.x, local_vertex.z, local_vertex.y) / voxel_size;
+	vec3 frag_pos = frag_voxel + voxel_offset;
 
 	// Debug visualizations (no return statements allowed in fragment)
 	if (DEBUG_MODE == 1) {
@@ -309,20 +333,30 @@ void fragment() {
 		if (hit.x > 0.5) {
 			// Hit - output material color with lighting
 			uint mat = uint(hit.z);
-			vec3 normal = vec3(0.0);
-			vec3 step_dir = sign(rd);
-			if (last_axis == 0) normal.x = -step_dir.x;
-			else if (last_axis == 1) normal.y = -step_dir.y;
-			else normal.z = -step_dir.z;
 
-			float diff = max(dot(normal, light_dir), 0.0);
+			// Compute normal in voxel space based on which axis we hit
+			vec3 normal_voxel = vec3(0.0);
+			vec3 step_dir = sign(rd);
+			if (last_axis == 0) normal_voxel.x = -step_dir.x;
+			else if (last_axis == 1) normal_voxel.y = -step_dir.y;
+			else normal_voxel.z = -step_dir.z;
+
+			// Directional lighting from upper left
+			float diff = max(dot(normal_voxel, light_dir), 0.0);
+			float ambient = 0.3;
+
 			vec3 base_color = texelFetch(palette_texture, ivec2(int(mat), 0), 0).rgb;
-			ALBEDO = base_color * (diff + 0.3);
+			ALBEDO = base_color * (diff + ambient);
 
 			// Compute depth from hit point
-			// Transform from voxel space back to Godot box-local space
-			vec3 hit_voxel = ro_voxel + hit.y * rd - voxel_offset;
-			vec3 hit_godot = vec3(hit_voxel.x, hit_voxel.z, -hit_voxel.y) * voxel_size;
+			// Hit point in voxel space
+			vec3 hit_voxel = ro_voxel + hit.y * rd;
+
+			// Transform back to box local space (Godot Y-up)
+			// Voxel space: X=right, Y=forward, Z=up -> Godot: X=right, Y=up, Z=back
+			vec3 hit_local = (hit_voxel - model_center);
+			vec3 hit_godot = vec3(hit_local.x, hit_local.z, -hit_local.y) * voxel_size;
+
 			vec4 hit_clip = PROJECTION_MATRIX * VIEW_MATRIX * MODEL_MATRIX * vec4(hit_godot, 1.0);
 			DEPTH = (hit_clip.z / hit_clip.w) * 0.5 + 0.5;
 		} else {
@@ -355,8 +389,9 @@ void fragment() {
 				ALBEDO = OUTLINE_COLOR;
 
 				// Depth from nearest neighbor hit
-				vec3 hit_voxel = ro_voxel + min_t * rd - voxel_offset;
-				vec3 hit_godot = vec3(hit_voxel.x, hit_voxel.z, -hit_voxel.y) * voxel_size;
+				vec3 hit_voxel = ro_voxel + min_t * rd;
+				vec3 hit_local = hit_voxel - model_center;
+				vec3 hit_godot = vec3(hit_local.x, hit_local.z, -hit_local.y) * voxel_size;
 				vec4 hit_clip = PROJECTION_MATRIX * VIEW_MATRIX * MODEL_MATRIX * vec4(hit_godot, 1.0);
 				DEPTH = (hit_clip.z / hit_clip.w) * 0.5 + 0.5 + 0.0001; // Small bias
 			} else {
@@ -368,7 +403,7 @@ void fragment() {
 }
 """;
 	private Camera3D _camera;
-	private MeshInstance3D _billboard;
+	private MeshInstance3D _proxyBox;
 	private ImageTexture _svoTexture;
 	private ShaderMaterial _material;
 	private Vector3I _modelSize;
@@ -421,9 +456,9 @@ void fragment() {
 		_material.SetShaderParameter("svo_texture", _svoTexture);
 		_material.SetShaderParameter("texture_width", _textureWidth);
 		_material.SetShaderParameter("svo_nodes_count", (uint)_totalNodesCount);
-		// Create billboard quad for the voxel model
-		_billboard = new MeshInstance3D();
-		AddChild(_billboard);
+		// Create proxy box for the voxel model
+		_proxyBox = new MeshInstance3D();
+		AddChild(_proxyBox);
 		// Create perspective camera
 		_camera = new Camera3D
 		{
@@ -458,24 +493,24 @@ void fragment() {
 		_material.SetShaderParameter("svo_max_depth", (uint)_maxDepth);
 		_material.SetShaderParameter("node_offset", descriptor.NodeOffset);
 		_material.SetShaderParameter("payload_offset", descriptor.PayloadOffset);
-		// Calculate billboard size in world space
-		// We need to cover the maximum possible projection of the model
-		// For a cubic root, the diagonal view is sqrt(2) * size, but we'll use max dimension + padding
-		float maxDim = Mathf.Max(_modelSize.X, Mathf.Max(_modelSize.Y, _modelSize.Z));
-		float billboardSize = maxDim * _voxelSize * 1.5f; // Extra margin for diagonal views
+		// Calculate box size in world space
+		// Voxel model size in world units
+		Vector3 modelWorldSize = new Vector3(_modelSize.X, _modelSize.Y, _modelSize.Z) * _voxelSize;
 		// Expand by 1 virtual pixel on each side for outline
 		float deltaPx = _voxelSize / _sigma;
-		billboardSize += deltaPx * 2f;
+		Vector3 boxSize = modelWorldSize + Vector3.One * deltaPx * 2f;
 		// voxel_offset is the center of the model in voxel space
 		Vector3 voxelOffset = new Vector3(_modelSize.X, _modelSize.Y, _modelSize.Z) * 0.5f;
-		// Create a quad mesh - it will be oriented by UpdateCamera to face the camera
-		_billboard.Mesh = new QuadMesh { Size = new Vector2(billboardSize, billboardSize) };
-		_billboard.MaterialOverride = _material;
+		// Create box mesh - swap Y and Z for Godot's Y-up coordinate system
+		// Box in Godot: X=right, Y=up, Z=back
+		// Voxel space: X=right, Y=forward, Z=up
+		_proxyBox.Mesh = new BoxMesh { Size = new Vector3(boxSize.X, boxSize.Z, boxSize.Y) };
+		_proxyBox.MaterialOverride = _material;
 		// Update shader uniforms
 		_material.SetShaderParameter("voxel_size", _voxelSize);
 		_material.SetShaderParameter("sigma", _sigma);
 		_material.SetShaderParameter("voxel_offset", voxelOffset);
-		GD.Print($"Switched to model {index}: {descriptor.SizeX}x{descriptor.SizeY}x{descriptor.SizeZ}, billboard size: {billboardSize}");
+		GD.Print($"Switched to model {index}: {descriptor.SizeX}x{descriptor.SizeY}x{descriptor.SizeZ}, box size: {boxSize}");
 	}
 	private void UpdateCamera()
 	{
@@ -492,11 +527,6 @@ void fragment() {
 		Vector3 camForward = -camTransform.Basis.Z.Normalized(); // Camera looks down -Z
 		Vector3 camRight = camTransform.Basis.X.Normalized();
 		Vector3 camUp = camTransform.Basis.Y.Normalized();
-		// Orient billboard to face camera (billboard normal = -camForward)
-		_billboard.GlobalTransform = new Transform3D(
-			new Basis(camRight, camUp, -camForward),
-			Vector3.Zero // Billboard at origin
-		);
 		// Transform from Godot Y-up to voxel Z-up space
 		// Godot: X=right, Y=up, Z=towards viewer (camera looks at -Z)
 		// Voxel: X=right, Y=forward (into screen), Z=up
@@ -505,8 +535,8 @@ void fragment() {
 		Vector3 camForwardVoxel = new Vector3(camForward.X, -camForward.Z, camForward.Y).Normalized();
 		Vector3 camRightVoxel = new Vector3(camRight.X, -camRight.Z, camRight.Y).Normalized();
 		Vector3 camUpVoxel = new Vector3(camUp.X, -camUp.Z, camUp.Y).Normalized();
-		// Light direction (from upper right front in view space)
-		Vector3 lightDirWorld = (camRight + camUp * 0.5f - camForward).Normalized();
+		// Light direction (from upper left in view space)
+		Vector3 lightDirWorld = (-camRight + camUp * 0.5f - camForward).Normalized();
 		Vector3 lightDirVoxel = new Vector3(lightDirWorld.X, -lightDirWorld.Z, lightDirWorld.Y).Normalized();
 		// Update shader uniforms
 		_material.SetShaderParameter("camera_pos_local", camPosVoxel);
