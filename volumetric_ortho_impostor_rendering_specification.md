@@ -128,6 +128,34 @@ Each entity is represented by a **BoxMesh** that serves two purposes:
 
 The box's triangles are not the rendered surface. The visual output is entirely determined by ray-traced voxel intersections inside the box volume. The box geometry merely triggers the fragment shader; the shader then ignores the box surface and traces rays through voxel space.
 
+### Anchor Point (Origin)
+
+The **anchor point** is the position in voxel space that corresponds to the entity's world-space position. The proxy box is offset so that the anchor point aligns with the box's local origin.
+
+**Key points:**
+
+* The anchor point is NOT necessarily the model center.
+* **Default anchor: bottom center.** The most common use case places entities on the ground, so the anchor is at the bottom center of the voxel model (e.g., `(sizeX/2, sizeY/2, 0)` in Z-up voxel space).
+* **Any point is valid.** The anchor may be anywhere in voxel space—inside the model, on its surface, or even outside the model bounds.
+* The anchor determines where the entity "stands" in the world. When you set an entity's world position, you are positioning its anchor point.
+
+**Ground placement note:** When placing entities on ground geometry, the entity should float slightly above the ground surface (by at least `Δpx_world`) to prevent ground geometry from occluding the bottom outline pixels.
+
+### Entity Management Pattern
+
+In Godot, the recommended pattern is:
+
+```
+Node3D (Entity root - position/rotation set here)
+└── MeshInstance3D (Proxy BoxMesh - offset to align anchor with parent origin)
+```
+
+The parent `Node3D` represents the entity's position and orientation in the game world. The child `MeshInstance3D` holding the proxy box is offset so that the anchor point in voxel space aligns with the parent's origin.
+
+This separation provides a clean contract:
+* Game logic sets the entity's world transform on the parent node.
+* The rendering system manages the box offset internally based on the anchor point.
+
 ---
 
 ## 5. Virtual Pixel Determination
@@ -136,16 +164,16 @@ Each fragment determines its virtual pixel position based on **screen coordinate
 
 ### 5.1 Screen-to-Sprite Mapping
 
-1. Compute the model center's screen position (NDC):
+1. Compute the anchor point's screen position (NDC). Since the box is offset so the anchor is at local origin:
    ```
-   center_clip = ProjectionMatrix * ViewMatrix * ModelMatrix * vec4(0, 0, 0, 1)
-   center_ndc = center_clip.xy / center_clip.w
+   anchor_clip = ProjectionMatrix * ViewMatrix * ModelMatrix * vec4(0, 0, 0, 1)
+   anchor_ndc = anchor_clip.xy / anchor_clip.w
    ```
 
-2. Compute fragment's offset from center in NDC:
+2. Compute fragment's offset from anchor in NDC:
    ```
    frag_ndc = (FragCoord.xy / ViewportSize) * 2.0 - 1.0
-   offset_ndc = frag_ndc - center_ndc
+   offset_ndc = frag_ndc - anchor_ndc
    ```
 
 3. Convert to world units at the sprite plane:
@@ -171,7 +199,7 @@ Each fragment determines its virtual pixel position based on **screen coordinate
 
 ### 5.2 Camera Distance
 
-The `camera_distance` parameter is the distance from the camera to the model center in world units. This must be provided as a uniform and updated per-frame.
+The `camera_distance` parameter is the distance from the camera to the anchor point in world units. This must be provided as a uniform and updated per-frame.
 
 For a perspective camera, this value determines the scale at which NDC offsets are converted to world units.
 
@@ -205,14 +233,14 @@ camera_right_local = cross(ray_dir_local, camera_up_local)
 
 The ray origin is constructed from the quantized sprite position:
 ```
-ray_origin = model_center
+ray_origin = anchor_to_center
            + u_snapped * camera_right_local
            + v_snapped * camera_up_local
            - D_voxel * (2 * max_dimension)
 ```
 
 Where:
-* `model_center` — center of the voxel model in voxel space
+* `anchor_to_center` — offset from anchor point to model center (the `anchor_to_center` uniform). Since the anchor is at voxel space origin, this equals the model center's position in voxel space.
 * `max_dimension` — largest dimension of the voxel model
 
 The ray starts well in front of the model (toward the camera) so that DDA traversal can properly intersect the voxel volume from its front face.
@@ -307,7 +335,7 @@ Correct depth writing is mandatory for proper occlusion.
 
 ### Billboard Depth Model
 
-The sprite writes depth as if it were a **flat billboard** at the sprite plane (the plane passing through the model center, perpendicular to the camera). This means:
+The sprite writes depth as if it were a **flat billboard** at the sprite plane (the plane passing through the **model center**, perpendicular to the camera). This means:
 
 * All pixels of the sprite share the same depth value.
 * The sprite is either entirely in front of or entirely behind other geometry.
@@ -315,12 +343,15 @@ The sprite writes depth as if it were a **flat billboard** at the sprite plane (
 
 This matches the behavior of classic 2D sprites and maintains the visual coherence of the ortho-impostor effect. Attempting to compute per-voxel depth would cause visually confusing partial occlusion that breaks the 2D sprite illusion.
 
+**Why model center, not anchor point:** The anchor point determines world positioning but may be anywhere in voxel space—even completely outside the model bounds (e.g., a flying character with an anchor at ground level). The sprite plane and depth must be at the model center where the visual content actually exists.
+
 ### Depth Calculation
 
-The depth is simply the clip-space depth of the model center:
+The depth is the clip-space depth of the model center. Since the anchor point is at the box's local origin, the model center in local space is the `anchor_to_center` offset (converted to world units):
 
 ```
-center_clip = ProjectionMatrix * ViewMatrix * ModelMatrix * vec4(0, 0, 0, 1)
+model_center_local = reverse_swizzle(anchor_to_center) * VoxelSize
+center_clip = ProjectionMatrix * ViewMatrix * ModelMatrix * vec4(model_center_local, 1)
 DEPTH = (center_clip.z / center_clip.w) * 0.5 + 0.5
 ```
 
@@ -348,7 +379,9 @@ Each instance provides:
 | `payload_offset` | uint | Offset to this model's payloads |
 | `voxel_size` | float | World-space size of one voxel |
 | `sigma` | float | Virtual pixels per voxel |
-| `voxel_offset` | vec3 | Model center in voxel space |
+| `anchor_to_center` | vec3 | Offset from anchor point to model center in voxel space |
+
+**Anchor offset:** The `anchor_to_center` uniform represents the vector from the anchor point (at the box's local origin) to the center of the voxel model. For a bottom-center anchor on a model of size `(sizeX, sizeY, sizeZ)`, this would be `(sizeX/2, sizeY/2, sizeZ/2)` in Z-up voxel space.
 
 ### Per-Frame Uniforms
 
@@ -358,7 +391,7 @@ Updated each frame based on camera:
 |---------|------|-------------|
 | `ray_dir_local` | vec3 | Camera forward in voxel space |
 | `camera_up_local` | vec3 | Camera up in voxel space |
-| `camera_distance` | float | Distance from camera to model center |
+| `camera_distance` | float | Distance from camera to anchor point |
 | `billboard_depth` | float | Pre-computed depth of sprite plane (optional optimization) |
 | `light_dir` | vec3 | Light direction in voxel space (optional) |
 
@@ -426,10 +459,12 @@ This system is designed for:
 
 ## 13. Glossary
 
+* **Anchor Point** — The position in voxel space that corresponds to the entity's world-space position. Typically bottom center. Determines depth and world placement.
 * **Voxel Space** — Canonical Z-up coordinate system used by `GpuSvoModel`
 * **Virtual Pixel** — A world-space pixel of width `Δpx_world = VoxelSize / σ`
 * **Sprite Space** — 2D grid defined by camera-right (U) and camera-up (V)
-* **Proxy Geometry** — The BoxMesh used to invoke the volumetric shader
+* **Sprite Plane** — The plane passing through the model center, perpendicular to the camera. Used for billboard depth.
+* **Proxy Geometry** — The BoxMesh used to invoke the volumetric shader and define entity transform
 * **Primary Ray** — The ray corresponding to the current virtual pixel
 * **Neighbor Ray** — A ray offset by ±Δpx in sprite space for outline evaluation
 * **DDA** — Digital Differential Analyzer, a voxel grid traversal algorithm
