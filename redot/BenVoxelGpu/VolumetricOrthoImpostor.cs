@@ -1,11 +1,35 @@
+using System;
 using BenVoxel.Structs;
 using Godot;
 
 namespace BenVoxelGpu;
 
 /// <summary>
+/// Camera information needed for volumetric ortho-impostor rendering.
+/// All vectors should be in voxel space (Z-up).
+/// </summary>
+public struct ImpostorCameraInfo
+{
+	/// <summary>Camera forward direction in voxel space (normalized).</summary>
+	public Vector3 ForwardVoxel;
+	/// <summary>Camera up direction in voxel space (normalized).</summary>
+	public Vector3 UpVoxel;
+	/// <summary>Light direction in voxel space (normalized).</summary>
+	public Vector3 LightDirVoxel;
+	/// <summary>Distance from camera to the impostor's model center in world units.</summary>
+	public float CameraDistance;
+}
+
+/// <summary>
+/// Delegate for providing camera information to an impostor.
+/// </summary>
+/// <param name="modelCenterWorld">The model center position in world space.</param>
+/// <returns>Camera information for rendering.</returns>
+public delegate ImpostorCameraInfo CameraInfoProvider(Vector3 modelCenterWorld);
+
+/// <summary>
 /// Container node for volumetric ortho-impostor entities.
-/// Manages proxy box sizing, anchor point offset, and ground clearance.
+/// Manages proxy box sizing, anchor point offset, and shader parameters.
 ///
 /// Entity Management Pattern:
 /// <code>
@@ -16,9 +40,18 @@ namespace BenVoxelGpu;
 public partial class VolumetricOrthoImpostor : Node3D
 {
 	private MeshInstance3D _proxyBox;
+	private ShaderMaterial _material;
+	private GpuSvoModelTextureBridge _bridge;
+	private int _modelIndex;
 	private Vector3I _modelSize;
 	private float _voxelSize;
 	private float _sigma;
+
+	/// <summary>
+	/// Callback that provides camera information each frame.
+	/// Must be set before the impostor can render correctly.
+	/// </summary>
+	public CameraInfoProvider CameraInfoProvider { get; set; }
 
 	/// <summary>
 	/// The anchor point in voxel space (Z-up).
@@ -46,6 +79,16 @@ public partial class VolumetricOrthoImpostor : Node3D
 	/// </summary>
 	public Vector3I ModelSize => _modelSize;
 
+	/// <summary>
+	/// Current model index in the texture bridge.
+	/// </summary>
+	public int ModelIndex => _modelIndex;
+
+	/// <summary>
+	/// Model center position in world space.
+	/// </summary>
+	public Vector3 ModelCenterWorld => GlobalPosition + _proxyBox.Position;
+
 	public VolumetricOrthoImpostor()
 	{
 		_proxyBox = new MeshInstance3D();
@@ -56,29 +99,57 @@ public partial class VolumetricOrthoImpostor : Node3D
 		AddChild(_proxyBox);
 	}
 
+	public override void _Process(double delta)
+	{
+		// Update camera-dependent shader parameters each frame
+		if (_material != null && CameraInfoProvider != null)
+		{
+			ImpostorCameraInfo cameraInfo = CameraInfoProvider(ModelCenterWorld);
+			_material.SetShaderParameter("ray_dir_local", cameraInfo.ForwardVoxel);
+			_material.SetShaderParameter("camera_up_local", cameraInfo.UpVoxel);
+			_material.SetShaderParameter("light_dir", cameraInfo.LightDirVoxel);
+			_material.SetShaderParameter("camera_distance", cameraInfo.CameraDistance);
+		}
+	}
+
 	/// <summary>
-	/// Initialize the impostor with model parameters.
+	/// Initialize the impostor with a texture bridge and model index.
 	/// </summary>
-	/// <param name="modelSize">Size of the voxel model in voxels</param>
+	/// <param name="bridge">The texture bridge containing SVO data</param>
+	/// <param name="modelIndex">Index of the model to display</param>
 	/// <param name="voxelSize">World-space size of one voxel (meters)</param>
 	/// <param name="sigma">Virtual pixels per voxel</param>
-	/// <param name="material">Shader material for the proxy box</param>
 	/// <param name="anchorPoint">Optional custom anchor point in voxel space. If null, uses bottom-center.</param>
-	public void Initialize(Vector3I modelSize, float voxelSize, float sigma, ShaderMaterial material, Point3D? anchorPoint = null)
+	public void Initialize(GpuSvoModelTextureBridge bridge, int modelIndex, float voxelSize, float sigma, Point3D? anchorPoint = null)
 	{
-		_modelSize = modelSize;
+		_bridge = bridge;
+		_modelIndex = modelIndex;
+		_modelSize = bridge.GetModelSize(modelIndex);
 		_voxelSize = voxelSize;
 		_sigma = sigma;
 
 		// Compute anchor point (default: bottom-center in Z-up voxel space)
-		AnchorPoint = anchorPoint ?? new Point3D(modelSize.X >> 1, modelSize.Y >> 1, 0);
+		AnchorPoint = anchorPoint ?? new Point3D(_modelSize.X >> 1, _modelSize.Y >> 1, 0);
+
+		// Create shader material if needed
+		if (_material == null)
+		{
+			_material = new ShaderMaterial
+			{
+				Shader = new Shader { Code = Root.SpatialShader },
+			};
+			// Bind shared texture data
+			bridge.BindToMaterial(_material);
+		}
+
+		// Bind model-specific data
+		bridge.BindModelToMaterial(_material, modelIndex);
 
 		// Compute box size using the 3D diagonal for worst-case orthographic projection
-		// The orthographic projection's maximum extent from any viewing angle is the model's 3D diagonal
 		float diagonal = Mathf.Sqrt(
-			modelSize.X * modelSize.X +
-			modelSize.Y * modelSize.Y +
-			modelSize.Z * modelSize.Z);
+			_modelSize.X * _modelSize.X +
+			_modelSize.Y * _modelSize.Y +
+			_modelSize.Z * _modelSize.Z);
 
 		// Virtual pixel size in world units
 		float deltaPxWorld = voxelSize / sigma;
@@ -88,43 +159,38 @@ public partial class VolumetricOrthoImpostor : Node3D
 
 		// Create cube mesh (same size on all axes)
 		_proxyBox.Mesh = new BoxMesh { Size = new Vector3(boxSide, boxSide, boxSide) };
-		_proxyBox.MaterialOverride = material;
+		_proxyBox.MaterialOverride = _material;
 
-		// Offset the proxy box child for anchor alignment and ground clearance
-		//
-		// The box mesh is centered at (0,0,0) in local space.
-		// We need the anchor point (in voxel space) to align with the parent Node3D's origin.
-		// The voxel model goes from (0,0,0) to (sizeX, sizeY, sizeZ) in voxel space.
-		//
-		// The shader expects the box local origin (0,0,0) to represent the anchor point.
-		// The model center is at (sizeX/2, sizeY/2, sizeZ/2).
-		// anchor_to_center = modelCenter - anchorPoint
-		//
-		// Convert voxel space (Z-up) to Godot space (Y-up):
-		//   godot.X = voxel.X
-		//   godot.Y = voxel.Z
-		//   godot.Z = -voxel.Y
-		Vector3 modelCenter = new Vector3(modelSize.X, modelSize.Y, modelSize.Z) * 0.5f;
+		// Offset the proxy box for anchor alignment and ground clearance
+		Vector3 modelCenter = new Vector3(_modelSize.X, _modelSize.Y, _modelSize.Z) * 0.5f;
 		Vector3 anchorToCenter = modelCenter - new Vector3(AnchorPoint.X, AnchorPoint.Y, AnchorPoint.Z);
 		Vector3 anchorOffsetGodot = new Vector3(
 			anchorToCenter.X,
 			anchorToCenter.Z,
 			-anchorToCenter.Y) * voxelSize;
 
-		// Ground clearance: offset up by one virtual pixel to prevent ground geometry
-		// from occluding the bottom outline pixels
+		// Ground clearance: offset up by one virtual pixel
 		float groundClearance = deltaPxWorld;
 
 		// Total offset for the proxy box
 		_proxyBox.Position = anchorOffsetGodot + new Vector3(0, groundClearance, 0);
 
-		// Update shader uniforms
-		// Pass anchor point directly - shader computes anchor_to_center and bounds from this
-		material.SetShaderParameter("voxel_size", voxelSize);
-		material.SetShaderParameter("sigma", sigma);
-		material.SetShaderParameter("anchor_point", new Vector3(AnchorPoint.X, AnchorPoint.Y, AnchorPoint.Z));
+		// Update shader uniforms for sizing
+		_material.SetShaderParameter("voxel_size", voxelSize);
+		_material.SetShaderParameter("sigma", sigma);
+		_material.SetShaderParameter("anchor_point", new Vector3(AnchorPoint.X, AnchorPoint.Y, AnchorPoint.Z));
 
-		GD.Print($"VolumetricOrthoImpostor: {modelSize}, box_side={boxSide:F3}, anchor={AnchorPoint}");
+		GD.Print($"VolumetricOrthoImpostor: model {modelIndex}, size {_modelSize}, box_side={boxSide:F3}, anchor={AnchorPoint}");
+	}
+
+	/// <summary>
+	/// Switch to a different model from the same texture bridge.
+	/// </summary>
+	public void SetModel(int modelIndex, Point3D? anchorPoint = null)
+	{
+		if (_bridge == null)
+			throw new InvalidOperationException("Impostor must be initialized before switching models");
+		Initialize(_bridge, modelIndex, _voxelSize, _sigma, anchorPoint);
 	}
 
 	/// <summary>
@@ -132,17 +198,18 @@ public partial class VolumetricOrthoImpostor : Node3D
 	/// </summary>
 	public void UpdateSizing(float voxelSize, float sigma)
 	{
-		if (_proxyBox.MaterialOverride is ShaderMaterial material)
-			Initialize(_modelSize, voxelSize, sigma, material, AnchorPoint);
+		if (_bridge == null)
+			throw new InvalidOperationException("Impostor must be initialized before updating sizing");
+		Initialize(_bridge, _modelIndex, voxelSize, sigma, AnchorPoint);
 	}
 
 	/// <summary>
 	/// Sets a custom anchor point and reinitializes the impostor.
 	/// </summary>
-	/// <param name="anchorPoint">New anchor point in voxel space (Z-up).</param>
 	public void SetAnchorPoint(Point3D anchorPoint)
 	{
-		if (_proxyBox.MaterialOverride is ShaderMaterial material)
-			Initialize(_modelSize, _voxelSize, _sigma, material, anchorPoint);
+		if (_bridge == null)
+			throw new InvalidOperationException("Impostor must be initialized before setting anchor");
+		Initialize(_bridge, _modelIndex, _voxelSize, _sigma, anchorPoint);
 	}
 }
