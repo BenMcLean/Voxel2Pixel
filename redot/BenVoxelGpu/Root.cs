@@ -39,6 +39,7 @@ uniform float voxel_size;         // World-space size of one voxel
 uniform float sigma;              // Virtual pixels per voxel
 uniform vec3 voxel_offset;        // Offset from box origin to voxel origin
 uniform vec3 light_dir;           // Light direction for shading
+uniform float camera_distance;    // Distance from camera to model center (world units)
 
 const uint FLAG_INTERNAL = 0x80000000u;
 const uint FLAG_LEAF_TYPE = 0x40000000u;
@@ -218,7 +219,7 @@ void fragment() {
 	// Use screen coordinates to determine sprite pixel, making it independent of box geometry.
 	// All fragments at the same screen position compute the same sprite pixel.
 
-	// Get world position of model center for reference
+	// Get model center's screen position for reference
 	vec4 center_clip = PROJECTION_MATRIX * VIEW_MATRIX * MODEL_MATRIX * vec4(0.0, 0.0, 0.0, 1.0);
 	vec2 center_ndc = center_clip.xy / center_clip.w;
 
@@ -228,21 +229,14 @@ void fragment() {
 	// Offset from center in NDC
 	vec2 offset_ndc = frag_ndc - center_ndc;
 
-	// Convert NDC offset to world units at the model's distance
-	// The model center is at distance |cam_to_center| from camera
-	// At that distance, NDC range [-1,1] maps to a certain world size based on FOV
-	float dist_to_center = length(camera_pos_local - model_center);
-
-	// For perspective projection: world_size = 2 * dist * tan(fov/2)
-	// We can derive the scale from the projection matrix
-	// P[0][0] = 1/(aspect * tan(fov/2)), P[1][1] = 1/tan(fov/2)
-	// So tan(fov/2) = 1/P[1][1], and at distance d, vertical extent = 2*d/P[1][1]
+	// Convert NDC offset to world units using projection matrix and camera distance
+	// For perspective: tan(fov/2) = 1/P[1][1], so at distance d, NDC 1.0 = d/P[1][1] world units
 	float proj_scale_y = 1.0 / PROJECTION_MATRIX[1][1];
 	float proj_scale_x = 1.0 / PROJECTION_MATRIX[0][0];
 
-	// World-space offset at the sprite plane distance
-	float world_offset_x = offset_ndc.x * dist_to_center * proj_scale_x;
-	float world_offset_y = offset_ndc.y * dist_to_center * proj_scale_y;
+	// World-space offset at the sprite plane (using fixed camera distance)
+	float world_offset_x = offset_ndc.x * camera_distance * proj_scale_x;
+	float world_offset_y = offset_ndc.y * camera_distance * proj_scale_y;
 
 	// Convert to voxel units
 	float u_coord = world_offset_x / voxel_size;
@@ -544,6 +538,7 @@ void fragment() {
 		_material.SetShaderParameter("camera_right_local", camRightVoxel);
 		_material.SetShaderParameter("camera_up_local", camUpVoxel);
 		_material.SetShaderParameter("light_dir", lightDirVoxel);
+		_material.SetShaderParameter("camera_distance", camPos.Length());
 	}
 	public override void _Process(double delta)
 	{
