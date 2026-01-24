@@ -1,5 +1,8 @@
 using System;
 using System.Buffers.Binary;
+using System.Collections.Generic;
+using System.Linq;
+using BenProgress;
 using BenVoxel.FileToVoxCore;
 using BenVoxel.Models;
 using Godot;
@@ -15,9 +18,12 @@ render_mode unshaded;
 uniform sampler2D svo_texture : filter_nearest;
 uniform sampler2D palette_texture : filter_nearest;
 uniform int texture_width;
-uniform uint svo_nodes_count;
+uniform uint svo_nodes_count; // Total nodes across all models (for locating payloads)
 uniform uvec3 svo_model_size;
 uniform uint svo_max_depth;
+// Per-model offsets for multi-model support (per GpuSvoModel.md Section 12.1)
+uniform uint node_offset;    // Start index in Nodes array for this model
+uniform uint payload_offset; // Start index in Payloads array for this model
 uniform int max_steps;
 uniform vec3 ray_dir;
 uniform float scale;
@@ -42,12 +48,15 @@ uint read_uint(int pixel_idx) {
 }
 
 uint read_node(uint idx) {
-	return read_uint(int(idx));
+	// Add node_offset for multi-model support (per GpuSvoModel.md Section 12.1)
+	return read_uint(int(node_offset + idx));
 }
 
 uint read_payload_byte(uint payload_idx, int octant) {
 	// Payloads start after nodes array
-	int base_pixel = int(svo_nodes_count + payload_idx * 2u);
+	// Add payload_offset for multi-model support (per GpuSvoModel.md Section 12.1)
+	// payload_offset is in uint64 units, so multiply by 2 for uint32 pixel addressing
+	int base_pixel = int(svo_nodes_count + (payload_offset + payload_idx) * 2u);
 
 	// Each uint64 payload is stored as 2 uint32s (little-endian)
 	// octant 0-3 are in first uint32, 4-7 in second
@@ -266,6 +275,11 @@ void fragment() {
 	private int _maxDepth;
 	private int _textureWidth;
 	private float _rotationAngle = 0f;
+	// Multi-model state
+	private IReadOnlyList<SvoModelDescriptor> _descriptors;
+	private ImageTexture[] _paletteTextures;
+	private int _currentModelIndex = 0;
+	private int _totalNodesCount;
 	// Configurable rendering parameters
 	private float _rayStartDistance = 500f;  // Distance camera starts from model
 	private float _safetyDistance = 600f;    // Maximum ray travel distance from model center
@@ -274,36 +288,44 @@ void fragment() {
 	public override void _Ready()
 	{
 		// Load model and create texture
-		VoxFileModel vox = new(@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\Sora.vox");
-		GpuSvoModel gpuModel = new(vox);
-		uint[] palette = vox.Palette; // 256 RGBA8888 colors, ignore index 0, 0x00FF00FF is blue.
+		VoxFileModel[] vox = {
+			new(@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\Sora.vox"),
+			new(@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\Tree.vox") };
+		GpuSvoModel[] gpuModel = [.. vox.Parallelize(vox => new GpuSvoModel(vox))];
+		uint[][] palettes = [.. vox.Select(vox => vox.Palette)]; // 256 RGBA8888 colors, ignore index 0, 0x00FF00FF is blue.
 		GpuSvoModelTexture modelTexture = new(gpuModel);
-		_modelSize = new Vector3I(modelTexture.SizeX, modelTexture.SizeY, modelTexture.SizeZ);
-		_maxDepth = modelTexture.MaxDepth;
+		_descriptors = modelTexture.Descriptors;
+		_totalNodesCount = modelTexture.TotalNodesCount;
 		_textureWidth = modelTexture.Width;
 		// Create ImageTexture from the model texture data
 		Image image = Image.CreateFromData(_textureWidth, _textureWidth, false, Image.Format.Rgba8, modelTexture.Data);
 		_svoTexture = ImageTexture.CreateFromImage(image);
-		// Create palette texture (256x1 RGBA8)
-		// Use the same pipeline as the rest of the codebase: WriteUInt32BigEndian
-		byte[] paletteBytes = new byte[256 << 2];
-		for (int i = 0; i < 256; i++)
-			BinaryPrimitives.WriteUInt32BigEndian(paletteBytes.AsSpan(i << 2, 4), palette[i]);
-		Image paletteImage = Image.CreateFromData(256, 1, false, Image.Format.Rgba8, paletteBytes);
-		ImageTexture paletteTexture = ImageTexture.CreateFromImage(paletteImage);
+		// Create palette textures for all models (256x1 RGBA8 each)
+		_paletteTextures = new ImageTexture[palettes.Length];
+		for (int m = 0; m < palettes.Length; m++)
+		{
+			byte[] paletteBytes = new byte[256 << 2];
+			for (int i = 0; i < 256; i++)
+				BinaryPrimitives.WriteUInt32BigEndian(paletteBytes.AsSpan(i << 2, 4), palettes[m][i]);
+			Image paletteImage = Image.CreateFromData(256, 1, false, Image.Format.Rgba8, paletteBytes);
+			_paletteTextures[m] = ImageTexture.CreateFromImage(paletteImage);
+		}
+		// Initialize with first model
+		SvoModelDescriptor descriptor = _descriptors[0];
+		_modelSize = new Vector3I(descriptor.SizeX, descriptor.SizeY, descriptor.SizeZ);
+		_maxDepth = descriptor.MaxDepth;
 		// Create shader material for voxel rendering
 		_material = new ShaderMaterial
 		{
 			Shader = new Shader { Code = SpatialShader, },
 		};
 		_material.SetShaderParameter("svo_texture", _svoTexture);
-		_material.SetShaderParameter("palette_texture", paletteTexture);
 		_material.SetShaderParameter("texture_width", _textureWidth);
-		_material.SetShaderParameter("svo_nodes_count", (uint)modelTexture.NodesCount);
-		_material.SetShaderParameter("svo_model_size", _modelSize);
-		_material.SetShaderParameter("svo_max_depth", (uint)_maxDepth);
+		_material.SetShaderParameter("svo_nodes_count", (uint)_totalNodesCount);
 		_material.SetShaderParameter("scale", _pixelsPerVoxel);
 		_material.SetShaderParameter("target_resolution", (float)_targetResolution);
+		// Set per-model parameters for first model
+		SwitchToModel(0);
 		// Create low-res SubViewport for pixel-perfect rendering
 		_lowResViewport = new SubViewport
 		{
@@ -357,6 +379,20 @@ void fragment() {
 		canvas.AddChild(display);
 		// Initialize shader parameters before first render
 		UpdateShaderParameters();
+	}
+	private void SwitchToModel(int index)
+	{
+		_currentModelIndex = index;
+		SvoModelDescriptor descriptor = _descriptors[index];
+		_modelSize = new Vector3I(descriptor.SizeX, descriptor.SizeY, descriptor.SizeZ);
+		_maxDepth = descriptor.MaxDepth;
+		// Update per-model shader uniforms
+		_material.SetShaderParameter("palette_texture", _paletteTextures[index]);
+		_material.SetShaderParameter("svo_model_size", _modelSize);
+		_material.SetShaderParameter("svo_max_depth", (uint)_maxDepth);
+		_material.SetShaderParameter("node_offset", descriptor.NodeOffset);
+		_material.SetShaderParameter("payload_offset", descriptor.PayloadOffset);
+		GD.Print($"Switched to model {index}: {descriptor.SizeX}x{descriptor.SizeY}x{descriptor.SizeZ}, depth {descriptor.MaxDepth}");
 	}
 	private void UpdateShaderParameters()
 	{
@@ -427,6 +463,9 @@ void fragment() {
 			_material.SetShaderParameter("scale", _pixelsPerVoxel);
 			GD.Print($"Resolution: {_targetResolution}, Pixels/Voxel: {_pixelsPerVoxel}");
 		}
+		// Space: Cycle to next model
+		if (Input.IsActionJustPressed("ui_accept"))
+			SwitchToModel((_currentModelIndex + 1) % _descriptors.Count);
 		// Accumulate rotation over time
 		_rotationAngle += (float)delta;
 		// Update all shader parameters

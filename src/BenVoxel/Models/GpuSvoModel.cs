@@ -37,6 +37,10 @@ public class GpuSvoModel : IBrickModel
 	public ushort SizeY { get; }
 	public ushort SizeZ { get; }
 	public byte MaxDepth { get; }
+	/// <summary>
+	/// Length of one edge of the cubic root volume (2^MaxDepth).
+	/// </summary>
+	public uint RootSize => 1u << MaxDepth;
 	#endregion
 	#region GpuSvoModel
 	public GpuSvoModel(IModel model)
