@@ -18,7 +18,7 @@ uniform float voxel_size;         // World-space size of one voxel
 uniform float sigma;              // Virtual pixels per voxel
 uniform vec3 anchor_point;        // Anchor point position in voxel space (e.g., bottom center)
 uniform vec3 light_dir;           // Light direction for shading
-uniform float camera_distance;    // Distance from camera to anchor point (world units)
+uniform float camera_distance;    // Distance from camera to model center (world units)
 
 const uint FLAG_INTERNAL = 0x80000000u;
 const uint FLAG_LEAF_TYPE = 0x40000000u;
@@ -211,15 +211,15 @@ void fragment() {
 	// Use screen coordinates to determine sprite pixel, making it independent of box geometry.
 	// All fragments at the same screen position compute the same sprite pixel.
 
-	// Get anchor point's screen position for reference (box local origin = anchor)
-	vec4 anchor_clip = PROJECTION_MATRIX * VIEW_MATRIX * MODEL_MATRIX * vec4(0.0, 0.0, 0.0, 1.0);
-	vec2 anchor_ndc = anchor_clip.xy / anchor_clip.w;
+	// Get model center's screen position for reference (box local origin = box center = model center)
+	vec4 center_clip = PROJECTION_MATRIX * VIEW_MATRIX * MODEL_MATRIX * vec4(0.0, 0.0, 0.0, 1.0);
+	vec2 center_ndc = center_clip.xy / center_clip.w;
 
 	// Current fragment's NDC position
 	vec2 frag_ndc = (FRAGCOORD.xy / VIEWPORT_SIZE) * 2.0 - 1.0;
 
-	// Offset from anchor in NDC
-	vec2 offset_ndc = frag_ndc - anchor_ndc;
+	// Offset from model center in NDC
+	vec2 offset_ndc = frag_ndc - center_ndc;
 
 	// Convert NDC offset to world units using projection matrix and camera distance
 	// For perspective: tan(fov/2) = 1/P[1][1], so at distance d, NDC 1.0 = d/P[1][1] world units
@@ -376,7 +376,10 @@ void fragment() {
 				DEPTH = billboard_depth;
 			} else {
 				// Transparent - discard fragment
-				discard;
+				// discard;
+				// Debug: show proxy box extent as grey
+				ALBEDO = vec3(0.5);
+				DEPTH = billboard_depth;
 			}
 		}
 	}

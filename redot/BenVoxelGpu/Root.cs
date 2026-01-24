@@ -112,14 +112,17 @@ public partial class Root : Node3D
 	}
 	private void UpdateCamera()
 	{
-		// Position camera to look at the impostor's anchor point (which is at the impostor's origin)
+		// Model center in world space = impostor position + proxy box offset
+		// (ProxyBox.Position includes anchor_to_center offset + ground clearance)
+		Vector3 modelCenterWorld = _impostor.GlobalPosition + _impostor.ProxyBox.Position;
+		// Position camera to look at the model center
 		// Rotate around Y axis (Godot up) for turntable effect
-		float camX = Mathf.Sin(_rotationAngle) * _cameraDistance;
-		float camZ = Mathf.Cos(_rotationAngle) * _cameraDistance;
-		float camY = _cameraDistance * 0.5f; // Slight elevation
+		float camX = modelCenterWorld.X + Mathf.Sin(_rotationAngle) * _cameraDistance;
+		float camZ = modelCenterWorld.Z + Mathf.Cos(_rotationAngle) * _cameraDistance;
+		float camY = modelCenterWorld.Y + _cameraDistance * 0.5f; // Slight elevation
 		_camera.Position = new Vector3(camX, camY, camZ);
-		// Look at the impostor's position (anchor point)
-		_camera.LookAt(_impostor.GlobalPosition, Vector3.Up);
+		// Look at the model center
+		_camera.LookAt(modelCenterWorld, Vector3.Up);
 		// Compute camera vectors
 		Transform3D camTransform = _camera.GlobalTransform;
 		Vector3 camPos = camTransform.Origin;
@@ -135,13 +138,13 @@ public partial class Root : Node3D
 		// Light direction (from upper left in view space)
 		Vector3 lightDirWorld = (-camRight + camUp * 0.5f - camForward).Normalized();
 		Vector3 lightDirVoxel = new Vector3(lightDirWorld.X, -lightDirWorld.Z, lightDirWorld.Y).Normalized();
-		// Compute camera distance to anchor point (for screen-to-sprite mapping)
-		float cameraDistanceToAnchor = (camPos - _impostor.GlobalPosition).Length();
+		// Compute camera distance to model center (for screen-to-sprite mapping)
+		float cameraDistanceToCenter = (camPos - modelCenterWorld).Length();
 		// Update shader uniforms (camera_right derived in shader from cross product)
 		_material.SetShaderParameter("ray_dir_local", camForwardVoxel);
 		_material.SetShaderParameter("camera_up_local", camUpVoxel);
 		_material.SetShaderParameter("light_dir", lightDirVoxel);
-		_material.SetShaderParameter("camera_distance", cameraDistanceToAnchor);
+		_material.SetShaderParameter("camera_distance", cameraDistanceToCenter);
 	}
 	public override void _Process(double delta)
 	{
