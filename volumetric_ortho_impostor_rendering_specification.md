@@ -112,10 +112,32 @@ Each entity is represented by a **BoxMesh** that serves two purposes:
 
 ### Box Dimensions
 
-* The box encloses the voxel model's bounds in the box's local space.
-* The box is **expanded by `Δpx_world` in all three local-space dimensions** to ensure outline pixels are captured from any camera angle.
+The box must be sized to contain the **orthographic projection** of the model from any camera angle. This is larger than the model's axis-aligned bounds due to the perspective/orthographic projection mismatch.
 
-**Rationale:** Since the sprite plane (U, V) rotates with the camera, uniform expansion in all three dimensions guarantees adequate margin for outline rendering regardless of viewing direction.
+**The problem:** The proxy box is rasterized with perspective projection, but the content inside is rendered orthographically. The orthographic projection doesn't foreshorten like perspective does. If the proxy box was the same size as the model, then from certain viewing angles, the orthographic content would extend beyond the perspective-projected box edges, causing visible clipping.
+
+**The solution:** The box must be large enough that its perspective projection always contains the orthographic projection of the model (plus outline) from any camera angle.
+
+**Worst-case extent:** The orthographic projection's maximum extent (from any viewing angle) is the model's 3D diagonal—the diameter of the bounding sphere:
+
+```
+diagonal = sqrt(sizeX² + sizeY² + sizeZ²)
+```
+
+**Box size formula:** The box should be a **cube** with side length:
+
+```
+box_side = diagonal * VoxelSize + 2 * Δpx_world
+```
+
+Where:
+* `diagonal` — model's 3D diagonal in voxels
+* `VoxelSize` — world-space size of one voxel
+* `2 * Δpx_world` — outline margin (one virtual pixel on each side)
+
+Using a cube (rather than the axis-aligned bounds) ensures the box always contains the orthographic projection regardless of which face is toward the camera.
+
+The container node is responsible for computing this box size from the model dimensions and size ratios.
 
 ### Transform Behavior
 
@@ -432,8 +454,9 @@ This system is designed for:
 ## 12. Data Flow Overview
 
 1. **CPU Setup:**
-   * Compute voxel bounds and model center
-   * Compute proxy box dimensions (model bounds + outline padding in all 3 axes)
+   * Compute voxel bounds, model center, and model diagonal
+   * Compute proxy box as cube: `side = diagonal * VoxelSize + 2 * Δpx_world`
+   * Compute anchor offset and ground clearance offset
    * Place proxy box in world space
 
 2. **Per-Frame CPU Update:**
