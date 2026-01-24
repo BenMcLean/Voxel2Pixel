@@ -422,9 +422,10 @@ void fragment() {
 	public override void _Ready()
 	{
 		// Load models and create SVO texture
-		VoxFileModel[] vox = {
+		VoxFileModel[] vox = [
 			new(@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\Sora.vox"),
-			new(@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\Tree.vox") };
+			new(@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\Tree.vox"),
+			new(@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\NumberCube.vox")];
 		GpuSvoModel[] gpuModel = [.. vox.Parallelize(vox => new GpuSvoModel(vox))];
 		uint[][] palettes = [.. vox.Select(vox => vox.Palette)];
 		GpuSvoModelTexture modelTexture = new(gpuModel);

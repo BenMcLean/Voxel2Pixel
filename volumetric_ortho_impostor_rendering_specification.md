@@ -139,22 +139,24 @@ The **anchor point** is the position in voxel space that corresponds to the enti
 * **Any point is valid.** The anchor may be anywhere in voxel space—inside the model, on its surface, or even outside the model bounds.
 * The anchor determines where the entity "stands" in the world. When you set an entity's world position, you are positioning its anchor point.
 
-**Ground placement note:** When placing entities on ground geometry, the entity should float slightly above the ground surface (by at least `Δpx_world`) to prevent ground geometry from occluding the bottom outline pixels.
-
 ### Entity Management Pattern
 
 In Godot, the recommended pattern is:
 
 ```
 Node3D (Entity root - position/rotation set here)
-└── MeshInstance3D (Proxy BoxMesh - offset to align anchor with parent origin)
+└── MeshInstance3D (Proxy BoxMesh - offset by container)
 ```
 
-The parent `Node3D` represents the entity's position and orientation in the game world. The child `MeshInstance3D` holding the proxy box is offset so that the anchor point in voxel space aligns with the parent's origin.
+The parent `Node3D` represents the entity's position and orientation in the game world. The child `MeshInstance3D` holding the proxy box is offset by the container to handle two concerns:
+
+1. **Anchor alignment:** Offset so the anchor point in voxel space aligns with the parent's origin.
+
+2. **Ground clearance:** Offset upward by `Δpx_world` (one virtual pixel) to prevent ground geometry from occluding the bottom outline pixels. Since the box is expanded by `2 * Δpx_world` total (one virtual pixel on each side), raising it by half that amount (`Δpx_world`) positions the bottom outline pixels exactly at ground level.
 
 This separation provides a clean contract:
-* Game logic sets the entity's world transform on the parent node.
-* The rendering system manages the box offset internally based on the anchor point.
+* Game logic sets the entity's world transform on the parent node (no need to account for outline clearance).
+* The container manages both the anchor offset and ground clearance internally.
 
 ---
 
