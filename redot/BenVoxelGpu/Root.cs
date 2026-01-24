@@ -9,266 +9,366 @@ using Godot;
 
 namespace BenVoxelGpu;
 
+/// <summary>
+/// Volumetric Ortho-Impostor Rendering System
+/// Renders voxel models as sprite-like entities in a 3D perspective world
+/// with orthographic internal projection and 1-pixel silhouette outline.
+/// </summary>
 public partial class Root : Node3D
 {
 	public const string SpatialShader = """
 shader_type spatial;
-render_mode unshaded;
+render_mode unshaded, depth_draw_always;
 
+// SVO data
 uniform sampler2D svo_texture : filter_nearest;
 uniform sampler2D palette_texture : filter_nearest;
 uniform int texture_width;
-uniform uint svo_nodes_count; // Total nodes across all models (for locating payloads)
+uniform uint svo_nodes_count;
 uniform uvec3 svo_model_size;
 uniform uint svo_max_depth;
-// Per-model offsets for multi-model support (per GpuSvoModel.md Section 12.1)
-uniform uint node_offset;    // Start index in Nodes array for this model
-uniform uint payload_offset; // Start index in Payloads array for this model
-uniform int max_steps;
-uniform vec3 ray_dir;
-uniform float scale;
-uniform vec3 step_dir;
-uniform vec3 t_delta;
-uniform mat4 rotation_matrix;
-uniform vec3 light_dir;
-uniform float ray_start_distance;
-uniform float safety_distance;
-uniform float target_resolution;
+uniform uint node_offset;
+uniform uint payload_offset;
+
+// Volumetric impostor parameters
+uniform vec3 camera_pos_local;    // Camera position in model local space
+uniform vec3 ray_dir_local;       // Ray direction in model local space (normalized)
+uniform vec3 camera_right_local;  // Camera right (U) in model local space
+uniform vec3 camera_up_local;     // Camera up (V) in model local space
+uniform float voxel_size;         // World-space size of one voxel
+uniform float sigma;              // Virtual pixels per voxel
+uniform vec3 voxel_offset;        // Offset from box origin to voxel origin
+uniform vec3 light_dir;           // Light direction for shading
 
 const uint FLAG_INTERNAL = 0x80000000u;
 const uint FLAG_LEAF_TYPE = 0x40000000u;
+const vec3 OUTLINE_COLOR = vec3(0.0);
+
+// Pass local position from vertex to fragment shader
+varying vec3 local_vertex;
+
+void vertex() {
+	// VERTEX in vertex shader is in local/model space
+	local_vertex = VERTEX;
+}
 
 // Read a uint32 from texture at pixel index
 uint read_uint(int pixel_idx) {
 	int x = pixel_idx % texture_width;
 	int y = pixel_idx / texture_width;
 	vec4 pixel = texelFetch(svo_texture, ivec2(x, y), 0);
-	// Pack RGBA8 back to uint32 (little-endian)
 	return uint(pixel.r * 255.0) | (uint(pixel.g * 255.0) << 8u) | (uint(pixel.b * 255.0) << 16u) | (uint(pixel.a * 255.0) << 24u);
 }
 
 uint read_node(uint idx) {
-	// Add node_offset for multi-model support (per GpuSvoModel.md Section 12.1)
 	return read_uint(int(node_offset + idx));
 }
 
 uint read_payload_byte(uint payload_idx, int octant) {
-	// Payloads start after nodes array
-	// Add payload_offset for multi-model support (per GpuSvoModel.md Section 12.1)
-	// payload_offset is in uint64 units, so multiply by 2 for uint32 pixel addressing
 	int base_pixel = int(svo_nodes_count + (payload_offset + payload_idx) * 2u);
-
-	// Each uint64 payload is stored as 2 uint32s (little-endian)
-	// octant 0-3 are in first uint32, 4-7 in second
 	int pixel_offset = octant / 4;
 	int byte_in_pixel = octant % 4;
-
 	uint pixel_data = read_uint(base_pixel + pixel_offset);
 	return (pixel_data >> uint(byte_in_pixel * 8)) & 0xFFu;
 }
 
-uint sample_svo(uvec3 pos) {
-	if (any(greaterThanEqual(pos, svo_model_size))) return 0u;
+uint sample_svo_no_bounds(vec3 pos) {
+	// Same as sample_svo but without bounds check for debugging
+	uvec3 upos = uvec3(pos);
 	uint node_idx = 0u;
 
 	for(int depth = 0; depth < int(svo_max_depth) - 1; depth++) {
 		uint node_data = read_node(node_idx);
-
-		// Check if this is an internal node (bit 31)
 		if ((node_data & FLAG_INTERNAL) == 0u) {
-			// Leaf node - check type (bit 30)
 			if ((node_data & FLAG_LEAF_TYPE) == 0u) {
-				// Uniform leaf - material is in lower 8 bits
 				return node_data & 0xFFu;
 			} else {
-				// Brick leaf - get payload index and extract voxel
 				uint payload_idx = node_data & ~FLAG_LEAF_TYPE;
-				int octant = ((int(pos.z) & 1) << 2) | ((int(pos.y) & 1) << 1) | (int(pos.x) & 1);
+				int octant = ((int(upos.z) & 1) << 2) | ((int(upos.y) & 1) << 1) | (int(upos.x) & 1);
 				return read_payload_byte(payload_idx, octant);
 			}
 		}
-
-		// Internal node - traverse to child
 		uint mask = node_data & 0xFFu;
 		uint shift = uint(int(svo_max_depth) - 1 - depth);
-		uint octant = (((pos.z >> shift) & 1u) << 2u) | (((pos.y >> shift) & 1u) << 1u) | ((pos.x >> shift) & 1u);
-
+		uint octant = (((upos.z >> shift) & 1u) << 2u) | (((upos.y >> shift) & 1u) << 1u) | ((upos.x >> shift) & 1u);
 		if (((mask >> octant) & 1u) == 0u) return 0u;
-
 		uint child_base = (node_data & ~FLAG_INTERNAL) >> 8u;
 		uint offset = uint(bitCount(mask & ((1u << octant) - 1u)));
 		node_idx = child_base + offset;
 	}
 
-	// Final level - must be a leaf
 	uint node_data = read_node(node_idx);
 	if ((node_data & FLAG_LEAF_TYPE) == 0u) {
 		return node_data & 0xFFu;
 	} else {
 		uint payload_idx = node_data & ~FLAG_LEAF_TYPE;
-		int octant = ((int(pos.z) & 1) << 2) | ((int(pos.y) & 1) << 1) | (int(pos.x) & 1);
+		uvec3 upos2 = uvec3(pos);
+		int octant = ((int(upos2.z) & 1) << 2) | ((int(upos2.y) & 1) << 1) | (int(upos2.x) & 1);
 		return read_payload_byte(payload_idx, octant);
 	}
 }
 
-// Query octree at a specific depth, returns node data and index
-// Returns: node_data in .x, node_idx in .y, 0 if out of bounds or empty child
-uvec2 query_svo_at_depth(uvec3 pos, int target_depth) {
-	if (any(greaterThanEqual(pos, svo_model_size))) return uvec2(0u);
-
-	uint node_idx = 0u;
-	uint cell_size = 1u << uint(int(svo_max_depth) - 1);
-
-	for(int depth = 0; depth <= target_depth && depth < int(svo_max_depth) - 1; depth++) {
-		uint node_data = read_node(node_idx);
-
-		if (depth == target_depth) {
-			return uvec2(node_data, node_idx);
-		}
-
-		// Check if this is an internal node
-		if ((node_data & FLAG_INTERNAL) == 0u) {
-			// Hit a leaf before reaching target depth
-			return uvec2(node_data, node_idx);
-		}
-
-		// Internal node - traverse to child
-		uint mask = node_data & 0xFFu;
-		uint shift = uint(int(svo_max_depth) - 1 - depth);
-		uint octant = (((pos.z >> shift) & 1u) << 2u) | (((pos.y >> shift) & 1u) << 1u) | ((pos.x >> shift) & 1u);
-
-		// Check if child exists
-		if (((mask >> octant) & 1u) == 0u) {
-			// Empty child - return special marker
-			return uvec2(0u);
-		}
-
-		uint child_base = (node_data & ~FLAG_INTERNAL) >> 8u;
-		uint offset = uint(bitCount(mask & ((1u << octant) - 1u)));
-		node_idx = child_base + offset;
-		cell_size >>= 1u;
-	}
-
-	// If we reach here, we're at max depth
-	uint node_data = read_node(node_idx);
-	return uvec2(node_data, node_idx);
+uint sample_svo(vec3 pos) {
+	// Simple bounds check
+	if (pos.x < 0.0 || pos.y < 0.0 || pos.z < 0.0) return 0u;
+	if (pos.x >= float(svo_model_size.x) || pos.y >= float(svo_model_size.y) || pos.z >= float(svo_model_size.z)) return 0u;
+	return sample_svo_no_bounds(pos);
 }
 
-void fragment() {
-	// Since we're rendering to exact low-res viewport, use UVs directly
-	// Each fragment corresponds to exactly one low-res pixel
-	vec2 uv_screen = UV * target_resolution;
+// Ray-AABB intersection, returns (t_enter, t_exit), t_enter < 0 means inside or behind
+vec2 ray_aabb(vec3 ro, vec3 rd, vec3 box_min, vec3 box_max) {
+	vec3 t1 = (box_min - ro) / rd;
+	vec3 t2 = (box_max - ro) / rd;
+	vec3 t_min = min(t1, t2);
+	vec3 t_max = max(t1, t2);
+	float t_enter = max(max(t_min.x, t_min.y), t_min.z);
+	float t_exit = min(min(t_max.x, t_max.y), t_max.z);
+	return vec2(t_enter, t_exit);
+}
 
-	// 1. Calculate ray origin in "Camera Space"
-	vec2 p = (uv_screen - target_resolution * 0.5) / scale;
+// DDA traversal, returns (hit, t_hit, material, last_axis)
+// hit: 1.0 if hit, 0.0 if miss
+// t_hit: distance to hit point
+// material: material index (0-255)
+// last_axis: 0=X, 1=Y, 2=Z
+vec4 trace_ray(vec3 ro, vec3 rd, vec3 box_min, vec3 box_max, out int last_axis) {
+	// Intersect with voxel AABB
+	vec2 t = ray_aabb(ro, rd, box_min, box_max);
+	if (t.y < max(t.x, 0.0)) {
+		last_axis = 0;
+		return vec4(0.0, 0.0, 0.0, 0.0); // Miss
+	}
 
-	// Ray starts far away at +Z (orthographic camera)
-	vec3 ro_view = vec3(p.x, p.y, ray_start_distance);
+	// Start at entry point
+	float t_start = max(t.x, 0.0) + 0.001;
+	vec3 pos = ro + rd * t_start;
 
-	// 2. Transform ray origin to "Model Space"
-	vec3 ro = (rotation_matrix * vec4(ro_view, 1.0)).xyz + (vec3(svo_model_size) * 0.5);
+	// DDA setup
+	vec3 step_dir = sign(rd);
+	vec3 t_delta = abs(1.0 / rd);
+	vec3 t_max_val = (floor(pos) + max(step_dir, vec3(0.0)) - pos) / rd;
+	last_axis = 0;
 
-	// Ray direction is pre-calculated and passed as uniform
-	vec3 rd = ray_dir;
-
-	vec4 color = vec4(0.03, 0.03, 0.05, 1.0); // Dark background
-
-	// 3. Hierarchical DDA Traversal
-	// Strategy: Use coarse steps through empty space, switch to voxel-level DDA near geometry
-	int hierarchy_depth = max(0, int(svo_max_depth) - 6); // Hierarchical test depth
-	int max_depth = int(svo_max_depth) - 1;
-
-	vec3 pos = floor(ro);
-	vec3 t_max = (floor(ro) + max(step_dir, 0.0) - ro) / rd;
-	int last_axis = 0;
+	int max_steps = int(svo_model_size.x + svo_model_size.y + svo_model_size.z) + 10;
+	float t_current = t_start;
 
 	for (int i = 0; i < max_steps; i++) {
 		// Check bounds
-		if (any(lessThan(pos, vec3(0.0))) || any(greaterThanEqual(pos, vec3(svo_model_size)))) {
-			// Outside grid - advance to next voxel
-			if (any(greaterThan(abs(pos - vec3(svo_model_size)*0.5), vec3(safety_distance)))) break;
-
-			// Standard DDA step
-			if (t_max.x < t_max.y) {
-				if (t_max.x < t_max.z) { t_max.x += t_delta.x; pos.x += step_dir.x; last_axis = 0; }
-				else { t_max.z += t_delta.z; pos.z += step_dir.z; last_axis = 2; }
-			} else {
-				if (t_max.y < t_max.z) { t_max.y += t_delta.y; pos.y += step_dir.y; last_axis = 1; }
-				else { t_max.z += t_delta.z; pos.z += step_dir.z; last_axis = 2; }
-			}
-			continue;
+		if (any(lessThan(pos, box_min)) || any(greaterThanEqual(pos, box_max))) {
+			return vec4(0.0, 0.0, 0.0, 0.0); // Miss - exited bounds
 		}
 
-		// Sample at voxel level for exact geometry
-		uint mat = sample_svo(uvec3(pos));
-
+		// Sample voxel
+		uint mat = sample_svo(pos);
 		if (mat > 0u) {
-			// Hit solid voxel - render it with simple diffuse lighting
-			vec3 normal = vec3(0.0);
-			if (last_axis == 0) normal.x = -step_dir.x;
-			else if (last_axis == 1) normal.y = -step_dir.y;
-			else if (last_axis == 2) normal.z = -step_dir.z;
-
-			float diff = max(dot(normal, light_dir), 0.0);
-			vec3 base_color = texelFetch(palette_texture, ivec2(int(mat), 0), 0).rgb;
-			color = vec4(base_color * (diff + 0.2), 1.0);
-			break;
+			return vec4(1.0, t_current, float(mat), float(last_axis));
 		}
 
-		// Empty voxel - check if we can skip ahead using hierarchy
-		// Align to coarse grid
-		uint cell_shift = uint(max_depth - hierarchy_depth);
-		uint cell_size = 1u << cell_shift;
-		float cell_size_f = float(cell_size);
-		vec3 grid_pos = floor(pos / cell_size_f) * cell_size_f;
-
-		// Query at coarse level
-		uvec2 node_info = query_svo_at_depth(uvec3(grid_pos), hierarchy_depth);
-		uint node_data = node_info.x;
-
-		if (node_data == 0u && cell_size > 1u) {
-			// Entire coarse cell is empty - skip across it
-			vec3 cell_min = grid_pos;
-			vec3 cell_max = grid_pos + vec3(cell_size_f);
-
-			// Calculate t values for cell boundaries
-			vec3 t_near = (cell_min - pos) / rd;
-			vec3 t_far = (cell_max - pos) / rd;
-
-			// Get the exit point (maximum of entry t values)
-			vec3 t_exit = max(t_near, t_far);
-			float t_exit_min = min(min(t_exit.x, t_exit.y), t_exit.z);
-
-			// Skip to just past cell boundary
-			pos += rd * (t_exit_min + 0.01);
-
-			// Recalculate t_max for DDA at new position
-			vec3 pos_floor = floor(pos);
-			t_max = (pos_floor + max(step_dir, 0.0) - pos) / rd;
-		} else {
-			// Near geometry or small cell - do normal voxel DDA step
-			if (t_max.x < t_max.y) {
-				if (t_max.x < t_max.z) { t_max.x += t_delta.x; pos.x += step_dir.x; last_axis = 0; }
-				else { t_max.z += t_delta.z; pos.z += step_dir.z; last_axis = 2; }
+		// DDA step
+		if (t_max_val.x < t_max_val.y) {
+			if (t_max_val.x < t_max_val.z) {
+				t_current = t_max_val.x;
+				t_max_val.x += t_delta.x;
+				pos.x += step_dir.x;
+				last_axis = 0;
 			} else {
-				if (t_max.y < t_max.z) { t_max.y += t_delta.y; pos.y += step_dir.y; last_axis = 1; }
-				else { t_max.z += t_delta.z; pos.z += step_dir.z; last_axis = 2; }
+				t_current = t_max_val.z;
+				t_max_val.z += t_delta.z;
+				pos.z += step_dir.z;
+				last_axis = 2;
+			}
+		} else {
+			if (t_max_val.y < t_max_val.z) {
+				t_current = t_max_val.y;
+				t_max_val.y += t_delta.y;
+				pos.y += step_dir.y;
+				last_axis = 1;
+			} else {
+				t_current = t_max_val.z;
+				t_max_val.z += t_delta.z;
+				pos.z += step_dir.z;
+				last_axis = 2;
 			}
 		}
 	}
 
-	ALBEDO = color.rgb;
+	return vec4(0.0, 0.0, 0.0, 0.0); // Miss - max steps exceeded
+}
+
+// Debug mode: 0=normal, 1=show frag_pos, 2=show ray dir, 3=show ray origin, 4=simple trace test
+// 5=show material as grayscale, 6=show bounds check, 7=show voxel_offset
+const int DEBUG_MODE = 0;
+
+void fragment() {
+	// Virtual pixel size in voxel units
+	float delta_px = 1.0 / sigma;
+
+	// Voxel/model bounds in voxel space
+	vec3 voxel_min = vec3(0.0);
+	vec3 voxel_max = vec3(float(svo_model_size.x), float(svo_model_size.y), float(svo_model_size.z));
+	float max_dim = max(max(voxel_max.x, voxel_max.y), voxel_max.z);
+
+	// Model center in voxel space
+	vec3 model_center = voxel_offset;
+
+	// === Ray direction (same for all fragments - orthographic internal projection) ===
+	vec3 rd = normalize(ray_dir_local);
+
+	// === BILLBOARD APPROACH ===
+	// The quad is a billboard facing the camera.
+	// local_vertex.xy gives us the position on the quad directly.
+	// We use these as U/V coordinates on the sprite plane.
+
+	// Quad local coordinates are in world units, centered at origin
+	// Convert to voxel units for the sprite plane
+	float u_coord = local_vertex.x / voxel_size;
+	float v_coord = local_vertex.y / voxel_size;
+
+	// Quantize to virtual pixel grid
+	float u_snapped = round(u_coord / delta_px) * delta_px;
+	float v_snapped = round(v_coord / delta_px) * delta_px;
+
+	// === Parallel Ray Origin ===
+	// Ray origin is on the sprite plane at the quantized position,
+	// pushed back along -rd to start behind the model
+	vec3 ro_voxel = model_center + u_snapped * camera_right_local + v_snapped * camera_up_local
+				  - max_dim * 2.0 * rd;
+
+	// For debug modes, compute frag_pos as the point on the sprite plane
+	vec3 frag_pos = model_center + u_coord * camera_right_local + v_coord * camera_up_local;
+
+	// Debug visualizations (no return statements allowed in fragment)
+	if (DEBUG_MODE == 1) {
+		// Show fragment position normalized to model bounds
+		ALBEDO = frag_pos / vec3(svo_model_size);
+	} else if (DEBUG_MODE == 2) {
+		// Show ray direction
+		ALBEDO = abs(rd);
+	} else if (DEBUG_MODE == 3) {
+		// Show ray origin relative to model
+		ALBEDO = (ro_voxel + max_dim * 2.0 * rd) / vec3(svo_model_size);
+	} else if (DEBUG_MODE == 4) {
+		// Simple sample test at fragment position
+		uint mat = sample_svo(frag_pos);
+		if (mat > 0u) {
+			ALBEDO = texelFetch(palette_texture, ivec2(int(mat), 0), 0).rgb;
+		} else {
+			ALBEDO = vec3(0.2, 0.0, 0.0); // Dark red for empty
+		}
+	} else if (DEBUG_MODE == 5) {
+		// Show material index as grayscale
+		uint mat = sample_svo(frag_pos);
+		ALBEDO = vec3(float(mat) / 255.0);
+	} else if (DEBUG_MODE == 6) {
+		// Show bounds check: green = inside, red = outside
+		bool inside = all(greaterThanEqual(frag_pos, vec3(0.0))) && all(lessThan(frag_pos, vec3(svo_model_size)));
+		ALBEDO = inside ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
+	} else if (DEBUG_MODE == 7) {
+		// Show voxel_offset normalized
+		ALBEDO = voxel_offset / vec3(svo_model_size);
+	} else if (DEBUG_MODE == 8) {
+		// Test raw texture read - show first node data as color
+		uint node0 = read_node(0u);
+		ALBEDO = vec3(float(node0 & 0xFFu) / 255.0, float((node0 >> 8u) & 0xFFu) / 255.0, float((node0 >> 16u) & 0xFFu) / 255.0);
+	} else if (DEBUG_MODE == 9) {
+		// Test bounds check - show model size as color (normalized by 256)
+		ALBEDO = vec3(float(svo_model_size.x) / 256.0, float(svo_model_size.y) / 256.0, float(svo_model_size.z) / 256.0);
+	} else if (DEBUG_MODE == 10) {
+		// Test SVO sampling without bounds check
+		uint mat = sample_svo_no_bounds(frag_pos);
+		if (mat > 0u) {
+			ALBEDO = texelFetch(palette_texture, ivec2(int(mat), 0), 0).rgb;
+		} else {
+			ALBEDO = vec3(0.2, 0.0, 0.0); // Dark red for empty
+		}
+	} else if (DEBUG_MODE == 11) {
+		// Show bounds check results: R=x_ok, G=y_ok, B=z_ok
+		float x_ok = (frag_pos.x >= 0.0 && frag_pos.x < float(svo_model_size.x)) ? 1.0 : 0.0;
+		float y_ok = (frag_pos.y >= 0.0 && frag_pos.y < float(svo_model_size.y)) ? 1.0 : 0.0;
+		float z_ok = (frag_pos.z >= 0.0 && frag_pos.z < float(svo_model_size.z)) ? 1.0 : 0.0;
+		ALBEDO = vec3(x_ok, y_ok, z_ok);
+	} else if (DEBUG_MODE == 12) {
+		// Simple direct ray trace from fragment position (no virtual pixel quantization)
+		// This tests pure ray tracing without the ortho-impostor complexity
+		int last_axis;
+		vec4 hit = trace_ray(frag_pos, rd, voxel_min, voxel_max, last_axis);
+
+		if (hit.x > 0.5) {
+			uint mat = uint(hit.z);
+			vec3 base_color = texelFetch(palette_texture, ivec2(int(mat), 0), 0).rgb;
+			ALBEDO = base_color;
+		} else {
+			discard;
+		}
+	} else {
+		// Normal rendering (DEBUG_MODE == 0)
+		// Primary ray trace
+		int last_axis;
+		vec4 hit = trace_ray(ro_voxel, rd, voxel_min, voxel_max, last_axis);
+
+		if (hit.x > 0.5) {
+			// Hit - output material color with lighting
+			uint mat = uint(hit.z);
+			vec3 normal = vec3(0.0);
+			vec3 step_dir = sign(rd);
+			if (last_axis == 0) normal.x = -step_dir.x;
+			else if (last_axis == 1) normal.y = -step_dir.y;
+			else normal.z = -step_dir.z;
+
+			float diff = max(dot(normal, light_dir), 0.0);
+			vec3 base_color = texelFetch(palette_texture, ivec2(int(mat), 0), 0).rgb;
+			ALBEDO = base_color * (diff + 0.3);
+
+			// Compute depth from hit point
+			// Transform from voxel space back to Godot box-local space
+			vec3 hit_voxel = ro_voxel + hit.y * rd - voxel_offset;
+			vec3 hit_godot = vec3(hit_voxel.x, hit_voxel.z, -hit_voxel.y) * voxel_size;
+			vec4 hit_clip = PROJECTION_MATRIX * VIEW_MATRIX * MODEL_MATRIX * vec4(hit_godot, 1.0);
+			DEPTH = (hit_clip.z / hit_clip.w) * 0.5 + 0.5;
+		} else {
+			// Miss - check neighbor rays for outline (cardinal directions only)
+			vec3 offsets[4];
+			offsets[0] = -camera_right_local * delta_px; // Left
+			offsets[1] = camera_right_local * delta_px;  // Right
+			offsets[2] = camera_up_local * delta_px;     // Up
+			offsets[3] = -camera_up_local * delta_px;    // Down
+
+			bool outline = false;
+			float min_t = 1e10;
+			int outline_axis = 0;
+
+			for (int n = 0; n < 4; n++) {
+				vec3 neighbor_ro = ro_voxel + offsets[n];
+				int neighbor_axis;
+				vec4 neighbor_hit = trace_ray(neighbor_ro, rd, voxel_min, voxel_max, neighbor_axis);
+				if (neighbor_hit.x > 0.5) {
+					outline = true;
+					if (neighbor_hit.y < min_t) {
+						min_t = neighbor_hit.y;
+						outline_axis = neighbor_axis;
+					}
+				}
+			}
+
+			if (outline) {
+				// Output black outline
+				ALBEDO = OUTLINE_COLOR;
+
+				// Depth from nearest neighbor hit
+				vec3 hit_voxel = ro_voxel + min_t * rd - voxel_offset;
+				vec3 hit_godot = vec3(hit_voxel.x, hit_voxel.z, -hit_voxel.y) * voxel_size;
+				vec4 hit_clip = PROJECTION_MATRIX * VIEW_MATRIX * MODEL_MATRIX * vec4(hit_godot, 1.0);
+				DEPTH = (hit_clip.z / hit_clip.w) * 0.5 + 0.5 + 0.0001; // Small bias
+			} else {
+				// Transparent - discard
+				discard;
+			}
+		}
+	}
 }
 """;
-	/// <summary>
-	/// Coordinate system transformation from Godot (Y-up, right-handed) to MagicaVoxel (Z-up, right-handed).
-	/// A -90° rotation around X converts: Godot +Y (up) → Model +Z (up), Godot +Z (forward) → Model +Y (forward).
-	/// This maintains Z+ as up in the model while displaying correctly in Godot's Y-up viewport.
-	/// </summary>
-	private static readonly Basis CoordTransform = Basis.FromEuler(new Vector3(Mathf.DegToRad(-90), 0, 0));
 	private Camera3D _camera;
-	private MeshInstance3D _screenQuad;
-	private SubViewport _lowResViewport;
+	private MeshInstance3D _billboard;
 	private ImageTexture _svoTexture;
 	private ShaderMaterial _material;
 	private Vector3I _modelSize;
@@ -280,19 +380,18 @@ void fragment() {
 	private ImageTexture[] _paletteTextures;
 	private int _currentModelIndex = 0;
 	private int _totalNodesCount;
-	// Configurable rendering parameters
-	private float _rayStartDistance = 500f;  // Distance camera starts from model
-	private float _safetyDistance = 600f;    // Maximum ray travel distance from model center
-	private int _targetResolution = 240;     // Render resolution for pixel-perfect look (try 160, 240, 320, etc.)
-	private float _pixelsPerVoxel = 4f;      // How many screen pixels per voxel (1=tiny, 2=small, 4=medium, 8=large, etc.)
+	// Volumetric impostor parameters
+	private float _voxelSize = 0.1f;     // World-space size of one voxel (meters)
+	private float _sigma = 4f;           // Virtual pixels per voxel
+	private float _cameraDistance = 20f; // Distance from camera to model center
 	public override void _Ready()
 	{
-		// Load model and create texture
+		// Load models and create SVO texture
 		VoxFileModel[] vox = {
 			new(@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\Sora.vox"),
 			new(@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\Tree.vox") };
 		GpuSvoModel[] gpuModel = [.. vox.Parallelize(vox => new GpuSvoModel(vox))];
-		uint[][] palettes = [.. vox.Select(vox => vox.Palette)]; // 256 RGBA8888 colors, ignore index 0, 0x00FF00FF is blue.
+		uint[][] palettes = [.. vox.Select(vox => vox.Palette)];
 		GpuSvoModelTexture modelTexture = new(gpuModel);
 		_descriptors = modelTexture.Descriptors;
 		_totalNodesCount = modelTexture.TotalNodesCount;
@@ -300,7 +399,7 @@ void fragment() {
 		// Create ImageTexture from the model texture data
 		Image image = Image.CreateFromData(_textureWidth, _textureWidth, false, Image.Format.Rgba8, modelTexture.Data);
 		_svoTexture = ImageTexture.CreateFromImage(image);
-		// Create palette textures for all models (256x1 RGBA8 each)
+		// Create palette textures for all models
 		_paletteTextures = new ImageTexture[palettes.Length];
 		for (int m = 0; m < palettes.Length; m++)
 		{
@@ -314,71 +413,38 @@ void fragment() {
 		SvoModelDescriptor descriptor = _descriptors[0];
 		_modelSize = new Vector3I(descriptor.SizeX, descriptor.SizeY, descriptor.SizeZ);
 		_maxDepth = descriptor.MaxDepth;
-		// Create shader material for voxel rendering
+		// Create shader material
 		_material = new ShaderMaterial
 		{
-			Shader = new Shader { Code = SpatialShader, },
+			Shader = new Shader { Code = SpatialShader },
 		};
 		_material.SetShaderParameter("svo_texture", _svoTexture);
 		_material.SetShaderParameter("texture_width", _textureWidth);
 		_material.SetShaderParameter("svo_nodes_count", (uint)_totalNodesCount);
-		_material.SetShaderParameter("scale", _pixelsPerVoxel);
-		_material.SetShaderParameter("target_resolution", (float)_targetResolution);
-		// Set per-model parameters for first model
-		SwitchToModel(0);
-		// Create low-res SubViewport for pixel-perfect rendering
-		_lowResViewport = new SubViewport
-		{
-			Size = new Vector2I(_targetResolution, _targetResolution),
-			RenderTargetUpdateMode = SubViewport.UpdateMode.Always,
-			TransparentBg = false,
-		};
-		AddChild(_lowResViewport);
-		// Create camera inside the viewport
+		// Create billboard quad for the voxel model
+		_billboard = new MeshInstance3D();
+		AddChild(_billboard);
+		// Create perspective camera
 		_camera = new Camera3D
 		{
-			Projection = Camera3D.ProjectionType.Orthogonal,
-			Size = 2f,
-			Position = new Vector3(0f, 0f, 1f), // Proper position
-			Rotation = Vector3.Zero, // Looking in -Z direction (default)
+			Projection = Camera3D.ProjectionType.Perspective,
+			Fov = 45f,
 			Current = true,
 		};
-		_lowResViewport.AddChild(_camera);
-		// Add WorldEnvironment to viewport
+		AddChild(_camera);
+		// Add environment for background
 		WorldEnvironment env = new()
 		{
 			Environment = new Godot.Environment()
 			{
 				BackgroundMode = Godot.Environment.BGMode.Color,
-				BackgroundColor = new Color(0.03f, 0.03f, 0.05f),
+				BackgroundColor = new Color(0.1f, 0.1f, 0.15f),
 			}
 		};
-		_lowResViewport.AddChild(env);
-		// Create screen quad inside viewport for voxel rendering
-		_screenQuad = new MeshInstance3D
-		{
-			Mesh = new QuadMesh { Size = new Vector2(2f, 2f) },
-			MaterialOverride = _material,
-			Position = Vector3.Zero,
-		};
-		_lowResViewport.AddChild(_screenQuad);
-		// Use 2D CanvasLayer to display the viewport - no 3D geometry issues!
-		CanvasLayer canvas = new();
-		AddChild(canvas);
-		TextureRect display = new()
-		{
-			Texture = _lowResViewport.GetTexture(),
-			ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
-			StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered, // Maintain square aspect ratio
-			TextureFilter = CanvasItem.TextureFilterEnum.Nearest, // Pixel-perfect upscaling
-			AnchorLeft = 0,
-			AnchorTop = 0,
-			AnchorRight = 1,
-			AnchorBottom = 1,
-		};
-		canvas.AddChild(display);
-		// Initialize shader parameters before first render
-		UpdateShaderParameters();
+		AddChild(env);
+		// Initialize first model
+		SwitchToModel(0);
+		UpdateCamera();
 	}
 	private void SwitchToModel(int index)
 	{
@@ -386,89 +452,102 @@ void fragment() {
 		SvoModelDescriptor descriptor = _descriptors[index];
 		_modelSize = new Vector3I(descriptor.SizeX, descriptor.SizeY, descriptor.SizeZ);
 		_maxDepth = descriptor.MaxDepth;
-		// Update per-model shader uniforms
+		// Update SVO uniforms
 		_material.SetShaderParameter("palette_texture", _paletteTextures[index]);
-		_material.SetShaderParameter("svo_model_size", _modelSize);
+		_material.SetShaderParameter("svo_model_size", new Vector3I(descriptor.SizeX, descriptor.SizeY, descriptor.SizeZ));
 		_material.SetShaderParameter("svo_max_depth", (uint)_maxDepth);
 		_material.SetShaderParameter("node_offset", descriptor.NodeOffset);
 		_material.SetShaderParameter("payload_offset", descriptor.PayloadOffset);
-		GD.Print($"Switched to model {index}: {descriptor.SizeX}x{descriptor.SizeY}x{descriptor.SizeZ}, depth {descriptor.MaxDepth}");
+		// Calculate billboard size in world space
+		// We need to cover the maximum possible projection of the model
+		// For a cubic root, the diagonal view is sqrt(2) * size, but we'll use max dimension + padding
+		float maxDim = Mathf.Max(_modelSize.X, Mathf.Max(_modelSize.Y, _modelSize.Z));
+		float billboardSize = maxDim * _voxelSize * 1.5f; // Extra margin for diagonal views
+		// Expand by 1 virtual pixel on each side for outline
+		float deltaPx = _voxelSize / _sigma;
+		billboardSize += deltaPx * 2f;
+		// voxel_offset is the center of the model in voxel space
+		Vector3 voxelOffset = new Vector3(_modelSize.X, _modelSize.Y, _modelSize.Z) * 0.5f;
+		// Create a quad mesh - it will be oriented by UpdateCamera to face the camera
+		_billboard.Mesh = new QuadMesh { Size = new Vector2(billboardSize, billboardSize) };
+		_billboard.MaterialOverride = _material;
+		// Update shader uniforms
+		_material.SetShaderParameter("voxel_size", _voxelSize);
+		_material.SetShaderParameter("sigma", _sigma);
+		_material.SetShaderParameter("voxel_offset", voxelOffset);
+		GD.Print($"Switched to model {index}: {descriptor.SizeX}x{descriptor.SizeY}x{descriptor.SizeZ}, billboard size: {billboardSize}");
 	}
-	private void UpdateShaderParameters()
+	private void UpdateCamera()
 	{
-		// Spin around model's Z axis (up in MagicaVoxel coordinates)
-		Basis modelSpin = Basis.FromEuler(new Vector3(0, 0, _rotationAngle)),
-			// Tilt camera view for better perspective (in model space)
-			viewTilt = Basis.FromEuler(new Vector3(Mathf.DegToRad(45), 0, 0)),
-			// Combine: convert to model space, tilt, then spin (applied right to left)
-			rotation = modelSpin * viewTilt * CoordTransform;
-		Projection rotationMatrix = new(new Transform3D(rotation, Vector3.Zero));
-		// Pre-calculate DDA constants for orthographic camera
-		Vector3 rdView = new(0f, 0f, -1f),
-			rdModel = (rotation * rdView).Normalized(),
-			// Calculate step_dir and t_delta
-			stepDir = new(
-				Math.Sign(rdModel.X),
-				Math.Sign(rdModel.Y),
-				Math.Sign(rdModel.Z)),
-			tDelta = new(
-				Math.Abs(1f / rdModel.X),
-				Math.Abs(1f / rdModel.Y),
-				Math.Abs(1f / rdModel.Z));
-		// Calculate max steps based on configurable geometry parameters
-		// Maximum distance = ray start distance + safety break distance + model traversal
-		int modelDiagonal = _modelSize.X + _modelSize.Y + _modelSize.Z;
-		int maxSteps = (int)(_rayStartDistance + _safetyDistance) + modelDiagonal + 50; // Buffer for edge cases
-		// Light direction: front upper right
-		Vector3 lightDirView = new(1.0f, -1.0f, 1.0f), // Right(+X), Upper(-Y), Front(+Z)
-			lightDirModel = (rotation * lightDirView).Normalized();
-		// Update shader parameters
-		_material.SetShaderParameter("ray_dir", rdModel);
-		_material.SetShaderParameter("step_dir", stepDir);
-		_material.SetShaderParameter("t_delta", tDelta);
-		_material.SetShaderParameter("max_steps", maxSteps);
-		_material.SetShaderParameter("rotation_matrix", rotationMatrix);
-		_material.SetShaderParameter("light_dir", lightDirModel);
-		_material.SetShaderParameter("ray_start_distance", _rayStartDistance);
-		_material.SetShaderParameter("safety_distance", _safetyDistance);
+		// Position camera to look at model center
+		// Rotate around Y axis (Godot up) for turntable effect
+		float camX = Mathf.Sin(_rotationAngle) * _cameraDistance;
+		float camZ = Mathf.Cos(_rotationAngle) * _cameraDistance;
+		float camY = _cameraDistance * 0.5f; // Slight elevation
+		_camera.Position = new Vector3(camX, camY, camZ);
+		_camera.LookAt(Vector3.Zero, Vector3.Up);
+		// Compute camera vectors
+		Transform3D camTransform = _camera.GlobalTransform;
+		Vector3 camPos = camTransform.Origin;
+		Vector3 camForward = -camTransform.Basis.Z.Normalized(); // Camera looks down -Z
+		Vector3 camRight = camTransform.Basis.X.Normalized();
+		Vector3 camUp = camTransform.Basis.Y.Normalized();
+		// Orient billboard to face camera (billboard normal = -camForward)
+		_billboard.GlobalTransform = new Transform3D(
+			new Basis(camRight, camUp, -camForward),
+			Vector3.Zero // Billboard at origin
+		);
+		// Transform from Godot Y-up to voxel Z-up space
+		// Godot: X=right, Y=up, Z=towards viewer (camera looks at -Z)
+		// Voxel: X=right, Y=forward (into screen), Z=up
+		// Transformation: voxel.X = godot.X, voxel.Y = -godot.Z, voxel.Z = godot.Y
+		Vector3 camPosVoxel = new Vector3(camPos.X, -camPos.Z, camPos.Y) / _voxelSize;
+		Vector3 camForwardVoxel = new Vector3(camForward.X, -camForward.Z, camForward.Y).Normalized();
+		Vector3 camRightVoxel = new Vector3(camRight.X, -camRight.Z, camRight.Y).Normalized();
+		Vector3 camUpVoxel = new Vector3(camUp.X, -camUp.Z, camUp.Y).Normalized();
+		// Light direction (from upper right front in view space)
+		Vector3 lightDirWorld = (camRight + camUp * 0.5f - camForward).Normalized();
+		Vector3 lightDirVoxel = new Vector3(lightDirWorld.X, -lightDirWorld.Z, lightDirWorld.Y).Normalized();
+		// Update shader uniforms
+		_material.SetShaderParameter("camera_pos_local", camPosVoxel);
+		_material.SetShaderParameter("ray_dir_local", camForwardVoxel);
+		_material.SetShaderParameter("camera_right_local", camRightVoxel);
+		_material.SetShaderParameter("camera_up_local", camUpVoxel);
+		_material.SetShaderParameter("light_dir", lightDirVoxel);
 	}
 	public override void _Process(double delta)
 	{
-		// Allow experimenting with different settings at runtime
-		// Up/Down: Adjust render resolution
+		// Up/Down: Adjust sigma (virtual pixels per voxel)
 		if (Input.IsActionJustPressed("ui_up"))
 		{
-			_targetResolution += 20;
-			_lowResViewport.Size = new Vector2I(_targetResolution, _targetResolution);
-			_material.SetShaderParameter("target_resolution", (float)_targetResolution);
-			GD.Print($"Resolution: {_targetResolution}, Pixels/Voxel: {_pixelsPerVoxel}");
+			_sigma = Mathf.Min(16f, _sigma + 1f);
+			SwitchToModel(_currentModelIndex); // Rebuild box with new sigma
+			GD.Print($"Sigma: {_sigma}, Voxel Size: {_voxelSize}");
 		}
 		if (Input.IsActionJustPressed("ui_down"))
 		{
-			_targetResolution = Math.Max(80, _targetResolution - 20);
-			_lowResViewport.Size = new Vector2I(_targetResolution, _targetResolution);
-			_material.SetShaderParameter("target_resolution", (float)_targetResolution);
-			GD.Print($"Resolution: {_targetResolution}, Pixels/Voxel: {_pixelsPerVoxel}");
+			_sigma = Mathf.Max(1f, _sigma - 1f);
+			SwitchToModel(_currentModelIndex);
+			GD.Print($"Sigma: {_sigma}, Voxel Size: {_voxelSize}");
 		}
-		// Left/Right: Adjust pixels per voxel (zoom)
+		// Left/Right: Adjust voxel size (zoom)
 		if (Input.IsActionJustPressed("ui_right"))
 		{
-			_pixelsPerVoxel = Mathf.Min(16f, _pixelsPerVoxel + 1f);
-			_material.SetShaderParameter("scale", _pixelsPerVoxel);
-			GD.Print($"Resolution: {_targetResolution}, Pixels/Voxel: {_pixelsPerVoxel}");
+			_voxelSize = Mathf.Min(1f, _voxelSize * 1.25f);
+			SwitchToModel(_currentModelIndex);
+			GD.Print($"Sigma: {_sigma}, Voxel Size: {_voxelSize}");
 		}
 		if (Input.IsActionJustPressed("ui_left"))
 		{
-			_pixelsPerVoxel = Mathf.Max(1f, _pixelsPerVoxel - 1f);
-			_material.SetShaderParameter("scale", _pixelsPerVoxel);
-			GD.Print($"Resolution: {_targetResolution}, Pixels/Voxel: {_pixelsPerVoxel}");
+			_voxelSize = Mathf.Max(0.01f, _voxelSize / 1.25f);
+			SwitchToModel(_currentModelIndex);
+			GD.Print($"Sigma: {_sigma}, Voxel Size: {_voxelSize}");
 		}
 		// Space: Cycle to next model
 		if (Input.IsActionJustPressed("ui_accept"))
 			SwitchToModel((_currentModelIndex + 1) % _descriptors.Count);
-		// Accumulate rotation over time
-		_rotationAngle += (float)delta;
-		// Update all shader parameters
-		UpdateShaderParameters();
+		// Rotate camera around model
+		_rotationAngle += (float)delta * 0.5f;
+		UpdateCamera();
 	}
 }
