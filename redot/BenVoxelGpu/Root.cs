@@ -14,8 +14,6 @@ namespace BenVoxelGpu;
 /// </summary>
 public partial class Root : Node3D
 {
-	public static readonly string SpatialShader = File.ReadAllText("volumetric_ortho_impostor.gdshader");
-
 	private Camera3D _camera;
 	private VolumetricOrthoImpostor _impostor;
 	private GpuSvoModelTextureBridge _bridge;

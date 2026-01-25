@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using BenVoxel.Structs;
 using Godot;
 
@@ -136,7 +137,7 @@ public partial class VolumetricOrthoImpostor : Node3D
 		{
 			_material = new ShaderMaterial
 			{
-				Shader = new Shader { Code = Root.SpatialShader },
+				Shader = new Shader { Code = File.ReadAllText("volumetric_ortho_impostor.gdshader"), },
 			};
 			// Bind shared texture data
 			bridge.BindToMaterial(_material);
