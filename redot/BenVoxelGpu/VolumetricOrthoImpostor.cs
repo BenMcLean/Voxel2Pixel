@@ -6,29 +6,6 @@ using Godot;
 namespace BenVoxelGpu;
 
 /// <summary>
-/// Camera information needed for volumetric ortho-impostor rendering.
-/// All vectors should be in voxel space (Z-up).
-/// </summary>
-public struct ImpostorCameraInfo
-{
-	/// <summary>Camera forward direction in voxel space (normalized).</summary>
-	public Vector3 ForwardVoxel;
-	/// <summary>Camera up direction in voxel space (normalized).</summary>
-	public Vector3 UpVoxel;
-	/// <summary>Light direction in voxel space (normalized).</summary>
-	public Vector3 LightDirVoxel;
-	/// <summary>Distance from camera to the impostor's model center in world units.</summary>
-	public float CameraDistance;
-}
-
-/// <summary>
-/// Delegate for providing camera information to an impostor.
-/// </summary>
-/// <param name="modelCenterWorld">The model center position in world space.</param>
-/// <returns>Camera information for rendering.</returns>
-public delegate ImpostorCameraInfo CameraInfoProvider(Vector3 modelCenterWorld);
-
-/// <summary>
 /// Container node for volumetric ortho-impostor entities.
 /// Manages proxy box sizing, anchor point offset, and shader parameters.
 ///
@@ -49,10 +26,23 @@ public partial class VolumetricOrthoImpostor : Node3D
 	private float _sigma;
 
 	/// <summary>
-	/// Callback that provides camera information each frame.
+	/// Delegate for providing camera transform to an impostor.
+	/// </summary>
+	/// <returns>The camera's global transform.</returns>
+	public delegate Transform3D CameraTransformProviderDelegate();
+
+	/// <summary>
+	/// Callback that provides camera transform each frame.
 	/// Must be set before the impostor can render correctly.
 	/// </summary>
-	public CameraInfoProvider CameraInfoProvider { get; set; }
+	public CameraTransformProviderDelegate CameraTransformProvider { get; set; }
+
+	/// <summary>
+	/// Light direction in voxel space (Z-up, normalized).
+	/// Default is from upper-left relative to camera view.
+	/// Set to null to use automatic camera-relative lighting.
+	/// </summary>
+	public Vector3? LightDirectionVoxel { get; set; } = null;
 
 	/// <summary>
 	/// The anchor point in voxel space (Z-up).
@@ -102,16 +92,56 @@ public partial class VolumetricOrthoImpostor : Node3D
 
 	public override void _Process(double delta)
 	{
-		// Update camera-dependent shader parameters each frame
-		if (_material != null && CameraInfoProvider != null)
+		if (_material is null || CameraTransformProvider is null)
+			return;
+
+		Transform3D camTransform = CameraTransformProvider();
+		Vector3 camPos = camTransform.Origin;
+		Vector3 camForward = -camTransform.Basis.Z.Normalized();
+		Vector3 camRight = camTransform.Basis.X.Normalized();
+		Vector3 camUp = camTransform.Basis.Y.Normalized();
+
+		// Transform from Godot Y-up to voxel Z-up space
+		// Godot: X=right, Y=up, Z=towards viewer
+		// Voxel: X=right, Y=forward (into screen), Z=up
+		// Transformation: voxel.X = godot.X, voxel.Y = -godot.Z, voxel.Z = godot.Y
+		Vector3 forwardVoxel = GodotToVoxel(camForward).Normalized();
+		Vector3 upVoxel = GodotToVoxel(camUp).Normalized();
+
+		// Light direction: use custom setting or compute from camera
+		Vector3 lightDirVoxel;
+		if (LightDirectionVoxel.HasValue)
 		{
-			ImpostorCameraInfo cameraInfo = CameraInfoProvider(ModelCenterWorld);
-			_material.SetShaderParameter("ray_dir_local", cameraInfo.ForwardVoxel);
-			_material.SetShaderParameter("camera_up_local", cameraInfo.UpVoxel);
-			_material.SetShaderParameter("light_dir", cameraInfo.LightDirVoxel);
-			_material.SetShaderParameter("camera_distance", cameraInfo.CameraDistance);
+			lightDirVoxel = LightDirectionVoxel.Value;
 		}
+		else
+		{
+			// Default: light from upper-left in view space
+			Vector3 lightDirWorld = (-camRight + camUp * 0.5f - camForward).Normalized();
+			lightDirVoxel = GodotToVoxel(lightDirWorld).Normalized();
+		}
+
+		// Camera distance to model center
+		float cameraDistance = (camPos - ModelCenterWorld).Length();
+
+		// Update shader uniforms
+		_material.SetShaderParameter("ray_dir_local", forwardVoxel);
+		_material.SetShaderParameter("camera_up_local", upVoxel);
+		_material.SetShaderParameter("light_dir", lightDirVoxel);
+		_material.SetShaderParameter("camera_distance", cameraDistance);
 	}
+
+	/// <summary>
+	/// Converts a vector from Godot space (Y-up) to voxel space (Z-up).
+	/// </summary>
+	private static Vector3 GodotToVoxel(Vector3 godot) =>
+		new(godot.X, -godot.Z, godot.Y);
+
+	/// <summary>
+	/// Converts a vector from voxel space (Z-up) to Godot space (Y-up).
+	/// </summary>
+	private static Vector3 VoxelToGodot(Vector3 voxel) =>
+		new(voxel.X, voxel.Z, -voxel.Y);
 
 	/// <summary>
 	/// Initialize the impostor with a texture bridge and model index.
@@ -133,7 +163,7 @@ public partial class VolumetricOrthoImpostor : Node3D
 		AnchorPoint = anchorPoint ?? new Point3D(_modelSize.X >> 1, _modelSize.Y >> 1, 0);
 
 		// Create shader material if needed
-		if (_material == null)
+		if (_material is null)
 		{
 			_material = new ShaderMaterial
 			{
@@ -165,10 +195,7 @@ public partial class VolumetricOrthoImpostor : Node3D
 		// Offset the proxy box for anchor alignment and ground clearance
 		Vector3 modelCenter = new Vector3(_modelSize.X, _modelSize.Y, _modelSize.Z) * 0.5f;
 		Vector3 anchorToCenter = modelCenter - new Vector3(AnchorPoint.X, AnchorPoint.Y, AnchorPoint.Z);
-		Vector3 anchorOffsetGodot = new Vector3(
-			anchorToCenter.X,
-			anchorToCenter.Z,
-			-anchorToCenter.Y) * voxelSize;
+		Vector3 anchorOffsetGodot = VoxelToGodot(anchorToCenter) * voxelSize;
 
 		// Ground clearance: offset up by one virtual pixel
 		float groundClearance = deltaPxWorld;
@@ -189,7 +216,7 @@ public partial class VolumetricOrthoImpostor : Node3D
 	/// </summary>
 	public void SetModel(int modelIndex, Point3D? anchorPoint = null)
 	{
-		if (_bridge == null)
+		if (_bridge is null)
 			throw new InvalidOperationException("Impostor must be initialized before switching models");
 		Initialize(_bridge, modelIndex, _voxelSize, _sigma, anchorPoint);
 	}
@@ -199,7 +226,7 @@ public partial class VolumetricOrthoImpostor : Node3D
 	/// </summary>
 	public void UpdateSizing(float voxelSize, float sigma)
 	{
-		if (_bridge == null)
+		if (_bridge is null)
 			throw new InvalidOperationException("Impostor must be initialized before updating sizing");
 		Initialize(_bridge, _modelIndex, voxelSize, sigma, AnchorPoint);
 	}
@@ -209,7 +236,7 @@ public partial class VolumetricOrthoImpostor : Node3D
 	/// </summary>
 	public void SetAnchorPoint(Point3D anchorPoint)
 	{
-		if (_bridge == null)
+		if (_bridge is null)
 			throw new InvalidOperationException("Impostor must be initialized before setting anchor");
 		Initialize(_bridge, _modelIndex, _voxelSize, _sigma, anchorPoint);
 	}
