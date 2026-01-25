@@ -106,12 +106,149 @@ vec2 ray_aabb(vec3 ro, vec3 rd, vec3 box_min, vec3 box_max) {
 	return vec2(t_enter, t_exit);
 }
 
-// DDA traversal, returns (hit, t_hit, material, last_axis)
-// hit: 1.0 if hit, 0.0 if miss
-// t_hit: distance to hit point
-// material: material index (0-255)
-// last_axis: 0=X, 1=Y, 2=Z
-// anchor_offset: offset to add to convert from anchor-centered to SVO coordinates
+// Hierarchical SVO traversal with empty-space skipping
+// Returns (hit, t_hit, material, last_axis)
+// Uses SVO structure to skip empty nodes instead of voxel-by-voxel stepping
+vec4 trace_ray_hierarchical(vec3 ro, vec3 rd, vec3 anchor_offset, out int last_axis) {
+	// Work in SVO coordinates (0 to model_size)
+	vec3 ro_svo = ro + anchor_offset;
+	vec3 model_size = vec3(float(svo_model_size.x), float(svo_model_size.y), float(svo_model_size.z));
+
+	// Ray-AABB intersection with SVO bounds
+	vec2 t_bounds = ray_aabb(ro_svo, rd, vec3(0.0), model_size);
+	if (t_bounds.y < max(t_bounds.x, 0.0)) {
+		last_axis = 0;
+		return vec4(0.0, 0.0, 0.0, 0.0); // Miss - ray doesn't intersect model
+	}
+
+	float t_current = max(t_bounds.x, 0.0) + 0.001;
+	float t_exit = t_bounds.y;
+
+	vec3 step_dir = sign(rd);
+	vec3 inv_rd = 1.0 / rd;
+
+	// Maximum iterations bounded by tree depth traversals
+	int max_iterations = int(svo_max_depth) * 64;
+	last_axis = 0;
+
+	for (int iter = 0; iter < max_iterations; iter++) {
+		if (t_current >= t_exit) {
+			return vec4(0.0, 0.0, 0.0, 0.0); // Exited bounds
+		}
+
+		vec3 pos = ro_svo + rd * t_current;
+
+		// Clamp to valid bounds (handle edge cases)
+		if (any(lessThan(pos, vec3(0.0))) || any(greaterThanEqual(pos, model_size))) {
+			return vec4(0.0, 0.0, 0.0, 0.0);
+		}
+
+		uvec3 upos = uvec3(pos);
+		uint node_idx = 0u;
+		float node_size = float(1u << (svo_max_depth - 1u)); // Size of root node children
+
+		// Traverse down the tree
+		for (int depth = 0; depth < int(svo_max_depth) - 1; depth++) {
+			uint node_data = read_node(node_idx);
+
+			if ((node_data & FLAG_INTERNAL) == 0u) {
+				// Leaf node - check material
+				if ((node_data & FLAG_LEAF_TYPE) == 0u) {
+					// Uniform leaf
+					uint mat = node_data & 0xFFu;
+					if (mat > 0u) {
+						return vec4(1.0, t_current, float(mat), float(last_axis));
+					}
+					// Empty uniform leaf - skip entire node
+					break;
+				} else {
+					// 2x2x2 payload leaf - sample exact voxel
+					uint payload_idx = node_data & ~FLAG_LEAF_TYPE;
+					int octant = ((int(upos.z) & 1) << 2) | ((int(upos.y) & 1) << 1) | (int(upos.x) & 1);
+					uint mat = read_payload_byte(payload_idx, octant);
+					if (mat > 0u) {
+						return vec4(1.0, t_current, float(mat), float(last_axis));
+					}
+					// Empty voxel in leaf - advance by 1 voxel
+					node_size = 1.0;
+					break;
+				}
+			}
+
+			// Internal node - check child occupancy
+			uint mask = node_data & 0xFFu;
+			uint shift = uint(int(svo_max_depth) - 1 - depth);
+			uint octant = (((upos.z >> shift) & 1u) << 2u) | (((upos.y >> shift) & 1u) << 1u) | ((upos.x >> shift) & 1u);
+
+			if (((mask >> octant) & 1u) == 0u) {
+				// Child is empty - skip this entire octant
+				// node_size is already set to the current level's child size
+				break;
+			}
+
+			// Descend into occupied child
+			uint child_base = (node_data & ~FLAG_INTERNAL) >> 8u;
+			uint offset = uint(bitCount(mask & ((1u << octant) - 1u)));
+			node_idx = child_base + offset;
+			node_size *= 0.5;
+		}
+
+		// Handle deepest level if we didn't break early
+		if (node_size < 1.5) {
+			uint node_data = read_node(node_idx);
+			if ((node_data & FLAG_LEAF_TYPE) == 0u) {
+				uint mat = node_data & 0xFFu;
+				if (mat > 0u) {
+					return vec4(1.0, t_current, float(mat), float(last_axis));
+				}
+			} else {
+				uint payload_idx = node_data & ~FLAG_LEAF_TYPE;
+				int octant = ((int(upos.z) & 1) << 2) | ((int(upos.y) & 1) << 1) | (int(upos.x) & 1);
+				uint mat = read_payload_byte(payload_idx, octant);
+				if (mat > 0u) {
+					return vec4(1.0, t_current, float(mat), float(last_axis));
+				}
+			}
+			node_size = 1.0;
+		}
+
+		// Compute distance to exit current node and advance ray
+		// Find the axis-aligned bounding box of the current node
+		float effective_size = max(node_size, 1.0);
+		vec3 node_min = floor(pos / effective_size) * effective_size;
+		vec3 node_max = node_min + vec3(effective_size);
+
+		// Compute t values to exit the node on each axis
+		vec3 t_exit_axis = (mix(node_min, node_max, max(step_dir, vec3(0.0))) - ro_svo) * inv_rd;
+
+		// Find the minimum exit t (first axis we exit)
+		float t_next;
+		if (t_exit_axis.x < t_exit_axis.y) {
+			if (t_exit_axis.x < t_exit_axis.z) {
+				t_next = t_exit_axis.x;
+				last_axis = 0;
+			} else {
+				t_next = t_exit_axis.z;
+				last_axis = 2;
+			}
+		} else {
+			if (t_exit_axis.y < t_exit_axis.z) {
+				t_next = t_exit_axis.y;
+				last_axis = 1;
+			} else {
+				t_next = t_exit_axis.z;
+				last_axis = 2;
+			}
+		}
+
+		// Advance ray with small epsilon to enter next node
+		t_current = t_next + 0.001;
+	}
+
+	return vec4(0.0, 0.0, 0.0, 0.0); // Max iterations exceeded
+}
+
+// Legacy DDA traversal (kept for debug modes)
 vec4 trace_ray(vec3 ro, vec3 rd, vec3 box_min, vec3 box_max, vec3 anchor_offset, out int last_axis) {
 	// Intersect with voxel AABB (in anchor-centered coordinates)
 	vec2 t = ray_aabb(ro, rd, box_min, box_max);
@@ -319,39 +456,32 @@ void fragment() {
 	} else {
 		// Normal rendering (DEBUG_MODE == 0)
 
+		// === PRE-TRAVERSAL AABB REJECTION (O(1) early exit) ===
+		// Check if this ray intersects the voxel volume at all before any traversal
+		// This is critical for rays that pass through the proxy box but miss the voxel AABB
+		vec3 ro_svo = ro_voxel + anchor_point; // Convert to SVO coordinates
+		vec2 t_bounds = ray_aabb(ro_svo, rd, vec3(0.0), model_size);
+		bool ray_can_hit = (t_bounds.y >= max(t_bounds.x, 0.0));
+
+		// Also check if any neighbor ray could possibly hit (for outline detection)
+		// Expand bounds by delta_px in the camera plane to account for neighbor rays
+		vec3 expanded_min = -vec3(delta_px);
+		vec3 expanded_max = model_size + vec3(delta_px);
+		vec2 t_expanded = ray_aabb(ro_svo, rd, expanded_min, expanded_max);
+		bool any_ray_can_hit = (t_expanded.y >= max(t_expanded.x, 0.0));
+
+		if (!any_ray_can_hit) {
+			// O(1) early exit: no ray (primary or neighbor) can possibly hit
+			discard;
+		}
+
 		// Compute billboard depth once - all visible pixels share this depth
-		// The depth is the clip-space depth of the model center
-		// Box center = model center (box is positioned so its center aligns with model center)
-		// So box local (0,0,0) = model center in world space after MODEL_MATRIX transform
 		vec4 model_center_clip = PROJECTION_MATRIX * VIEW_MATRIX * MODEL_MATRIX * vec4(0.0, 0.0, 0.0, 1.0);
 		float billboard_depth = (model_center_clip.z / model_center_clip.w) * 0.5 + 0.5;
 
-		// Primary ray trace
-		int last_axis;
-		vec4 hit = trace_ray(ro_voxel, rd, voxel_min, voxel_max, anchor_point, last_axis);
-
-		if (hit.x > 0.5) {
-			// Hit - output material color with lighting
-			uint mat = uint(hit.z);
-
-			// Compute normal in voxel space based on which axis we hit
-			vec3 normal_voxel = vec3(0.0);
-			vec3 step_dir = sign(rd);
-			if (last_axis == 0) normal_voxel.x = -step_dir.x;
-			else if (last_axis == 1) normal_voxel.y = -step_dir.y;
-			else normal_voxel.z = -step_dir.z;
-
-			// Directional lighting from upper left
-			float diff = max(dot(normal_voxel, light_dir), 0.0);
-			float ambient = 0.3;
-
-			vec3 base_color = texelFetch(palette_texture, ivec2(int(mat), 0), 0).rgb;
-			ALBEDO = base_color * (diff + ambient);
-
-			// Billboard depth - all pixels share the same depth at sprite plane
-			DEPTH = billboard_depth;
-		} else {
-			// Miss - check neighbor rays for outline (cardinal directions only)
+		if (!ray_can_hit) {
+			// Primary ray misses, but neighbor rays might hit (we're in expanded bounds)
+			// Check neighbor rays for outline only
 			vec3 offsets[4];
 			offsets[0] = -camera_right_local * delta_px; // Left
 			offsets[1] = camera_right_local * delta_px;  // Right
@@ -363,23 +493,70 @@ void fragment() {
 			for (int n = 0; n < 4; n++) {
 				vec3 neighbor_ro = ro_voxel + offsets[n];
 				int neighbor_axis;
-				vec4 neighbor_hit = trace_ray(neighbor_ro, rd, voxel_min, voxel_max, anchor_point, neighbor_axis);
+				vec4 neighbor_hit = trace_ray_hierarchical(neighbor_ro, rd, anchor_point, neighbor_axis);
 				if (neighbor_hit.x > 0.5) {
 					outline = true;
-					break; // Found an outline, no need to check more neighbors
+					break;
 				}
 			}
 
 			if (outline) {
-				// Output black outline with billboard depth
 				ALBEDO = OUTLINE_COLOR;
 				DEPTH = billboard_depth;
 			} else {
-				// Transparent - discard fragment
-				// discard;
-				// Debug: show proxy box extent as grey
-				ALBEDO = vec3(0.5);
+				discard;
+			}
+		} else {
+			// Primary ray can hit - use hierarchical traversal
+			int last_axis;
+			vec4 hit = trace_ray_hierarchical(ro_voxel, rd, anchor_point, last_axis);
+
+			if (hit.x > 0.5) {
+				// Hit - output material color with lighting
+				uint mat = uint(hit.z);
+
+				// Compute normal in voxel space based on which axis we hit
+				vec3 normal_voxel = vec3(0.0);
+				vec3 step_dir = sign(rd);
+				if (last_axis == 0) normal_voxel.x = -step_dir.x;
+				else if (last_axis == 1) normal_voxel.y = -step_dir.y;
+				else normal_voxel.z = -step_dir.z;
+
+				// Directional lighting from upper left
+				float diff = max(dot(normal_voxel, light_dir), 0.0);
+				float ambient = 0.3;
+
+				vec3 base_color = texelFetch(palette_texture, ivec2(int(mat), 0), 0).rgb;
+				ALBEDO = base_color * (diff + ambient);
+
+				// Billboard depth - all pixels share the same depth at sprite plane
 				DEPTH = billboard_depth;
+			} else {
+				// Miss - check neighbor rays for outline (cardinal directions only)
+				vec3 offsets[4];
+				offsets[0] = -camera_right_local * delta_px; // Left
+				offsets[1] = camera_right_local * delta_px;  // Right
+				offsets[2] = camera_up_local * delta_px;     // Up
+				offsets[3] = -camera_up_local * delta_px;    // Down
+
+				bool outline = false;
+
+				for (int n = 0; n < 4; n++) {
+					vec3 neighbor_ro = ro_voxel + offsets[n];
+					int neighbor_axis;
+					vec4 neighbor_hit = trace_ray_hierarchical(neighbor_ro, rd, anchor_point, neighbor_axis);
+					if (neighbor_hit.x > 0.5) {
+						outline = true;
+						break;
+					}
+				}
+
+				if (outline) {
+					ALBEDO = OUTLINE_COLOR;
+					DEPTH = billboard_depth;
+				} else {
+					discard;
+				}
 			}
 		}
 	}

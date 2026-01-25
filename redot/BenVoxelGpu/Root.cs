@@ -58,7 +58,7 @@ public partial class Root : Node3D
 			Environment = new Godot.Environment()
 			{
 				BackgroundMode = Godot.Environment.BGMode.Color,
-				BackgroundColor = Godot.Colors.Black,
+				BackgroundColor = Godot.Colors.DarkSlateGray,
 			}
 		};
 		AddChild(env);
