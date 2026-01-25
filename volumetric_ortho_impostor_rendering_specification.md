@@ -509,3 +509,86 @@ This system renders voxel models as **volumetric orthographic sprites** embedded
 ...the system achieves a visual result reminiscent of classic 2D sprites from the 16-bit gaming era, while remaining fully 3D, occlusion-correct, and GPU-driven.
 
 This document constitutes the authoritative rendering specification for the Volumetric Ortho-Impostor System.
+
+# Specification Amendment – Traversal Performance Invariants
+
+> **Status:** Normative clarification (no change to visual output or feature scope)
+
+This amendment clarifies performance-related *invariants* that are already implied by the specification’s goals, in order to prevent inefficient but technically compliant implementations.
+
+---
+
+## X. Traversal Performance Invariants
+
+The following constraints apply to any conforming implementation of the volumetric orthographic voxel renderer.
+
+These constraints **do not permit approximation** and **must not alter pixel-perfect output**.
+
+They exist solely to constrain *how* traversal work is performed, not *what* is rendered.
+
+---
+
+### X.1 Constant-Time Rejection of Non-Intersecting Rays
+
+Any fragment whose orthographic ray cannot intersect the voxel model’s axis-aligned bounding box **must be rejected in constant time**.
+
+Specifically:
+
+* Rays that provably do not enter the voxel AABB must not perform voxel stepping, SVO traversal, or leaf evaluation
+* Ray–AABB rejection must occur prior to any per-ray traversal logic
+
+Late rejection inside iterative traversal is insufficient to satisfy this requirement.
+
+This invariant guarantees that empty regions of the proxy volume which lie outside the voxel model’s projection incur minimal, bounded cost.
+
+---
+
+### X.2 Hierarchical Empty-Space Skipping
+
+Empty space represented by higher-level spatial structures (e.g. internal or empty SVO nodes) **must be skipped as a whole** when traversed by a ray.
+
+In particular:
+
+* Implementations must not rely on uniform, voxel-scale stepping through regions that are known to be empty at a coarser spatial level
+* Spatial hierarchies are expected to function as *acceleration structures*, not merely as occupancy classifiers
+
+This requirement preserves exact first-hit correctness while bounding traversal cost independently of ray length through empty space.
+
+---
+
+### X.3 Exactness Requirement
+
+All optimizations implied by this section are **mathematically exact**.
+
+They must not:
+
+* Alter silhouettes
+* Alter depth values
+* Introduce resolution-dependent artifacts
+* Approximate voxel boundaries
+* Depend on screen resolution or distance-based heuristics
+
+Any optimization that risks visual deviation is explicitly out of scope.
+
+---
+
+### X.4 Implementation Freedom
+
+This amendment intentionally does **not** prescribe:
+
+* A specific traversal algorithm
+* A specific shader structure
+* A specific data layout
+* A specific graphics API or engine
+
+Any implementation that satisfies the above invariants while preserving pixel-perfect output is considered compliant.
+
+---
+
+## Rationale (Non-Normative)
+
+The renderer’s aesthetic relies on exact voxel-defined imagery presented directly to the viewer, not on impostor or LOD-based approximation.
+
+As a result, performance improvements must come exclusively from eliminating provably unnecessary work (e.g. traversal of known-empty space), rather than from reducing precision.
+
+This amendment ensures that compliant implementations use available spatial information efficiently while preserving the renderer’s defining visual properties.
