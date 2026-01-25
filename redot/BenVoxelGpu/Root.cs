@@ -28,14 +28,13 @@ public partial class Root : Node3D
 	public override void _Ready()
 	{
 		// Load models and create texture bridge
-		VoxFileModel[] vox = [
+		VoxFileModel[] models = [
 			new(@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\Sora.vox"),
 			new(@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\Tree.vox"),
 			new(@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\NumberCube.vox")];
-		GpuSvoModel[] gpuModels = [.. vox.Parallelize(v => new GpuSvoModel(v))];
-		uint[][] palettes = [.. vox.Select(v => v.Palette)];
-
-		_bridge = new GpuSvoModelTextureBridge(gpuModels, palettes);
+		_bridge = new GpuSvoModelTextureBridge(
+			models: models,
+			palettes: [.. models.Select(model => model.Palette)]);
 
 		// Create impostor and set up camera info callback
 		_impostor = new VolumetricOrthoImpostor
@@ -64,7 +63,7 @@ public partial class Root : Node3D
 			Environment = new Godot.Environment()
 			{
 				BackgroundMode = Godot.Environment.BGMode.Color,
-				BackgroundColor = new Color(0.1f, 0.1f, 0.15f),
+				BackgroundColor = Godot.Colors.Black,
 			}
 		};
 		AddChild(env);

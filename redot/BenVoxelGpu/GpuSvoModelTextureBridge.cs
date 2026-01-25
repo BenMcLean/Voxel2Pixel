@@ -1,6 +1,8 @@
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
+using BenProgress;
+using BenVoxel.Interfaces;
 using BenVoxel.Models;
 using Godot;
 
@@ -34,7 +36,7 @@ public class GpuSvoModelTextureBridge
 	/// </summary>
 	/// <param name="models">Array of GPU SVO models to pack into a texture</param>
 	/// <param name="palettes">Array of 256-color palettes (one per model)</param>
-	public GpuSvoModelTextureBridge(GpuSvoModel[] models, uint[][] palettes)
+	public GpuSvoModelTextureBridge(IModel[] models, uint[][] palettes)
 	{
 		if (models.Length != palettes.Length)
 			throw new ArgumentException("Models and palettes arrays must have the same length");

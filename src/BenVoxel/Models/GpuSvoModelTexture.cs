@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using BenProgress;
+using BenVoxel.Interfaces;
 
 namespace BenVoxel.Models;
 
@@ -9,42 +11,31 @@ namespace BenVoxel.Models;
 /// Contains all metadata needed to traverse a specific model within packed SVO data.
 /// Offsets are expressed in element units, not bytes.
 /// </summary>
-public readonly struct SvoModelDescriptor
+public readonly struct SvoModelDescriptor(uint nodeOffset, uint payloadOffset, GpuSvoModel model)
 {
 	/// <summary>
 	/// Offset into the Nodes array where this model's nodes begin.
 	/// </summary>
-	public uint NodeOffset { get; }
+	public uint NodeOffset { get; } = nodeOffset;
 	/// <summary>
 	/// Offset into the Payloads array where this model's payloads begin.
 	/// Note: Payloads are stored as uint64, so each payload occupies 2 uint32 slots in texture.
 	/// </summary>
-	public uint PayloadOffset { get; }
+	public uint PayloadOffset { get; } = payloadOffset;
 	/// <summary>
 	/// Maximum depth of the octree for this model.
 	/// </summary>
-	public byte MaxDepth { get; }
+	public byte MaxDepth { get; } = model.MaxDepth;
 	/// <summary>
 	/// Voxel dimensions (X, Y, Z) of the model in Z-up coordinate space.
 	/// </summary>
-	public ushort SizeX { get; }
-	public ushort SizeY { get; }
-	public ushort SizeZ { get; }
+	public ushort SizeX { get; } = model.SizeX;
+	public ushort SizeY { get; } = model.SizeY;
+	public ushort SizeZ { get; } = model.SizeZ;
 	/// <summary>
 	/// Length of one edge of the cubic root volume (2^MaxDepth).
 	/// </summary>
-	public uint RootSize { get; }
-
-	public SvoModelDescriptor(uint nodeOffset, uint payloadOffset, GpuSvoModel model)
-	{
-		NodeOffset = nodeOffset;
-		PayloadOffset = payloadOffset;
-		MaxDepth = model.MaxDepth;
-		SizeX = model.SizeX;
-		SizeY = model.SizeY;
-		SizeZ = model.SizeZ;
-		RootSize = model.RootSize;
-	}
+	public uint RootSize { get; } = model.RootSize;
 }
 
 /// <summary>
@@ -86,17 +77,22 @@ public class GpuSvoModelTexture
 	/// <summary>
 	/// Creates a texture containing multiple models packed contiguously.
 	/// </summary>
-	public GpuSvoModelTexture(params GpuSvoModel[] models)
+	public GpuSvoModelTexture(params IModel[] models)
 	{
 		if (models is null || models.Length == 0)
 			throw new ArgumentException("At least one model is required.", nameof(models));
+		GpuSvoModel[] gpuSvoModels = models is GpuSvoModel[] unchanged
+			? unchanged
+			: [.. models.Parallelize(model =>
+				model is GpuSvoModel gpuSvoModel
+					? gpuSvoModel
+					: new GpuSvoModel(model))];
 
 		// Build descriptors and calculate totals
 		List<SvoModelDescriptor> descriptors = new(models.Length);
-		uint nodeOffset = 0;
-		uint payloadOffset = 0;
+		uint nodeOffset = 0, payloadOffset = 0;
 
-		foreach (GpuSvoModel model in models)
+		foreach (GpuSvoModel model in gpuSvoModels)
 		{
 			if (model is null)
 				throw new ArgumentNullException(nameof(models), "Model array contains null entry.");
@@ -122,7 +118,7 @@ public class GpuSvoModelTexture
 
 		// Copy all nodes contiguously
 		int nodeByteOffset = 0;
-		foreach (GpuSvoModel model in models)
+		foreach (GpuSvoModel model in gpuSvoModels)
 		{
 			int nodeBytes = model.Nodes.Length << 2;
 			MemoryMarshal.AsBytes(model.Nodes.AsSpan())
@@ -132,7 +128,7 @@ public class GpuSvoModelTexture
 
 		// Copy all payloads contiguously (starting after all nodes)
 		int payloadByteOffset = TotalNodesCount << 2;
-		foreach (GpuSvoModel model in models)
+		foreach (GpuSvoModel model in gpuSvoModels)
 		{
 			int payloadBytes = model.Payloads.Length << 3;
 			MemoryMarshal.AsBytes(model.Payloads.AsSpan())
