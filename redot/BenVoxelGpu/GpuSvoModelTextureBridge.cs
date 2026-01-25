@@ -35,11 +35,12 @@ public class GpuSvoModelTextureBridge
 	/// Creates a texture bridge from an array of GpuSvoModels and their palettes.
 	/// </summary>
 	/// <param name="models">Array of GPU SVO models to pack into a texture</param>
-	/// <param name="palettes">Array of 256-color palettes (one per model)</param>
-	public GpuSvoModelTextureBridge(IModel[] models, uint[][] palettes)
+	/// <param name="palettes">Array of 256-color palettes. If one palette is provided, it is used for all models.
+	/// Otherwise, the number of palettes must match the number of models.</param>
+	public GpuSvoModelTextureBridge(IModel[] models, params uint[][] palettes)
 	{
-		if (models.Length != palettes.Length)
-			throw new ArgumentException("Models and palettes arrays must have the same length");
+		if (palettes.Length != 1 && models.Length != palettes.Length)
+			throw new ArgumentException("Palettes array must contain either one palette (shared by all models) or one palette per model");
 
 		GpuSvoModelTexture modelTexture = new(models);
 		_descriptors = modelTexture.Descriptors;
@@ -50,7 +51,7 @@ public class GpuSvoModelTextureBridge
 		Image image = Image.CreateFromData(_textureWidth, _textureWidth, false, Image.Format.Rgba8, modelTexture.Data);
 		_svoTexture = ImageTexture.CreateFromImage(image);
 
-		// Create palette textures for all models
+		// Create palette textures
 		_paletteTextures = new ImageTexture[palettes.Length];
 		for (int m = 0; m < palettes.Length; m++)
 		{
@@ -83,7 +84,9 @@ public class GpuSvoModelTextureBridge
 			throw new ArgumentOutOfRangeException(nameof(modelIndex));
 
 		SvoModelDescriptor descriptor = _descriptors[modelIndex];
-		material.SetShaderParameter("palette_texture", _paletteTextures[modelIndex]);
+		// Use single shared palette if only one was provided, otherwise use per-model palette
+		int paletteIndex = _paletteTextures.Length == 1 ? 0 : modelIndex;
+		material.SetShaderParameter("palette_texture", _paletteTextures[paletteIndex]);
 		material.SetShaderParameter("svo_model_size", new Vector3I(descriptor.SizeX, descriptor.SizeY, descriptor.SizeZ));
 		material.SetShaderParameter("svo_max_depth", (uint)descriptor.MaxDepth);
 		material.SetShaderParameter("node_offset", descriptor.NodeOffset);
