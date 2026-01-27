@@ -457,8 +457,9 @@ void fragment() {
 	// ── Clip-space position of the proxy box's local origin ──
 	// The box's local origin is the anchor point in world space (the entity's
 	// position).  This single matrix multiply is reused for both:
-	//   (a) computing the anchor's screen position (NDC) for sprite grid alignment
-	//   (b) computing billboard depth for the depth buffer
+	//   computing the model center's screen position (NDC) for sprite grid alignment.
+	//   Billboard depth is handled by the quad's rasterized depth (the quad is
+	//   camera-facing and centered on the model center, so its natural depth is correct).
 	vec4 origin_clip = PROJECTION_MATRIX * VIEW_MATRIX * MODEL_MATRIX * vec4(0.0, 0.0, 0.0, 1.0);
 
 	// ── Screen-based sprite pixel determination ──
@@ -523,15 +524,6 @@ void fragment() {
 		discard; // O(1) exit — no ray (primary or neighbor) can hit
 	}
 
-	// ── Billboard depth ──
-	// All visible pixels (both solid voxels and outline) write the same depth:
-	// the clip-space depth of the entity's local origin (the anchor point,
-	// which the proxy box is offset to place at the model center).
-	// This makes the sprite behave like a flat billboard for occlusion,
-	// preventing visually confusing partial-depth intersections with other
-	// geometry that would break the 2D sprite illusion.
-	float billboard_depth = (origin_clip.z / origin_clip.w) * 0.5 + 0.5;
-
 	// ── Per-face lighting ──
 	// A voxel cube has 6 faces, but from any given viewpoint only 3 are
 	// visible — one per axis, the one whose outward normal points toward the
@@ -581,7 +573,6 @@ void fragment() {
 
 		if (outline) {
 			ALBEDO = OUTLINE_COLOR;
-			DEPTH = billboard_depth;
 		} else {
 			discard;
 		}
@@ -604,7 +595,6 @@ void fragment() {
 
 			vec3 base_color = texelFetch(palette_texture, ivec2(int(mat), 0), 0).rgb;
 			ALBEDO = base_color * (diff + ambient);
-			DEPTH = billboard_depth;
 		} else {
 			// ── Primary ray missed — check for outline ──
 			// Same 4-neighbor test as the !ray_can_hit path above.
@@ -629,7 +619,6 @@ void fragment() {
 
 			if (outline) {
 				ALBEDO = OUTLINE_COLOR;
-				DEPTH = billboard_depth;
 			} else {
 				discard;
 			}
