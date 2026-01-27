@@ -22,8 +22,8 @@
 //    with per-face directional lighting.
 // 5. If the ray misses, four cardinal neighbor rays are tested; if any
 //    neighbor hits, a black outline pixel is output.
-// 6. All visible pixels share the same billboard depth (the depth of the
-//    model center), preserving the 2D-sprite illusion.
+// 6. All visible pixels share the same billboard depth (provided by the
+//    camera-facing quad's rasterized depth), preserving the 2D-sprite illusion.
 //
 // COORDINATE SPACES
 // -----------------

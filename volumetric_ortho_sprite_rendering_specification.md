@@ -140,9 +140,8 @@ Because the quad always faces the camera, back-face culling is enabled (`cull_ba
 
 The quad is centered on the **model center** in world space, not on the entity's anchor point. This is critical because:
 
-* `MODEL_MATRIX * vec4(0,0,0,1)` in the shader gives the quad origin's clip position.
-* This is used for **billboard depth** (sprites occlude at model center depth).
-* This is used for **NDC grid center** (the virtual pixel grid is centered on the model center's screen position).
+* `MODEL_MATRIX * vec4(0,0,0,1)` in the shader gives the quad origin's clip position, used for **NDC grid center** (the virtual pixel grid is centered on the model center's screen position).
+* The quad's rasterized depth naturally provides the correct **billboard depth** (sprites occlude at model center depth) because the quad is centered on the model center.
 
 If the quad were centered on the anchor instead, a flying character with a ground-level anchor would have its depth and pixel grid computed at ground level—completely wrong.
 
@@ -200,7 +199,7 @@ Each fragment determines its virtual pixel position based on **screen coordinate
    ```
    origin_clip = ProjectionMatrix * ViewMatrix * ModelMatrix * vec4(0, 0, 0, 1)
    ```
-   This single matrix multiply is reused for both NDC computation and billboard depth (see Section 10).
+   This matrix multiply provides the NDC center for sprite grid alignment. Billboard depth is provided automatically by the quad's rasterized depth (see Section 10).
 
 2. Compute anchor's NDC position and fragment's offset from it:
    ```
@@ -349,7 +348,7 @@ This specification does not prescribe a specific traversal algorithm, shader str
 
 ## 8. Lighting
 
-Lighting is not a core concern of this specification. The system's defining features are its orthographic projection, stable pixel grid, outline logic, and billboard depth — all of which are independent of how lit pixels are colored. Any lighting model can be used, from unlit palette colors to sophisticated PBR shading, as long as it operates on the hit voxel's material and face information provided by the traversal.
+Lighting is not a core concern of this specification. The system's defining features are its orthographic projection, stable pixel grid, outline logic, and billboard depth (provided by the proxy quad's rasterized depth) — all of which are independent of how lit pixels are colored. Any lighting model can be used, from unlit palette colors to sophisticated PBR shading, as long as it operates on the hit voxel's material and face information provided by the traversal.
 
 The current implementation provides a simple default lighting model suitable for the retro sprite aesthetic. It is described here as a reference, not as a requirement.
 
@@ -462,13 +461,13 @@ Diagonal neighbors are never tested.
 
 ## 10. Depth Output
 
-Correct depth writing is mandatory for proper occlusion.
+Correct depth is mandatory for proper occlusion.
 
 ### Billboard Depth Model
 
-The sprite writes depth as if it were a **flat billboard** at the sprite plane (the plane passing through the **model center**, perpendicular to the camera). This means:
+The sprite behaves as a **flat billboard** at the sprite plane (the plane passing through the **model center**, perpendicular to the camera). This means:
 
-* All pixels of the sprite share the same depth value.
+* All pixels of the sprite share approximately the same depth value.
 * The sprite is either entirely in front of or entirely behind other geometry.
 * No partial occlusion occurs within a single sprite.
 
@@ -476,18 +475,11 @@ This matches the behavior of classic 2D sprites and maintains the visual coheren
 
 **Why model center, not anchor point:** The anchor point determines world positioning but may be anywhere in voxel space—even completely outside the model bounds (e.g., a flying character with an anchor at ground level). The sprite plane and depth must be at the model center where the visual content actually exists.
 
-### Depth Calculation
+### Depth from Rasterization
 
-The depth is derived from the clip-space position of the proxy box's local origin, which is the same matrix multiply already performed for screen-to-sprite mapping (Section 5.1):
+Because the proxy quad is a camera-facing rectangle centered on the model center (Section 4), the GPU's standard rasterized depth is already correct. The quad surface lies in the sprite plane, so every fragment receives the model center's depth automatically. The shader does not need to write a custom `DEPTH` value — the rasterizer provides it for free.
 
-```
-origin_clip = ProjectionMatrix * ViewMatrix * ModelMatrix * vec4(0, 0, 0, 1)
-billboard_depth = (origin_clip.z / origin_clip.w) * 0.5 + 0.5
-```
-
-This reuses the `origin_clip` value — no additional matrix multiply is needed (see Section 11.2).
-
-This value is constant for all fragments of the sprite (both solid pixels and outlines).
+Fragments that miss all rays (primary and neighbor) are discarded, so they do not write to the depth buffer.
 
 ---
 
@@ -511,14 +503,15 @@ Several values are constant for all rays within a fragment invocation (and indee
 
 The trace function accepts `inv_rd`, `step_dir`, and `model_size` as parameters so they are computed once in the fragment shader and shared across all 1–5 trace calls per fragment (1 primary + up to 4 neighbor rays).
 
-### 11.2 Single Matrix Multiply
+### 11.2 Origin Clip-Space Position
 
-The fragment shader needs the clip-space position of the proxy box's local origin for two purposes:
+The fragment shader computes the clip-space position of the proxy quad's local origin for **NDC center** computation (screen-to-sprite mapping, Section 5.1):
 
-1. **NDC center** for screen-to-sprite mapping (Section 5.1)
-2. **Billboard depth** for the depth buffer (Section 10)
+```
+origin_clip = ProjectionMatrix × ViewMatrix × ModelMatrix × vec4(0,0,0,1)
+```
 
-Both are derived from the same `origin_clip` vector. A naive implementation would compute `ProjectionMatrix × ViewMatrix × ModelMatrix × vec4(0,0,0,1)` twice. The implementation computes it once and extracts both values.
+Billboard depth is handled automatically by the quad's rasterized depth (Section 10), so `origin_clip` is only needed for NDC.
 
 ### 11.3 Inlined AABB + Entry Face Detection
 
@@ -613,7 +606,7 @@ Updated each frame based on camera:
 
 The `camera_right_local` vector is derived in the shader via cross product.
 
-Billboard depth is computed in the shader from the same matrix multiply used for screen-to-sprite mapping (see Sections 5.1 and 11.2), so it is not passed as a uniform.
+Billboard depth is provided by the quad's rasterized depth (the quad is camera-facing and centered on the model center), so it requires no uniform or shader computation.
 
 ### Light Direction
 
@@ -667,7 +660,7 @@ This system is designed for:
    * Camera-facing proxy quad is rasterized, generating fragments
 
 4. **Fragment Shader:**
-   * Compute `origin_clip` once (reused for NDC and billboard depth)
+   * Compute `origin_clip` once (for NDC center; billboard depth comes from rasterized quad depth)
    * Derive camera right from forward and up (cross product)
    * Compute screen offset from anchor, convert to voxel units, quantize to virtual pixel grid
    * Construct parallel ray origin
@@ -675,10 +668,10 @@ This system is designed for:
    * Precompute per-face lighting (3 values, one per axis)
    * Pre-traversal AABB rejection: discard if no ray (primary or neighbor) can hit
    * If primary ray can hit: trace via hierarchical SVO traversal
-     * If hit: output palette color × (face lighting + ambient), write billboard depth
+     * If hit: output palette color × (face lighting + ambient)
      * If miss: test cardinal neighbor rays (early exit on first hit)
    * If primary ray cannot hit but expanded AABB passes: test neighbor rays for outline
-   * Outline hit: output black, write billboard depth
+   * Outline hit: output black
    * All misses: discard fragment
 
 ---
@@ -689,7 +682,7 @@ This system is designed for:
 * **Voxel Space** — Canonical Z-up coordinate system used by `GpuSvoModel`
 * **Virtual Pixel** — A world-space pixel of width `Δpx_world = VoxelSize / σ`
 * **Sprite Space** — 2D grid defined by camera-right (U) and camera-up (V)
-* **Sprite Plane** — The plane passing through the model center, perpendicular to the camera. Used for billboard depth.
+* **Sprite Plane** — The plane passing through the model center, perpendicular to the camera. The proxy quad lies in this plane, providing billboard depth via rasterization.
 * **Proxy Geometry** — The camera-facing QuadMesh used to invoke the volumetric shader; sized per-frame to the tight bounding rectangle of the model's projection
 * **Primary Ray** — The ray corresponding to the current virtual pixel
 * **Neighbor Ray** — A ray offset by ±Δpx in sprite space for outline evaluation
@@ -711,7 +704,7 @@ This system renders voxel models as **volumetric orthographic sprites** embedded
 * Hierarchical SVO traversal with empty-space skipping
 * Per-face directional lighting with precomputed axis values
 * Sprite-space silhouette logic via neighbor ray tests with early exit
-* Correct billboard depth output for occlusion
+* Correct billboard depth from camera-facing proxy quad rasterization
 * Shared common subexpressions across all trace calls per fragment
 
 ...the system achieves a visual result reminiscent of classic 2D sprites from the 16-bit gaming era, while remaining fully 3D, occlusion-correct, and GPU-driven.
