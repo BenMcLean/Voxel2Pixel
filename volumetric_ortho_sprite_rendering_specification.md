@@ -2,7 +2,7 @@
 
 This document specifies a **GPU-driven volumetric sprite rendering system** for games. The system renders 3D voxel models (stored as GPU Sparse Voxel Octrees, *GpuSvoModel*) as *sprite-like entities* inside a fully perspective 3D world, while preserving **orthographic internal projection**, a **stable virtual pixel grid**, and a **1-pixel silhouette outline defined in sprite space**.
 
-This specification is written to be *implementation-ready*. All ambiguity around coordinate spaces, ray setup, quantization, outlining, and depth output is explicitly resolved. An engineer implementing this system is assumed to have access to the `GpuSvoModel` specification and traversal routines.
+This specification is written to be *implementation-ready*. All ambiguity around coordinate spaces, ray setup, quantization, outlining, lighting, depth output, and performance is explicitly resolved. An engineer implementing this system is assumed to have access to the `GpuSvoModel` specification and traversal routines.
 
 ---
 
@@ -73,7 +73,7 @@ voxel.Y = -godot.Z
 voxel.Z =  godot.Y
 ```
 
-This transformation is applied on the CPU when computing camera vectors passed to the shader. The shader operates entirely in voxel space.
+This transformation is applied on the CPU when computing camera and light vectors passed to the shader. The shader operates entirely in voxel space.
 
 ---
 
@@ -188,34 +188,26 @@ Each fragment determines its virtual pixel position based on **screen coordinate
 
 ### 5.1 Screen-to-Sprite Mapping
 
-1. Compute the anchor point's screen position (NDC). Since the box is offset so the anchor is at local origin:
+1. Compute the anchor point's clip-space position. Since the box is offset so the anchor is at local origin:
    ```
-   anchor_clip = ProjectionMatrix * ViewMatrix * ModelMatrix * vec4(0, 0, 0, 1)
-   anchor_ndc = anchor_clip.xy / anchor_clip.w
+   origin_clip = ProjectionMatrix * ViewMatrix * ModelMatrix * vec4(0, 0, 0, 1)
    ```
+   This single matrix multiply is reused for both NDC computation and billboard depth (see Section 10).
 
-2. Compute fragment's offset from anchor in NDC:
+2. Compute anchor's NDC position and fragment's offset from it:
    ```
+   center_ndc = origin_clip.xy / origin_clip.w
    frag_ndc = (FragCoord.xy / ViewportSize) * 2.0 - 1.0
-   offset_ndc = frag_ndc - anchor_ndc
+   offset_ndc = frag_ndc - center_ndc
    ```
 
-3. Convert to world units at the sprite plane:
+3. Convert NDC offset directly to voxel units (combining world-unit conversion and voxel-unit conversion into one step):
    ```
-   proj_scale_x = 1.0 / ProjectionMatrix[0][0]
-   proj_scale_y = 1.0 / ProjectionMatrix[1][1]
-
-   world_offset_x = offset_ndc.x * camera_distance * proj_scale_x
-   world_offset_y = offset_ndc.y * camera_distance * proj_scale_y
+   u_coord = offset_ndc.x * camera_distance / (ProjectionMatrix[0][0] * VoxelSize)
+   v_coord = offset_ndc.y * camera_distance / (ProjectionMatrix[1][1] * VoxelSize)
    ```
 
-4. Convert to voxel units:
-   ```
-   u_coord = world_offset_x / VoxelSize
-   v_coord = world_offset_y / VoxelSize
-   ```
-
-5. Quantize to virtual pixel grid:
+4. Quantize to virtual pixel grid:
    ```
    u_snapped = round(u_coord / Δpx_voxel) * Δpx_voxel
    v_snapped = round(v_coord / Δpx_voxel) * Δpx_voxel
@@ -257,57 +249,165 @@ camera_right_local = cross(ray_dir_local, camera_up_local)
 
 The ray origin is constructed from the quantized sprite position:
 ```
-ray_origin = anchor_to_center
+ray_origin = model_center
            + u_snapped * camera_right_local
            + v_snapped * camera_up_local
            - D_voxel * (2 * max_dimension)
 ```
 
 Where:
-* `anchor_to_center` — offset from anchor point to model center (the `anchor_to_center` uniform). Since the anchor is at voxel space origin, this equals the model center's position in voxel space.
+* `model_center` — the model center in anchor-centered coordinates: `model_size * 0.5 - anchor_point`. Since the anchor is at the voxel-space origin, this is the offset from the anchor to the model center.
 * `max_dimension` — largest dimension of the voxel model
 
-The ray starts well in front of the model (toward the camera) so that DDA traversal can properly intersect the voxel volume from its front face.
+The ray starts well in front of the model (toward the camera) so that traversal can properly intersect the voxel volume from its front face.
 
 ---
 
 ## 7. Primary Ray Traversal
 
-Traversal uses a **3D Digital Differential Analyzer (DDA)** in voxel space.
+Traversal uses **hierarchical SVO descent** with empty-space skipping. The SVO structure functions as an acceleration structure, not merely an occupancy classifier.
 
-### Ray-Voxel-AABB Intersection
+### 7.1 Pre-Traversal AABB Rejection
 
-Before DDA traversal, the fragment shader computes a ray-AABB intersection against the voxel bounds:
-* If the ray does not intersect the voxel AABB, the fragment proceeds to outline logic.
-* If the ray intersects, DDA traversal begins at the entry point.
+Before any SVO traversal, the fragment shader tests whether the ray intersects the voxel model's axis-aligned bounding box using the **slab method**:
 
-### Traversal Model
+```
+t1 = (box_min - ray_origin) * inv_rd
+t2 = (box_max - ray_origin) * inv_rd
+t_min = min(t1, t2)    // entry t per axis
+t_max = max(t1, t2)    // exit  t per axis
+t_enter = max(t_min.x, t_min.y, t_min.z)   // last axis to enter
+t_exit  = min(t_max.x, t_max.y, t_max.z)   // first axis to exit
+hit = (t_exit >= max(t_enter, 0))
+```
 
-* The ray is marched through the integer voxel grid starting at the voxel-AABB entry point.
-* At each step, the voxel coordinate `(x, y, z)` currently intersected by the ray is queried via `GpuSvoModel`.
-* A voxel is considered **solid** if its resolved material index ≠ 0.
+Any fragment whose ray does not intersect the voxel AABB **must be rejected in constant time** — no voxel stepping, SVO traversal, or leaf evaluation may occur. Late rejection inside iterative traversal is insufficient. This guarantees that empty regions of the proxy volume outside the model's projection incur minimal, bounded cost.
 
-### Hit Definition
+For outline detection, a second AABB test is performed against an expanded box (padded by `Δpx_voxel` on each side). If even this expanded test misses, the fragment cannot be a primary hit or an outline pixel, and is discarded immediately at O(1) cost.
 
-A ray is considered to **hit** if it intersects any solid voxel. Partial voxel intersections count as hits. Uniform leaves are treated as fully solid regions.
+### 7.2 Entry Face Detection
 
-### Termination Conditions
+When the ray does intersect the AABB, the shader determines which face the ray enters through by identifying which axis produced the `t_enter` value (the largest `t_min` component). This axis is recorded as `last_axis` — the face the voxel was entered through — which is used for per-face lighting (see Section 8).
+
+The entry face detection reuses the `t_min` components already computed by the slab AABB test, requiring no additional divisions (see Section 11.2).
+
+### 7.3 Hierarchical Traversal
+
+At each position along the ray, the shader descends the SVO tree from root to leaf:
+
+1. Start at the root node. The initial child size is `2^(max_depth - 1)` voxels.
+2. Read the node. If internal, check the occupancy mask for the octant containing the current position.
+   * If the octant is **empty**, break out of the descent — this entire region is known empty.
+   * If the octant is **occupied**, compute the child index and descend. The child size halves.
+3. If a leaf is reached:
+   * **Uniform leaf** (all 8 children share one material): check bits 0–7 for the material index. If non-zero, the ray has hit a solid voxel.
+   * **Payload leaf** (2×2×2 individually-addressed voxels): read the specific byte for the current octant. If non-zero, hit.
+
+Empty space represented by higher-level SVO nodes **must be skipped as a whole**. Implementations must not step through known-empty regions at voxel scale. This bounds traversal cost independently of ray length through empty space.
+
+### 7.4 Node Advancement
+
+When a position is found empty (at any level of the tree), the ray must advance past the empty node's bounding box:
+
+1. Compute the axis-aligned bounds of the empty node from the current position and node size.
+2. For each axis, compute the ray `t` at the node's exit face (selected by the ray's step direction).
+3. The minimum of these three `t` values identifies the first exit — that axis becomes the new `last_axis`.
+4. Advance `t_current` just past the exit point (with a small epsilon) and repeat.
+
+### 7.5 Termination
 
 Traversal terminates when:
-* A solid voxel is hit
-* The ray exits the voxel AABB
-* A fixed maximum traversal distance (derived from model bounds) is exceeded
+* A solid voxel is hit → return material index and `last_axis`
+* The ray exits the voxel AABB (`t_current >= t_exit`) → miss
+* A maximum iteration count is exceeded → miss (safety bound: `max_depth × 64`)
 
-The traversal step size and axis advancement follow standard voxel DDA rules.
+### 7.6 Exactness Requirement
 
-### Outcomes
+All traversal optimizations are **mathematically exact**. They must not:
 
-* **Hit** → return material color (and normal for lighting)
-* **Miss** → candidate for outline logic
+* Alter silhouettes
+* Alter depth values
+* Introduce resolution-dependent artifacts
+* Approximate voxel boundaries
+* Depend on screen resolution or distance-based heuristics
+
+Performance improvements come exclusively from eliminating provably unnecessary work (empty-space skipping, constant-time AABB rejection), never from reducing precision.
+
+### 7.7 Implementation Freedom
+
+This specification does not prescribe a specific traversal algorithm, shader structure, data layout, or graphics API. Any implementation that satisfies the above invariants while preserving pixel-perfect output is considered compliant.
 
 ---
 
-## 8. Sprite-Space Outline Logic
+## 8. Lighting
+
+Lighting is not a core concern of this specification. The system's defining features are its orthographic projection, stable pixel grid, outline logic, and billboard depth — all of which are independent of how lit pixels are colored. Any lighting model can be used, from unlit palette colors to sophisticated PBR shading, as long as it operates on the hit voxel's material and face information provided by the traversal.
+
+The current implementation provides a simple default lighting model suitable for the retro sprite aesthetic. It is described here as a reference, not as a requirement.
+
+### 8.1 Light Direction
+
+The light direction is specified in **world space** (engine coordinates) on the CPU side. The container class converts it to voxel space internally before passing it to the shader. This keeps voxel space as an internal implementation detail that external code does not need to know about.
+
+If no explicit light direction is set, the default is **upper-right relative to the camera view**:
+
+```
+light_world = normalize(camera_right + camera_up * 0.5 - camera_forward)
+light_voxel = normalize(swizzle(light_world))
+```
+
+The light direction points **from the surface toward the light source** (standard convention).
+
+### 8.2 Default Per-Face Lighting Model
+
+The default lighting model is a minimal directional light with ambient. It exploits the geometry of axis-aligned voxel cubes for simplicity and efficiency.
+
+A voxel cube has 6 faces, but from any given viewpoint only **3 faces are visible** — one per axis. The visible face on each axis is the one whose outward normal points toward the camera, which is:
+
+```
+normal_axis = -sign(ray_direction) on that axis
+```
+
+For axis `i`, the diffuse lighting contribution simplifies to:
+
+```
+face_light[i] = max(-sign(rd[i]) * light_dir[i], 0.0)
+```
+
+This produces 3 precomputed lighting values — one per axis — that are constant for all fragments of the entity. When a ray hits a voxel, the shader selects the lighting value for `last_axis` (the face the ray entered through).
+
+Final pixel color:
+```
+color = palette_color * (face_light[last_axis] + ambient)
+```
+
+Where `ambient` (currently 0.3) prevents unlit faces from being pure black.
+
+### 8.3 Why Per-Face, Not Per-Normal
+
+Since every voxel face along a given axis shares the same normal direction, and the light direction is constant per entity, the dot product is identical for all faces on the same axis. Computing it per-hit would repeat the same calculation. Precomputing 3 values and selecting by axis index is both simpler and faster.
+
+### 8.4 Alternative Lighting Models
+
+The traversal provides all the information needed for more sophisticated lighting:
+
+* **Material index** — can index into material property tables (roughness, metallic, emissive, etc.)
+* **Face normal** — determined by `last_axis` and `sign(rd)`, available for any shading model
+* **Hit position** — derivable from `t_hit` and the ray, available for position-dependent effects
+
+Possible alternatives include (but are not limited to):
+
+* Multiple directional lights or point lights
+* Ambient occlusion (e.g., precomputed per-voxel or screen-space)
+* Emissive materials (material index maps to an emissive color)
+* Toon/cel shading with quantized light bands
+* Entirely unlit rendering (palette colors only)
+
+The lighting model can be changed in the shader without affecting any other part of the system.
+
+---
+
+## 9. Sprite-Space Outline Logic
 
 The outline is defined **exactly** as a 2D sprite dilation applied in virtual sprite space, not in voxel space.
 
@@ -317,9 +417,9 @@ Imagine the entity rendered to an orthographic sprite buffer at resolution `Δpx
 
 This behavior is reproduced implicitly via ray tests.
 
-### 8.1 Neighbor Rays
+### 9.1 Neighbor Rays
 
-For a fragment whose primary ray **misses**, construct four additional rays:
+For a fragment whose primary ray **misses**, four additional rays are constructed by offsetting the ray origin along the camera basis vectors:
 
 ```
 O_left  = ray_origin - camera_right_local * Δpx_voxel
@@ -328,15 +428,13 @@ O_up    = ray_origin + camera_up_local * Δpx_voxel
 O_down  = ray_origin - camera_up_local * Δpx_voxel
 ```
 
-Each neighbor ray:
-* Shares the same direction `D_voxel`
-* Performs identical SVO traversal
+Each neighbor ray shares the same direction `D_voxel` and performs identical SVO traversal.
 
-### Outline Rule
+### 9.2 Outline Rule
 
 ```
 if primary ray hits:
-    output material color
+    output material color with lighting
 else if any neighbor ray hits:
     output black (outline)
 else:
@@ -345,15 +443,16 @@ else:
 
 Diagonal neighbors are never tested.
 
-### 8.2 Performance Notes
+### 9.3 Performance Notes
 
 * Neighbor rays are only evaluated for fragments whose primary ray misses.
+* The neighbor ray tests use **early exit**: testing stops at the first neighbor hit.
 * All rays are parallel and highly coherent.
-* Worst-case cost occurs only along silhouettes.
+* Worst-case cost (4 neighbor traces) occurs only along silhouettes.
 
 ---
 
-## 9. Depth Output
+## 10. Depth Output
 
 Correct depth writing is mandatory for proper occlusion.
 
@@ -371,23 +470,97 @@ This matches the behavior of classic 2D sprites and maintains the visual coheren
 
 ### Depth Calculation
 
-The depth is the clip-space depth of the model center. Since the anchor point is at the box's local origin, the model center in local space is the `anchor_to_center` offset (converted to world units):
+The depth is derived from the clip-space position of the proxy box's local origin, which is the same matrix multiply already performed for screen-to-sprite mapping (Section 5.1):
 
 ```
-model_center_local = reverse_swizzle(anchor_to_center) * VoxelSize
-center_clip = ProjectionMatrix * ViewMatrix * ModelMatrix * vec4(model_center_local, 1)
-DEPTH = (center_clip.z / center_clip.w) * 0.5 + 0.5
+origin_clip = ProjectionMatrix * ViewMatrix * ModelMatrix * vec4(0, 0, 0, 1)
+billboard_depth = (origin_clip.z / origin_clip.w) * 0.5 + 0.5
 ```
+
+This reuses the `origin_clip` value — no additional matrix multiply is needed (see Section 11.2).
 
 This value is constant for all fragments of the sprite (both solid pixels and outlines).
 
-### Optimization
+---
 
-Since the depth is constant per-instance, it can be computed once per frame on the CPU and passed as a uniform, rather than recomputed in every fragment.
+## 11. Performance
+
+The system's aesthetic relies on exact voxel-defined imagery. Performance improvements come exclusively from eliminating provably unnecessary work, never from reducing precision. The invariants in Section 7.6 are absolute.
+
+Within those constraints, the following efficiency principles have been identified through implementation.
+
+### 11.1 Per-Fragment Common Subexpression Sharing
+
+Several values are constant for all rays within a fragment invocation (and indeed for all fragments of the entity). Computing them once and reusing them avoids redundant work:
+
+| Value | Computed once | Used by |
+|-------|--------------|---------|
+| `inv_rd = 1.0 / rd` | Per fragment | All AABB tests (2 in fragment + 1 per trace call), all node exit computations |
+| `step_dir = sign(rd)` | Per fragment | Entry face detection, node exit face selection, per-face lighting |
+| `model_size = vec3(svo_model_size)` | Per fragment | All AABB tests, all bounds checks inside traversal |
+| `step_positive = max(step_dir, vec3(0.0))` | Per trace call | Node exit face computation (selects between node_min and node_max per axis) |
+| `root_child_size = float(1 << (max_depth - 1))` | Per trace call | Initial node size for each tree descent |
+
+The trace function accepts `inv_rd`, `step_dir`, and `model_size` as parameters so they are computed once in the fragment shader and shared across all 1–5 trace calls per fragment (1 primary + up to 4 neighbor rays).
+
+### 11.2 Single Matrix Multiply
+
+The fragment shader needs the clip-space position of the proxy box's local origin for two purposes:
+
+1. **NDC center** for screen-to-sprite mapping (Section 5.1)
+2. **Billboard depth** for the depth buffer (Section 10)
+
+Both are derived from the same `origin_clip` vector. A naive implementation would compute `ProjectionMatrix × ViewMatrix × ModelMatrix × vec4(0,0,0,1)` twice. The implementation computes it once and extracts both values.
+
+### 11.3 Inlined AABB + Entry Face Detection
+
+Inside the trace function, the ray–AABB intersection and entry face detection share the same intermediate values. The slab test computes per-axis `t_min` and `t_max` vectors. The entry face is simply the axis with the largest `t_min` component — the same values already computed for the intersection test.
+
+A naive implementation would call `ray_aabb()` for the intersection, then recompute the per-axis `t` values to determine the entry face. The implementation inlines the slab test so that the `t_min` components are computed once and used for both the hit/miss decision and the entry face.
+
+### 11.4 Reciprocal Ray Direction
+
+The slab-method AABB test and the node-exit computation both require dividing by the ray direction. Since the ray direction is constant for all rays in the entity, its reciprocal (`inv_rd = 1.0 / rd`) is computed once and multiplied instead. This converts divisions to multiplications throughout:
+
+* `ray_aabb()` takes `inv_rd` instead of `rd`
+* Node exit computation uses `inv_rd`
+* The 6 divisions that would otherwise occur per AABB test become 6 multiplications
+
+### 11.5 Per-Face Lighting Precomputation
+
+Because only 3 face normals are visible from any viewpoint and the light direction is constant per entity, the diffuse lighting for each axis is a single scalar computed once per fragment. The hit path then selects by axis index — a branch on an integer — rather than computing a dot product per hit. See Section 8.2.
+
+### 11.6 Neighbor Ray Early Exit
+
+Outline detection requires testing up to 4 neighbor rays (left, right, up, down). The tests are **unrolled** (no loop, no array allocation) and executed with **early exit**: each test is guarded by `if (!outline)`, so the first neighbor hit skips the remaining tests. On average, silhouette fragments test fewer than 4 neighbors.
+
+### 11.7 NDC-to-Voxel Conversion
+
+The screen-to-sprite mapping (Section 5.1) converts an NDC offset to voxel units. The naive approach uses 4 intermediate values:
+
+```
+proj_scale_x = 1.0 / ProjectionMatrix[0][0]
+proj_scale_y = 1.0 / ProjectionMatrix[1][1]
+world_offset = offset_ndc * camera_distance * proj_scale
+voxel_offset = world_offset / VoxelSize
+```
+
+The implementation collapses this into a single expression per axis:
+
+```
+u_coord = offset_ndc.x * camera_distance / (ProjectionMatrix[0][0] * VoxelSize)
+v_coord = offset_ndc.y * camera_distance / (ProjectionMatrix[1][1] * VoxelSize)
+```
+
+This eliminates 2 intermediate divisions.
+
+### 11.8 Empty Vertex Shader
+
+The proxy box geometry exists solely to generate fragments. The vertex shader passes no varyings to the fragment shader — no interpolated positions, normals, or texture coordinates. The fragment shader derives everything it needs from screen coordinates and uniforms. This eliminates per-vertex computation and per-fragment interpolation overhead.
 
 ---
 
-## 10. CPU-GPU Interface
+## 12. CPU-GPU Interface
 
 ### Per-Instance Uniforms
 
@@ -395,17 +568,19 @@ Each instance provides:
 
 | Uniform | Type | Description |
 |---------|------|-------------|
-| `svo_texture` | sampler2D | SVO node and payload data |
-| `palette_texture` | sampler2D | Color palette (256 entries) |
+| `svo_texture` | sampler2D | SVO node and payload data (RGBA8, packed uint32 per texel) |
+| `palette_texture` | sampler2D | Color palette (256 RGBA entries, indexed by material ID) |
+| `texture_width` | int | Width of `svo_texture` in pixels (for 2D index computation) |
+| `svo_nodes_count` | uint | Total node entries in texture (payload data starts after) |
 | `svo_model_size` | uvec3 | Voxel model dimensions |
 | `svo_max_depth` | uint | Maximum SVO tree depth |
 | `node_offset` | uint | Offset to this model's nodes in texture |
 | `payload_offset` | uint | Offset to this model's payloads |
 | `voxel_size` | float | World-space size of one voxel |
 | `sigma` | float | Virtual pixels per voxel |
-| `anchor_to_center` | vec3 | Offset from anchor point to model center in voxel space |
+| `anchor_point` | vec3 | Anchor point position in voxel space |
 
-**Anchor offset:** The `anchor_to_center` uniform represents the vector from the anchor point (at the box's local origin) to the center of the voxel model. For a bottom-center anchor on a model of size `(sizeX, sizeY, sizeZ)`, this would be `(sizeX/2, sizeY/2, sizeZ/2)` in Z-up voxel space.
+**Anchor point:** The `anchor_point` uniform is the position of the anchor in voxel space (e.g., `(sizeX/2, sizeY/2, 0)` for bottom-center). The shader computes the model center in anchor-centered coordinates as `model_size * 0.5 - anchor_point`.
 
 ### Per-Frame Uniforms
 
@@ -413,19 +588,24 @@ Updated each frame based on camera:
 
 | Uniform | Type | Description |
 |---------|------|-------------|
-| `ray_dir_local` | vec3 | Camera forward in voxel space |
-| `camera_up_local` | vec3 | Camera up in voxel space |
-| `camera_distance` | float | Distance from camera to anchor point |
-| `billboard_depth` | float | Pre-computed depth of sprite plane (optional optimization) |
-| `light_dir` | vec3 | Light direction in voxel space (optional) |
+| `ray_dir_local` | vec3 | Camera forward in voxel space (unit length) |
+| `camera_up_local` | vec3 | Camera up in voxel space (unit length) |
+| `camera_distance` | float | Distance from camera to anchor point (world units) |
+| `light_dir` | vec3 | Light direction in voxel space (unit length, toward light) |
+
+**All vec3 uniforms must be normalized on the CPU.** The shader does not re-normalize them.
 
 The `camera_right_local` vector is derived in the shader via cross product.
 
-If `billboard_depth` is not pre-computed on the CPU, the shader can compute it from the model center's clip-space position (see Section 9).
+Billboard depth is computed in the shader from the same matrix multiply used for screen-to-sprite mapping (see Sections 5.1 and 11.2), so it is not passed as a uniform.
+
+### Light Direction
+
+The light direction is set in **world space** on the CPU and converted to voxel space internally by the container class. External code never needs to work in voxel space — it is an internal implementation detail.
 
 ---
 
-## 11. Constraints and Non-Goals
+## 13. Constraints and Non-Goals
 
 ### Camera Interaction
 
@@ -451,7 +631,7 @@ This system is designed for:
 
 ---
 
-## 12. Data Flow Overview
+## 14. Data Flow Overview
 
 1. **CPU Setup:**
    * Compute voxel bounds, model center, and model diagonal
@@ -461,30 +641,33 @@ This system is designed for:
 
 2. **Per-Frame CPU Update:**
    * Compute camera vectors in voxel space (with coordinate swizzle)
+   * Compute light direction in voxel space (from world-space input, with coordinate swizzle)
    * Compute camera distance
-   * Optionally pre-compute sprite plane depth (billboard depth)
-   * Update per-frame uniforms
+   * Update per-frame uniforms (all vec3 uniforms normalized)
 
 3. **GPU Rasterization:**
    * Proxy box is rasterized, generating fragments
 
 4. **Fragment Shader:**
+   * Compute `origin_clip` once (reused for NDC and billboard depth)
    * Derive camera right from forward and up (cross product)
-   * Compute screen offset from model center
-   * Convert to voxel units and quantize to virtual pixel grid
+   * Compute screen offset from anchor, convert to voxel units, quantize to virtual pixel grid
    * Construct parallel ray origin
-   * Traverse SVO via DDA
-   * If hit: output material color
-   * If miss: test cardinal neighbor rays for outline
-   * If outline: output black
-   * Otherwise: discard fragment
-   * All visible pixels write the same billboard depth (sprite plane depth)
+   * Precompute `inv_rd`, `step_dir`, `model_size` (shared across all trace calls)
+   * Precompute per-face lighting (3 values, one per axis)
+   * Pre-traversal AABB rejection: discard if no ray (primary or neighbor) can hit
+   * If primary ray can hit: trace via hierarchical SVO traversal
+     * If hit: output palette color × (face lighting + ambient), write billboard depth
+     * If miss: test cardinal neighbor rays (early exit on first hit)
+   * If primary ray cannot hit but expanded AABB passes: test neighbor rays for outline
+   * Outline hit: output black, write billboard depth
+   * All misses: discard fragment
 
 ---
 
-## 13. Glossary
+## 15. Glossary
 
-* **Anchor Point** — The position in voxel space that corresponds to the entity's world-space position. Typically bottom center. Determines depth and world placement.
+* **Anchor Point** — The position in voxel space that corresponds to the entity's world-space position. Typically bottom center. Determines world placement.
 * **Voxel Space** — Canonical Z-up coordinate system used by `GpuSvoModel`
 * **Virtual Pixel** — A world-space pixel of width `Δpx_world = VoxelSize / σ`
 * **Sprite Space** — 2D grid defined by camera-right (U) and camera-up (V)
@@ -492,103 +675,27 @@ This system is designed for:
 * **Proxy Geometry** — The BoxMesh used to invoke the volumetric shader and define entity transform
 * **Primary Ray** — The ray corresponding to the current virtual pixel
 * **Neighbor Ray** — A ray offset by ±Δpx in sprite space for outline evaluation
-* **DDA** — Digital Differential Analyzer, a voxel grid traversal algorithm
+* **SVO** — Sparse Voxel Octree, the hierarchical data structure storing voxel occupancy and materials
+* **Slab Method** — Ray–AABB intersection algorithm using per-axis entry/exit t values
+* **`last_axis`** — The axis (0=X, 1=Y, 2=Z) the ray crossed to enter the hit voxel; determines which face was hit for lighting
+* **`inv_rd`** — Reciprocal ray direction (1/rd), precomputed to convert divisions to multiplications
+* **Empty-Space Skipping** — Advancing the ray past an entire empty SVO node rather than stepping voxel-by-voxel
 
 ---
 
-## 14. Summary
+## 16. Summary
 
 This system renders voxel models as **volumetric orthographic sprites** embedded in a 3D perspective world. By combining:
 
 * Screen-based virtual pixel determination
 * Parallel per-instance rays (orthographic internal projection)
 * Quantization to a stable virtual pixel grid
-* Sprite-space silhouette logic via neighbor ray tests
-* Correct depth output for occlusion
+* Hierarchical SVO traversal with empty-space skipping
+* Per-face directional lighting with precomputed axis values
+* Sprite-space silhouette logic via neighbor ray tests with early exit
+* Correct billboard depth output for occlusion
+* Shared common subexpressions across all trace calls per fragment
 
 ...the system achieves a visual result reminiscent of classic 2D sprites from the 16-bit gaming era, while remaining fully 3D, occlusion-correct, and GPU-driven.
 
 This document constitutes the authoritative rendering specification for the Volumetric Ortho-Sprite System.
-
-# Specification Amendment – Traversal Performance Invariants
-
-> **Status:** Normative clarification (no change to visual output or feature scope)
-
-This amendment clarifies performance-related *invariants* that are already implied by the specification’s goals, in order to prevent inefficient but technically compliant implementations.
-
----
-
-## X. Traversal Performance Invariants
-
-The following constraints apply to any conforming implementation of the volumetric orthographic voxel renderer.
-
-These constraints **do not permit approximation** and **must not alter pixel-perfect output**.
-
-They exist solely to constrain *how* traversal work is performed, not *what* is rendered.
-
----
-
-### X.1 Constant-Time Rejection of Non-Intersecting Rays
-
-Any fragment whose orthographic ray cannot intersect the voxel model’s axis-aligned bounding box **must be rejected in constant time**.
-
-Specifically:
-
-* Rays that provably do not enter the voxel AABB must not perform voxel stepping, SVO traversal, or leaf evaluation
-* Ray–AABB rejection must occur prior to any per-ray traversal logic
-
-Late rejection inside iterative traversal is insufficient to satisfy this requirement.
-
-This invariant guarantees that empty regions of the proxy volume which lie outside the voxel model’s projection incur minimal, bounded cost.
-
----
-
-### X.2 Hierarchical Empty-Space Skipping
-
-Empty space represented by higher-level spatial structures (e.g. internal or empty SVO nodes) **must be skipped as a whole** when traversed by a ray.
-
-In particular:
-
-* Implementations must not rely on uniform, voxel-scale stepping through regions that are known to be empty at a coarser spatial level
-* Spatial hierarchies are expected to function as *acceleration structures*, not merely as occupancy classifiers
-
-This requirement preserves exact first-hit correctness while bounding traversal cost independently of ray length through empty space.
-
----
-
-### X.3 Exactness Requirement
-
-All optimizations implied by this section are **mathematically exact**.
-
-They must not:
-
-* Alter silhouettes
-* Alter depth values
-* Introduce resolution-dependent artifacts
-* Approximate voxel boundaries
-* Depend on screen resolution or distance-based heuristics
-
-Any optimization that risks visual deviation is explicitly out of scope.
-
----
-
-### X.4 Implementation Freedom
-
-This amendment intentionally does **not** prescribe:
-
-* A specific traversal algorithm
-* A specific shader structure
-* A specific data layout
-* A specific graphics API or engine
-
-Any implementation that satisfies the above invariants while preserving pixel-perfect output is considered compliant.
-
----
-
-## Rationale (Non-Normative)
-
-The renderer’s aesthetic relies on exact voxel-defined imagery presented directly to the viewer, not on sprite or LOD-based approximation.
-
-As a result, performance improvements must come exclusively from eliminating provably unnecessary work (e.g. traversal of known-empty space), rather than from reducing precision.
-
-This amendment ensures that compliant implementations use available spatial information efficiently while preserving the renderer’s defining visual properties.
