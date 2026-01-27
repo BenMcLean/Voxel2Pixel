@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.Linq;
+using BenProgress;
 using BenVoxel.FileToVoxCore;
 using BenVoxel.Structs;
 using Godot;
@@ -19,14 +21,14 @@ public partial class Root : Node3D
 		_voxelSize = 0.1f,
 		_sigma = 4f,
 		_cameraDistance = 20f;
-
+	private static readonly IReadOnlyCollection<string> sourceArray = [
+		@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\Sora.vox",
+		@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\Tree.vox",
+		@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\NumberCube.vox" ];
 	public override void _Ready()
 	{
 		// Load models and create texture bridge
-		VoxFileModel[] models = [
-			new(@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\Sora.vox"),
-			new(@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\Tree.vox"),
-			new(@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\NumberCube.vox")];
+		VoxFileModel[] models = [.. sourceArray.Parallelize(path => new VoxFileModel(path))];
 		_bridge = new GpuSvoModelTextureBridge(
 			models: models,
 			palettes: [.. models.Select(model => model.Palette)]);
