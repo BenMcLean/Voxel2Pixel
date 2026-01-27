@@ -39,11 +39,11 @@ public partial class VolumetricOrthoSprite : Node3D
 	public CameraTransformProviderDelegate CameraTransformProvider { get; set; }
 
 	/// <summary>
-	/// Light direction in voxel space (Z-up, normalized).
-	/// Default is from upper-left relative to camera view.
+	/// Light direction in world space (Godot Y-up, normalized).
+	/// Default is from upper-right relative to camera view.
 	/// Set to null to use automatic camera-relative lighting.
 	/// </summary>
-	public Vector3? LightDirectionVoxel { get; set; } = null;
+	public Vector3? LightDirection { get; set; } = null;
 
 	/// <summary>
 	/// The anchor point in voxel space (Z-up).
@@ -98,7 +98,8 @@ public partial class VolumetricOrthoSprite : Node3D
 		// Transformation: voxel.X = godot.X, voxel.Y = -godot.Z, voxel.Z = godot.Y
 		_material.SetShaderParameter("ray_dir_local", GodotToVoxel(camForward).Normalized());
 		_material.SetShaderParameter("camera_up_local", GodotToVoxel(camUp).Normalized());
-		_material.SetShaderParameter("light_dir", LightDirectionVoxel ?? GodotToVoxel((-camRight + camUp * 0.5f - camForward).Normalized()).Normalized());
+		_material.SetShaderParameter("light_dir", GodotToVoxel(LightDirection
+			?? (camRight + camUp * 0.5f - camForward).Normalized()).Normalized());
 		_material.SetShaderParameter("camera_distance", (camPos - ModelCenterWorld).Length());
 	}
 	/// <summary>

@@ -129,7 +129,18 @@ vec4 trace_ray_hierarchical(vec3 ro, vec3 rd, vec3 anchor_offset, out int last_a
 
 	// Maximum iterations bounded by tree depth traversals
 	int max_iterations = int(svo_max_depth) * 64;
-	last_axis = 0;
+
+	// Compute which AABB face the ray enters through (axis with largest t_min)
+	vec3 t1 = (vec3(0.0) - ro_svo) / rd;
+	vec3 t2 = (model_size - ro_svo) / rd;
+	vec3 t_min_vals = min(t1, t2);
+	if (t_min_vals.x >= t_min_vals.y && t_min_vals.x >= t_min_vals.z) {
+		last_axis = 0;
+	} else if (t_min_vals.y >= t_min_vals.z) {
+		last_axis = 1;
+	} else {
+		last_axis = 2;
+	}
 
 	for (int iter = 0; iter < max_iterations; iter++) {
 		if (t_current >= t_exit) {
@@ -511,20 +522,23 @@ void fragment() {
 			int last_axis;
 			vec4 hit = trace_ray_hierarchical(ro_voxel, rd, anchor_point, last_axis);
 
+			// Precompute per-face lighting for the 3 visible faces.
+			// Each axis has one visible face whose normal points toward the camera.
+			// normal = -sign(rd) on that axis, so dot(normal, light) = -sign(rd.c) * light.c
+			vec3 nl = normalize(light_dir);
+			float face_light_0 = max(-sign(rd.x) * nl.x, 0.0); // X-axis face
+			float face_light_1 = max(-sign(rd.y) * nl.y, 0.0); // Y-axis face
+			float face_light_2 = max(-sign(rd.z) * nl.z, 0.0); // Z-axis face
+			float ambient = 0.3;
+
 			if (hit.x > 0.5) {
-				// Hit - output material color with lighting
+				// Hit - output material color with per-face lighting
 				uint mat = uint(hit.z);
 
-				// Compute normal in voxel space based on which axis we hit
-				vec3 normal_voxel = vec3(0.0);
-				vec3 step_dir = sign(rd);
-				if (last_axis == 0) normal_voxel.x = -step_dir.x;
-				else if (last_axis == 1) normal_voxel.y = -step_dir.y;
-				else normal_voxel.z = -step_dir.z;
-
-				// Directional lighting from upper left
-				float diff = max(dot(normal_voxel, light_dir), 0.0);
-				float ambient = 0.3;
+				float diff;
+				if (last_axis == 0) diff = face_light_0;
+				else if (last_axis == 1) diff = face_light_1;
+				else diff = face_light_2;
 
 				vec3 base_color = texelFetch(palette_texture, ivec2(int(mat), 0), 0).rgb;
 				ALBEDO = base_color * (diff + ambient);
