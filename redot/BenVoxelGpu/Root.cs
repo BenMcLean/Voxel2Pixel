@@ -12,7 +12,7 @@ namespace BenVoxelGpu;
 public partial class Root : Node3D
 {
 	private Camera3D _camera;
-	private VolumetricOrthoImpostor _impostor;
+	private VolumetricOrthoSprite _impostor;
 	private GpuSvoModelTextureBridge _bridge;
 
 	private float _rotationAngle = 0f,
@@ -41,7 +41,7 @@ public partial class Root : Node3D
 		AddChild(_camera);
 
 		// Create impostor with camera transform callback
-		_impostor = new VolumetricOrthoImpostor
+		_impostor = new VolumetricOrthoSprite
 		{
 			CameraTransformProvider = () => _camera.GlobalTransform,
 		};

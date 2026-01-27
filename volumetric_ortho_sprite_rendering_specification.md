@@ -1,6 +1,6 @@
-# Volumetric Ortho-Impostor Rendering System
+# Volumetric Ortho-Sprite Rendering System
 
-This document specifies a **GPU-driven volumetric impostor rendering system** for games. The system renders 3D voxel models (stored as GPU Sparse Voxel Octrees, *GpuSvoModel*) as *sprite-like entities* inside a fully perspective 3D world, while preserving **orthographic internal projection**, a **stable virtual pixel grid**, and a **1-pixel silhouette outline defined in sprite space**.
+This document specifies a **GPU-driven volumetric sprite rendering system** for games. The system renders 3D voxel models (stored as GPU Sparse Voxel Octrees, *GpuSvoModel*) as *sprite-like entities* inside a fully perspective 3D world, while preserving **orthographic internal projection**, a **stable virtual pixel grid**, and a **1-pixel silhouette outline defined in sprite space**.
 
 This specification is written to be *implementation-ready*. All ambiguity around coordinate spaces, ray setup, quantization, outlining, and depth output is explicitly resolved. An engineer implementing this system is assumed to have access to the `GpuSvoModel` specification and traversal routines.
 
@@ -365,7 +365,7 @@ The sprite writes depth as if it were a **flat billboard** at the sprite plane (
 * The sprite is either entirely in front of or entirely behind other geometry.
 * No partial occlusion occurs within a single sprite.
 
-This matches the behavior of classic 2D sprites and maintains the visual coherence of the ortho-impostor effect. Attempting to compute per-voxel depth would cause visually confusing partial occlusion that breaks the 2D sprite illusion.
+This matches the behavior of classic 2D sprites and maintains the visual coherence of the ortho-sprite effect. Attempting to compute per-voxel depth would cause visually confusing partial occlusion that breaks the 2D sprite illusion.
 
 **Why model center, not anchor point:** The anchor point determines world positioning but may be anywhere in voxel space—even completely outside the model bounds (e.g., a flying character with an anchor at ground level). The sprite plane and depth must be at the model center where the visual content actually exists.
 
@@ -508,7 +508,7 @@ This system renders voxel models as **volumetric orthographic sprites** embedded
 
 ...the system achieves a visual result reminiscent of classic 2D sprites from the 16-bit gaming era, while remaining fully 3D, occlusion-correct, and GPU-driven.
 
-This document constitutes the authoritative rendering specification for the Volumetric Ortho-Impostor System.
+This document constitutes the authoritative rendering specification for the Volumetric Ortho-Sprite System.
 
 # Specification Amendment – Traversal Performance Invariants
 
@@ -587,7 +587,7 @@ Any implementation that satisfies the above invariants while preserving pixel-pe
 
 ## Rationale (Non-Normative)
 
-The renderer’s aesthetic relies on exact voxel-defined imagery presented directly to the viewer, not on impostor or LOD-based approximation.
+The renderer’s aesthetic relies on exact voxel-defined imagery presented directly to the viewer, not on sprite or LOD-based approximation.
 
 As a result, performance improvements must come exclusively from eliminating provably unnecessary work (e.g. traversal of known-empty space), rather than from reducing precision.
 

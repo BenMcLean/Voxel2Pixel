@@ -11,7 +11,7 @@ uniform uint svo_max_depth;
 uniform uint node_offset;
 uniform uint payload_offset;
 
-// Volumetric impostor parameters
+// Volumetric sprite parameters
 uniform vec3 ray_dir_local;       // Camera forward in voxel space (normalized)
 uniform vec3 camera_up_local;     // Camera up (V) in voxel space (normalized)
 uniform float voxel_size;         // World-space size of one voxel
@@ -442,7 +442,7 @@ void fragment() {
 		ALBEDO = vec3(x_ok, y_ok, z_ok);
 	} else if (DEBUG_MODE == 12) {
 		// Simple direct ray trace from fragment position (no virtual pixel quantization)
-		// This tests pure ray tracing without the ortho-impostor complexity
+		// This tests pure ray tracing without the ortho-sprite complexity
 		int last_axis;
 		vec4 hit = trace_ray(frag_pos, rd, voxel_min, voxel_max, anchor_point, last_axis);
 

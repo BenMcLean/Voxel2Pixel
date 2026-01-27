@@ -4,7 +4,7 @@
 		<EnableDynamicLoading>true</EnableDynamicLoading>
 	</PropertyGroup>
 	<ItemGroup>
-		<None Include="volumetric_ortho_impostor.gdshader" />
+		<None Include="volumetric_ortho_sprite.gdshader" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\BenVoxel.FileToVoxCore\BenVoxel.FileToVoxCore.csproj" />
