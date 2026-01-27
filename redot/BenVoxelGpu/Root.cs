@@ -16,6 +16,7 @@ public partial class Root : Node3D
 	private Camera3D _camera;
 	private VolumetricOrthoSprite _impostor;
 	private GpuSvoModelTextureBridge _bridge;
+	private Label _perfLabel;
 
 	private float _rotationAngle = 0f,
 		_voxelSize = 0.1f,
@@ -64,6 +65,22 @@ public partial class Root : Node3D
 			}
 		};
 		AddChild(env);
+
+		// Add performance overlay
+		CanvasLayer overlay = new();
+		AddChild(overlay);
+		_perfLabel = new Label
+		{
+			Position = new Vector2(10, 10),
+			LabelSettings = new LabelSettings
+			{
+				FontSize = 32,
+				FontColor = Colors.White,
+				OutlineSize = 2,
+				OutlineColor = Colors.Black,
+			},
+		};
+		overlay.AddChild(_perfLabel);
 
 		UpdateCameraPosition();
 	}
@@ -121,5 +138,14 @@ public partial class Root : Node3D
 		// Rotate camera around model
 		_rotationAngle += (float)delta * 0.5f;
 		UpdateCameraPosition();
+
+		// Update performance overlay
+		_perfLabel.Text = $"FPS: {Engine.GetFramesPerSecond()}\n"
+			+ $"Frame Time: {Performance.GetMonitor(Performance.Monitor.TimeProcess) * 1000:F1} ms\n"
+			+ $"Draw Calls: {Performance.GetMonitor(Performance.Monitor.RenderTotalDrawCallsInFrame)}\n"
+			+ $"VRAM: {Performance.GetMonitor(Performance.Monitor.RenderVideoMemUsed) / (1024 * 1024):F1} MB\n"
+			+ $"RAM: {Performance.GetMonitor(Performance.Monitor.MemoryStatic) / (1024 * 1024):F1} MB\n"
+			+ $"Objects: {Performance.GetMonitor(Performance.Monitor.ObjectCount)}\n"
+			+ $"Sigma: {_sigma}  Voxel Size: {_voxelSize:F3}";
 	}
 }
