@@ -12,7 +12,7 @@
 //
 // HOW IT WORKS (high level)
 // -------------------------
-// 1. The proxy BoxMesh is rasterized with the engine's perspective camera,
+// 1. The proxy QuadMesh is rasterized with the engine's perspective camera,
 //    generating fragments.
 // 2. Each fragment computes its position on a quantized virtual pixel grid
 //    derived from screen coordinates, not from the box surface.
@@ -42,10 +42,11 @@
 // -----------------------
 // - ray_dir_local and camera_up_local are unit vectors (normalized on CPU).
 // - light_dir is a unit vector (normalized on CPU).
-// - The proxy box is a cube large enough to contain the orthographic
-//   projection of the model from any viewing angle, plus a 1-virtual-pixel
-//   outline margin on each side. See the rendering specification for the
-//   exact sizing formula.
+// - The proxy quad is a camera-facing rectangle sized to the tight bounding
+//   rectangle of the model's orthographic projection onto the camera plane,
+//   plus a 1-virtual-pixel outline margin on each side. The CPU recomputes
+//   the quad size and orientation each frame. See the rendering specification
+//   for the exact sizing formula.
 // - svo_texture packs uint32 node/payload data as RGBA8 pixels.
 //   Byte order: R = bits 0–7, G = bits 8–15, B = bits 16–23, A = bits 24–31.
 // - palette_texture is a 1D row of 256 RGBA colors indexed by material ID.
@@ -56,12 +57,10 @@
 
 shader_type spatial;
 
-// "unshaded"          — we do our own lighting; skip engine lights entirely.
-// "depth_draw_always" — we write a custom DEPTH every fragment; ensure the
-//                       engine actually uses it for occlusion.
-// "cull_disabled"     — the proxy box must be visible from any angle,
-//                       including when the camera sees its back faces.
-render_mode unshaded, depth_draw_always, cull_disabled;
+// "unshaded"  — we do our own lighting; skip engine lights entirely.
+// "cull_back" — the proxy quad is billboard-oriented to face the camera
+//               every frame, so back faces are never visible.
+render_mode unshaded, cull_back;
 
 // ─── SVO data uniforms ───────────────────────────────────────────────────────
 // These describe the GPU-resident Sparse Voxel Octree and its color palette.
@@ -144,7 +143,7 @@ const uint FLAG_LEAF_TYPE = 0x40000000u;
 const vec3 OUTLINE_COLOR = vec3(0.0);
 
 // ─── Vertex shader ───────────────────────────────────────────────────────────
-// Nothing to do.  The proxy box geometry only exists to generate fragments;
+// Nothing to do.  The proxy quad geometry only exists to generate fragments;
 // all rendering math happens in the fragment shader.
 void vertex() {}
 

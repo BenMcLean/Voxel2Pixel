@@ -46,9 +46,9 @@ The system operates across four coordinate spaces:
    * Perspective camera.
 
 2. **Model Local Space**
-   * The local coordinate system of the proxy BoxMesh.
-   * The proxy box is centered at the origin.
-   * Transforming the box (position, rotation, scale) transforms the voxel model accordingly.
+   * The local coordinate system of the proxy QuadMesh.
+   * The proxy quad is centered at the model center in world space.
+   * Transforming the entity (position, rotation, scale) transforms the voxel model accordingly.
    * The voxel grid is axis-aligned to this space, not to world space.
 
 3. **Voxel Space (Canonical)**
@@ -104,55 +104,61 @@ These parameters are constants shared by all entities, ensuring consistent visua
 
 ## 4. Proxy Geometry
 
-Each entity is represented by a **BoxMesh** that serves two purposes:
+Each entity is represented by a **QuadMesh** that serves two purposes:
 
-1. **Transform Handle:** The box's position, orientation, and scale in world space define the corresponding transform of the voxel model inside. Moving, rotating, or scaling the box transforms the rendered voxels accordingly. The voxel model is rigidly attached to the box's local coordinate system.
+1. **Transform Handle:** The entity's position, orientation, and scale in world space define the corresponding transform of the voxel model inside. Moving, rotating, or scaling the entity transforms the rendered voxels accordingly.
 
-2. **Rasterization Region:** The box's screen projection determines which fragments invoke the volumetric shader. No pixels outside the box's projection will be rendered.
+2. **Rasterization Region:** The quad's screen projection determines which fragments invoke the volumetric shader. No pixels outside the quad's projection will be rendered.
 
-### Box Dimensions
+### Quad Sizing (Per-Frame)
 
-The box must be sized to contain the **orthographic projection** of the model from any camera angle. This is larger than the model's axis-aligned bounds due to the perspective/orthographic projection mismatch.
+The quad is sized each frame to the **tight bounding rectangle** of the model's orthographic projection onto the camera plane. This is computed by projecting the model's AABB extents onto the camera right and up vectors.
 
-**The problem:** The proxy box is rasterized with perspective projection, but the content inside is rendered orthographically. The orthographic projection doesn't foreshorten like perspective does. If the proxy box was the same size as the model, then from certain viewing angles, the orthographic content would extend beyond the perspective-projected box edges, causing visible clipping.
-
-**The solution:** The box must be large enough that its perspective projection always contains the orthographic projection of the model (plus outline) from any camera angle.
-
-**Worst-case extent:** The orthographic projection's maximum extent (from any viewing angle) is the model's 3D diagonal—the diameter of the bounding sphere:
+For an AABB with voxel-space dimensions `(sX, sY, sZ)` and camera basis vectors `right` and `up` (in voxel space), the projected extents are:
 
 ```
-diagonal = sqrt(sizeX² + sizeY² + sizeZ²)
+quad_width  = (|right.x| * sX + |right.y| * sY + |right.z| * sZ) * VoxelSize + 2 * Δpx_world
+quad_height = (|up.x| * sX + |up.y| * sY + |up.z| * sZ) * VoxelSize + 2 * Δpx_world
 ```
 
-**Box size formula:** The box should be a **cube** with side length:
+Where `2 * Δpx_world` is the outline margin (one virtual pixel on each side).
 
+This produces a tight-fitting rectangle that covers exactly the model's projection plus outline from the current camera angle, with zero wasted fragments. Unlike a worst-case cube (which would use the 3D diagonal), the tight quad adapts to the actual viewing direction.
+
+### Billboard Orientation (Per-Frame)
+
+The quad is oriented each frame to face the camera. The container sets the quad's `GlobalTransform` with:
+
+* **Basis X** = `camRight * quadWidth` (quad's local X spans the world-space width)
+* **Basis Y** = `camUp * quadHeight` (quad's local Y spans the world-space height)
+* **Basis Z** = `camForward` (perpendicular to the quad face)
+* **Origin** = model center in world space
+
+Because the quad always faces the camera, back-face culling is enabled (`cull_back`), halving the rasterized triangle count compared to a box with `cull_disabled`.
+
+### Quad Center = Model Center (Not Anchor)
+
+The quad is centered on the **model center** in world space, not on the entity's anchor point. This is critical because:
+
+* `MODEL_MATRIX * vec4(0,0,0,1)` in the shader gives the quad origin's clip position.
+* This is used for **billboard depth** (sprites occlude at model center depth).
+* This is used for **NDC grid center** (the virtual pixel grid is centered on the model center's screen position).
+
+If the quad were centered on the anchor instead, a flying character with a ground-level anchor would have its depth and pixel grid computed at ground level—completely wrong.
+
+The model center world position is computed as:
 ```
-box_side = diagonal * VoxelSize + 2 * Δpx_world
+modelCenterWorld = GlobalTransform * _modelCenterOffset
 ```
+where `_modelCenterOffset` is the anchor-to-model-center vector in the entity's local space (including ground clearance).
 
-Where:
-* `diagonal` — model's 3D diagonal in voxels
-* `VoxelSize` — world-space size of one voxel
-* `2 * Δpx_world` — outline margin (one virtual pixel on each side)
+### What the Quad Is Not
 
-Using a cube (rather than the axis-aligned bounds) ensures the box always contains the orthographic projection regardless of which face is toward the camera.
-
-The container node is responsible for computing this box size from the model dimensions and size ratios.
-
-### Transform Behavior
-
-* The voxel grid is aligned to the box's local axes, not to world axes.
-* The box may be placed at any position and orientation in world space.
-* Rotating the box rotates the voxel model; the internal voxel grid remains axis-aligned relative to the box.
-* This enables intuitive manipulation: in a VR authoring tool, a user can physically grab and rotate the proxy box to view the model from different angles.
-
-### What the Box Is Not
-
-The box's triangles are not the rendered surface. The visual output is entirely determined by ray-traced voxel intersections inside the box volume. The box geometry merely triggers the fragment shader; the shader then ignores the box surface and traces rays through voxel space.
+The quad's triangles are not the rendered surface. The visual output is entirely determined by ray-traced voxel intersections. The quad geometry merely triggers the fragment shader; the shader then ignores the quad surface and traces rays through voxel space.
 
 ### Anchor Point (Origin)
 
-The **anchor point** is the position in voxel space that corresponds to the entity's world-space position. The proxy box is offset so that the anchor point aligns with the box's local origin.
+The **anchor point** is the position in voxel space that corresponds to the entity's world-space position. The container computes the offset from the anchor to the model center and applies it when positioning the quad.
 
 **Key points:**
 
@@ -167,18 +173,20 @@ In Godot, the recommended pattern is:
 
 ```
 Node3D (Entity root - position/rotation set here)
-└── MeshInstance3D (Proxy BoxMesh - offset by container)
+└── MeshInstance3D (Proxy QuadMesh - billboard-oriented each frame, centered on model center)
 ```
 
-The parent `Node3D` represents the entity's position and orientation in the game world. The child `MeshInstance3D` holding the proxy box is offset by the container to handle two concerns:
+The parent `Node3D` represents the entity's position and orientation in the game world. The child `MeshInstance3D` holding the proxy quad is repositioned and reoriented each frame by the container to handle:
 
-1. **Anchor alignment:** Offset so the anchor point in voxel space aligns with the parent's origin.
+1. **Anchor alignment:** The quad is centered on the model center, offset from the anchor point.
 
-2. **Ground clearance:** Offset upward by `Δpx_world` (one virtual pixel) to prevent ground geometry from occluding the bottom outline pixels. Since the box is expanded by `2 * Δpx_world` total (one virtual pixel on each side), raising it by half that amount (`Δpx_world`) positions the bottom outline pixels exactly at ground level.
+2. **Ground clearance:** Offset upward by `Δpx_world` (one virtual pixel) to prevent ground geometry from occluding the bottom outline pixels.
+
+3. **Billboard orientation:** The quad faces the camera, with its width and height matching the tight bounding rectangle of the model's projection.
 
 This separation provides a clean contract:
-* Game logic sets the entity's world transform on the parent node (no need to account for outline clearance).
-* The container manages both the anchor offset and ground clearance internally.
+* Game logic sets the entity's world transform on the parent node (no need to account for outline clearance or billboard orientation).
+* The container manages anchor offset, ground clearance, sizing, and orientation internally.
 
 ---
 
@@ -556,7 +564,15 @@ This eliminates 2 intermediate divisions.
 
 ### 11.8 Empty Vertex Shader
 
-The proxy box geometry exists solely to generate fragments. The vertex shader passes no varyings to the fragment shader — no interpolated positions, normals, or texture coordinates. The fragment shader derives everything it needs from screen coordinates and uniforms. This eliminates per-vertex computation and per-fragment interpolation overhead.
+The proxy quad geometry exists solely to generate fragments. The vertex shader passes no varyings to the fragment shader — no interpolated positions, normals, or texture coordinates. The fragment shader derives everything it needs from screen coordinates and uniforms. This eliminates per-vertex computation and per-fragment interpolation overhead.
+
+### 11.9 Tight Quad Fitting
+
+The camera-facing quad is sized each frame to the tight bounding rectangle of the model's orthographic projection onto the camera plane (Section 4). This eliminates the wasted fragments that a worst-case cube proxy would generate.
+
+A cube proxy covers the bounding sphere of the model from any angle. Its screen-space projection is a hexagon whose area exceeds the tight bounding rectangle by up to ~15% (depending on viewing angle and model aspect ratio). The tight quad covers exactly the needed rectangle, so every rasterized fragment has a chance of producing a visible pixel.
+
+The per-frame CPU cost is minimal: projecting the AABB onto two camera vectors requires 6 absolute values, 6 multiplications, and 4 additions per entity per frame. Back-face culling (`cull_back`) is also enabled since the quad always faces the camera, halving the rasterized triangle count compared to a box with `cull_disabled`.
 
 ---
 
@@ -634,19 +650,21 @@ This system is designed for:
 ## 14. Data Flow Overview
 
 1. **CPU Setup:**
-   * Compute voxel bounds, model center, and model diagonal
-   * Compute proxy box as cube: `side = diagonal * VoxelSize + 2 * Δpx_world`
-   * Compute anchor offset and ground clearance offset
-   * Place proxy box in world space
+   * Compute voxel bounds and model center
+   * Compute anchor-to-model-center offset (including ground clearance)
+   * Store outline margin (`Δpx_world`) for per-frame use
+   * Create unit QuadMesh (actual size set per-frame)
 
 2. **Per-Frame CPU Update:**
    * Compute camera vectors in voxel space (with coordinate swizzle)
    * Compute light direction in voxel space (from world-space input, with coordinate swizzle)
    * Compute camera distance
    * Update per-frame uniforms (all vec3 uniforms normalized)
+   * Project model AABB onto camera right/up to compute tight quad dimensions
+   * Set quad GlobalTransform as a billboard centered on the model center
 
 3. **GPU Rasterization:**
-   * Proxy box is rasterized, generating fragments
+   * Camera-facing proxy quad is rasterized, generating fragments
 
 4. **Fragment Shader:**
    * Compute `origin_clip` once (reused for NDC and billboard depth)
@@ -672,7 +690,7 @@ This system is designed for:
 * **Virtual Pixel** — A world-space pixel of width `Δpx_world = VoxelSize / σ`
 * **Sprite Space** — 2D grid defined by camera-right (U) and camera-up (V)
 * **Sprite Plane** — The plane passing through the model center, perpendicular to the camera. Used for billboard depth.
-* **Proxy Geometry** — The BoxMesh used to invoke the volumetric shader and define entity transform
+* **Proxy Geometry** — The camera-facing QuadMesh used to invoke the volumetric shader; sized per-frame to the tight bounding rectangle of the model's projection
 * **Primary Ray** — The ray corresponding to the current virtual pixel
 * **Neighbor Ray** — A ray offset by ±Δpx in sprite space for outline evaluation
 * **SVO** — Sparse Voxel Octree, the hierarchical data structure storing voxel occupancy and materials

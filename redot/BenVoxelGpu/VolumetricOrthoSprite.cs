@@ -7,12 +7,12 @@ namespace BenVoxelGpu;
 
 /// <summary>
 /// Container node for volumetric ortho-sprite entities.
-/// Manages proxy box sizing, anchor point offset, and shader parameters.
+/// Manages proxy quad sizing, anchor point offset, billboard orientation, and shader parameters.
 ///
 /// Entity Management Pattern:
 /// <code>
 /// VolumetricOrthoSprite (Entity root - position/rotation set here)
-/// └── MeshInstance3D (Proxy BoxMesh - offset internally for anchor + ground clearance)
+/// └── MeshInstance3D (Proxy QuadMesh - billboard-oriented each frame, centered on model center)
 /// </code>
 /// </summary>
 public partial class VolumetricOrthoSprite : Node3D
@@ -25,6 +25,8 @@ public partial class VolumetricOrthoSprite : Node3D
 	private Vector3I _modelSize;
 	private float _voxelSize;
 	private float _sigma;
+	private Vector3 _modelCenterOffset;
+	private float _deltaPxWorld;
 
 	/// <summary>
 	/// Delegate for providing camera transform to an sprite.
@@ -52,7 +54,7 @@ public partial class VolumetricOrthoSprite : Node3D
 	public Point3D AnchorPoint { get; private set; }
 
 	/// <summary>
-	/// The proxy box MeshInstance3D child.
+	/// The proxy quad MeshInstance3D child.
 	/// </summary>
 	public MeshInstance3D ProxyBox => _proxyBox;
 
@@ -79,7 +81,7 @@ public partial class VolumetricOrthoSprite : Node3D
 	/// <summary>
 	/// Model center position in world space.
 	/// </summary>
-	public Vector3 ModelCenterWorld => GlobalPosition + _proxyBox.Position;
+	public Vector3 ModelCenterWorld => GlobalTransform * _modelCenterOffset;
 	#endregion Data
 	public VolumetricOrthoSprite() => _proxyBox = new MeshInstance3D();
 	public override void _Ready() => AddChild(_proxyBox);
@@ -101,6 +103,25 @@ public partial class VolumetricOrthoSprite : Node3D
 		_material.SetShaderParameter("light_dir", GodotToVoxel(LightDirection
 			?? (camRight + camUp * 0.5f - camForward).Normalized()).Normalized());
 		_material.SetShaderParameter("camera_distance", (camPos - ModelCenterWorld).Length());
+		// Project model AABB extents onto camera right and up to get tight quad dimensions.
+		// For an AABB with sizes (sX, sY, sZ) in voxel space, the extent along a direction d is:
+		//   extent = |d.x| * sX + |d.y| * sY + |d.z| * sZ
+		// We work in voxel space (Z-up) for the projection, then convert to world units.
+		Vector3 voxelRight = GodotToVoxel(camRight),
+			voxelUp = GodotToVoxel(camUp);
+		float sX = _modelSize.X, sY = _modelSize.Y, sZ = _modelSize.Z,
+			quadWidthVoxel = Mathf.Abs(voxelRight.X) * sX + Mathf.Abs(voxelRight.Y) * sY + Mathf.Abs(voxelRight.Z) * sZ,
+			quadHeightVoxel = Mathf.Abs(voxelUp.X) * sX + Mathf.Abs(voxelUp.Y) * sY + Mathf.Abs(voxelUp.Z) * sZ,
+			quadWidth = quadWidthVoxel * _voxelSize + 2f * _deltaPxWorld,
+			quadHeight = quadHeightVoxel * _voxelSize + 2f * _deltaPxWorld;
+		// Set billboard transform: quad centered on model center in world space
+		Vector3 modelCenterWorld = ModelCenterWorld;
+		_proxyBox.GlobalTransform = new Transform3D(
+			new Basis(
+				camRight * quadWidth,
+				camUp * quadHeight,
+				-camForward),
+			modelCenterWorld);
 	}
 	/// <summary>
 	/// Converts a vector from Godot space (Y-up) to voxel space (Z-up).
@@ -135,26 +156,18 @@ public partial class VolumetricOrthoSprite : Node3D
 				Shader = new Shader { Code = File.ReadAllText("volumetric_ortho_sprite.gdshader"), },
 			});
 		bridge.BindModelToMaterial(_material, modelIndex);
-		// Compute box size using the 3D diagonal for worst-case orthographic projection
-		float diagonal = Mathf.Sqrt(
-			_modelSize.X * _modelSize.X +
-			_modelSize.Y * _modelSize.Y +
-			_modelSize.Z * _modelSize.Z),
-			// Virtual pixel size in world units
-			deltaPxWorld = voxelSize / sigma,
-			// Box side length: cube that contains orthographic projection from any angle + outline margin
-			boxSide = diagonal * voxelSize + 2f * deltaPxWorld;
-		// Create cube mesh (same size on all axes)
-		_proxyBox.Mesh = new BoxMesh { Size = new Vector3(boxSide, boxSide, boxSide) };
+		// Virtual pixel size in world units (stored for per-frame quad sizing)
+		_deltaPxWorld = voxelSize / sigma;
+		// Unit quad; actual size is set per-frame via billboard transform in _Process
+		_proxyBox.Mesh = new QuadMesh { Size = new Vector2(1, 1) };
 		_proxyBox.MaterialOverride = _material;
-		// Offset the proxy box for anchor alignment and ground clearance
+		// Compute anchor-to-model-center offset in the entity's local space (Godot Y-up)
 		Vector3 modelCenter = new Vector3(_modelSize.X, _modelSize.Y, _modelSize.Z) * 0.5f,
 			anchorToCenter = modelCenter - new Vector3(AnchorPoint.X, AnchorPoint.Y, AnchorPoint.Z),
 			anchorOffsetGodot = VoxelToGodot(anchorToCenter) * voxelSize;
 		// Ground clearance: offset up by one virtual pixel
-		float groundClearance = deltaPxWorld;
-		// Total offset for the proxy box
-		_proxyBox.Position = anchorOffsetGodot + new Vector3(0, groundClearance, 0);
+		float groundClearance = _deltaPxWorld;
+		_modelCenterOffset = anchorOffsetGodot + new Vector3(0, groundClearance, 0);
 		// Update shader uniforms for sizing
 		_material.SetShaderParameter("voxel_size", voxelSize);
 		_material.SetShaderParameter("sigma", sigma);
