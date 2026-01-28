@@ -59,8 +59,8 @@ The system operates across four coordinate spaces:
 4. **Virtual Sprite Space (U/V)**
    * 2D grid perpendicular to the ray direction.
    * Axes:
-     * `U` → camera right
-     * `V` → camera up
+     * `U` → sprite right (perpendicular to view direction and entity up)
+     * `V` → sprite up (derived from entity transform up, respects entity rotation)
 
 ### Coordinate Swizzling
 
@@ -127,14 +127,16 @@ This produces a tight-fitting rectangle that covers exactly the model's projecti
 
 ### Billboard Orientation (Per-Frame)
 
-The quad is oriented each frame to face the camera. The container sets the quad's `GlobalTransform` with:
+The quad is oriented each frame to face the viewer's position. The container sets the quad's `GlobalTransform` with:
 
-* **Basis X** = `camRight * quadWidth` (quad's local X spans the world-space width)
-* **Basis Y** = `camUp * quadHeight` (quad's local Y spans the world-space height)
-* **Basis Z** = `camForward` (perpendicular to the quad face)
+* **Basis X** = `spriteRight * quadWidth` (quad's local X spans the world-space width)
+* **Basis Y** = `spriteUp * quadHeight` (quad's local Y spans the world-space height)
+* **Basis Z** = `-viewDir` (perpendicular to the quad face, pointing toward viewer)
 * **Origin** = model center in world space
 
-Because the quad always faces the camera, back-face culling is enabled (`cull_back`), halving the rasterized triangle count compared to a box with `cull_disabled`.
+Where `viewDir = normalize(ModelCenterWorld - CameraPosition)` is the direction from viewer to model center.
+
+Because the quad always faces the viewer, back-face culling is enabled (`cull_back`), halving the rasterized triangle count compared to a box with `cull_disabled`.
 
 ### Quad Center = Model Center (Not Anchor)
 
@@ -234,31 +236,55 @@ For a perspective camera, this value determines the scale at which NDC offsets a
 
 All rays for a given entity share the same direction, achieving orthographic internal projection.
 
-The ray direction is the camera forward vector transformed to voxel space:
+The ray direction is the normalized vector from the **viewer's position** to the **model center** (not the anchor point), transformed to voxel space:
 ```
-D_voxel = swizzle(normalize(CameraForward))
+ViewDir_world = normalize(ModelCenterWorld - CameraPosition)
+D_voxel = swizzle(ViewDir_world)
 ```
 
 This direction is constant for all fragments of the instance.
 
-### 6.2 Camera Orientation Vectors
+**Why viewer-to-model-center, not camera forward:** Using the camera's forward direction would make all sprites appear as if viewed from the same angle regardless of their position on screen. By using the direction from the viewer's position to each model's center, the sprites maintain physical presence in the world—a model off to the side appears rotated appropriately, just as a real 3D object would.
 
-Two camera vectors are passed as uniforms:
-* `ray_dir_local` — camera forward in voxel space (normalized)
-* `camera_up_local` — camera up in voxel space (normalized)
+**Batching implication:** Because each sprite's ray direction depends on its unique world position relative to the viewer, sprites cannot be batched together in single draw calls. Each sprite requires its own draw call with its own `ray_dir_local` uniform.
 
-The camera right vector is derived in the shader using the standard graphics convention:
+### 6.2 Sprite Orientation Vectors
+
+Two vectors are passed as uniforms:
+* `ray_dir_local` — direction from viewer to model center in voxel space (normalized)
+* `sprite_up_local` — sprite's up direction in voxel space (normalized)
+
+The sprite right vector is derived in the shader:
 ```
-camera_right_local = cross(ray_dir_local, camera_up_local)
+sprite_right_local = cross(ray_dir_local, sprite_up_local)
 ```
+
+**Entity up, not camera up:** The sprite's up direction is derived from the **entity's transform up** (its local Y-axis in world space), not the camera's up vector. This keeps sprites upright relative to their own orientation, respecting any rotation applied to the entity. A tilted entity produces a tilted sprite.
+
+The CPU computes the sprite basis as:
+```
+entityUp = entity.GlobalTransform.Basis.Y
+spriteRight = cross(viewDir, entityUp)
+spriteUp = cross(spriteRight, viewDir)
+```
+
+**Degenerate case:** When `viewDir` is nearly parallel to `entityUp` (looking straight along the entity's up axis), the cross product becomes degenerate. In this case, the CPU falls back to camera-relative orientation:
+```
+if length(spriteRight) < threshold:
+    spriteRight = cameraRight  // fallback
+spriteRight = normalize(spriteRight)
+spriteUp = normalize(cross(spriteRight, viewDir))
+```
+
+Both vectors are per-instance because they depend on the model's unique position relative to the viewer.
 
 ### 6.3 Parallel Ray Origin
 
 The ray origin is constructed from the quantized sprite position:
 ```
 ray_origin = model_center
-           + u_snapped * camera_right_local
-           + v_snapped * camera_up_local
+           + u_snapped * sprite_right_local
+           + v_snapped * sprite_up_local
            - D_voxel * (2 * max_dimension)
 ```
 
@@ -356,14 +382,16 @@ The current implementation provides a simple default lighting model suitable for
 
 The light direction is specified in **world space** (engine coordinates) on the CPU side. The container class converts it to voxel space internally before passing it to the shader. This keeps voxel space as an internal implementation detail that external code does not need to know about.
 
-If no explicit light direction is set, the default is **upper-right relative to the camera view**:
+If no explicit light direction is set, the default is **upper-right relative to the viewer-to-model direction** (not the camera angle):
 
 ```
-light_world = normalize(camera_right + camera_up * 0.5 - camera_forward)
+light_world = normalize(sprite_right + sprite_up * 0.5 - view_dir)
 light_voxel = normalize(swizzle(light_world))
 ```
 
-The light direction points **from the surface toward the light source** (standard convention).
+Where `view_dir` is the direction from viewer to model center, and `sprite_right`/`sprite_up` are the sprite's orientation vectors (derived from the entity's transform up).
+
+The light direction points **from the surface toward the light source** (standard convention). This per-instance default lighting ensures each sprite is lit consistently relative to how it's being viewed, maintaining physical presence in the world.
 
 ### 8.2 Default Per-Face Lighting Model
 
@@ -429,10 +457,10 @@ This behavior is reproduced implicitly via ray tests.
 For a fragment whose primary ray **misses**, four additional rays are constructed by offsetting the ray origin along the camera basis vectors:
 
 ```
-O_left  = ray_origin - camera_right_local * Δpx_voxel
-O_right = ray_origin + camera_right_local * Δpx_voxel
-O_up    = ray_origin + camera_up_local * Δpx_voxel
-O_down  = ray_origin - camera_up_local * Δpx_voxel
+O_left  = ray_origin - sprite_right_local * Δpx_voxel
+O_right = ray_origin + sprite_right_local * Δpx_voxel
+O_up    = ray_origin + sprite_up_local * Δpx_voxel
+O_down  = ray_origin - sprite_up_local * Δpx_voxel
 ```
 
 Each neighbor ray shares the same direction `D_voxel` and performs identical SVO traversal.
@@ -591,22 +619,24 @@ Each instance provides:
 
 **Anchor point:** The `anchor_point` uniform is the position of the anchor in voxel space (e.g., `(sizeX/2, sizeY/2, 0)` for bottom-center). The shader computes the model center in anchor-centered coordinates as `model_size * 0.5 - anchor_point`.
 
-### Per-Frame Uniforms
+### Per-Instance Uniforms (Updated Per-Frame)
 
-Updated each frame based on camera:
+Updated each frame based on camera and model position:
 
 | Uniform | Type | Description |
 |---------|------|-------------|
-| `ray_dir_local` | vec3 | Camera forward in voxel space (unit length) |
-| `camera_up_local` | vec3 | Camera up in voxel space (unit length) |
-| `camera_distance` | float | Distance from camera to anchor point (world units) |
+| `ray_dir_local` | vec3 | Direction from viewer to model center in voxel space (unit length) |
+| `sprite_up_local` | vec3 | Sprite up direction in voxel space (unit length, derived from entity transform up) |
+| `camera_distance` | float | Distance from camera to model center (world units) |
 | `light_dir` | vec3 | Light direction in voxel space (unit length, toward light) |
 
 **All vec3 uniforms must be normalized on the CPU.** The shader does not re-normalize them.
 
-The `camera_right_local` vector is derived in the shader via cross product.
+The `sprite_right_local` vector is derived in the shader via cross product.
 
-Billboard depth is provided by the quad's rasterized depth (the quad is camera-facing and centered on the model center), so it requires no uniform or shader computation.
+Billboard depth is provided by the quad's rasterized depth (the quad faces the viewer and is centered on the model center), so it requires no uniform or shader computation.
+
+**Note:** Because both `ray_dir_local` and `sprite_up_local` are per-instance (depend on each model's unique position relative to the viewer), sprites cannot share uniforms and thus cannot be batched into single draw calls.
 
 ### Light Direction
 
@@ -637,6 +667,7 @@ This system is designed for:
 * No diagonal outline logic
 * No continuous LOD or impostor fallback (deferred)
 * Scenes are assumed to be bounded in size and entity count
+* **No draw call batching** — each sprite requires its own draw call because the ray direction depends on the model's unique position relative to the viewer. This is an inherent consequence of giving sprites physical presence in the world.
 
 ---
 
@@ -648,20 +679,21 @@ This system is designed for:
    * Store outline margin (`Δpx_world`) for per-frame use
    * Create unit QuadMesh (actual size set per-frame)
 
-2. **Per-Frame CPU Update:**
-   * Compute camera vectors in voxel space (with coordinate swizzle)
+2. **Per-Frame CPU Update (per instance):**
+   * Compute view direction from camera position to model center (with coordinate swizzle to voxel space)
+   * Compute sprite orientation from entity transform up (with fallback to camera-relative for degenerate case)
    * Compute light direction in voxel space (from world-space input, with coordinate swizzle)
-   * Compute camera distance
-   * Update per-frame uniforms (all vec3 uniforms normalized)
-   * Project model AABB onto camera right/up to compute tight quad dimensions
-   * Set quad GlobalTransform as a billboard centered on the model center
+   * Compute camera distance to model center
+   * Update per-instance uniforms (all vec3 uniforms normalized)
+   * Project model AABB onto sprite right/up to compute tight quad dimensions
+   * Set quad GlobalTransform as a billboard centered on the model center, facing viewer position
 
 3. **GPU Rasterization:**
    * Camera-facing proxy quad is rasterized, generating fragments
 
 4. **Fragment Shader:**
    * Compute `origin_clip` once (for NDC center; billboard depth comes from rasterized quad depth)
-   * Derive camera right from forward and up (cross product)
+   * Derive sprite right from view direction and sprite up (cross product)
    * Compute screen offset from anchor, convert to voxel units, quantize to virtual pixel grid
    * Construct parallel ray origin
    * Precompute `inv_rd`, `step_dir`, `model_size` (shared across all trace calls)
@@ -681,7 +713,7 @@ This system is designed for:
 * **Anchor Point** — The position in voxel space that corresponds to the entity's world-space position. Typically bottom center. Determines world placement.
 * **Voxel Space** — Canonical Z-up coordinate system used by `GpuSvoModel`
 * **Virtual Pixel** — A world-space pixel of width `Δpx_world = VoxelSize / σ`
-* **Sprite Space** — 2D grid defined by camera-right (U) and camera-up (V)
+* **Sprite Space** — 2D grid defined by sprite-right (U) and sprite-up (V), where up is derived from the entity's transform up
 * **Sprite Plane** — The plane passing through the model center, perpendicular to the camera. The proxy quad lies in this plane, providing billboard depth via rasterization.
 * **Proxy Geometry** — The camera-facing QuadMesh used to invoke the volumetric shader; sized per-frame to the tight bounding rectangle of the model's projection
 * **Primary Ray** — The ray corresponding to the current virtual pixel

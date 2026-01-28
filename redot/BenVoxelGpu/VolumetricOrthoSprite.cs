@@ -91,36 +91,47 @@ public partial class VolumetricOrthoSprite : Node3D
 			return;
 		Transform3D camTransform = CameraTransformProvider();
 		Vector3 camPos = camTransform.Origin,
-			camForward = -camTransform.Basis.Z.Normalized(),
-			camRight = camTransform.Basis.X.Normalized(),
-			camUp = camTransform.Basis.Y.Normalized();
+			modelCenterWorld = ModelCenterWorld,
+			// Ray direction is from viewer position to model center (NOT camera forward)
+			// This gives the model physical presence in the world
+			viewDir = (modelCenterWorld - camPos).Normalized(),
+			camRight = camTransform.Basis.X.Normalized();  // Used for degenerate case fallback
+		// Compute sprite orientation using the entity's transform up (not camera up)
+		// This keeps sprites upright relative to their own orientation
+		Vector3 entityUp = GlobalTransform.Basis.Y.Normalized(),
+			spriteRight = viewDir.Cross(entityUp);
+		// Handle degenerate case: viewing straight along entity up axis
+		if (spriteRight.LengthSquared() < 0.001f)
+			spriteRight = camRight;  // Fall back to camera-relative orientation
+		spriteRight = spriteRight.Normalized();
+		Vector3 spriteUp = spriteRight.Cross(viewDir).Normalized();
 		// Transform from Godot Y-up to voxel Z-up space
 		// Godot: X=right, Y=up, Z=towards viewer
 		// Voxel: X=right, Y=forward (into screen), Z=up
 		// Transformation: voxel.X = godot.X, voxel.Y = -godot.Z, voxel.Z = godot.Y
-		_material.SetShaderParameter("ray_dir_local", GodotToVoxel(camForward).Normalized());
-		_material.SetShaderParameter("camera_up_local", GodotToVoxel(camUp).Normalized());
+		_material.SetShaderParameter("ray_dir_local", GodotToVoxel(viewDir).Normalized());
+		_material.SetShaderParameter("sprite_up_local", GodotToVoxel(spriteUp).Normalized());
+		// Default light: upper-right relative to viewer-to-model direction (not camera angle)
 		_material.SetShaderParameter("light_dir", GodotToVoxel(LightDirection
-			?? (camRight + camUp * 0.5f - camForward).Normalized()).Normalized());
+			?? (spriteRight + spriteUp * 0.5f - viewDir).Normalized()).Normalized());
 		_material.SetShaderParameter("camera_distance", (camPos - ModelCenterWorld).Length());
-		// Project model AABB extents onto camera right and up to get tight quad dimensions.
+		// Project model AABB extents onto sprite right and up to get tight quad dimensions.
 		// For an AABB with sizes (sX, sY, sZ) in voxel space, the extent along a direction d is:
 		//   extent = |d.x| * sX + |d.y| * sY + |d.z| * sZ
 		// We work in voxel space (Z-up) for the projection, then convert to world units.
-		Vector3 voxelRight = GodotToVoxel(camRight),
-			voxelUp = GodotToVoxel(camUp);
+		Vector3 voxelRight = GodotToVoxel(spriteRight),
+			voxelUp = GodotToVoxel(spriteUp);
 		float sX = _modelSize.X, sY = _modelSize.Y, sZ = _modelSize.Z,
 			quadWidthVoxel = Mathf.Abs(voxelRight.X) * sX + Mathf.Abs(voxelRight.Y) * sY + Mathf.Abs(voxelRight.Z) * sZ,
 			quadHeightVoxel = Mathf.Abs(voxelUp.X) * sX + Mathf.Abs(voxelUp.Y) * sY + Mathf.Abs(voxelUp.Z) * sZ,
 			quadWidth = quadWidthVoxel * _voxelSize + 2f * _deltaPxWorld,
 			quadHeight = quadHeightVoxel * _voxelSize + 2f * _deltaPxWorld;
-		// Set billboard transform: quad centered on model center in world space
-		Vector3 modelCenterWorld = ModelCenterWorld;
+		// Set billboard transform: quad centered on model center, facing viewer position
 		_proxyBox.GlobalTransform = new Transform3D(
 			new Basis(
-				camRight * quadWidth,
-				camUp * quadHeight,
-				-camForward),
+				spriteRight * quadWidth,
+				spriteUp * quadHeight,
+				-viewDir),
 			modelCenterWorld);
 	}
 	/// <summary>

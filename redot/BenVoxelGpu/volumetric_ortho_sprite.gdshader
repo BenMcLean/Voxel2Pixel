@@ -35,12 +35,13 @@
 // - Anchor space:  Voxel space translated so the anchor point is at the
 //                  origin. Ray origins are expressed in this space; the SVO
 //                  lookup adds anchor_point back to get SVO coordinates.
-// - Sprite space:  2D grid (U = camera right, V = camera up) in the plane
-//                  perpendicular to the ray direction.
+// - Sprite space:  2D grid (U = sprite right, V = sprite up) in the plane
+//                  perpendicular to the ray direction. "Up" is derived from
+//                  the entity's transform up, not camera up.
 //
 // ASSUMPTIONS / CONTRACTS
 // -----------------------
-// - ray_dir_local and camera_up_local are unit vectors (normalized on CPU).
+// - ray_dir_local and sprite_up_local are unit vectors (normalized on CPU).
 // - light_dir is a unit vector (normalized on CPU).
 // - The proxy quad is a camera-facing rectangle sized to the tight bounding
 //   rectangle of the model's orthographic projection onto the camera plane,
@@ -97,14 +98,17 @@ uniform uint payload_offset;
 // ─── Volumetric sprite uniforms ──────────────────────────────────────────────
 // These are set per-frame by VolumetricOrthoSprite.cs on the CPU.
 
-// Camera forward direction in voxel space (Z-up), unit length.
+// Direction from viewer to model center in voxel space (Z-up), unit length.
 // All rays for this entity share this direction (orthographic projection).
+// This is NOT the camera forward — it's per-instance, based on the model's
+// position relative to the viewer, giving each sprite physical presence.
 uniform vec3 ray_dir_local;
 
-// Camera up direction in voxel space (Z-up), unit length.
-// Together with ray_dir_local, defines the sprite plane orientation.
-// Camera right is derived as cross(ray_dir_local, camera_up_local).
-uniform vec3 camera_up_local;
+// Sprite up direction in voxel space (Z-up), unit length.
+// Derived from the entity's transform up, not camera up — keeps sprites
+// upright relative to their own orientation, respecting entity rotation.
+// Sprite right is derived as cross(ray_dir_local, sprite_up_local).
+uniform vec3 sprite_up_local;
 
 // World-space size of one voxel in meters.  Controls how large sprites
 // appear in the scene.  Shared across all entities.
@@ -426,12 +430,12 @@ vec4 trace_ray_hierarchical(vec3 ro, vec3 rd, vec3 anchor_offset, vec3 model_siz
 // either a lit voxel color or a black outline pixel.
 
 void fragment() {
-	// ── Derive camera basis vectors in voxel space ──
-	// ray_dir_local = camera forward (into screen).
-	// camera_up_local = camera up.
-	// camera_right_local = camera right, derived via cross product.
+	// ── Derive sprite basis vectors in voxel space ──
+	// ray_dir_local = direction from viewer to model center (into screen).
+	// sprite_up_local = sprite up (derived from world up on CPU).
+	// sprite_right_local = sprite right, derived via cross product.
 	// These define the sprite plane: right = U axis, up = V axis.
-	vec3 camera_right_local = cross(ray_dir_local, camera_up_local);
+	vec3 sprite_right_local = cross(ray_dir_local, sprite_up_local);
 
 	// ── Virtual pixel grid parameters ──
 	// delta_px is the width of one virtual pixel in voxel units.
@@ -495,12 +499,12 @@ void fragment() {
 
 	// ── Parallel ray origin ──
 	// Start at the model center (in anchor-centered coords), offset by the
-	// snapped sprite pixel position along camera right and up, then pull back
+	// snapped sprite pixel position along sprite right and up, then pull back
 	// along the ray direction far enough to be in front of the entire model.
 	// The factor 2× max_dim guarantees the ray starts outside the bounding box.
 	vec3 ro_voxel = model_center
-				  + u_snapped * camera_right_local
-				  + v_snapped * camera_up_local
+				  + u_snapped * sprite_right_local
+				  + v_snapped * sprite_up_local
 				  - max_dim * 2.0 * rd;
 
 	// ── Pre-traversal AABB rejection (O(1) early exit) ──
@@ -543,8 +547,8 @@ void fragment() {
 	// Offset to shift a ray by one virtual pixel in each cardinal direction.
 	// Used for outline detection: if the primary ray misses but a neighbor hits,
 	// this fragment is on the silhouette edge and gets a black outline pixel.
-	vec3 right_offset = camera_right_local * delta_px;
-	vec3 up_offset    = camera_up_local * delta_px;
+	vec3 right_offset = sprite_right_local * delta_px;
+	vec3 up_offset    = sprite_up_local * delta_px;
 
 	if (!ray_can_hit) {
 		// ── Primary ray misses the exact AABB, but is within the expanded AABB ──

@@ -4,6 +4,8 @@ This document explores the problem of rendering a large number of small voxel mo
 
 Animation is achieved by swapping entire models per animation frame, leveraging the existing ability to pack multiple models into a single GPU texture.
 
+**Important constraint:** Each sprite's ray direction is computed as the direction from the viewer's position to the sprite's model center (not the camera's forward direction). This gives each sprite physical presence in the world but prevents batching multiple sprites into single draw calls, since each sprite requires unique per-instance shader uniforms. See Section 5.1 for details.
+
 ---
 
 ## 1. The Scalability Problem
@@ -164,6 +166,19 @@ If all entity models use the same bounding box dimensions (e.g., 32×32×48 for 
 
 ## 5. Rendering Architecture for Many Entities
 
+### 5.1 The Per-Instance Ray Direction Constraint
+
+A critical design decision shapes the entire rendering architecture: **each sprite's ray direction is computed from the viewer's position to that sprite's model center**, not from the camera's forward direction.
+
+This means:
+- A sprite on the left side of the screen has rays pointing slightly leftward from the viewer
+- A sprite on the right has rays pointing slightly rightward
+- Each sprite appears as if the viewer is looking directly at it from their eye position
+
+**Why this matters for physical presence:** If all sprites used the camera's forward direction, they would all show the same "face" regardless of where they are on screen. A character to your left would appear exactly the same as one directly ahead. By using viewer-to-model-center direction, each sprite maintains the illusion of being a real 3D object in the world.
+
+**Why this prevents batching:** The ray direction (`ray_dir_local`) and sprite orientation (`sprite_up_local`) are shader uniforms that must be unique per sprite. Standard GPU instancing (e.g., `MultiMeshInstance3D`) cannot efficiently provide different uniform values to different instances within a single draw call. Each sprite requires its own draw call with its own uniforms.
+
 ### Per-Entity State
 
 Each on-screen entity needs:
@@ -173,35 +188,53 @@ Each on-screen entity needs:
 | World position | Yes | Yes (movement) |
 | Model slot / animation frame | Yes | Yes (animation) |
 | Entity type (palette, size class) | Yes | Rarely |
-| Camera vectors (voxel space) | Global | Yes |
+| Ray direction (viewer → model center) | **Yes** | **Yes** |
+| Sprite up (from entity transform) | **Yes** | **Yes** |
+| Light direction (position-based default) | **Yes** | **Yes** |
+| Camera distance | Yes | Yes |
 | Voxel size, sigma | Global | Rarely |
 
-### Instancing vs. Individual Draw Calls
+The ray direction, sprite up, and light direction are all per-entity because they depend on each entity's unique position and orientation relative to the viewer. This is the fundamental reason batching is not possible.
 
-The current system uses one `MeshInstance3D` per entity — one draw call each. This is the primary scalability concern.
+### Why Instancing Cannot Help
 
-**Option A: Godot `MultiMeshInstance3D`**
-- One draw call for all entities sharing the same material.
-- Each instance gets a per-instance transform (position + billboard orientation).
-- The shader receives instance-specific data via custom instance uniforms or encoded in the transform.
-- Challenge: per-instance model slot and animation frame must be communicated to the shader. Godot's `MultiMesh` supports per-instance `custom_data` (a `Color` = 4 floats), which can encode model slot index and palette index.
-- **This is likely the critical architectural decision.** Without instancing, draw call overhead will cap entity count at low hundreds.
+Traditional instancing strategies fail for volumetric ortho-sprites:
 
-**Option B: Individual draw calls with batching**
-- Keep `MeshInstance3D` per entity but minimize state changes.
-- Group entities by type, bind type-specific texture once, draw all entities of that type.
-- Simpler but scales worse than instancing.
+**`MultiMeshInstance3D` limitation:**
+- `MultiMesh` provides per-instance transform and `custom_data` (4 floats)
+- The shader uniforms `ray_dir_local` (vec3), `sprite_up_local` (vec3), and `light_dir` (vec3) require 9 floats minimum
+- Even if we could pack this data, the fragment shader needs these as proper uniforms for the ray tracing math, not as varying interpolated values
 
-**Recommendation:** Target **MultiMeshInstance3D** for production. Prototype with individual draw calls first (like the current demo) to validate visual correctness, then migrate to instanced rendering.
+**Uniform buffer instancing:**
+- Could theoretically pack per-instance data into a buffer and index by instance ID
+- But the volumetric shader's fragment stage has no access to instance ID — only the vertex stage does
+- Passing ray direction as a varying would require per-vertex ray direction, defeating the purpose
 
-### Billboard Orientation with Instancing
+**Conclusion:** Each sprite requires an individual draw call. Scalability must come from other optimizations.
 
-The current system sets each quad's `GlobalTransform` per-frame from C# to orient it toward the camera. With `MultiMesh`, the per-instance transform is set via `MultiMesh.SetInstanceTransform()`, which can encode the billboard orientation and quad size. This is the same data — just delivered through the instancing API instead of per-node transforms.
+### Scalability Without Batching
 
-However, the tight quad sizing (projecting the AABB onto camera right/up) depends on the model dimensions, which vary per entity type. Options:
+Since batching is not possible, scalability must come from:
 
-- Compute tight quad size per entity type on CPU (group by type, batch update).
-- Use a conservative quad size per size class (simpler, slightly more fragments).
+1. **Efficient per-entity update:** Minimize CPU cost of computing per-entity uniforms (ray direction, sprite orientation, quad sizing). Current implementation is already lightweight.
+
+2. **Frustum culling:** Skip entities outside the camera frustum entirely. Godot handles this automatically for `MeshInstance3D` nodes.
+
+3. **LOD / Distance culling:** Very distant entities can be skipped or rendered as simple billboards.
+
+4. **Shader efficiency:** The DDA traversal approach (Section 6) reduces per-fragment cost, allowing more fragments per frame even with many draw calls.
+
+5. **Draw call overhead reduction:** Use Godot's scene tree efficiently. Consider object pooling to avoid node creation/destruction overhead.
+
+### Billboard Orientation
+
+Each entity's quad is oriented per-frame to face the viewer's position (not the camera's forward direction). The quad's basis is:
+
+- **X axis:** `spriteRight * quadWidth` — perpendicular to view direction and entity up
+- **Y axis:** `spriteUp * quadHeight` — derived from entity's transform up
+- **Z axis:** `-viewDir` — pointing from model center toward viewer
+
+The tight quad sizing (projecting the AABB onto sprite right/up) is computed per entity, per frame.
 
 ---
 
@@ -269,17 +302,33 @@ Everything else — virtual pixel grid, outline logic, lighting, depth handling 
 
 ### Draw Calls
 
-- With `MultiMeshInstance3D`: **1 draw call per size class** (potentially just 1 total).
-- Without instancing: 500 draw calls — likely the bottleneck.
+**Batching is not possible** (see Section 5.1). Each entity requires its own draw call because the ray direction uniform is unique per entity (computed from viewer position to model center).
+
+- 500 tanks = **500 draw calls per frame**
+- This is the primary scalability constraint
+
+Modern GPUs and drivers can handle hundreds of draw calls, but this will be the limiting factor rather than fragment processing. Mitigation strategies:
+
+- **Frustum culling:** Godot automatically culls `MeshInstance3D` nodes outside the frustum
+- **Distance culling:** Skip very distant entities entirely
+- **LOD:** Distant entities could use simpler rendering (static billboards, lower sigma)
+- **Object pooling:** Reuse nodes rather than creating/destroying them
 
 ### CPU Cost
 
-- Per entity: AABB projection (6 abs + 6 mul + 4 add) + transform update.
-- 500 entities × ~20 operations = ~10,000 floating-point ops — negligible.
+- Per entity: ray direction computation (1 normalize) + sprite orientation (2 cross products) + AABB projection (6 abs + 6 mul + 4 add) + transform update
+- 500 entities × ~50 operations = ~25,000 floating-point ops — negligible
 
 ### Verdict
 
-**Feasible on current GPUs**, provided instanced rendering is used to avoid draw call bottleneck. The dense 3D texture approach keeps fragment shader cost low. VRAM usage is modest. The main engineering effort is the instancing integration with Godot's `MultiMesh`.
+**Feasible on current GPUs**, but draw call count is the bottleneck. The dense 3D texture approach keeps per-fragment cost low. VRAM usage is modest. The per-instance ray direction requirement means batching is not possible, so scalability depends on efficient scene management and culling.
+
+Practical entity counts:
+- **100–200 entities:** Should run smoothly on most hardware
+- **200–500 entities:** Feasible with good culling; may stress lower-end GPUs
+- **500+ entities:** Requires aggressive culling and LOD strategies
+
+The main engineering effort shifts from instancing (which is not applicable) to efficient culling and LOD systems.
 
 ---
 
@@ -300,20 +349,29 @@ Build the new data structure alongside the existing SVO, not replacing it.
 
 ### Phase 3: Entity Demo
 
-6. **New demo scene** — Multiple entities with different models, positions, and animation states. Individual `VolumetricOrthoSprite` nodes (non-instanced). Verify correctness and establish baseline performance.
+6. **New demo scene** — Multiple entities with different models, positions, and animation states. Individual `VolumetricOrthoSprite` nodes. Verify correctness and establish baseline performance.
 7. **Animation system** — Swap model slot per entity per frame. Validate smooth animation playback.
 
-### Phase 4: Instanced Rendering
+### Phase 4: Scalability (Culling and LOD)
 
-8. **`MultiMesh` integration** — Replace individual `MeshInstance3D` nodes with a `MultiMeshInstance3D`. Encode per-instance model slot and entity type in `custom_data`. Update transforms in bulk each frame.
-9. **Shader modifications for instancing** — Read per-instance custom data to select model slot and palette. Billboard orientation may be computed in the vertex shader instead of on the CPU.
-10. **Tank army demo** — Spawn 500+ entities, measure performance.
+**Note:** Instanced rendering (e.g., `MultiMeshInstance3D`) is **not applicable** because each entity requires unique shader uniforms for ray direction and sprite orientation. Scalability must come from other strategies.
 
-### Phase 5: Optimization (If Needed)
+8. **Frustum culling verification** — Confirm Godot automatically culls off-screen `MeshInstance3D` nodes. If not, implement manual frustum culling.
+9. **Distance culling** — Skip entities beyond a configurable distance threshold.
+10. **LOD system** — Distant entities use lower sigma (larger virtual pixels), reducing fragment cost. Very distant entities could fall back to pre-rendered static billboards.
+11. **Object pooling** — Reuse `VolumetricOrthoSprite` nodes rather than creating/destroying them during gameplay.
 
-11. **Frustum culling** — Skip entities outside the camera frustum (Godot may handle this automatically for `MultiMesh` instances).
-12. **LOD** — Distant entities could use lower sigma (larger virtual pixels), reducing ray count.
-13. **Occupancy bitmask acceleration** — A coarse 3D bitmask (1 bit per 4³ region) for O(1) empty-region rejection before DDA stepping. Small memory cost, potentially large speedup for sparse models.
+### Phase 5: Performance Testing
+
+12. **Tank army demo** — Spawn 100, 200, 500 entities. Measure frame time, identify bottlenecks.
+13. **Profile draw call overhead** — Determine the practical limit on entity count for target hardware.
+14. **Tune culling aggressiveness** — Balance visual quality against performance.
+
+### Phase 6: Optimization (If Needed)
+
+15. **Occupancy bitmask acceleration** — A coarse 3D bitmask (1 bit per 4³ region) for O(1) empty-region rejection before DDA stepping. Small memory cost, potentially large speedup for sparse models.
+16. **Shader micro-optimizations** — Profile fragment shader, optimize hot paths.
+17. **Alternative rendering for distant entities** — Pre-rendered sprite sheets for entities below a certain screen size.
 
 ---
 
@@ -321,12 +379,14 @@ Build the new data structure alongside the existing SVO, not replacing it.
 
 1. **Godot `Texture3D` support quality** — Does Godot 4's `Texture3D` support `texelFetch` with integer coordinates in shaders? Is `Image.Format.R8` supported for 3D textures? Need to verify.
 
-2. **`MultiMesh` per-instance data limits** — Godot's `MultiMesh.custom_data` provides 4 floats per instance. Is this enough to encode model slot + palette index + animation frame? (Likely yes: 3 integers packed into 3 floats.)
+2. **Maximum `Texture3D` size** — What is the maximum 3D texture dimension in Godot 4 / the target GPU? A 512³ atlas is 128 MB at R8 — large but feasible. Need to verify driver limits.
 
-3. **Vertex shader billboard** — With `MultiMesh`, can the vertex shader compute billboard orientation from the camera, or must transforms be set from the CPU? CPU-side is simpler and proven; vertex-shader-side would reduce CPU work.
+3. **Draw order and transparency** — Discarded fragments on the quad create an implicit alpha mask. Does Godot handle depth sorting correctly for many `MeshInstance3D` nodes with `discard`-heavy shaders? May need `depth_draw_always` or alpha-scissor hints.
 
-4. **Maximum `Texture3D` size** — What is the maximum 3D texture dimension in Godot 4 / the target GPU? A 512³ atlas is 128 MB at R8 — large but feasible. Need to verify driver limits.
+4. **Animation frame rate** — At what cadence do animation frames advance? Per game tick? Per render frame? Does the CPU compute the current frame index?
 
-5. **Draw order and transparency** — Discarded fragments on the quad create an implicit alpha mask. Does Godot handle depth sorting correctly for `MultiMesh` instances with `discard`-heavy shaders? May need `depth_draw_always` or alpha-scissor hints.
+5. **Practical draw call limit** — What is the practical limit on draw calls per frame in Godot 4 on target hardware? This is the primary scalability constraint given that batching is not possible.
 
-6. **Animation frame rate** — At what cadence do animation frames advance? Per game tick? Per render frame? Does the CPU or a shader compute the current frame index?
+6. **LOD transition smoothness** — When switching between LOD levels (different sigma values or static billboards), how can visual popping be minimized? Crossfade? Distance hysteresis?
+
+7. **Object pool sizing** — For games with dynamic entity counts (spawning/despawning), what's the optimal pool size strategy? Pre-allocate maximum? Grow on demand?
