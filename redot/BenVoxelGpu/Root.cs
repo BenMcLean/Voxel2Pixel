@@ -98,28 +98,28 @@ public partial class Root : Node3D
 
 	public override void _Process(double delta)
 	{
-		// Up/Down: Adjust sigma (virtual pixels per voxel)
-		if (Input.IsActionJustPressed("ui_up"))
-		{
-			_sigma = Mathf.Min(16f, _sigma + 1f);
-			_impostor.UpdateSizing(_voxelSize, _sigma);
-			GD.Print($"Sigma: {_sigma}, Voxel Size: {_voxelSize}");
-		}
-		if (Input.IsActionJustPressed("ui_down"))
+		// Left/Right: Adjust sigma (virtual pixels per voxel)
+		if (Input.IsActionJustPressed("ui_left"))
 		{
 			_sigma = Mathf.Max(1f, _sigma - 1f);
 			_impostor.UpdateSizing(_voxelSize, _sigma);
 			GD.Print($"Sigma: {_sigma}, Voxel Size: {_voxelSize}");
 		}
-
-		// Left/Right: Adjust voxel size (zoom)
 		if (Input.IsActionJustPressed("ui_right"))
+		{
+			_sigma = Mathf.Min(16f, _sigma + 1f);
+			_impostor.UpdateSizing(_voxelSize, _sigma);
+			GD.Print($"Sigma: {_sigma}, Voxel Size: {_voxelSize}");
+		}
+
+		// Up/Down: Adjust voxel size (zoom)
+		if (Input.IsActionJustPressed("ui_up"))
 		{
 			_voxelSize = Mathf.Min(1f, _voxelSize * 1.25f);
 			_impostor.UpdateSizing(_voxelSize, _sigma);
 			GD.Print($"Sigma: {_sigma}, Voxel Size: {_voxelSize}");
 		}
-		if (Input.IsActionJustPressed("ui_left"))
+		if (Input.IsActionJustPressed("ui_down"))
 		{
 			_voxelSize = Mathf.Max(0.01f, _voxelSize / 1.25f);
 			_impostor.UpdateSizing(_voxelSize, _sigma);
