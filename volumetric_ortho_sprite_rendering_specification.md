@@ -117,11 +117,21 @@ The quad is sized each frame to the **tight bounding rectangle** of the model's 
 For an AABB with voxel-space dimensions `(sX, sY, sZ)` and camera basis vectors `right` and `up` (in voxel space), the projected extents are:
 
 ```
-quad_width  = (|right.x| * sX + |right.y| * sY + |right.z| * sZ) * VoxelSize + 2 * Δpx_world
-quad_height = (|up.x| * sX + |up.y| * sY + |up.z| * sZ) * VoxelSize + 2 * Δpx_world
+quad_width  = (|right.x| * sX + |right.y| * sY + |right.z| * sZ) * VoxelSize + 3 * Δpx_world
+quad_height = (|up.x| * sX + |up.y| * sY + |up.z| * sZ) * VoxelSize + 3 * Δpx_world
 ```
 
-Where `2 * Δpx_world` is the outline margin (one virtual pixel on each side).
+Where `3 * Δpx_world` is the outline margin (1.5 virtual pixels on each side).
+
+**Why 1.5 pixels instead of 1?** The outline pixel must be fully covered by the quad for all screen fragments that map to it to be rasterized. Due to virtual pixel grid quantization:
+
+* The model's projection extends `E` voxel units from the center (half of projected width).
+* The outline pixel center is at the first pixel position outside this extent: `(⌊E/Δpx⌋ + 1) × Δpx`.
+* The outline pixel extends `Δpx/2` beyond its center, so its far edge is at `(⌊E/Δpx⌋ + 1.5) × Δpx`.
+* In the worst case (when `E` is exactly a multiple of `Δpx`), this equals `E + 1.5×Δpx`.
+* Therefore, the quad must extend to `E + 1.5×Δpx` per side to fully cover the outline pixel.
+
+With only 1 pixel margin per side, the worst case cuts off half the outline pixel.
 
 This produces a tight-fitting rectangle that covers exactly the model's projection plus outline from the current camera angle, with zero wasted fragments. Unlike a worst-case cube (which would use the 3D diagonal), the tight quad adapts to the actual viewing direction.
 

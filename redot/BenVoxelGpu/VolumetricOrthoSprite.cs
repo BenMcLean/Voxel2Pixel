@@ -124,8 +124,10 @@ public partial class VolumetricOrthoSprite : Node3D
 		float sX = _modelSize.X, sY = _modelSize.Y, sZ = _modelSize.Z,
 			quadWidthVoxel = Mathf.Abs(voxelRight.X) * sX + Mathf.Abs(voxelRight.Y) * sY + Mathf.Abs(voxelRight.Z) * sZ,
 			quadHeightVoxel = Mathf.Abs(voxelUp.X) * sX + Mathf.Abs(voxelUp.Y) * sY + Mathf.Abs(voxelUp.Z) * sZ,
-			quadWidth = quadWidthVoxel * _voxelSize + 2f * _deltaPxWorld,
-			quadHeight = quadHeightVoxel * _voxelSize + 2f * _deltaPxWorld;
+			// 3 * Δpx margin (1.5 pixels per side) to fully cover outline pixels in worst case
+			// See specification Section 4 "Quad Sizing" for derivation
+			quadWidth = quadWidthVoxel * _voxelSize + 3f * _deltaPxWorld,
+			quadHeight = quadHeightVoxel * _voxelSize + 3f * _deltaPxWorld;
 		// Set billboard transform: quad centered on model center, facing viewer position
 		_proxyBox.GlobalTransform = new Transform3D(
 			new Basis(
