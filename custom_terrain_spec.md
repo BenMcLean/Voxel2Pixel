@@ -44,7 +44,7 @@ This system uses marching-squares–style logic to classify tiles, **not** to ex
 ## 3. Input Data
 
 ```csharp
-int[,] heightMap;
+byte[,] heightMap;
 ```
 
 * Rectangular grid
@@ -104,6 +104,8 @@ dE = heightMap[x + 1, z] - hC
 dS = heightMap[x, z + 1] - hC
 dW = heightMap[x - 1, z] - hC
 ```
+
+Note: since height comes in as bytes, underflow must be prevented.
 
 ---
 
@@ -313,7 +315,7 @@ public static TileSurfaceType[,] ClassifyTiles(int[,] heightMap);
 
 ```csharp
 public static ArrayMesh BuildChunkMesh(
-	int[,] heightMap,
+	byte[,] heightMap,
 	TileSurfaceType[,] surfaceMap,
 	int chunkX,
 	int chunkZ,
