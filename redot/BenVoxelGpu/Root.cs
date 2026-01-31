@@ -10,6 +10,7 @@ namespace BenVoxelGpu;
 /// <summary>
 /// Interactive demo for the Volumetric Ortho-Impostor Rendering System.
 /// Controls camera, handles input, and manages the demo environment.
+/// Now includes procedural terrain with sprites placed on the surface.
 /// </summary>
 public partial class Root : Node3D
 {
@@ -17,17 +18,31 @@ public partial class Root : Node3D
 	private VolumetricOrthoSprite _impostor;
 	private GpuSvoModelTextureBridge _bridge;
 	private Label _perfLabel;
+	private Terrain _terrain;
 
 	private float _rotationAngle = 0f,
 		_voxelSize = 0.1f,
 		_sigma = 4f,
-		_cameraDistance = 20f;
+		_cameraDistance = 40f;
 	private static readonly IReadOnlyCollection<string> sourceArray = [
 		@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\Sora.vox",
 		@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\Tree.vox",
 		@"..\..\src\Tests\Voxel2Pixel.Test\TestData\Models\NumberCube.vox" ];
 	public override void _Ready()
 	{
+		// Create terrain first
+		_terrain = new Terrain
+		{
+			TerrainSize = 64,
+			TileSize = 1.0f,
+			HeightStep = 0.5f,
+			MaxHeight = 16,
+			NoiseFrequency = 0.03f,
+			NoiseOctaves = 4,
+			Seed = 42,
+		};
+		AddChild(_terrain);
+
 		// Load models and create texture bridge
 		VoxFileModel[] models = [.. sourceArray.Parallelize(path => new VoxFileModel(path))];
 		_bridge = new GpuSvoModelTextureBridge(
@@ -55,6 +70,9 @@ public partial class Root : Node3D
 		Point3D anchorPoint = new(modelSize.X >> 1, modelSize.Y >> 1, 0);
 		_impostor.Initialize(_bridge, 0, _voxelSize, _sigma, anchorPoint);
 
+		// Position the impostor on the terrain
+		PositionImpostorOnTerrain();
+
 		// Add environment for background
 		WorldEnvironment env = new()
 		{
@@ -65,6 +83,15 @@ public partial class Root : Node3D
 			}
 		};
 		AddChild(env);
+
+		// Add directional light for the terrain
+		DirectionalLight3D light = new()
+		{
+			Position = new Vector3(0, 50, 0),
+			RotationDegrees = new Vector3(-45, 45, 0),
+			ShadowEnabled = true,
+		};
+		AddChild(light);
 
 		// Add performance overlay
 		CanvasLayer overlay = new();
@@ -85,15 +112,25 @@ public partial class Root : Node3D
 		UpdateCameraPosition();
 	}
 
+	/// <summary>
+	/// Positions the impostor at the center of the terrain, on the surface.
+	/// </summary>
+	private void PositionImpostorOnTerrain()
+	{
+		Vector3 terrainCenter = _terrain.GetCenter();
+		float terrainHeight = _terrain.SampleHeight(terrainCenter.X, terrainCenter.Z);
+		_impostor.Position = new Vector3(terrainCenter.X, terrainHeight, terrainCenter.Z);
+	}
+
 	private void UpdateCameraPosition()
 	{
-		// Position camera to look at the model center
-		Vector3 modelCenterWorld = _impostor.ModelCenterWorld;
+		// Position camera to look at the terrain center
+		Vector3 terrainCenter = _terrain.GetCenter();
 		_camera.Position = new Vector3(
-			x: modelCenterWorld.X + Mathf.Sin(_rotationAngle) * _cameraDistance,
-			y: modelCenterWorld.Y + _cameraDistance * 0.5f,
-			z: modelCenterWorld.Z + Mathf.Cos(_rotationAngle) * _cameraDistance);
-		_camera.LookAt(modelCenterWorld, Vector3.Up);
+			x: terrainCenter.X + Mathf.Sin(_rotationAngle) * _cameraDistance,
+			y: terrainCenter.Y + _cameraDistance * 0.5f,
+			z: terrainCenter.Z + Mathf.Cos(_rotationAngle) * _cameraDistance);
+		_camera.LookAt(terrainCenter, Vector3.Up);
 	}
 
 	public override void _Process(double delta)
@@ -133,6 +170,15 @@ public partial class Root : Node3D
 			Vector3I modelSize = _bridge.GetModelSize(nextModel);
 			Point3D anchorPoint = new(modelSize.X >> 1, modelSize.Y >> 1, 0);
 			_impostor.SetModel(nextModel, anchorPoint);
+			PositionImpostorOnTerrain();
+		}
+
+		// Tab: Regenerate terrain with new seed
+		if (Input.IsActionJustPressed("ui_focus_next"))
+		{
+			_terrain.Randomize();
+			PositionImpostorOnTerrain();
+			GD.Print($"Terrain regenerated with seed: {_terrain.Seed}");
 		}
 
 		// Rotate camera around model
@@ -146,6 +192,7 @@ public partial class Root : Node3D
 			+ $"VRAM: {Performance.GetMonitor(Performance.Monitor.RenderVideoMemUsed) / (1024 * 1024):F1} MB\n"
 			+ $"RAM: {Performance.GetMonitor(Performance.Monitor.MemoryStatic) / (1024 * 1024):F1} MB\n"
 			+ $"Objects: {Performance.GetMonitor(Performance.Monitor.ObjectCount)}\n"
-			+ $"Sigma: {_sigma}  Voxel Size: {_voxelSize:F3}";
+			+ $"Sigma: {_sigma}  Voxel Size: {_voxelSize:F3}\n"
+			+ $"Terrain: {_terrain.TerrainSize}x{_terrain.TerrainSize} (Tab to regenerate)";
 	}
 }
