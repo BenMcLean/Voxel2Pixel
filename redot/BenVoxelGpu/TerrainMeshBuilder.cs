@@ -5,21 +5,13 @@ namespace BenVoxelGpu;
 
 /// <summary>
 /// Generates renderable terrain meshes from heightfield and surface map data.
-/// Implements marching-squares-style mesh synthesis with surface patches and cliff faces.
+/// Uses corner-height computation for seamless tile connections.
 /// </summary>
 public static class TerrainMeshBuilder
 {
 	/// <summary>
 	/// Builds an ArrayMesh for a terrain chunk.
 	/// </summary>
-	/// <param name="heightMap">Height values with one-tile apron around the chunk</param>
-	/// <param name="surfaceMap">Surface types for interior tiles (from TerrainClassifier)</param>
-	/// <param name="chunkX">World X offset for this chunk (in tiles)</param>
-	/// <param name="chunkZ">World Z offset for this chunk (in tiles)</param>
-	/// <param name="chunkSize">Size of chunk in tiles (surfaceMap should be this size)</param>
-	/// <param name="tileSize">World-space size of one tile</param>
-	/// <param name="heightStep">World-space height of one height unit</param>
-	/// <returns>An ArrayMesh ready for use with MeshInstance3D</returns>
 	public static ArrayMesh BuildChunkMesh(
 		byte[,] heightMap,
 		TileSurfaceType[,] surfaceMap,
@@ -33,55 +25,72 @@ public static class TerrainMeshBuilder
 		List<Vector3> normals = [];
 		List<int> indices = [];
 
-		// Generate geometry for each tile
 		for (int iz = 0; iz < chunkSize; iz++)
 		{
 			for (int ix = 0; ix < chunkSize; ix++)
 			{
-				// Heightmap coordinates include the apron offset
 				int hx = ix + 1,
 					hz = iz + 1;
 
 				TileSurfaceType surfaceType = surfaceMap[ix, iz];
-				int height = heightMap[hx, hz];
+				int baseHeight = heightMap[hx, hz];
 
-				// World position of tile corner (min X, min Z)
 				float worldX = (chunkX + ix) * tileSize,
 					worldZ = (chunkZ + iz) * tileSize,
-					worldY = height * heightStep;
+					baseY = baseHeight * heightStep;
+
+				// Compute corner height offsets based on surface type
+				GetCornerOffsets(surfaceType, out int oNW, out int oNE, out int oSE, out int oSW);
+
+				// Compute actual corner heights
+				float yNW = baseY + oNW * heightStep,
+					yNE = baseY + oNE * heightStep,
+					ySE = baseY + oSE * heightStep,
+					ySW = baseY + oSW * heightStep;
+
+				// Corner positions
+				Vector3 nw = new(worldX, yNW, worldZ),
+					ne = new(worldX + tileSize, yNE, worldZ),
+					se = new(worldX + tileSize, ySE, worldZ + tileSize),
+					sw = new(worldX, ySW, worldZ + tileSize);
 
 				// Generate top surface
-				GenerateTopSurface(vertices, normals, indices, surfaceType,
-					worldX, worldY, worldZ, tileSize, heightStep);
+				GenerateTopSurface(vertices, normals, indices, nw, ne, se, sw);
 
-				// Generate cliff faces for each edge where neighbor is lower
-				// North edge (z - 1)
-				int neighborHeight = heightMap[hx, hz - 1];
-				if (neighborHeight < height && !HasSlopeOnEdge(surfaceType, Direction.North))
-					GenerateCliffFace(vertices, normals, indices, Direction.North,
-						worldX, worldZ, height, neighborHeight, tileSize, heightStep, surfaceType);
+				// Generate cliff faces for each edge
+				int nHeight = heightMap[hx, hz - 1],
+					eHeight = heightMap[hx + 1, hz],
+					sHeight = heightMap[hx, hz + 1],
+					wHeight = heightMap[hx - 1, hz];
 
-				// East edge (x + 1)
-				neighborHeight = heightMap[hx + 1, hz];
-				if (neighborHeight < height && !HasSlopeOnEdge(surfaceType, Direction.East))
-					GenerateCliffFace(vertices, normals, indices, Direction.East,
-						worldX, worldZ, height, neighborHeight, tileSize, heightStep, surfaceType);
+				// Get neighbor corner offsets for proper cliff face generation
+				TileSurfaceType nType = hz > 1 ? surfaceMap[ix, iz - 1] : TileSurfaceType.Flat;
+				TileSurfaceType eType = ix < chunkSize - 1 ? surfaceMap[ix + 1, iz] : TileSurfaceType.Flat;
+				TileSurfaceType sType = iz < chunkSize - 1 ? surfaceMap[ix, iz + 1] : TileSurfaceType.Flat;
+				TileSurfaceType wType = ix > 0 ? surfaceMap[ix - 1, iz] : TileSurfaceType.Flat;
 
-				// South edge (z + 1)
-				neighborHeight = heightMap[hx, hz + 1];
-				if (neighborHeight < height && !HasSlopeOnEdge(surfaceType, Direction.South))
-					GenerateCliffFace(vertices, normals, indices, Direction.South,
-						worldX, worldZ, height, neighborHeight, tileSize, heightStep, surfaceType);
+				// North edge cliff
+				GenerateCliffFace(vertices, normals, indices,
+					worldX, worldZ, tileSize, heightStep,
+					yNW, yNE, nHeight, nType, Direction.North);
 
-				// West edge (x - 1)
-				neighborHeight = heightMap[hx - 1, hz];
-				if (neighborHeight < height && !HasSlopeOnEdge(surfaceType, Direction.West))
-					GenerateCliffFace(vertices, normals, indices, Direction.West,
-						worldX, worldZ, height, neighborHeight, tileSize, heightStep, surfaceType);
+				// East edge cliff
+				GenerateCliffFace(vertices, normals, indices,
+					worldX, worldZ, tileSize, heightStep,
+					yNE, ySE, eHeight, eType, Direction.East);
+
+				// South edge cliff
+				GenerateCliffFace(vertices, normals, indices,
+					worldX, worldZ, tileSize, heightStep,
+					ySE, ySW, sHeight, sType, Direction.South);
+
+				// West edge cliff
+				GenerateCliffFace(vertices, normals, indices,
+					worldX, worldZ, tileSize, heightStep,
+					ySW, yNW, wHeight, wType, Direction.West);
 			}
 		}
 
-		// Build the mesh
 		ArrayMesh mesh = new();
 		if (vertices.Count == 0)
 			return mesh;
@@ -99,226 +108,186 @@ public static class TerrainMeshBuilder
 	private enum Direction { North, East, South, West }
 
 	/// <summary>
-	/// Checks if a slope type occupies a given edge (meaning no cliff should be generated there).
+	/// Gets corner height offsets (0 or -1) for a surface type.
+	/// Key principle: Higher tiles slope DOWN to meet lower neighbors.
+	/// Offsets are always 0 (at base) or -1 (lowered to meet neighbor).
+	/// Order: NW, NE, SE, SW
 	/// </summary>
-	private static bool HasSlopeOnEdge(TileSurfaceType surfaceType, Direction edge) =>
-		surfaceType switch
+	private static void GetCornerOffsets(TileSurfaceType type, out int oNW, out int oNE, out int oSE, out int oSW)
+	{
+		// Default: all corners at base height
+		oNW = oNE = oSE = oSW = 0;
+
+		switch (type)
 		{
-			TileSurfaceType.CardinalSlopeNorth => edge == Direction.North,
-			TileSurfaceType.CardinalSlopeEast => edge == Direction.East,
-			TileSurfaceType.CardinalSlopeSouth => edge == Direction.South,
-			TileSurfaceType.CardinalSlopeWest => edge == Direction.West,
-			TileSurfaceType.DiagonalSlopeNE => edge == Direction.North || edge == Direction.East,
-			TileSurfaceType.DiagonalSlopeSE => edge == Direction.South || edge == Direction.East,
-			TileSurfaceType.DiagonalSlopeSW => edge == Direction.South || edge == Direction.West,
-			TileSurfaceType.DiagonalSlopeNW => edge == Direction.North || edge == Direction.West,
-			_ => false
-		};
+			// === Single Edge Slopes (one neighbor is 1 lower) ===
+			// The edge shared with the lower neighbor goes down
+			case TileSurfaceType.SlopeN:
+				oNW = oNE = -1;
+				break;
+			case TileSurfaceType.SlopeE:
+				oNE = oSE = -1;
+				break;
+			case TileSurfaceType.SlopeS:
+				oSE = oSW = -1;
+				break;
+			case TileSurfaceType.SlopeW:
+				oSW = oNW = -1;
+				break;
+
+			// === Corner (two adjacent neighbors are 1 lower) ===
+			// Both edges to lower neighbors go down; only the opposite corner stays at base
+			case TileSurfaceType.CornerNE:
+				// N and E neighbors are lower; N edge (NW,NE) and E edge (NE,SE) go down
+				oNW = oNE = oSE = -1;  // Only SW stays at base
+				break;
+			case TileSurfaceType.CornerSE:
+				// E and S neighbors are lower
+				oNE = oSE = oSW = -1;  // Only NW stays at base
+				break;
+			case TileSurfaceType.CornerSW:
+				// S and W neighbors are lower
+				oSE = oSW = oNW = -1;  // Only NE stays at base
+				break;
+			case TileSurfaceType.CornerNW:
+				// N and W neighbors are lower
+				oSW = oNW = oNE = -1;  // Only SE stays at base
+				break;
+
+			// === Valley (three neighbors are 1 lower) and Peak (all four are 1 lower) ===
+			// All corners go down to meet the lower neighbors
+			case TileSurfaceType.ValleyN:
+			case TileSurfaceType.ValleyE:
+			case TileSurfaceType.ValleyS:
+			case TileSurfaceType.ValleyW:
+			case TileSurfaceType.Peak:
+				oNW = oNE = oSE = oSW = -1;
+				break;
+
+			// Flat and unknown
+			case TileSurfaceType.Flat:
+			default:
+				// All at base height (already set to 0)
+				break;
+		}
+	}
 
 	/// <summary>
-	/// Generates the top surface geometry for a tile.
+	/// Generates the top surface geometry from corner positions.
 	/// </summary>
 	private static void GenerateTopSurface(
 		List<Vector3> vertices,
 		List<Vector3> normals,
 		List<int> indices,
-		TileSurfaceType surfaceType,
-		float x, float y, float z,
-		float tileSize, float heightStep)
+		Vector3 nw, Vector3 ne, Vector3 se, Vector3 sw)
 	{
 		int baseIndex = vertices.Count;
 
-		// Corner positions in Godot coordinates (Y-up)
-		// Tile corners: NW, NE, SE, SW (going clockwise from top-left when viewed from above)
-		// In Godot: -Z is North, +X is East
-		Vector3 nw = new(x, y, z),                           // North-West (min X, min Z)
-			ne = new(x + tileSize, y, z),                    // North-East (max X, min Z)
-			se = new(x + tileSize, y, z + tileSize),         // South-East (max X, max Z)
-			sw = new(x, y, z + tileSize);                    // South-West (min X, max Z)
-
-		float lowY = y - heightStep;  // Height one step lower (for slopes)
-
-		switch (surfaceType)
-		{
-			case TileSurfaceType.Flat:
-				// Simple flat quad
-				AddQuad(vertices, normals, indices, baseIndex,
-					nw, ne, se, sw, Vector3.Up);
-				break;
-
-			case TileSurfaceType.CardinalSlopeNorth:
-				// Slopes down to north - north edge is lower
-				AddQuad(vertices, normals, indices, baseIndex,
-					nw with { Y = lowY }, ne with { Y = lowY }, se, sw,
-					ComputeNormal(nw with { Y = lowY }, ne with { Y = lowY }, se));
-				break;
-
-			case TileSurfaceType.CardinalSlopeEast:
-				// Slopes down to east - east edge is lower
-				AddQuad(vertices, normals, indices, baseIndex,
-					nw, ne with { Y = lowY }, se with { Y = lowY }, sw,
-					ComputeNormal(nw, ne with { Y = lowY }, se with { Y = lowY }));
-				break;
-
-			case TileSurfaceType.CardinalSlopeSouth:
-				// Slopes down to south - south edge is lower
-				AddQuad(vertices, normals, indices, baseIndex,
-					nw, ne, se with { Y = lowY }, sw with { Y = lowY },
-					ComputeNormal(nw, ne, se with { Y = lowY }));
-				break;
-
-			case TileSurfaceType.CardinalSlopeWest:
-				// Slopes down to west - west edge is lower
-				AddQuad(vertices, normals, indices, baseIndex,
-					nw with { Y = lowY }, ne, se, sw with { Y = lowY },
-					ComputeNormal(nw with { Y = lowY }, ne, se));
-				break;
-
-			case TileSurfaceType.DiagonalSlopeNE:
-				// Slopes down to NE corner - NE corner is lowest
-				// This is a triangular slope with NE corner at lower height
-				AddTriangle(vertices, normals, indices, baseIndex,
-					nw, ne with { Y = lowY }, sw,
-					ComputeNormal(nw, ne with { Y = lowY }, sw));
-				AddTriangle(vertices, normals, indices, baseIndex + 3,
-					ne with { Y = lowY }, se, sw,
-					ComputeNormal(ne with { Y = lowY }, se, sw));
-				break;
-
-			case TileSurfaceType.DiagonalSlopeSE:
-				// Slopes down to SE corner
-				AddTriangle(vertices, normals, indices, baseIndex,
-					ne, se with { Y = lowY }, nw,
-					ComputeNormal(ne, se with { Y = lowY }, nw));
-				AddTriangle(vertices, normals, indices, baseIndex + 3,
-					se with { Y = lowY }, sw, nw,
-					ComputeNormal(se with { Y = lowY }, sw, nw));
-				break;
-
-			case TileSurfaceType.DiagonalSlopeSW:
-				// Slopes down to SW corner
-				AddTriangle(vertices, normals, indices, baseIndex,
-					se, sw with { Y = lowY }, ne,
-					ComputeNormal(se, sw with { Y = lowY }, ne));
-				AddTriangle(vertices, normals, indices, baseIndex + 3,
-					sw with { Y = lowY }, nw, ne,
-					ComputeNormal(sw with { Y = lowY }, nw, ne));
-				break;
-
-			case TileSurfaceType.DiagonalSlopeNW:
-				// Slopes down to NW corner
-				AddTriangle(vertices, normals, indices, baseIndex,
-					sw, nw with { Y = lowY }, se,
-					ComputeNormal(sw, nw with { Y = lowY }, se));
-				AddTriangle(vertices, normals, indices, baseIndex + 3,
-					nw with { Y = lowY }, ne, se,
-					ComputeNormal(nw with { Y = lowY }, ne, se));
-				break;
-		}
+		// Standard quad - split along NW-SE diagonal for consistent triangulation
+		AddTriangle(vertices, normals, indices, baseIndex,
+			nw, ne, se, ComputeNormal(nw, ne, se));
+		AddTriangle(vertices, normals, indices, baseIndex + 3,
+			nw, se, sw, ComputeNormal(nw, se, sw));
 	}
 
 	/// <summary>
-	/// Generates a cliff face on the specified edge.
+	/// Generates a cliff face on the specified edge if needed.
 	/// </summary>
 	private static void GenerateCliffFace(
 		List<Vector3> vertices,
 		List<Vector3> normals,
 		List<int> indices,
-		Direction edge,
 		float x, float z,
-		int topHeight, int bottomHeight,
 		float tileSize, float heightStep,
-		TileSurfaceType surfaceType)
+		float ourCorner1Y, float ourCorner2Y,
+		int neighborBaseHeight, TileSurfaceType neighborType,
+		Direction edge)
 	{
-		int baseIndex = vertices.Count;
-		float topY = topHeight * heightStep,
-			bottomY = bottomHeight * heightStep;
+		// Get neighbor's corner heights on the shared edge
+		GetCornerOffsets(neighborType, out int nONW, out int nONE, out int nOSE, out int nOSW);
+		float neighborBaseY = neighborBaseHeight * heightStep;
 
-		// Determine if top edge of cliff should be lowered due to slope
-		float topY1 = topY, topY2 = topY;
+		float neighborCorner1Y, neighborCorner2Y;
 
-		// For cardinal slopes, the edge on the slope side is one step lower
-		// For diagonal slopes, check if this edge is part of the slope
-		switch (surfaceType)
+		switch (edge)
 		{
-			case TileSurfaceType.CardinalSlopeNorth when edge == Direction.North:
-			case TileSurfaceType.CardinalSlopeEast when edge == Direction.East:
-			case TileSurfaceType.CardinalSlopeSouth when edge == Direction.South:
-			case TileSurfaceType.CardinalSlopeWest when edge == Direction.West:
-				// These cases are already filtered out by HasSlopeOnEdge
+			case Direction.North:
+				// Our N edge (NW, NE) meets neighbor's S edge (SW, SE)
+				neighborCorner1Y = neighborBaseY + nOSW * heightStep;  // Their SW = our NW side
+				neighborCorner2Y = neighborBaseY + nOSE * heightStep;  // Their SE = our NE side
+				break;
+			case Direction.East:
+				// Our E edge (NE, SE) meets neighbor's W edge (NW, SW)
+				neighborCorner1Y = neighborBaseY + nONW * heightStep;  // Their NW = our NE side
+				neighborCorner2Y = neighborBaseY + nOSW * heightStep;  // Their SW = our SE side
+				break;
+			case Direction.South:
+				// Our S edge (SE, SW) meets neighbor's N edge (NE, NW)
+				neighborCorner1Y = neighborBaseY + nONE * heightStep;  // Their NE = our SE side
+				neighborCorner2Y = neighborBaseY + nONW * heightStep;  // Their NW = our SW side
+				break;
+			case Direction.West:
+				// Our W edge (SW, NW) meets neighbor's E edge (SE, NE)
+				neighborCorner1Y = neighborBaseY + nOSE * heightStep;  // Their SE = our SW side
+				neighborCorner2Y = neighborBaseY + nONE * heightStep;  // Their NE = our NW side
+				break;
+			default:
 				return;
-
-			case TileSurfaceType.DiagonalSlopeNE:
-				if (edge == Direction.North) topY2 = topY - heightStep;      // NE corner lower
-				else if (edge == Direction.East) topY1 = topY - heightStep;  // NE corner lower
-				break;
-			case TileSurfaceType.DiagonalSlopeSE:
-				if (edge == Direction.East) topY2 = topY - heightStep;       // SE corner lower
-				else if (edge == Direction.South) topY1 = topY - heightStep; // SE corner lower
-				break;
-			case TileSurfaceType.DiagonalSlopeSW:
-				if (edge == Direction.South) topY2 = topY - heightStep;      // SW corner lower
-				else if (edge == Direction.West) topY1 = topY - heightStep;  // SW corner lower
-				break;
-			case TileSurfaceType.DiagonalSlopeNW:
-				if (edge == Direction.West) topY2 = topY - heightStep;       // NW corner lower
-				else if (edge == Direction.North) topY1 = topY - heightStep; // NW corner lower
-				break;
 		}
 
+		// Check if we need a cliff face (our edge higher than neighbor's)
+		bool needsCliff1 = ourCorner1Y > neighborCorner1Y + 0.001f;
+		bool needsCliff2 = ourCorner2Y > neighborCorner2Y + 0.001f;
+
+		if (!needsCliff1 && !needsCliff2)
+			return;
+
+		int baseIndex = vertices.Count;
+
+		// Generate cliff face vertices
 		Vector3 v0, v1, v2, v3, normal;
 
 		switch (edge)
 		{
 			case Direction.North:
-				// Face pointing -Z (north)
 				normal = new Vector3(0, 0, -1);
-				v0 = new Vector3(x, bottomY, z);              // Bottom-left
-				v1 = new Vector3(x + tileSize, bottomY, z);   // Bottom-right
-				v2 = new Vector3(x + tileSize, topY2, z);     // Top-right (may be lower for NW slope)
-				v3 = new Vector3(x, topY1, z);                // Top-left (may be lower for NE slope)
+				v0 = new Vector3(x, neighborCorner1Y, z);                    // Bottom-left
+				v1 = new Vector3(x + tileSize, neighborCorner2Y, z);         // Bottom-right
+				v2 = new Vector3(x + tileSize, ourCorner2Y, z);              // Top-right
+				v3 = new Vector3(x, ourCorner1Y, z);                         // Top-left
 				break;
-
 			case Direction.East:
-				// Face pointing +X (east)
 				normal = new Vector3(1, 0, 0);
-				v0 = new Vector3(x + tileSize, bottomY, z);              // Bottom-left (north end)
-				v1 = new Vector3(x + tileSize, bottomY, z + tileSize);   // Bottom-right (south end)
-				v2 = new Vector3(x + tileSize, topY2, z + tileSize);     // Top-right
-				v3 = new Vector3(x + tileSize, topY1, z);                // Top-left
+				v0 = new Vector3(x + tileSize, neighborCorner1Y, z);         // Bottom-left
+				v1 = new Vector3(x + tileSize, neighborCorner2Y, z + tileSize);
+				v2 = new Vector3(x + tileSize, ourCorner2Y, z + tileSize);
+				v3 = new Vector3(x + tileSize, ourCorner1Y, z);
 				break;
-
 			case Direction.South:
-				// Face pointing +Z (south)
 				normal = new Vector3(0, 0, 1);
-				v0 = new Vector3(x + tileSize, bottomY, z + tileSize);   // Bottom-left
-				v1 = new Vector3(x, bottomY, z + tileSize);              // Bottom-right
-				v2 = new Vector3(x, topY2, z + tileSize);                // Top-right
-				v3 = new Vector3(x + tileSize, topY1, z + tileSize);     // Top-left
+				v0 = new Vector3(x + tileSize, neighborCorner1Y, z + tileSize);
+				v1 = new Vector3(x, neighborCorner2Y, z + tileSize);
+				v2 = new Vector3(x, ourCorner2Y, z + tileSize);
+				v3 = new Vector3(x + tileSize, ourCorner1Y, z + tileSize);
 				break;
-
 			case Direction.West:
-				// Face pointing -X (west)
 				normal = new Vector3(-1, 0, 0);
-				v0 = new Vector3(x, bottomY, z + tileSize);   // Bottom-left (south end)
-				v1 = new Vector3(x, bottomY, z);              // Bottom-right (north end)
-				v2 = new Vector3(x, topY2, z);                // Top-right
-				v3 = new Vector3(x, topY1, z + tileSize);     // Top-left
+				v0 = new Vector3(x, neighborCorner1Y, z + tileSize);
+				v1 = new Vector3(x, neighborCorner2Y, z);
+				v2 = new Vector3(x, ourCorner2Y, z);
+				v3 = new Vector3(x, ourCorner1Y, z + tileSize);
 				break;
-
 			default:
 				return;
 		}
 
-		// Only generate if there's actual height difference
-		if (topY1 > bottomY || topY2 > bottomY)
+		// Only add the quad if there's actual height difference
+		if ((v3.Y - v0.Y) > 0.001f || (v2.Y - v1.Y) > 0.001f)
+		{
 			AddQuad(vertices, normals, indices, baseIndex, v0, v1, v2, v3, normal);
+		}
 	}
 
-	/// <summary>
-	/// Adds a quad (two triangles) to the mesh data.
-	/// Vertices should be in counter-clockwise order when viewed from the front.
-	/// </summary>
 	private static void AddQuad(
 		List<Vector3> vertices,
 		List<Vector3> normals,
@@ -337,7 +306,6 @@ public static class TerrainMeshBuilder
 		normals.Add(normal);
 		normals.Add(normal);
 
-		// Two triangles: 0-1-2, 0-2-3
 		indices.Add(baseIndex);
 		indices.Add(baseIndex + 1);
 		indices.Add(baseIndex + 2);
@@ -347,9 +315,6 @@ public static class TerrainMeshBuilder
 		indices.Add(baseIndex + 3);
 	}
 
-	/// <summary>
-	/// Adds a triangle to the mesh data.
-	/// </summary>
 	private static void AddTriangle(
 		List<Vector3> vertices,
 		List<Vector3> normals,
@@ -371,13 +336,12 @@ public static class TerrainMeshBuilder
 		indices.Add(baseIndex + 2);
 	}
 
-	/// <summary>
-	/// Computes the normal for a triangle.
-	/// </summary>
 	private static Vector3 ComputeNormal(Vector3 v0, Vector3 v1, Vector3 v2)
 	{
 		Vector3 edge1 = v1 - v0,
 			edge2 = v2 - v0;
-		return edge1.Cross(edge2).Normalized();
+		Vector3 normal = edge1.Cross(edge2).Normalized();
+		// Ensure normal points upward for top surfaces
+		return normal.Y < 0 ? -normal : normal;
 	}
 }

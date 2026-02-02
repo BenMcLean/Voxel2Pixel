@@ -2,18 +2,18 @@ namespace BenVoxelGpu;
 
 /// <summary>
 /// Classifies tiles in a heightfield using marching-squares-style neighborhood evaluation.
-/// Converts an integer heightfield into a TileSurfaceType map that describes the surface
-/// type and orientation of each tile.
+///
+/// Key principle: Only LOWER neighbors (exactly 1 unit lower) trigger slopes.
+/// Higher neighbors are handled by those neighbors sloping down toward us.
+/// Cliffs (2+ units difference) generate vertical faces, not slopes.
 /// </summary>
 public static class TerrainClassifier
 {
 	/// <summary>
 	/// Classifies tiles in a heightfield to produce a surface map.
-	/// The heightMap must include a one-tile apron on all sides.
-	/// Only the interior region is classified.
 	/// </summary>
 	/// <param name="heightMap">Height values with one-tile apron. Size must be at least 3x3.</param>
-	/// <returns>Surface type for each interior tile. Size is (heightMap width - 2) x (heightMap height - 2).</returns>
+	/// <returns>Surface type for each interior tile. Size is (width-2) x (height-2).</returns>
 	public static TileSurfaceType[,] ClassifyTiles(byte[,] heightMap)
 	{
 		int fullWidth = heightMap.GetLength(0),
@@ -30,11 +30,11 @@ public static class TerrainClassifier
 		{
 			for (int ix = 0; ix < interiorWidth; ix++)
 			{
-				// Convert interior coordinates to heightmap coordinates (offset by 1 for apron)
-				int x = ix + 1,
-					z = iz + 1;
+				// Interior coordinate (ix, iz) maps to heightmap coordinate (ix+1, iz+1)
+				int hx = ix + 1,
+					hz = iz + 1;
 
-				surfaceMap[ix, iz] = ClassifyTile(heightMap, x, z);
+				surfaceMap[ix, iz] = ClassifyTile(heightMap, hx, hz);
 			}
 		}
 
@@ -42,28 +42,25 @@ public static class TerrainClassifier
 	}
 
 	/// <summary>
-	/// Classifies a single tile based on its neighbors.
+	/// Classifies a single tile based on which neighbors are exactly 1 lower.
 	/// </summary>
-	/// <param name="heightMap">The full heightmap with apron</param>
-	/// <param name="x">X coordinate in heightmap (not interior coordinate)</param>
-	/// <param name="z">Z coordinate in heightmap (not interior coordinate)</param>
-	private static TileSurfaceType ClassifyTile(byte[,] heightMap, int x, int z)
+	/// <param name="heightMap">The full heightmap including apron</param>
+	/// <param name="hx">X coordinate in heightmap (includes +1 offset for apron)</param>
+	/// <param name="hz">Z coordinate in heightmap (includes +1 offset for apron)</param>
+	private static TileSurfaceType ClassifyTile(byte[,] heightMap, int hx, int hz)
 	{
-		int hC = heightMap[x, z];
+		int hC = heightMap[hx, hz];
 
-		// Compute height differences to neighbors
-		// Using int to prevent underflow when subtracting bytes
-		int dN = heightMap[x, z - 1] - hC,
-			dE = heightMap[x + 1, z] - hC,
-			dS = heightMap[x, z + 1] - hC,
-			dW = heightMap[x - 1, z] - hC;
+		// Compute height differences: neighbor - current
+		// Negative means neighbor is LOWER, positive means neighbor is HIGHER
+		int dN = heightMap[hx, hz - 1] - hC,
+			dE = heightMap[hx + 1, hz] - hC,
+			dS = heightMap[hx, hz + 1] - hC,
+			dW = heightMap[hx - 1, hz] - hC;
 
-		// Rule 1: Cliff Dominance
-		// If any neighbor is 2+ lower than this tile, it's a cliff edge - must be flat
-		if (dN <= -2 || dE <= -2 || dS <= -2 || dW <= -2)
-			return TileSurfaceType.Flat;
-
-		// Count which neighbors are exactly 1 lower (candidates for slope direction)
+		// Only care about neighbors that are exactly 1 lower (d == -1)
+		// Higher neighbors (d > 0) are ignored - they handle the slope
+		// Cliffs (d <= -2) are handled by vertical faces, not slopes
 		bool nLower = dN == -1,
 			eLower = dE == -1,
 			sLower = dS == -1,
@@ -71,35 +68,44 @@ public static class TerrainClassifier
 
 		int lowerCount = (nLower ? 1 : 0) + (eLower ? 1 : 0) + (sLower ? 1 : 0) + (wLower ? 1 : 0);
 
-		// Check that all non-slope neighbors are at same level or higher
-		bool nOk = dN >= 0,
-			eOk = dE >= 0,
-			sOk = dS >= 0,
-			wOk = dW >= 0;
-
-		// Rule 2: Cardinal Slope
-		// Exactly one neighbor is 1 lower, all others are >= 0
-		if (lowerCount == 1)
+		return lowerCount switch
 		{
-			if (nLower && eOk && sOk && wOk) return TileSurfaceType.CardinalSlopeNorth;
-			if (eLower && nOk && sOk && wOk) return TileSurfaceType.CardinalSlopeEast;
-			if (sLower && nOk && eOk && wOk) return TileSurfaceType.CardinalSlopeSouth;
-			if (wLower && nOk && eOk && sOk) return TileSurfaceType.CardinalSlopeWest;
-		}
+			0 => TileSurfaceType.Flat,
 
-		// Rule 3: Diagonal Slope
-		// Exactly two orthogonal neighbors are 1 lower, all others are >= 0
-		if (lowerCount == 2)
-		{
-			// Check for orthogonal pairs (N+E, E+S, S+W, W+N)
-			// Opposite pairs (N+S or E+W) don't form valid diagonal slopes
-			if (nLower && eLower && sOk && wOk) return TileSurfaceType.DiagonalSlopeNE;
-			if (eLower && sLower && nOk && wOk) return TileSurfaceType.DiagonalSlopeSE;
-			if (sLower && wLower && nOk && eOk) return TileSurfaceType.DiagonalSlopeSW;
-			if (wLower && nLower && eOk && sOk) return TileSurfaceType.DiagonalSlopeNW;
-		}
+			1 => (nLower, eLower, sLower, wLower) switch
+			{
+				(true, false, false, false) => TileSurfaceType.SlopeN,
+				(false, true, false, false) => TileSurfaceType.SlopeE,
+				(false, false, true, false) => TileSurfaceType.SlopeS,
+				(false, false, false, true) => TileSurfaceType.SlopeW,
+				_ => TileSurfaceType.Flat  // Shouldn't happen
+			},
 
-		// Rule 4: Default to Flat
-		return TileSurfaceType.Flat;
+			2 => (nLower, eLower, sLower, wLower) switch
+			{
+				// Adjacent pairs -> corner
+				(true, true, false, false) => TileSurfaceType.CornerNE,
+				(false, true, true, false) => TileSurfaceType.CornerSE,
+				(false, false, true, true) => TileSurfaceType.CornerSW,
+				(true, false, false, true) => TileSurfaceType.CornerNW,
+				// Opposite pairs -> treat as flat (vertical faces handle it)
+				// This creates a "ridge" which isn't well-represented by slopes
+				_ => TileSurfaceType.Flat
+			},
+
+			3 => (nLower, eLower, sLower, wLower) switch
+			{
+				// Three lower = valley toward the one that's NOT lower
+				(false, true, true, true) => TileSurfaceType.ValleyN,  // N is not lower
+				(true, false, true, true) => TileSurfaceType.ValleyE,  // E is not lower
+				(true, true, false, true) => TileSurfaceType.ValleyS,  // S is not lower
+				(true, true, true, false) => TileSurfaceType.ValleyW,  // W is not lower
+				_ => TileSurfaceType.Flat  // Shouldn't happen
+			},
+
+			4 => TileSurfaceType.Peak,
+
+			_ => TileSurfaceType.Flat
+		};
 	}
 }

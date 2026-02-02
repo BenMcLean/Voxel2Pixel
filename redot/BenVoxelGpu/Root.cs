@@ -19,6 +19,7 @@ public partial class Root : Node3D
 	private GpuSvoModelTextureBridge _bridge;
 	private Label _perfLabel;
 	private Terrain _terrain;
+	private DirectionalLight3D _light;
 
 	private float _rotationAngle = 0f,
 		_voxelSize = 0.1f,
@@ -85,13 +86,16 @@ public partial class Root : Node3D
 		AddChild(env);
 
 		// Add directional light for the terrain
-		DirectionalLight3D light = new()
+		_light = new DirectionalLight3D
 		{
 			Position = new Vector3(0, 50, 0),
 			RotationDegrees = new Vector3(-45, 45, 0),
 			ShadowEnabled = true,
 		};
-		AddChild(light);
+		AddChild(_light);
+
+		// Set consistent light direction for the sprite (light travels in the -Z local direction)
+		_impostor.LightDirection = -_light.GlobalTransform.Basis.Z;
 
 		// Add performance overlay
 		CanvasLayer overlay = new();
