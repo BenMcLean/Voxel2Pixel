@@ -10,6 +10,7 @@ public partial class Terrain : Node3D
 {
 	private MeshInstance3D _meshInstance;
 	private FastNoiseLite _noise;
+	private byte[,] _heightMap;
 
 	/// <summary>
 	/// Size of the terrain in tiles (width and depth).
@@ -81,7 +82,7 @@ public partial class Terrain : Node3D
 
 		// Generate heightmap with apron (terrainSize + 2 on each side)
 		int fullSize = TerrainSize + 2;
-		byte[,] heightMap = new byte[fullSize, fullSize];
+		_heightMap = new byte[fullSize, fullSize];
 
 		for (int z = 0; z < fullSize; z++)
 		{
@@ -91,17 +92,13 @@ public partial class Terrain : Node3D
 				float noiseValue = _noise.GetNoise2D(x, z);
 				// Map from [-1, 1] to [0, MaxHeight]
 				float normalizedHeight = (noiseValue + 1f) * 0.5f * MaxHeight;
-				heightMap[x, z] = (byte)Mathf.Clamp(Mathf.RoundToInt(normalizedHeight), 0, 255);
+				_heightMap[x, z] = (byte)Mathf.Clamp(Mathf.RoundToInt(normalizedHeight), 0, 255);
 			}
 		}
 
-		// Classify tiles
-		TileSurfaceType[,] surfaceMap = TerrainClassifier.ClassifyTiles(heightMap);
-
-		// Build mesh
+		// Build mesh directly from heightmap (corner heights computed internally)
 		ArrayMesh mesh = TerrainMeshBuilder.BuildChunkMesh(
-			heightMap,
-			surfaceMap,
+			_heightMap,
 			chunkX: 0,
 			chunkZ: 0,
 			chunkSize: TerrainSize,
@@ -143,21 +140,18 @@ public partial class Terrain : Node3D
 	}
 
 	/// <summary>
-	/// Samples the height at a given world position.
-	/// Returns the height in world units, or 0 if outside bounds.
+	/// Samples the height at a given world position using bilinear interpolation.
+	/// Returns the interpolated height in world units, matching the rendered mesh.
 	/// </summary>
 	public float SampleHeight(float worldX, float worldZ)
 	{
-		// Convert to tile coordinates
-		int tileX = Mathf.FloorToInt(worldX / TileSize),
-			tileZ = Mathf.FloorToInt(worldZ / TileSize);
-
-		if (tileX < 0 || tileX >= TerrainSize || tileZ < 0 || tileZ >= TerrainSize)
+		if (_heightMap == null)
 			return 0f;
 
-		// Sample noise at this position
-		float noiseValue = _noise.GetNoise2D(tileX + 1, tileZ + 1); // +1 for apron offset
-		float normalizedHeight = (noiseValue + 1f) * 0.5f * MaxHeight;
-		return Mathf.RoundToInt(normalizedHeight) * HeightStep;
+		return TerrainMeshBuilder.GetTerrainHeight(
+			_heightMap,
+			worldX, worldZ,
+			TileSize, HeightStep,
+			chunkX: 0, chunkZ: 0);
 	}
 }
