@@ -94,8 +94,8 @@ public partial class Root : Node3D
 		};
 		AddChild(_light);
 
-		// Set consistent light direction for the sprite (light travels in the -Z local direction)
-		_impostor.LightDirection = -_light.GlobalTransform.Basis.Z;
+		// Use the same directional light for the sprite
+		_impostor.SetLight(_light);
 
 		// Add performance overlay
 		CanvasLayer overlay = new();

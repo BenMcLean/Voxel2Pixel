@@ -41,11 +41,19 @@ public partial class VolumetricOrthoSprite : Node3D
 	public CameraTransformProviderDelegate CameraTransformProvider { get; set; }
 
 	/// <summary>
-	/// Light direction in world space (Godot Y-up, normalized).
-	/// Default is from upper-right relative to camera view.
-	/// Set to null to use automatic camera-relative lighting.
+	/// Direction toward the light source in Godot world space (Y-up), normalized.
+	/// This follows Godot's shader convention where LIGHT points from surface to light.
+	/// Set to null for automatic camera-relative lighting (upper-right of view).
 	/// </summary>
+	/// <seealso cref="SetLight(DirectionalLight3D)"/>
 	public Vector3? LightDirection { get; set; } = null;
+
+	/// <summary>
+	/// Sets the light direction from a DirectionalLight3D node.
+	/// </summary>
+	/// <param name="light">The directional light to use, or null for automatic lighting.</param>
+	public void SetLight(DirectionalLight3D light) =>
+		LightDirection = light?.GlobalTransform.Basis.Z;
 
 	/// <summary>
 	/// The anchor point in voxel space (Z-up).
