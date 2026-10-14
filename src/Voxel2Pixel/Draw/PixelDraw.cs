@@ -30,7 +30,6 @@ namespace Voxel2Pixel.Draw;
 /// </summary>
 public static class PixelDraw
 {
-	//TODO: DrawLine
 	//TODO: DrawCircle
 	//TODO: DrawEllipse
 	//TODO: DrawTriangle
@@ -116,6 +115,87 @@ public static class PixelDraw
 	public static byte[] DrawRectangle(this byte[] texture, uint color, int x, int y, int rectWidth = 1, int rectHeight = 1, ushort width = 0)
 	{
 		texture.AsSpan().DrawRectangle(color, x, y, rectWidth, rectHeight, width);
+		return texture;
+	}
+	/// <summary>
+	/// Draws a line of the specified color using Bresenham's algorithm.
+	/// Both points may be anywhere, including completely outside the texture in any direction. Only the part of the line that intersects the texture is drawn, and it consists of exactly the pixels that drawing the whole line would have put there.
+	/// The same pixels are drawn no matter which point is A and which is B.
+	/// Where the ideal line passes exactly halfway between two pixels, the pixel farther along the minor axis is chosen, going from the lower to the higher coordinate on the major axis.
+	/// </summary>
+	/// <param name="texture">raw rgba8888 pixel data to be modified</param>
+	/// <param name="xA">x of the first point</param>
+	/// <param name="yA">y of the first point</param>
+	/// <param name="xB">x of the second point</param>
+	/// <param name="yB">y of the second point</param>
+	/// <param name="color">rgba color to draw</param>
+	/// <param name="width">width of texture or 0 to assume square texture</param>
+	/// <returns>same texture with line drawn</returns>
+	public static Span<byte> DrawLine(this Span<byte> texture, int xA, int yA, int xB, int yB, uint color = White, ushort width = 0)
+	{
+		int w = width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width,
+			h = width < 1 ? w : (texture.Length / width) >> 2;
+		if (w < 1 || h < 1) return texture;
+		// Work in (major, minor) coordinates, where major is the axis the line is longer on, so that one loop handles all eight octants.
+		bool steep = Math.Abs((long)yB - yA) > Math.Abs((long)xB - xA);
+		long major0 = steep ? yA : xA,
+			major1 = steep ? yB : xB,
+			minor0 = steep ? xA : yA,
+			minor1 = steep ? xB : yB;
+		if (major0 > major1)
+		{
+			(major1, major0) = (major0, major1);
+			(minor1, minor0) = (minor0, minor1);
+		}
+		int majorSize = steep ? h : w,
+			minorSize = steep ? w : h,
+			majorStride = steep ? w << 2 : 4,
+			minorStride = steep ? 4 : w << 2,
+			minorSign = minor1 >= minor0 ? 1 : -1;
+		long majorLength = major1 - major0,
+			twoMajorLength = majorLength << 1,
+			twoMinorLength = Math.Abs(minor1 - minor0) << 1,
+			first = Math.Max(0L, -major0), // Clip to the texture on the major axis
+			last = Math.Min(majorLength, majorSize - 1L - major0);
+		if (first > last) return texture;
+		// The minor offset at major step i is floor((2 * minorLength * i + majorLength) / (2 * majorLength)).
+		// Start the usual incremental error term at the first step inside the texture instead of at step 0 so that clipping doesn't change which pixels are drawn.
+		long minorOffset, error;
+		if (first == 0)
+		{
+			minorOffset = 0;
+			error = majorLength;
+		}
+		else
+		{ // decimal because 2 * minorLength * first can need up to 65 bits
+			decimal numerator = (decimal)twoMinorLength * first + majorLength,
+				remainder = numerator % twoMajorLength;
+			minorOffset = (long)((numerator - remainder) / twoMajorLength);
+			error = (long)remainder;
+		}
+		for (long step = first; ; step++)
+		{
+			long minor = minor0 + minorSign * minorOffset;
+			if (minor >= 0 && minor < minorSize)
+				BinaryPrimitives.WriteUInt32BigEndian(
+					destination: texture.Slice((int)(major0 + step) * majorStride + (int)minor * minorStride, 4),
+					value: color);
+			else if (minorSign > 0 ? minor >= minorSize : minor < 0)
+				break; // Left the texture on the minor axis and the line only moves farther away
+			if (step == last) break;
+			error += twoMinorLength;
+			if (error >= twoMajorLength)
+			{
+				error -= twoMajorLength;
+				minorOffset++;
+			}
+		}
+		return texture;
+	}
+	/// <inheritdoc cref="DrawLine(Span{byte}, int, int, int, int, uint, ushort)"/>
+	public static byte[] DrawLine(this byte[] texture, int xA, int yA, int xB, int yB, uint color = White, ushort width = 0)
+	{
+		texture.AsSpan().DrawLine(xA, yA, xB, yB, color, width);
 		return texture;
 	}
 	public static Span<byte> DrawBoundingBox(this Span<byte> texture, ushort width = 0)
