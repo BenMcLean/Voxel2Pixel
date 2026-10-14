@@ -30,7 +30,6 @@ namespace Voxel2Pixel.Draw;
 /// </summary>
 public static class PixelDraw
 {
-	//TODO: DrawCircle
 	//TODO: DrawEllipse
 	//TODO: DrawTriangle
 	public const double Tau = 2d * Math.PI;
@@ -196,6 +195,89 @@ public static class PixelDraw
 	public static byte[] DrawLine(this byte[] texture, int xA, int yA, int xB, int yB, uint color = White, ushort width = 0)
 	{
 		texture.AsSpan().DrawLine(xA, yA, xB, yB, color, width);
+		return texture;
+	}
+	/// <summary>
+	/// Draws a circle using the midpoint circle algorithm, either as a 1 pixel wide outline or filled in.
+	/// The center may be anywhere, including completely outside the texture in any direction. Only the part of the circle that overlaps the texture is drawn.
+	/// The circle is (2 * radius + 1) pixels across, with the center pixel at the exact middle. A radius of 0 draws a single pixel.
+	/// Each outline pixel is the nearest to the ideal circle on its octant's major axis. The fill covers exactly the pixels enclosed by that outline, including the outline.
+	/// </summary>
+	/// <param name="texture">raw rgba8888 pixel data to be modified</param>
+	/// <param name="x">x of the center pixel</param>
+	/// <param name="y">y of the center pixel</param>
+	/// <param name="radius">distance in pixels from the center pixel to the outline pixels directly to its left, right, top and bottom</param>
+	/// <param name="fill">true to fill in the circle, false to only draw its outline</param>
+	/// <param name="color">rgba color to draw</param>
+	/// <param name="width">width of texture or 0 to assume square texture</param>
+	/// <returns>same texture with circle drawn</returns>
+	public static Span<byte> DrawCircle(this Span<byte> texture, int x, int y, ushort radius, bool fill = false, uint color = White, ushort width = 0)
+	{
+		int w = width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width,
+			h = width < 1 ? w : (texture.Length / width) >> 2;
+		if (w < 1 || h < 1) return texture;
+		// Draws one pixel, or nothing if it is outside the texture. Unlike DrawPixel, this already knows the size of the texture.
+		// The span is a parameter because a local function can't capture a Span.
+		void Plot(Span<byte> pixels, int px, int py)
+		{
+			if (px >= 0 && py >= 0 && px < w && py < h)
+				BinaryPrimitives.WriteUInt32BigEndian(
+					destination: pixels.Slice((py * w + px) << 2, 4),
+					value: color);
+		}
+		// If the circle's bounding box misses the texture then there is nothing to draw.
+		// Past this check the center is at most radius pixels outside the texture, so none of the int math below can overflow.
+		if ((long)x + radius < 0 || (long)x - radius >= w || (long)y + radius < 0 || (long)y - radius >= h) return texture;
+		// Walk one octant, from straight above the center to the 45 degree diagonal, and mirror every step into the other seven.
+		// Work is bounded by the radius no matter how little of the circle is on the texture.
+		int dx = 0,
+			dy = radius,
+			error = 1 - radius;
+		while (dx <= dy)
+		{
+			int nextDx = dx + 1,
+				nextDy = dy,
+				nextError = error;
+			if (error < 0)
+				nextError += (nextDx << 1) + 1;
+			else
+			{
+				nextDy--;
+				nextError += ((nextDx - nextDy) << 1) + 1;
+			}
+			if (fill)
+			{
+				// Rows near the left and right sides get one span per step.
+				texture.DrawRectangle(color, x - dy, y + dx, (dy << 1) + 1, 1, width);
+				texture.DrawRectangle(color, x - dy, y - dx, (dy << 1) + 1, 1, width);
+				// Rows near the top and bottom are shared by several steps, so only fill them once the widest step for that row is reached.
+				if (nextDy != dy || nextDx > nextDy)
+				{
+					texture.DrawRectangle(color, x - dx, y + dy, (dx << 1) + 1, 1, width);
+					texture.DrawRectangle(color, x - dx, y - dy, (dx << 1) + 1, 1, width);
+				}
+			}
+			else
+			{
+				Plot(texture, x + dx, y + dy);
+				Plot(texture, x - dx, y + dy);
+				Plot(texture, x + dx, y - dy);
+				Plot(texture, x - dx, y - dy);
+				Plot(texture, x + dy, y + dx);
+				Plot(texture, x - dy, y + dx);
+				Plot(texture, x + dy, y - dx);
+				Plot(texture, x - dy, y - dx);
+			}
+			dx = nextDx;
+			dy = nextDy;
+			error = nextError;
+		}
+		return texture;
+	}
+	/// <inheritdoc cref="DrawCircle(Span{byte}, int, int, ushort, bool, uint, ushort)"/>
+	public static byte[] DrawCircle(this byte[] texture, int x, int y, ushort radius, bool fill = false, uint color = White, ushort width = 0)
+	{
+		texture.AsSpan().DrawCircle(x, y, radius, fill, color, width);
 		return texture;
 	}
 	public static Span<byte> DrawBoundingBox(this Span<byte> texture, ushort width = 0)
