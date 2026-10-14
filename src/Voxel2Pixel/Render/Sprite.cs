@@ -81,6 +81,7 @@ public class Sprite : IDictionary<string, Point>, ISprite, IColoredRenderer
 			color: color,
 			rectWidth: sizeX,
 			rectHeight: sizeY,
+			fill: true,
 			width: Width);
 	public virtual void Rect(ushort x, ushort y, byte index, VisibleFace visibleFace = VisibleFace.Front, ushort sizeX = 1, ushort sizeY = 1) => Rect(
 		x: x,

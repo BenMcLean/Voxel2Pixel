@@ -30,7 +30,9 @@ namespace Voxel2Pixel.Draw;
 /// </summary>
 public static class PixelDraw
 {
-	//TODO: DrawTriangle
+	//TODO: DrawFlood
+	//TODO: DrawCircle for arcs and pies
+	//TODO: DrawInsert XOR / OR / AND modes
 	public const double Tau = 2d * Math.PI;
 	public const uint Red = 0xFF0000FFu,
 		Yellow = 0xFFFF00FFu,
@@ -68,19 +70,40 @@ public static class PixelDraw
 		return texture;
 	}
 	/// <summary>
-	/// Draws a rectangle of the specified color
+	/// Draws a rectangle of the specified color, either filled in or as a 1 pixel wide outline.
+	/// The rectangle may extend past any edge of the texture, or be completely outside it. Only the part that overlaps the texture is drawn.
+	/// An outline keeps its edges where they would be if the whole rectangle were on the texture, so for example a rectangle sticking out past the left edge has no left side.
 	/// </summary>
 	/// <param name="texture">raw rgba8888 pixel data to be modified</param>
 	/// <param name="color">rgba color to draw</param>
 	/// <param name="x">upper left corner of rectangle</param>
 	/// <param name="y">upper left corner of rectangle</param>
+	/// <param name="rectWidth">width of the rectangle in pixels</param>
+	/// <param name="rectHeight">height of the rectangle in pixels or less than 1 to make it as tall as it is wide</param>
+	/// <param name="fill">true to fill in the rectangle, false to only draw its outline</param>
 	/// <param name="width">width of texture or 0 to assume square texture</param>
 	/// <returns>same texture with rectangle drawn</returns>
-	public static Span<byte> DrawRectangle(this Span<byte> texture, uint color, int x, int y, int rectWidth = 1, int rectHeight = 1, ushort width = 0)
+	public static Span<byte> DrawRectangle(this Span<byte> texture, uint color, int x, int y, int rectWidth = 1, int rectHeight = 1, bool fill = false, ushort width = 0)
 	{
 		if (rectWidth == 1 && rectHeight == 1)
 			return texture.DrawPixel(x, y, color, width);
 		if (rectHeight < 1) rectHeight = rectWidth;
+		if (rectWidth < 1 || rectHeight < 1) return texture; // Nothing to draw, and this keeps the clipping math below from overflowing
+		if (!fill && rectWidth > 2 && rectHeight > 2)
+		{ // Four filled edges. Each one is clipped separately, so that the edges that are off the texture aren't drawn.
+			long right = (long)x + rectWidth - 1,
+				bottom = (long)y + rectHeight - 1;
+			texture.DrawRectangle(color, x, y, rectWidth, 1, true, width);
+			if (bottom <= int.MaxValue)
+				texture.DrawRectangle(color, x, (int)bottom, rectWidth, 1, true, width);
+			if (y < int.MaxValue) // Otherwise the sides start below the largest possible texture
+			{
+				texture.DrawRectangle(color, x, y + 1, 1, rectHeight - 2, true, width);
+				if (right <= int.MaxValue)
+					texture.DrawRectangle(color, (int)right, y + 1, 1, rectHeight - 2, true, width);
+			}
+			return texture;
+		}
 		if (x < 0)
 		{
 			rectWidth += x;
@@ -101,18 +124,19 @@ public static class PixelDraw
 			offset = y * xSide + x4,
 			rectWidth4 = rectWidth << 2,
 			yStop = offset + xSide * rectHeight;
-		for (int x2 = offset; x2 < offset + rectWidth4; x2 += 4)
-			BinaryPrimitives.WriteUInt32BigEndian(
-				destination: texture.Slice(x2, 4),
-				value: color);
+		BinaryPrimitives.WriteUInt32BigEndian(
+			destination: texture.Slice(offset, 4),
+			value: color);
+		for (int filled = 4; filled < rectWidth4; filled <<= 1) // Double the filled run each time
+			texture.Slice(offset, Math.Min(filled, rectWidth4 - filled)).CopyTo(texture[(offset + filled)..]);
 		for (int y2 = offset + xSide; y2 < yStop; y2 += xSide)
 			texture.Slice(offset, rectWidth4).CopyTo(texture[y2..]);
 		return texture;
 	}
-	/// <inheritdoc cref="DrawRectangle(Span{byte}, uint, int, int, int, int, ushort)"/>
-	public static byte[] DrawRectangle(this byte[] texture, uint color, int x, int y, int rectWidth = 1, int rectHeight = 1, ushort width = 0)
+	/// <inheritdoc cref="DrawRectangle(Span{byte}, uint, int, int, int, int, bool, ushort)"/>
+	public static byte[] DrawRectangle(this byte[] texture, uint color, int x, int y, int rectWidth = 1, int rectHeight = 1, bool fill = false, ushort width = 0)
 	{
-		texture.AsSpan().DrawRectangle(color, x, y, rectWidth, rectHeight, width);
+		texture.AsSpan().DrawRectangle(color, x, y, rectWidth, rectHeight, fill, width);
 		return texture;
 	}
 	/// <summary>
@@ -134,51 +158,35 @@ public static class PixelDraw
 		int w = width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width,
 			h = width < 1 ? w : (texture.Length / width) >> 2;
 		if (w < 1 || h < 1) return texture;
+		if (yA == yB)
+		{ // A horizontal line (or a single point) is one run of pixels, which draws the same pixels as the general code below would without its error term and bounds checks.
+			int left = Math.Max(Math.Min(xA, xB), 0),
+				right = Math.Min(Math.Max(xA, xB), w - 1);
+			if (yA >= 0 && yA < h && left <= right)
+				texture.DrawRectangle(color, left, yA, right - left + 1, 1, true, width);
+			return texture;
+		}
 		// Work in (major, minor) coordinates, where major is the axis the line is longer on, so that one loop handles all eight octants.
-		bool steep = Math.Abs((long)yB - yA) > Math.Abs((long)xB - xA);
-		long major0 = steep ? yA : xA,
-			major1 = steep ? yB : xB,
-			minor0 = steep ? xA : yA,
-			minor1 = steep ? xB : yB;
-		if (major0 > major1)
-		{
-			(major1, major0) = (major0, major1);
-			(minor1, minor0) = (minor0, minor1);
-		}
-		int majorSize = steep ? h : w,
-			minorSize = steep ? w : h,
-			majorStride = steep ? w << 2 : 4,
-			minorStride = steep ? 4 : w << 2,
-			minorSign = minor1 >= minor0 ? 1 : -1;
-		long majorLength = major1 - major0,
-			twoMajorLength = majorLength << 1,
-			twoMinorLength = Math.Abs(minor1 - minor0) << 1,
-			first = Math.Max(0L, -major0), // Clip to the texture on the major axis
-			last = Math.Min(majorLength, majorSize - 1L - major0);
+		BresenhamLine line = new(xA, yA, xB, yB);
+		int majorSize = line.Steep ? h : w,
+			minorSize = line.Steep ? w : h,
+			majorStride = line.Steep ? w << 2 : 4,
+			minorStride = line.Steep ? 4 : w << 2;
+		long twoMajorLength = line.MajorLength << 1,
+			twoMinorLength = line.MinorLength << 1,
+			first = Math.Max(0L, -line.Major0), // Clip to the texture on the major axis
+			last = Math.Min(line.MajorLength, majorSize - 1L - line.Major0);
 		if (first > last) return texture;
-		// The minor offset at major step i is floor((2 * minorLength * i + majorLength) / (2 * majorLength)).
 		// Start the usual incremental error term at the first step inside the texture instead of at step 0 so that clipping doesn't change which pixels are drawn.
-		long minorOffset, error;
-		if (first == 0)
-		{
-			minorOffset = 0;
-			error = majorLength;
-		}
-		else
-		{ // decimal because 2 * minorLength * first can need up to 65 bits
-			decimal numerator = (decimal)twoMinorLength * first + majorLength,
-				remainder = numerator % twoMajorLength;
-			minorOffset = (long)((numerator - remainder) / twoMajorLength);
-			error = (long)remainder;
-		}
+		long minorOffset = line.MinorOffset(first, out long error);
 		for (long step = first; ; step++)
 		{
-			long minor = minor0 + minorSign * minorOffset;
+			long minor = line.Minor0 + line.MinorSign * minorOffset;
 			if (minor >= 0 && minor < minorSize)
 				BinaryPrimitives.WriteUInt32BigEndian(
-					destination: texture.Slice((int)(major0 + step) * majorStride + (int)minor * minorStride, 4),
+					destination: texture.Slice((int)(line.Major0 + step) * majorStride + (int)minor * minorStride, 4),
 					value: color);
-			else if (minorSign > 0 ? minor >= minorSize : minor < 0)
+			else if (line.MinorSign > 0 ? minor >= minorSize : minor < 0)
 				break; // Left the texture on the minor axis and the line only moves farther away
 			if (step == last) break;
 			error += twoMinorLength;
@@ -247,13 +255,13 @@ public static class PixelDraw
 			if (fill)
 			{
 				// Rows near the left and right sides get one span per step.
-				texture.DrawRectangle(color, x - dy, y + dx, (dy << 1) + 1, 1, width);
-				texture.DrawRectangle(color, x - dy, y - dx, (dy << 1) + 1, 1, width);
+				texture.DrawRectangle(color, x - dy, y + dx, (dy << 1) + 1, 1, true, width);
+				texture.DrawRectangle(color, x - dy, y - dx, (dy << 1) + 1, 1, true, width);
 				// Rows near the top and bottom are shared by several steps, so only fill them once the widest step for that row is reached.
 				if (nextDy != dy || nextDx > nextDy)
 				{
-					texture.DrawRectangle(color, x - dx, y + dy, (dx << 1) + 1, 1, width);
-					texture.DrawRectangle(color, x - dx, y - dy, (dx << 1) + 1, 1, width);
+					texture.DrawRectangle(color, x - dx, y + dy, (dx << 1) + 1, 1, true, width);
+					texture.DrawRectangle(color, x - dx, y - dy, (dx << 1) + 1, 1, true, width);
 				}
 			}
 			else
@@ -326,11 +334,11 @@ public static class PixelDraw
 			{
 				int row = mirror < 1 ? y + dy : y - dy;
 				if (start < 1)
-					texture.DrawRectangle(color, x - extent, row, (extent << 1) + 1, 1, width);
+					texture.DrawRectangle(color, x - extent, row, (extent << 1) + 1, 1, true, width);
 				else
 				{
-					texture.DrawRectangle(color, x - extent, row, extent - start + 1, 1, width);
-					texture.DrawRectangle(color, x + start, row, extent - start + 1, 1, width);
+					texture.DrawRectangle(color, x - extent, row, extent - start + 1, 1, true, width);
+					texture.DrawRectangle(color, x + start, row, extent - start + 1, 1, true, width);
 				}
 			}
 			extentAbove = extent;
@@ -342,6 +350,161 @@ public static class PixelDraw
 	{
 		texture.AsSpan().DrawEllipse(x, y, radiusX, radiusY, fill, color, width);
 		return texture;
+	}
+	/// <summary>
+	/// Draws a triangle, either as a 1 pixel wide outline or filled in.
+	/// The points may be anywhere, including completely outside the texture in any direction. Only the part of the triangle that intersects the texture is drawn.
+	/// The outline is exactly the three lines that <see cref="DrawLine(Span{byte}, int, int, int, int, uint, ushort)"/> would draw between the points.
+	/// The fill covers everything between the outline's leftmost and rightmost pixels on each row, so it always includes the outline.
+	/// The same pixels are drawn in whatever order the three points are given in. Points in a straight line draw that line.
+	/// </summary>
+	/// <param name="texture">raw rgba8888 pixel data to be modified</param>
+	/// <param name="xA">x of the first point</param>
+	/// <param name="yA">y of the first point</param>
+	/// <param name="xB">x of the second point</param>
+	/// <param name="yB">y of the second point</param>
+	/// <param name="xC">x of the third point</param>
+	/// <param name="yC">y of the third point</param>
+	/// <param name="fill">true to fill in the triangle, false to only draw its outline</param>
+	/// <param name="color">rgba color to draw</param>
+	/// <param name="width">width of texture or 0 to assume square texture</param>
+	/// <returns>same texture with triangle drawn</returns>
+	public static Span<byte> DrawTriangle(this Span<byte> texture, int xA, int yA, int xB, int yB, int xC, int yC, bool fill = false, uint color = White, ushort width = 0)
+	{
+		if (!fill)
+			return texture
+				.DrawLine(xA, yA, xB, yB, color, width)
+				.DrawLine(xB, yB, xC, yC, color, width)
+				.DrawLine(xC, yC, xA, yA, color, width);
+		int w = width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width,
+			h = width < 1 ? w : (texture.Length / width) >> 2;
+		if (w < 1 || h < 1) return texture;
+		long minY = Math.Min(yA, Math.Min(yB, yC)),
+			maxY = Math.Max(yA, Math.Max(yB, yC));
+		if (Math.Max(xA, Math.Max(xB, xC)) < 0 || Math.Min(xA, Math.Min(xB, xC)) >= w || maxY < 0 || minY >= h) return texture;
+		BresenhamLine edgeAB = new(xA, yA, xB, yB),
+			edgeBC = new(xB, yB, xC, yC),
+			edgeCA = new(xC, yC, xA, yA);
+		// Only the rows on the texture are visited, so the work is bounded by the texture's height however large the triangle is.
+		for (long row = Math.Max(0L, minY); row <= Math.Min(h - 1L, maxY); row++)
+		{
+			long left = long.MaxValue,
+				right = long.MinValue;
+			edgeAB.Widen(row, ref left, ref right);
+			edgeBC.Widen(row, ref left, ref right);
+			edgeCA.Widen(row, ref left, ref right);
+			left = Math.Max(left, 0L);
+			right = Math.Min(right, w - 1L);
+			if (left <= right)
+				texture.DrawRectangle(color, (int)left, (int)row, (int)(right - left) + 1, 1, true, width);
+		}
+		return texture;
+	}
+	/// <inheritdoc cref="DrawTriangle(Span{byte}, int, int, int, int, int, int, bool, uint, ushort)"/>
+	public static byte[] DrawTriangle(this byte[] texture, int xA, int yA, int xB, int yB, int xC, int yC, bool fill = false, uint color = White, ushort width = 0)
+	{
+		texture.AsSpan().DrawTriangle(xA, yA, xB, yB, xC, yC, fill, color, width);
+		return texture;
+	}
+	/// <summary>
+	/// The rule for which pixels a Bresenham line puts on a grid, kept in one place so that everything that needs to know agrees.
+	/// Everything is in (major, minor) coordinates, where major is the axis the line is longer on (y if <see cref="Steep"/>, otherwise x), counting from the lower to the higher end of the major axis.
+	/// The pixel at major step i is i along the major axis and <see cref="MinorOffset"/>(i) along the minor axis, toward the other end of the line.
+	/// Because the line always starts from the lower end, the same pixels come out whichever end the caller calls A.
+	/// Where the ideal line is exactly halfway between two pixels, the pixel farther along the minor axis is chosen.
+	/// <see cref="DrawLine(Span{byte}, int, int, int, int, uint, ushort)"/> walks the line with an incremental error term that must always agree with <see cref="MinorOffset"/>, and <see cref="Widen"/> answers per row questions from it without walking.
+	/// </summary>
+	private readonly struct BresenhamLine
+	{
+		/// <summary>
+		/// true if y is the major axis
+		/// </summary>
+		public readonly bool Steep;
+		/// <summary>
+		/// Major and minor coordinates of the lower end of the line on the major axis
+		/// </summary>
+		public readonly long Major0, Minor0;
+		/// <summary>
+		/// Distances between the ends of the line along each axis. MajorLength is never smaller than MinorLength.
+		/// </summary>
+		public readonly long MajorLength, MinorLength;
+		/// <summary>
+		/// 1 if the minor coordinate increases along the line, otherwise -1
+		/// </summary>
+		public readonly int MinorSign;
+		/// <summary>
+		/// Lowest and highest y that the line reaches
+		/// </summary>
+		public readonly long FirstRow, LastRow;
+		public BresenhamLine(int xA, int yA, int xB, int yB)
+		{
+			Steep = Math.Abs((long)yB - yA) > Math.Abs((long)xB - xA);
+			long major1;
+			Major0 = Steep ? yA : xA;
+			major1 = Steep ? yB : xB;
+			Minor0 = Steep ? xA : yA;
+			long minor1 = Steep ? xB : yB;
+			if (Major0 > major1)
+			{
+				(major1, Major0) = (Major0, major1);
+				(minor1, Minor0) = (Minor0, minor1);
+			}
+			MajorLength = major1 - Major0;
+			MinorLength = Math.Abs(minor1 - Minor0);
+			MinorSign = minor1 >= Minor0 ? 1 : -1;
+			FirstRow = Math.Min(yA, yB);
+			LastRow = Math.Max(yA, yB);
+		}
+		/// <summary>
+		/// The rule: how far along the minor axis the pixel at this step along the major axis is, which is floor((2 * MinorLength * step + MajorLength) / (2 * MajorLength)).
+		/// </summary>
+		/// <param name="step">steps along the major axis from the lower end of the line</param>
+		/// <param name="error">what is left over from that division, which is where an incremental error term has to be at this step. It stays below 2 * MajorLength.</param>
+		public long MinorOffset(long step, out long error)
+		{
+			if (step == 0)
+			{ // The usual case, and the only one that is valid if the line is a single point
+				error = MajorLength;
+				return 0;
+			}
+			// decimal because 2 * MinorLength * step can need up to 65 bits
+			decimal numerator = 2m * MinorLength * step + MajorLength,
+				denominator = 2m * MajorLength,
+				remainder = numerator % denominator;
+			error = (long)remainder;
+			return (long)((numerator - remainder) / denominator);
+		}
+		/// <summary>
+		/// If the line has pixels on this row, widens left and right to include their columns.
+		/// </summary>
+		public void Widen(long row, ref long left, ref long right)
+		{
+			if (row < FirstRow || row > LastRow) return;
+			long from, to;
+			if (Steep)
+				from = to = Minor0 + MinorSign * MinorOffset(row - Major0, out _); // One pixel per row
+			else
+			{ // A run of pixels on this row: all of the steps i where MinorOffset(i) is k, which is solving the rule for i
+				long k = MinorSign * (row - Minor0),
+					first = 0,
+					last = MajorLength;
+				if (MinorLength > 0)
+				{
+					first = Math.Max(first, CeilingDivide(2m * MajorLength * k - MajorLength, 2m * MinorLength));
+					last = Math.Min(last, CeilingDivide(2m * MajorLength * k + MajorLength, 2m * MinorLength) - 1);
+				}
+				from = Major0 + first;
+				to = Major0 + last;
+			}
+			left = Math.Min(left, from);
+			right = Math.Max(right, to);
+		}
+		private static long CeilingDivide(decimal numerator, decimal denominator)
+		{
+			decimal remainder = numerator % denominator,
+				quotient = (numerator - remainder) / denominator; // Exact, rounded toward zero
+			return (long)(remainder > 0m ? quotient + 1m : quotient);
+		}
 	}
 	public static Span<byte> DrawBoundingBox(this Span<byte> texture, ushort width = 0)
 	{

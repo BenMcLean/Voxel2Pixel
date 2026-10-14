@@ -124,6 +124,7 @@ public static class TestData
 			y: height >> 2,
 			rectWidth: width >> 1,
 			rectHeight: height >> 1,
+			fill: true,
 			width: width);
 	public static byte[][][] Pyramid(int width, params byte[]? colors)
 	{
