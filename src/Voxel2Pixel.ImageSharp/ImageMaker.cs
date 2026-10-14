@@ -36,13 +36,13 @@ public static class ImageMaker
 		Image<SixLabors.ImageSharp.PixelFormats.Rgba32> gif = new(resized[0].Width, resized[0].Height);
 		SixLabors.ImageSharp.Formats.Gif.GifMetadata gifMetaData = gif.Metadata.GetGifMetadata();
 		gifMetaData.RepeatCount = repeatCount;
-		gifMetaData.ColorTableMode = SixLabors.ImageSharp.Formats.Gif.GifColorTableMode.Local;
+		gifMetaData.ColorTableMode = SixLabors.ImageSharp.Formats.FrameColorTableMode.Local;
 		foreach (Sprite sprite in resized)
 		{
 			Image<SixLabors.ImageSharp.PixelFormats.Rgba32> image = sprite.Png();
 			SixLabors.ImageSharp.Formats.Gif.GifFrameMetadata metadata = image.Frames.RootFrame.Metadata.GetGifMetadata();
 			metadata.FrameDelay = frameDelay;
-			metadata.DisposalMethod = SixLabors.ImageSharp.Formats.Gif.GifDisposalMethod.RestoreToBackground;
+			metadata.DisposalMode = SixLabors.ImageSharp.Formats.FrameDisposalMode.RestoreToBackground;
 			gif.Frames.AddFrame(image.Frames.RootFrame);
 		}
 		gif.Frames.RemoveFrame(0);//I don't know why ImageSharp has me doing this but if I don't then I get an extra transparent frame at the start.
@@ -56,7 +56,7 @@ public static class ImageMaker
 		Image<SixLabors.ImageSharp.PixelFormats.Rgba32> gif = new(width, height);
 		SixLabors.ImageSharp.Formats.Gif.GifMetadata gifMetaData = gif.Metadata.GetGifMetadata();
 		gifMetaData.RepeatCount = repeatCount;
-		gifMetaData.ColorTableMode = SixLabors.ImageSharp.Formats.Gif.GifColorTableMode.Local;
+		gifMetaData.ColorTableMode = SixLabors.ImageSharp.Formats.FrameColorTableMode.Local;
 		foreach (byte[] frame in frames)
 		{
 			Image<SixLabors.ImageSharp.PixelFormats.Rgba32> image = SixLabors.ImageSharp.Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(
@@ -65,7 +65,7 @@ public static class ImageMaker
 				height: height);
 			SixLabors.ImageSharp.Formats.Gif.GifFrameMetadata metadata = image.Frames.RootFrame.Metadata.GetGifMetadata();
 			metadata.FrameDelay = frameDelay;
-			metadata.DisposalMethod = SixLabors.ImageSharp.Formats.Gif.GifDisposalMethod.RestoreToBackground;
+			metadata.DisposalMode = SixLabors.ImageSharp.Formats.FrameDisposalMode.RestoreToBackground;
 			gif.Frames.AddFrame(image.Frames.RootFrame);
 		}
 		gif.Frames.RemoveFrame(0);//I don't know why ImageSharp has me doing this but if I don't then I get an extra transparent frame at the start.

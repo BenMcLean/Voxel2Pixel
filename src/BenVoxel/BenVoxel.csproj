@@ -6,11 +6,11 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="Cromulent.Encoding.Z85" Version="1.0.0" />
-		<PackageReference Include="PolySharp" Version="1.15.0">
+		<PackageReference Include="PolySharp" Version="1.16.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="System.Text.Json" Version="10.0.1" />
+		<PackageReference Include="System.Text.Json" Version="10.0.13" />
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\BenProgress\BenProgress.csproj" />

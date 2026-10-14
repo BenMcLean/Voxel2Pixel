@@ -10,4 +10,13 @@
 		<ProjectReference Include="..\..\src\BenVoxel.FileToVoxCore\BenVoxel.FileToVoxCore.csproj" />
 		<ProjectReference Include="..\..\src\BenVoxel\BenVoxel.csproj" />
 	</ItemGroup>
+	<ItemGroup>
+	  <PackageReference Update="Redot.SourceGenerators" Version="26.2.0" />
+	</ItemGroup>
+	<ItemGroup>
+	  <PackageReference Update="RedotSharp" Version="26.2.0" />
+	</ItemGroup>
+	<ItemGroup>
+	  <PackageReference Update="RedotSharpEditor" Version="26.2.0" />
+	</ItemGroup>
 </Project>
