@@ -30,7 +30,6 @@ namespace Voxel2Pixel.Draw;
 /// </summary>
 public static class PixelDraw
 {
-	//TODO: DrawEllipse
 	//TODO: DrawTriangle
 	public const double Tau = 2d * Math.PI;
 	public const uint Red = 0xFF0000FFu,
@@ -278,6 +277,70 @@ public static class PixelDraw
 	public static byte[] DrawCircle(this byte[] texture, int x, int y, ushort radius, bool fill = false, uint color = White, ushort width = 0)
 	{
 		texture.AsSpan().DrawCircle(x, y, radius, fill, color, width);
+		return texture;
+	}
+	/// <summary>
+	/// Draws an ellipse, either as a 1 pixel wide outline or filled in.
+	/// The center may be anywhere, including completely outside the texture in any direction. Only the part of the ellipse that overlaps the texture is drawn.
+	/// The ellipse is (2 * radiusX + 1) pixels wide and (2 * radiusY + 1) pixels tall, with the center pixel at the exact middle. A radius of 0 on an axis makes it a line, and 0 on both draws a single pixel.
+	/// A pixel is part of the ellipse if the middle of its edge facing the center vertically, or the middle of its edge facing the center horizontally, is inside or on the ideal ellipse.
+	/// The outline is every pixel of that shape that has a pixel outside the shape directly above, below, left or right of it.
+	/// With equal radii this draws exactly the same pixels as <see cref="DrawCircle(Span{byte}, int, int, ushort, bool, uint, ushort)"/>.
+	/// </summary>
+	/// <param name="texture">raw rgba8888 pixel data to be modified</param>
+	/// <param name="x">x of the center pixel</param>
+	/// <param name="y">y of the center pixel</param>
+	/// <param name="radiusX">distance in pixels from the center pixel to the outline pixels directly to its left and right</param>
+	/// <param name="radiusY">distance in pixels from the center pixel to the outline pixels directly above and below it</param>
+	/// <param name="fill">true to fill in the ellipse, false to only draw its outline</param>
+	/// <param name="color">rgba color to draw</param>
+	/// <param name="width">width of texture or 0 to assume square texture</param>
+	/// <returns>same texture with ellipse drawn</returns>
+	public static Span<byte> DrawEllipse(this Span<byte> texture, int x, int y, ushort radiusX, ushort radiusY, bool fill = false, uint color = White, ushort width = 0)
+	{
+		int w = width < 1 ? (int)Math.Sqrt(texture.Length >> 2) : width,
+			h = width < 1 ? w : (texture.Length / width) >> 2;
+		if (w < 1 || h < 1) return texture;
+		// If the ellipse's bounding box misses the texture then there is nothing to draw.
+		// Past this check the center is at most a radius pixels outside the texture, so none of the int math below can overflow.
+		if ((long)x + radiusX < 0 || (long)x - radiusX >= w || (long)y + radiusY < 0 || (long)y - radiusY >= h) return texture;
+		// Exact math needs more than 64 bits here: radius is up to 65535 so squaring both of them and multiplying by 4 reaches about 7.4E19.
+		decimal radiusX2 = (decimal)radiusX * radiusX,
+			radiusY2 = (decimal)radiusY * radiusY,
+			limit = 4 * radiusX2 * radiusY2;
+		// Is the point (doubleDx / 2, doubleDy / 2), relative to the center, inside or on the ellipse? Doubled so that pixel edge midpoints, which are half a pixel off, stay whole numbers.
+		bool Inside(int doubleDx, int doubleDy) => radiusY2 * doubleDx * doubleDx + radiusX2 * doubleDy * doubleDy <= limit;
+		// Walk the rows of the top half from the top down to the center row. The shape only gets wider as the rows get closer to the center, so both edge tests only ever move one way.
+		int bottomEdgeDx = -1, // Widest pixel found so far by the test on the pixel's bottom edge middle
+			leftEdgeDx = -1, // Widest pixel found so far by the test on the pixel's left edge middle
+			extentAbove = -1; // The width of the row above, where -1 means no pixels
+		for (int dy = radiusY; dy >= 0; dy--)
+		{
+			while (bottomEdgeDx < radiusX && Inside((bottomEdgeDx + 1) << 1, (dy << 1) - 1)) bottomEdgeDx++;
+			while (leftEdgeDx < radiusX && Inside(((leftEdgeDx + 1) << 1) - 1, dy << 1)) leftEdgeDx++;
+			int extent = Math.Max(bottomEdgeDx, leftEdgeDx), // This row goes from -extent to extent
+				// Filled draws the whole row. The outline is only where the row sticks out past the row above.
+				// Where it doesn't, the row's last pixel on each side is still outline.
+				start = fill ? 0 : Math.Min(extentAbove + 1, extent);
+			for (int mirror = 0; mirror < (dy > 0 ? 2 : 1); mirror++) // The row above the center and the same row below it
+			{
+				int row = mirror < 1 ? y + dy : y - dy;
+				if (start < 1)
+					texture.DrawRectangle(color, x - extent, row, (extent << 1) + 1, 1, width);
+				else
+				{
+					texture.DrawRectangle(color, x - extent, row, extent - start + 1, 1, width);
+					texture.DrawRectangle(color, x + start, row, extent - start + 1, 1, width);
+				}
+			}
+			extentAbove = extent;
+		}
+		return texture;
+	}
+	/// <inheritdoc cref="DrawEllipse(Span{byte}, int, int, ushort, ushort, bool, uint, ushort)"/>
+	public static byte[] DrawEllipse(this byte[] texture, int x, int y, ushort radiusX, ushort radiusY, bool fill = false, uint color = White, ushort width = 0)
+	{
+		texture.AsSpan().DrawEllipse(x, y, radiusX, radiusY, fill, color, width);
 		return texture;
 	}
 	public static Span<byte> DrawBoundingBox(this Span<byte> texture, ushort width = 0)
