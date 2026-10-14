@@ -105,7 +105,7 @@ public partial class Root : Node3D
 			Position = new Vector2(10, 10),
 			LabelSettings = new LabelSettings
 			{
-				FontSize = 64,
+				FontSize = 32,
 				FontColor = Colors.White,
 				OutlineSize = 2,
 				OutlineColor = Colors.Black,

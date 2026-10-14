@@ -466,8 +466,9 @@ public class BenVoxelFile() : IBinaryWritable
 	public static string ReadString(BinaryReader reader) => Encoding.UTF8.GetString(reader.ReadBytes((int)reader.ReadUInt32()));
 	public static void WriteString(BinaryWriter writer, string s)
 	{
-		writer.Write((uint)s.Length);
-		writer.Write(Encoding.UTF8.GetBytes(s));
+		byte[] bytes = Encoding.UTF8.GetBytes(s);
+		writer.Write((uint)bytes.Length);
+		writer.Write(bytes);
 	}
 	#endregion Utilities
 }
