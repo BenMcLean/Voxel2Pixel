@@ -32,7 +32,6 @@ namespace Voxel2Pixel.Draw;
 /// </summary>
 public static class PixelDraw
 {
-	//TODO: DrawFlood
 	//TODO: DrawCircle for arcs and pies
 	//TODO: DrawInsert XOR / OR / AND modes
 	public const double Tau = 2d * Math.PI;
@@ -398,6 +397,64 @@ public static class PixelDraw
 	public static byte[] DrawTriangle(this byte[] texture, int xA, int yA, int xB, int yB, int xC, int yC, bool fill = false, uint color = White, ushort width = 0)
 	{
 		texture.AsSpan().DrawTriangle(xA, yA, xB, yB, xC, yC, fill, color, width);
+		return texture;
+	}
+	/// <summary>
+	/// Flood fills the area of connected pixels that have the same rgba value as the starting pixel, replacing them with the specified color.
+	/// Pixels are connected if they touch along an edge, not just at a corner.
+	/// Does nothing if the starting point is outside the texture or if the starting pixel is already the specified color.
+	/// Uses a scanline algorithm with an explicit stack, so a large area can't overflow the call stack.
+	/// </summary>
+	/// <param name="texture">raw rgba8888 pixel data to be modified</param>
+	/// <param name="x">x of the starting pixel</param>
+	/// <param name="y">y of the starting pixel</param>
+	/// <param name="color">rgba color to fill with</param>
+	/// <param name="width">width of texture or 0 to assume square texture</param>
+	/// <returns>same texture with area filled</returns>
+	public static Span<byte> DrawFlood(this Span<byte> texture, int x, int y, uint color = White, ushort width = 0)
+	{
+		int w = PixelWidth(texture.Length, width),
+			h = PixelHeight(texture.Length, width);
+		if (x < 0 || y < 0 || x >= w || y >= h) return texture;
+		int xSide = w << 2;
+		Span<byte> replacement = stackalloc byte[4];
+		WritePixel(replacement, 0, color);
+		Span<byte> target = stackalloc byte[4];
+		texture.Slice(y * xSide + (x << 2), 4).CopyTo(target);
+		if (target.SequenceEqual(replacement)) return texture;
+		Stack<(int X, int Y)> seeds = new();
+		seeds.Push((x, y));
+		while (seeds.Count > 0)
+		{
+			(int sx, int sy) = seeds.Pop();
+			int rowStart = sy * xSide;
+			if (!texture.Slice(rowStart + (sx << 2), 4).SequenceEqual(target)) continue; // Already filled
+			int left = sx,
+				right = sx;
+			while (left > 0 && texture.Slice(rowStart + ((left - 1) << 2), 4).SequenceEqual(target)) left--;
+			while (right < w - 1 && texture.Slice(rowStart + ((right + 1) << 2), 4).SequenceEqual(target)) right++;
+			for (int i = left; i <= right; i++)
+				replacement.CopyTo(texture[(rowStart + (i << 2))..]);
+			for (int direction = -1; direction <= 1; direction += 2) // Row above, then row below
+			{
+				int ny = sy + direction;
+				if (ny < 0 || ny >= h) continue;
+				int neighborStart = ny * xSide;
+				bool inRun = false;
+				for (int i = left; i <= right; i++)
+				{
+					bool match = texture.Slice(neighborStart + (i << 2), 4).SequenceEqual(target);
+					if (match && !inRun) seeds.Push((i, ny)); // One seed per run
+					inRun = match;
+				}
+			}
+		}
+		return texture;
+	}
+	/// <inheritdoc cref="DrawFlood(Span{byte}, int, int, uint, ushort)"/>
+	public static byte[] DrawFlood(this byte[] texture, int x, int y, uint color = White, ushort width = 0)
+	{
+		texture.AsSpan().DrawFlood(x, y, color, width);
 		return texture;
 	}
 	/// <summary>
