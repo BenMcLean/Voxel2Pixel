@@ -32,7 +32,6 @@ namespace Voxel2Pixel.Draw;
 /// </summary>
 public static class PixelDraw
 {
-	//TODO: DrawCircle for arcs and pies
 	//TODO: DrawInsert XOR / OR / AND modes
 	public const double Tau = 2d * Math.PI;
 	public const uint Red = 0xFF0000FFu,
@@ -343,6 +342,197 @@ public static class PixelDraw
 	{
 		texture.AsSpan().DrawEllipse(x, y, radiusX, radiusY, fill, color, width);
 		return texture;
+	}
+	/// <summary>
+	/// Draws an arc of an ellipse: the part of its <see cref="DrawEllipse(Span{byte}, int, int, ushort, ushort, bool, uint, ushort)"/> outline that falls within a range of angles.
+	/// Angles are in radians. 0 points right, and angles increase clockwise on screen (because y+ is down), so Math.PI / 2 points down.
+	/// The arc runs clockwise from startAngle to endAngle. Angles can be any finite value, and the arc wraps past a full turn, so startAngle = 3 and endAngle = 1 is an arc of almost a full turn. If endAngle is at least a full turn (<see cref="Tau"/>) past startAngle then the whole ellipse outline is drawn.
+	/// Angles on an ellipse are parametric: the point at angle t is (radiusX * cos(t), radiusY * sin(t)) from the center. On a circle that is the same as the usual angle.
+	/// A pixel of the outline is drawn if its center is inside the range of angles or exactly on its edge. The ends of the arc are not guaranteed to line up with any particular pixel.
+	/// Everything else works as it does for DrawEllipse, including clipping, and with equal radii this draws the same pixels as the circle overload.
+	/// </summary>
+	/// <param name="texture">raw rgba8888 pixel data to be modified</param>
+	/// <param name="x">x of the center pixel</param>
+	/// <param name="y">y of the center pixel</param>
+	/// <param name="radiusX">distance in pixels from the center pixel to the outline pixels directly to its left and right</param>
+	/// <param name="radiusY">distance in pixels from the center pixel to the outline pixels directly above and below it</param>
+	/// <param name="startAngle">angle in radians where the arc starts</param>
+	/// <param name="endAngle">angle in radians where the arc ends, going clockwise from startAngle</param>
+	/// <param name="color">rgba color to draw</param>
+	/// <param name="width">width of texture or 0 to assume square texture</param>
+	/// <returns>same texture with arc drawn</returns>
+	public static Span<byte> DrawArc(this Span<byte> texture, int x, int y, ushort radiusX, ushort radiusY, double startAngle, double endAngle, uint color = White, ushort width = 0)
+	{
+		if (!IsFinite(startAngle) || !IsFinite(endAngle)) return texture;
+		Sector sector = new(startAngle, endAngle, radiusX, radiusY);
+		return sector.Full
+			? texture.DrawEllipse(x, y, radiusX, radiusY, false, color, width)
+			: DrawEllipseSector(texture, x, y, radiusX, radiusY, false, color, width, sector);
+	}
+	/// <inheritdoc cref="DrawArc(Span{byte}, int, int, ushort, ushort, double, double, uint, ushort)"/>
+	public static byte[] DrawArc(this byte[] texture, int x, int y, ushort radiusX, ushort radiusY, double startAngle, double endAngle, uint color = White, ushort width = 0)
+	{
+		texture.AsSpan().DrawArc(x, y, radiusX, radiusY, startAngle, endAngle, color, width);
+		return texture;
+	}
+	/// <summary>
+	/// Draws an arc of a circle. Same as the ellipse overload with equal radii. See that for how the angles work.
+	/// </summary>
+	/// <param name="radius">distance in pixels from the center pixel to the outline pixels directly to its left, right, top and bottom</param>
+	/// <inheritdoc cref="DrawArc(Span{byte}, int, int, ushort, ushort, double, double, uint, ushort)"/>
+	public static Span<byte> DrawArc(this Span<byte> texture, int x, int y, ushort radius, double startAngle, double endAngle, uint color = White, ushort width = 0) =>
+		texture.DrawArc(x, y, radius, radius, startAngle, endAngle, color, width);
+	/// <inheritdoc cref="DrawArc(Span{byte}, int, int, ushort, double, double, uint, ushort)"/>
+	public static byte[] DrawArc(this byte[] texture, int x, int y, ushort radius, double startAngle, double endAngle, uint color = White, ushort width = 0)
+	{
+		texture.AsSpan().DrawArc(x, y, radius, radius, startAngle, endAngle, color, width);
+		return texture;
+	}
+	/// <summary>
+	/// Draws a pie slice of an ellipse: the part of the ellipse that falls within a range of angles, either filled in or as a 1 pixel wide outline.
+	/// The outline is the arc (see <see cref="DrawArc(Span{byte}, int, int, ushort, ushort, double, double, uint, ushort)"/>, which also explains how the angles work) plus the two straight lines from the center to the ends of the arc.
+	/// If the range is a full turn or more then this is the same as DrawEllipse.
+	/// </summary>
+	/// <param name="texture">raw rgba8888 pixel data to be modified</param>
+	/// <param name="x">x of the center pixel</param>
+	/// <param name="y">y of the center pixel</param>
+	/// <param name="radiusX">distance in pixels from the center pixel to the outline pixels directly to its left and right</param>
+	/// <param name="radiusY">distance in pixels from the center pixel to the outline pixels directly above and below it</param>
+	/// <param name="startAngle">angle in radians where the slice starts</param>
+	/// <param name="endAngle">angle in radians where the slice ends, going clockwise from startAngle</param>
+	/// <param name="fill">true to fill in the slice, false to only draw its outline</param>
+	/// <param name="color">rgba color to draw</param>
+	/// <param name="width">width of texture or 0 to assume square texture</param>
+	/// <returns>same texture with pie slice drawn</returns>
+	public static Span<byte> DrawPie(this Span<byte> texture, int x, int y, ushort radiusX, ushort radiusY, double startAngle, double endAngle, bool fill = false, uint color = White, ushort width = 0)
+	{
+		if (!IsFinite(startAngle) || !IsFinite(endAngle)) return texture;
+		Sector sector = new(startAngle, endAngle, radiusX, radiusY);
+		if (sector.Full)
+			return texture.DrawEllipse(x, y, radiusX, radiusY, fill, color, width);
+		DrawEllipseSector(texture, x, y, radiusX, radiusY, fill, color, width, sector);
+		if (!fill)
+		{ // The straight sides. A filled slice already has them.
+			// Clamped because the end of a radius can be past the limits of an int when the center is near them.
+			static int Offset(int center, double distance) => (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, center + distance));
+			texture.DrawLine(x, y, Offset(x, Math.Round(radiusX * Math.Cos(startAngle))), Offset(y, Math.Round(radiusY * Math.Sin(startAngle))), color, width);
+			texture.DrawLine(x, y, Offset(x, Math.Round(radiusX * Math.Cos(endAngle))), Offset(y, Math.Round(radiusY * Math.Sin(endAngle))), color, width);
+		}
+		return texture;
+	}
+	/// <inheritdoc cref="DrawPie(Span{byte}, int, int, ushort, ushort, double, double, bool, uint, ushort)"/>
+	public static byte[] DrawPie(this byte[] texture, int x, int y, ushort radiusX, ushort radiusY, double startAngle, double endAngle, bool fill = false, uint color = White, ushort width = 0)
+	{
+		texture.AsSpan().DrawPie(x, y, radiusX, radiusY, startAngle, endAngle, fill, color, width);
+		return texture;
+	}
+	/// <summary>
+	/// Draws a pie slice of a circle. Same as the ellipse overload with equal radii. See that for how the angles work.
+	/// </summary>
+	/// <param name="radius">distance in pixels from the center pixel to the outline pixels directly to its left, right, top and bottom</param>
+	/// <inheritdoc cref="DrawPie(Span{byte}, int, int, ushort, ushort, double, double, bool, uint, ushort)"/>
+	public static Span<byte> DrawPie(this Span<byte> texture, int x, int y, ushort radius, double startAngle, double endAngle, bool fill = false, uint color = White, ushort width = 0) =>
+		texture.DrawPie(x, y, radius, radius, startAngle, endAngle, fill, color, width);
+	/// <inheritdoc cref="DrawPie(Span{byte}, int, int, ushort, double, double, bool, uint, ushort)"/>
+	public static byte[] DrawPie(this byte[] texture, int x, int y, ushort radius, double startAngle, double endAngle, bool fill = false, uint color = White, ushort width = 0)
+	{
+		texture.AsSpan().DrawPie(x, y, radius, radius, startAngle, endAngle, fill, color, width);
+		return texture;
+	}
+	private static bool IsFinite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
+	/// <summary>
+	/// Draws the pixels that <see cref="DrawEllipse(Span{byte}, int, int, ushort, ushort, bool, uint, ushort)"/> would draw, except only those inside the sector.
+	/// Walks the rows the same way as DrawEllipse, but tests each pixel of each run instead of drawing the run in one go.
+	/// </summary>
+	private static Span<byte> DrawEllipseSector(Span<byte> texture, int x, int y, ushort radiusX, ushort radiusY, bool fill, uint color, ushort width, Sector sector)
+	{
+		int w = PixelWidth(texture.Length, width),
+			h = PixelHeight(texture.Length, width);
+		if (w < 1 || h < 1) return texture;
+		if ((long)x + radiusX < 0 || (long)x - radiusX >= w || (long)y + radiusY < 0 || (long)y - radiusY >= h) return texture;
+		decimal radiusX2 = (decimal)radiusX * radiusX,
+			radiusY2 = (decimal)radiusY * radiusY,
+			limit = 4 * radiusX2 * radiusY2;
+		bool Inside(int doubleDx, int doubleDy) => radiusY2 * doubleDx * doubleDx + radiusX2 * doubleDy * doubleDy <= limit;
+		int bottomEdgeDx = -1,
+			leftEdgeDx = -1,
+			extentAbove = -1;
+		for (int dy = radiusY; dy >= 0; dy--)
+		{
+			while (bottomEdgeDx < radiusX && Inside((bottomEdgeDx + 1) << 1, (dy << 1) - 1)) bottomEdgeDx++;
+			while (leftEdgeDx < radiusX && Inside(((leftEdgeDx + 1) << 1) - 1, dy << 1)) leftEdgeDx++;
+			int extent = Math.Max(bottomEdgeDx, leftEdgeDx),
+				start = fill ? 0 : Math.Min(extentAbove + 1, extent);
+			for (int mirror = 0; mirror < (dy > 0 ? 2 : 1); mirror++)
+			{
+				int row = mirror < 1 ? y + dy : y - dy;
+				if (row >= 0 && row < h)
+					if (start < 1)
+						DrawSectorRun(texture, w, x, y, x - extent, x + extent, row, color, sector);
+					else
+					{
+						DrawSectorRun(texture, w, x, y, x - extent, x - start, row, color, sector);
+						DrawSectorRun(texture, w, x, y, x + start, x + extent, row, color, sector);
+					}
+			}
+			extentAbove = extent;
+		}
+		return texture;
+	}
+	/// <summary>
+	/// Draws the pixels of a horizontal run, left to right inclusive, that are on the texture and inside the sector.
+	/// </summary>
+	private static void DrawSectorRun(Span<byte> texture, int w, int centerX, int centerY, int left, int right, int row, uint color, Sector sector)
+	{
+		for (int px = Math.Max(left, 0); px <= Math.Min(right, w - 1); px++)
+			if (sector.Contains(px - centerX, row - centerY))
+				WritePixel(texture, (row * w + px) << 2, color);
+	}
+	/// <summary>
+	/// A range of angles around the center of an ellipse, which answers whether a pixel is inside it by comparing cross products instead of calculating each pixel's angle.
+	/// Pixel offsets are first divided by the radii, which turns the ellipse into a unit circle, so that the angles are parametric.
+	/// </summary>
+	private readonly struct Sector
+	{
+		/// <summary>
+		/// true if the range is a full turn or more, so everything is inside
+		/// </summary>
+		public readonly bool Full;
+		private readonly double startX, startY, endX, endY, scaleX, scaleY;
+		private readonly bool reflex, ray;
+		public Sector(double startAngle, double endAngle, ushort radiusX, ushort radiusY)
+		{
+			double sweep = endAngle - startAngle;
+			Full = sweep >= Tau;
+			if (!Full)
+			{
+				sweep %= Tau;
+				if (sweep < 0d) sweep += Tau;
+			}
+			startX = Math.Cos(startAngle);
+			startY = Math.Sin(startAngle);
+			endX = Math.Cos(endAngle);
+			endY = Math.Sin(endAngle);
+			scaleX = 1d / Math.Max((int)radiusX, 1); // A radius of 0 makes a line, whose angles don't mean much
+			scaleY = 1d / Math.Max((int)radiusY, 1);
+			reflex = sweep > Math.PI;
+			ray = sweep == 0d;
+		}
+		/// <param name="dx">pixels right of the center</param>
+		/// <param name="dy">pixels below the center</param>
+		public bool Contains(int dx, int dy)
+		{
+			if (Full) return true;
+			double px = dx * scaleX,
+				py = dy * scaleY,
+				fromStart = startX * py - startY * px, // Positive if the pixel is clockwise from the start, within half a turn
+				toEnd = px * endY - py * endX; // Positive if the end is clockwise from the pixel, within half a turn
+			if (reflex) // More than half a turn: everything except the smaller range from the end around to the start
+				return fromStart >= 0d || toEnd >= 0d;
+			if (ray) // Only the line from the center in the direction of the start, not also the opposite direction
+				return fromStart == 0d && startX * px + startY * py >= 0d;
+			return fromStart >= 0d && toEnd >= 0d;
+		}
 	}
 	/// <summary>
 	/// Draws a triangle, either as a 1 pixel wide outline or filled in.
