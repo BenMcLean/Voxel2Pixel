@@ -90,12 +90,15 @@ vec4 raymarch(vec3 ray_origin, vec3 ray_dir) {
     // Step through voxels
     for (int step = 0; step < max_steps && distance < max_distance; step++) {
         // Bounds check (16-bit unsigned coordinates: 0-65535)
-        if (any(lessThan(voxel_pos, ivec3(0))) || any(greaterThanEqual(voxel_pos, ivec3(65536)))) {
+        // The entry ray is backed off the box surface, so it may start just outside the valid range
+        // (e.g. faces at coordinate 0); tolerate that for the first few steps instead of breaking
+        bool out_of_range = any(lessThan(voxel_pos, ivec3(0))) || any(greaterThanEqual(voxel_pos, ivec3(65536)));
+        if (out_of_range && step >= 3) {
             break;
         }
 
         // Fetch voxel (converts Y-up to Z-up internally)
-        uint material = fetch_voxel(voxel_pos);
+        uint material = out_of_range ? 0u : fetch_voxel(voxel_pos);
 
         if (material > 0u) {
             // Hit solid voxel
@@ -157,7 +160,9 @@ void fragment() {
         // Camera is OUTSIDE the box, looking at a front face
         // Start raymarching from the box surface (entry point)
         ray_dir = normalize(world_vertex - camera_pos);
-        ray_origin = world_vertex;
+        // Back off slightly so faces lying exactly on the box surface are entered via a DDA step
+        // (which sets the hit normal) instead of being the starting voxel with a zero normal
+        ray_origin = world_vertex - ray_dir * 0.01;
     } else {
         // Camera is INSIDE the box, looking at a back face
         // Start raymarching from the camera position toward the back face
