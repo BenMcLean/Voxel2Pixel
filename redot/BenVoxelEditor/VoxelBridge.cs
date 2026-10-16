@@ -8,41 +8,28 @@ namespace BenVoxelEditor;
 
 /// <summary>
 /// Bridges SegmentedBrickModel (CPU) to Godot GPU textures for raymarching.
-/// Uploads 64³ brick arrays directly as RG32UI textures (2 MB each) - NO conversion needed!
 ///
-/// Usage in spatial shaders (Godot 4):
-/// - Bind DirectoryTexture as uniform sampler2D (RGBA32UI format)
-/// - Bind segment textures as usampler3D array (RG32UI brick data)
-/// - Use ActiveSegmentCount for loop bounds
+/// The model is split into segments of 128³ voxels. Each loaded segment becomes one 64³ 3D texture in
+/// which one texel is one brick (2×2×2 voxels, 8 bytes, one palette-index byte per voxel). Godot's
+/// spatial shaders cannot sample integer textures, so the 8 bytes are stored bit-for-bit in the R and G
+/// channels of a 32-bit-float RGBAF texel (R = low 32 bits, G = high 32 bits) and recovered in the shader
+/// with floatBitsToUint. Each texture is 64³ × 16 bytes = 4 MB.
 ///
-/// Shader example (Godot Shader Language):
-/// uniform int active_segment_count;
-/// uniform usampler2D segment_directory; // RGBA32UI: (segX, segY, segZ, texIndex)
-/// uniform usampler3D segment_bricks[64]; // RG32UI: each texel = one brick (8 bytes)
+/// A small directory texture tells the shader which segments exist. It is rebuilt whenever a segment
+/// loads or unloads.
 ///
-/// uint fetch_voxel(ivec3 world_pos) {
-///     ivec3 seg_coord = world_pos >> 7;
+/// What the shader (voxel_raymarch.gdshader) expects:
+/// - uniform int active_segment_count         = ActiveSegmentCount
+/// - uniform sampler2D segment_directory      = DirectoryTexture  (MaxSegments×1 RGBAF;
+///                                              texel i = segX, segY, segZ, texture slot, as floats)
+/// - uniform sampler3D segment_bricks[64]     = the entries of Textures, ordered as Directory is, so a
+///                                              directory entry's TextureIndex is its array position
 ///
-///     // Linear search through directory texture
-///     for (int i = 0; i < active_segment_count; i++) {
-///         uvec4 entry = texelFetch(segment_directory, ivec2(i, 0), 0);
-///         if (entry.xyz == uvec3(seg_coord)) {
-///             // Extract brick coordinates and voxel offset
-///             ivec3 brick_coord = (world_pos >> 1) & 0x3F;  // Bits 1-6
-///             ivec3 voxel_offset = world_pos & 1;           // Bit 0
+/// Voxel coordinates here are Z-up storage coordinates (MagicaVoxel convention). A voxel at (x, y, z)
+/// is in segment (x >> 7, y >> 7, z >> 7), in brick ((x >> 1) &amp; 63, ...), at offset (x &amp; 1, ...).
 ///
-///             // Fetch entire brick (8 bytes as uvec2)
-///             uvec2 brick = texelFetch(segment_bricks[entry.w], brick_coord, 0).rg;
-///
-///             // Extract specific voxel byte
-///             int byte_idx = (voxel_offset.z << 2) | (voxel_offset.y << 1) | voxel_offset.x;
-///             return (byte_idx < 4)
-///                 ? (brick.x >> (byte_idx * 8)) & 0xFFu
-///                 : (brick.y >> ((byte_idx - 4) * 8)) & 0xFFu;
-///         }
-///     }
-///     return 0u; // Empty space
-/// }
+/// The bridge also tracks when removals may have left the model's bounds larger than necessary and
+/// can recompute tight bounds on the GPU (see <see cref="Poll"/> and <see cref="TrimBounds"/>).
 /// </summary>
 public sealed class VoxelBridge : IDisposable
 {
@@ -71,7 +58,19 @@ public sealed class VoxelBridge : IDisposable
 	/// </summary>
 	private ImageTexture _directoryTexture;
 
-	private const int MaxSegments = 256; // Max directory size
+	/// <summary>
+	/// Maximum number of segments resident on the GPU at once. Must equal the size of the
+	/// <c>segment_bricks</c> sampler3D array in voxel_raymarch.gdshader; if it is larger, the shader
+	/// indexes past the end of the array. It also sizes the directory texture.
+	///
+	/// TEMPORARY LIMIT - NOT PART OF THE FORMAT. The file format addresses 512 segments per axis
+	/// (SegmentedBrickModel.md), and each resident segment costs 4 MB of GPU memory here, so 64 is
+	/// 256 MB. Supporting big scenes needs a different residency scheme, for example one large 3D atlas
+	/// texture whose slots are paged in and out, with the directory mapping segment -> atlas slot. That
+	/// would replace this constant, the per-segment ImageTexture3D dictionary, the sampler array in the
+	/// shader, and the texture-array binding in Root.cs (SetupShaderUniforms / UpdateShaderSegments).
+	/// </summary>
+	public const int MaxSegments = 64;
 
 	// GPU bounds computation
 	private BoundsCompute _boundsCompute;
@@ -102,11 +101,7 @@ public sealed class VoxelBridge : IDisposable
 			uint segmentId = ((uint)(brick.X >> 7) << 18) | ((uint)(brick.Y >> 7) << 9) | (uint)(brick.Z >> 7);
 
 			if (seenSegments.Add(segmentId) && _model.TryGetSegment(segmentId, out ulong[] bricks))
-			{
-				// Upload this segment
-				ImageTexture3D texture = CreateSegmentTexture(bricks);
-				_textures[segmentId] = texture;
-			}
+				TryUploadSegment(segmentId, bricks);
 		}
 
 		if (seenSegments.Count > 0)
@@ -125,10 +120,25 @@ public sealed class VoxelBridge : IDisposable
 		if (!_model.TryGetSegment(segmentId, out ulong[] bricks))
 			return;
 
-		// Upload full segment texture (2 MB)
-		ImageTexture3D texture = CreateSegmentTexture(bricks);
-		_textures[segmentId] = texture;
-		RebuildDirectory();
+		if (TryUploadSegment(segmentId, bricks))
+			RebuildDirectory();
+	}
+
+	/// <summary>
+	/// Uploads a segment's full texture (4 MB) unless doing so would exceed <see cref="MaxSegments"/>.
+	/// Replacing a segment that is already resident is always allowed. A refused segment is NOT drawn:
+	/// its voxels are treated as empty space, and an error is logged. Does not rebuild the directory.
+	/// </summary>
+	/// <returns>True if the segment is now resident on the GPU.</returns>
+	private bool TryUploadSegment(uint segmentId, ulong[] bricks)
+	{
+		if (!_textures.ContainsKey(segmentId) && _textures.Count >= MaxSegments)
+		{
+			GD.PrintErr($"VoxelBridge: segment {segmentId} not uploaded; GPU limit of {MaxSegments} resident segments reached");
+			return false;
+		}
+		_textures[segmentId] = CreateSegmentTexture(bricks);
+		return true;
 	}
 
 	private void HandleBrickDirty(uint segmentId, int brickIndex, ulong payload)

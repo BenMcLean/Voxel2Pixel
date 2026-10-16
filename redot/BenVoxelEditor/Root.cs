@@ -6,25 +6,45 @@ using BenVoxel.Models;
 using BenVoxelEditor;
 using Godot;
 
+/// <summary>
+/// Demo scene root: loads a .vox model, uploads it to the GPU through <see cref="VoxelBridge"/> and
+/// renders it by raymarching inside a bounding box (see voxel_raymarch.gdshader).
+///
+/// Coordinate systems: voxel data is Z-up (MagicaVoxel); Godot is Y-up. Everything on the C# side that
+/// positions the box or camera converts (x, y, z)_zup to (x, z, y)_yup. The shader converts back when
+/// it reads voxels, so the scene's world space is voxel space, one unit per voxel.
+/// </summary>
 public partial class Root : Node3D
 {
+	/// <summary>Uploads the model's segments to GPU textures and keeps them in sync with edits.</summary>
 	private VoxelBridge _voxelBridge;
+	/// <summary>Material running voxel_raymarch.gdshader; carries every shader uniform.</summary>
 	private ShaderMaterial _raymarchMaterial;
 	private FreeLookCamera _camera;
+	/// <summary>256x1 RGBA8 palette lookup texture bound to the shader.</summary>
 	private ImageTexture _paletteTexture;
 
 	private SegmentedBrickModel _model;
+	/// <summary>256 palette colours, each a uint packed as 0xRRGGBBAA ("rgba8888, big endian", see VoxFileModel.Argb2rgba). Entry 0 is empty.</summary>
 	private uint[] _palette;
 
-	// Bounding box mesh for raymarching
+	/// <summary>
+	/// Box mesh instance covering the model's bounds. It is only the rasterisation footprint: the shader
+	/// ignores its geometry and traces rays through the voxels inside it.
+	/// </summary>
 	private MeshInstance3D _boundingBox;
 	private BoxMesh _boxMesh;
 
-	// Toggling voxel demo state
+	// Toggling voxel demo state (adds/removes the voxel at (0,0,0) once a second)
 	private double _toggleTimer;
 	private bool _voxelPresent;
+	/// <summary>Last segment count printed, so the log only reports changes.</summary>
 	private int _lastSegmentCount;
 
+	/// <summary>
+	/// Loads the model, builds the GPU resources, creates the bounding box and camera, and hooks
+	/// model events so the shader follows edits and bounds changes.
+	/// </summary>
 	public override void _Ready()
 	{
 		// Load voxel model
@@ -67,6 +87,11 @@ public partial class Root : Node3D
 		GD.Print("Toggling voxel at (0,0,0) every second to demonstrate real-time editing.");
 	}
 
+	/// <summary>
+	/// Creates the free-look camera, placed in front of and slightly above the model and aimed at its
+	/// centre, at 2.5x the model's largest dimension away so the whole model is in view.
+	/// Must run after the model is loaded because it uses the model's size.
+	/// </summary>
 	private void SetupCamera()
 	{
 		// Model center in voxel space (Z-up)
@@ -95,6 +120,12 @@ public partial class Root : Node3D
 		GD.Print($"Camera positioned at {cameraPos} looking at {modelCenter}");
 	}
 
+	/// <summary>
+	/// Creates the bounding box mesh sized and positioned to the model's bounds, assigns the raymarch
+	/// shader material and passes the box to the shader. Despite the name this is a box, not a quad.
+	/// The BoxMesh is centred on its own origin, so the instance's Position is the box centre in voxel
+	/// space, which is why the shader adds box_center to mesh-local coordinates.
+	/// </summary>
 	private void SetupRaymarchQuad()
 	{
 		// Get bounds and calculate box dimensions
@@ -126,6 +157,7 @@ public partial class Root : Node3D
 
 		// Position box at voxel volume center
 		_boundingBox.Position = center;
+		SetBoxUniforms(center, size);
 
 		// Disable casting shadows (this is a raymarched volume, not geometry)
 		_boundingBox.CastShadow = GeometryInstance3D.ShadowCastingSetting.Off;
@@ -136,6 +168,9 @@ public partial class Root : Node3D
 
 	/// <summary>
 	/// Calculates bounding box center and size in Godot world space (Y-up) from model bounds (Z-up).
+	/// The max is extended by 2 voxels because bounds are stored at brick granularity (2x2x2 voxels), so
+	/// the last brick may contain voxels up to max + 1. Corners are therefore always integer coordinates.
+	/// Returns a zero-sized box at the origin if the model has no bounds yet.
 	/// </summary>
 	private static (Vector3 Center, Vector3 Size) CalculateBoundingBox(SegmentedBrickModel.Bounds? bounds)
 	{
@@ -159,7 +194,8 @@ public partial class Root : Node3D
 	}
 
 	/// <summary>
-	/// Handles bounds changes by resizing and repositioning the raymarching bounding box.
+	/// Handles bounds changes (growth from edits, or shrinkage after GPU trimming) by resizing and
+	/// repositioning the raymarching bounding box and updating the shader's copy of it.
 	/// </summary>
 	private void HandleBoundsChanged(SegmentedBrickModel.Bounds? oldBounds, SegmentedBrickModel.Bounds newBounds)
 	{
@@ -171,11 +207,30 @@ public partial class Root : Node3D
 		// Update the box mesh size and position
 		_boxMesh.Size = size;
 		_boundingBox.Position = center;
+		SetBoxUniforms(center, size);
 
 		GD.Print($"Bounds expanded: {oldBounds} -> {newBounds}");
 		GD.Print($"  New bounding box: center={center}, size={size}");
 	}
 
+	/// <summary>
+	/// Tells the shader the bounding box in voxel space; it intersects rays with this box analytically
+	/// to find where each ray enters the volume. Must be called whenever the BoxMesh size or the
+	/// instance Position changes, or rays will start in the wrong place.
+	/// </summary>
+	private void SetBoxUniforms(Vector3 center, Vector3 size)
+	{
+		_raymarchMaterial.SetShaderParameter("box_center", center);
+		_raymarchMaterial.SetShaderParameter("box_size", size);
+	}
+
+	/// <summary>
+	/// Binds the segment count, directory texture, per-segment brick textures and palette to the shader.
+	/// The brick textures are bound as an array in directory order, so the directory's texture index
+	/// for a segment is its position in that array. The array holds at most
+	/// <see cref="VoxelBridge.MaxSegments"/> textures (a temporary limit that big scenes will need to
+	/// replace with a paged atlas; see the note on that constant).
+	/// </summary>
 	private void SetupShaderUniforms()
 	{
 		if (_raymarchMaterial == null || _voxelBridge == null)
@@ -223,6 +278,12 @@ public partial class Root : Node3D
 		SetupPaletteTexture();
 	}
 
+	/// <summary>
+	/// Builds the 256x1 RGBA8 palette texture. The model stores each colour as a 0xRRGGBBAA uint.
+	/// Reversing the endianness makes it 0xAABBGGRR, whose little-endian bytes in memory are R, G, B, A,
+	/// which is the byte order an RGBA8 image expects; the raw byte copy below relies on that, so the
+	/// two steps must be changed together. The shader reads this texture as sRGB (source_color).
+	/// </summary>
 	private void SetupPaletteTexture()
 	{
 		// Convert palette with endianness reversal
@@ -248,10 +309,17 @@ public partial class Root : Node3D
 		GD.Print("Palette texture created and bound (256 colors)");
 	}
 
+	/// <summary>
+	/// Per-frame work: lets the bridge finish any pending GPU bounds trim, refreshes the inverse model
+	/// matrix the shader needs, and runs the toggling-voxel editing demo.
+	/// </summary>
 	public override void _Process(double delta)
 	{
 		// Poll for async GPU bounds computation results
 		_voxelBridge?.Poll();
+
+		// The fragment stage has no inverse of MODEL_MATRIX, so supply it every frame
+		_raymarchMaterial?.SetShaderParameter("inv_model_matrix", new Projection(_boundingBox.GlobalTransform.AffineInverse()));
 
 		// Toggle voxel at (0,0,0) every second to demonstrate real-time editing
 		_toggleTimer += delta;
