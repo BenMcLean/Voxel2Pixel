@@ -49,6 +49,16 @@ public partial class Root : Node3D
 	private StandardMaterial3D _cursorMaterial;
 	private double _cursorTime;
 
+	/// <summary>World position of the ortho-sprite preview's centre when the demo starts: to the left of the model.</summary>
+	private static readonly Vector3 SpriteWorldCenter = ModelWorldCenter + new Vector3(-0.4f, 0f, 0f);
+	/// <summary>Non-editable ortho-sprite preview of the same model; also a grab target.</summary>
+	private VoxelOrthoSprite _sprite;
+	/// <summary>Model bounds in voxel space (Y-up), kept for the sprite and for grab hit-testing.</summary>
+	private Vector3 _boxCenter;
+	private Vector3 _boxSize;
+	/// <summary>What the current grip grab moves: <see cref="_modelPivot"/> or <see cref="_sprite"/>. Chosen when the first grip goes down.</summary>
+	private Node3D _grabTarget;
+
 	/// <summary>Radius of the light sphere in metres.</summary>
 	private const float LightRadius = 0.025f;
 	/// <summary>White sphere marking the point light; a child of the root (world space), so grab-scaling the model does not resize it.</summary>
@@ -96,6 +106,7 @@ public partial class Root : Node3D
 		SetupDisplay();
 		LoadModel();
 		SetupRaymarchBox();
+		SetupSprite();
 		SetupLight();
 		SetupShaderUniforms();
 		// Subscribe to model changes to update shader when data changes
@@ -214,7 +225,9 @@ public partial class Root : Node3D
 	#region Grab manipulation
 
 	/// <summary>
-	/// Grip-to-grab. While one grip is held the model follows that controller (position and orientation).
+	/// Grip-to-grab. The target is the ortho-sprite preview if the gripping hand's tip is inside it when the
+	/// first grip goes down, otherwise the editable model, and stays the same until all grips are released.
+	/// While one grip is held the target follows that controller (position and orientation).
 	/// While both are held it follows the midpoint between them, is oriented by the line between the hands
 	/// (with roll taken from the controllers' up directions) and is scaled by the change in hand distance.
 	/// All cases use one "grab frame" whose basis is scaled by the hand distance; the pivot is moved by
@@ -235,16 +248,36 @@ public partial class Root : Node3D
 			_gripMask = 0;
 			return;
 		}
+		if (_gripMask == 0)
+			_grabTarget = PickGrabTarget(right ? _rightController : _leftController);
 		Transform3D frame = GetGrabFrame(left, right);
 		if (mask != _gripMask)
 		{
 			_gripMask = mask;
 			_grabFrameStart = frame;
-			_pivotStart = _modelPivot.GlobalTransform;
+			_pivotStart = _grabTarget.GlobalTransform;
 			return;
 		}
-		_modelPivot.GlobalTransform = frame * _grabFrameStart.AffineInverse() * _pivotStart;
+		_grabTarget.GlobalTransform = frame * _grabFrameStart.AffineInverse() * _pivotStart;
 	}
+
+	/// <summary>
+	/// Chooses what a grab moves. The ortho sprite wins if the controller's tip is inside its bounding sphere and
+	/// closer to its centre than to the model's; anywhere else the editable model is grabbed, as before.
+	/// </summary>
+	private Node3D PickGrabTarget(XRController3D controller)
+	{
+		Vector3 tip = controller.GlobalTransform * new Vector3(0f, 0f, -TipOffset);
+		(float spriteDistance, float spriteRadius) = BoundsSphereDistance(_sprite, tip);
+		if (spriteDistance > spriteRadius)
+			return _modelPivot;
+		(float modelDistance, float modelRadius) = BoundsSphereDistance(_modelPivot, tip);
+		return modelDistance <= modelRadius && modelDistance < spriteDistance ? _modelPivot : _sprite;
+	}
+
+	/// <summary>Distance from a world point to the centre of a pivot's model bounds, and the radius of the sphere around those bounds, both in metres.</summary>
+	private (float Distance, float Radius) BoundsSphereDistance(Node3D pivot, Vector3 point) =>
+		(pivot.ToGlobal(_boxCenter).DistanceTo(point), _boxSize.Length() * 0.5f * pivot.GlobalTransform.Basis.Scale.X);
 
 	/// <summary>
 	/// Light dragging takes priority over model grabbing. A drag starts when the right grip goes down (with the
@@ -288,8 +321,11 @@ public partial class Root : Node3D
 	{
 		if (_lightOn)
 			return _lightSphere.GlobalPosition;
-		return (_vrActive ? _xrCamera : (Node3D)_flatCamera).GlobalPosition;
+		return GetHeadWorldPosition();
 	}
+
+	/// <summary>The viewer's position: the XR camera (midpoint between the eyes) in VR, otherwise the free-look camera.</summary>
+	private Vector3 GetHeadWorldPosition() => (_vrActive ? _xrCamera : (Node3D)_flatCamera).GlobalPosition;
 
 	private Transform3D GetGrabFrame(bool left, bool right)
 	{
@@ -357,6 +393,21 @@ public partial class Root : Node3D
 		};
 		_modelPivot.AddChild(_boundingBox);
 		SetBoxUniforms(center, size);
+	}
+
+	/// <summary>
+	/// Creates the ortho-sprite preview. Its node maps voxel space to metres like the model pivot, and it is
+	/// positioned so the model's centre lands on <see cref="SpriteWorldCenter"/>.
+	/// </summary>
+	private void SetupSprite()
+	{
+		_sprite = new VoxelOrthoSprite
+		{
+			Scale = Vector3.One * MetresPerVoxel,
+			Position = SpriteWorldCenter - _boxCenter * MetresPerVoxel,
+		};
+		AddChild(_sprite);
+		SetBoxUniforms(_boxCenter, _boxSize);
 	}
 
 	/// <summary>
@@ -486,13 +537,22 @@ public partial class Root : Node3D
 	/// </summary>
 	private void SetBoxUniforms(Vector3 center, Vector3 size)
 	{
-		_raymarchMaterial.SetShaderParameter("box_center", center);
-		_raymarchMaterial.SetShaderParameter("box_size", size);
+		_boxCenter = center;
+		_boxSize = size;
+		SetSharedParameter("box_center", center);
+		SetSharedParameter("box_size", size);
 	}
 
 	#endregion
 
 	#region Shader uniforms
+
+	/// <summary>Sets a uniform on both voxel materials: the editable raymarcher and the ortho sprite. Both read the same voxel data.</summary>
+	private void SetSharedParameter(StringName name, Variant value)
+	{
+		_raymarchMaterial?.SetShaderParameter(name, value);
+		_sprite?.Material.SetShaderParameter(name, value);
+	}
 
 	/// <summary>Binds the segment count, directory texture, per-segment brick textures and palette to the shader.</summary>
 	private void SetupShaderUniforms()
@@ -511,9 +571,9 @@ public partial class Root : Node3D
 	{
 		if (_raymarchMaterial is null || _voxelBridge is null)
 			return;
-		_raymarchMaterial.SetShaderParameter("active_segment_count", _voxelBridge.ActiveSegmentCount);
+		SetSharedParameter("active_segment_count", _voxelBridge.ActiveSegmentCount);
 		if (_voxelBridge.DirectoryTexture is not null)
-			_raymarchMaterial.SetShaderParameter("segment_directory", _voxelBridge.DirectoryTexture);
+			SetSharedParameter("segment_directory", _voxelBridge.DirectoryTexture);
 		Godot.Collections.Array<Texture3D> textureArray = [];
 		foreach (VoxelBridge.SegmentEntry entry in _voxelBridge.Directory)
 		{
@@ -523,7 +583,7 @@ public partial class Root : Node3D
 			else
 				GD.PrintErr($"Texture not found for segment ({entry.X}, {entry.Y}, {entry.Z})");
 		}
-		_raymarchMaterial.SetShaderParameter("segment_bricks", textureArray);
+		SetSharedParameter("segment_bricks", textureArray);
 		if (_voxelBridge.ActiveSegmentCount != _lastSegmentCount)
 		{
 			_lastSegmentCount = _voxelBridge.ActiveSegmentCount;
@@ -544,7 +604,7 @@ public partial class Root : Node3D
 			converted[i] = BinaryPrimitives.ReverseEndianness(_palette[i]);
 		byte[] paletteData = MemoryMarshal.AsBytes(converted.AsSpan()).ToArray();
 		_paletteTexture = ImageTexture.CreateFromImage(Image.CreateFromData(256, 1, false, Image.Format.Rgba8, paletteData));
-		_raymarchMaterial.SetShaderParameter("palette", _paletteTexture);
+		SetSharedParameter("palette", _paletteTexture);
 	}
 
 	#endregion
@@ -561,7 +621,9 @@ public partial class Root : Node3D
 		// The fragment stage has no inverse of MODEL_MATRIX, so supply it every frame. Reading it from
 		// the box's GlobalTransform includes the pivot, so moving or scaling the pivot just works.
 		_raymarchMaterial?.SetShaderParameter("inv_model_matrix", new Projection(_boundingBox.GlobalTransform.AffineInverse()));
-		_raymarchMaterial?.SetShaderParameter("light_position", _modelPivot.ToLocal(GetLightWorldPosition()));
+		Vector3 lightWorld = GetLightWorldPosition();
+		_raymarchMaterial?.SetShaderParameter("light_position", _modelPivot.ToLocal(lightWorld));
+		_sprite?.UpdateView(GetHeadWorldPosition(), lightWorld, _boxCenter, _boxSize);
 		_toggleTimer += delta;
 		if (_toggleTimer >= 1.0)
 		{
