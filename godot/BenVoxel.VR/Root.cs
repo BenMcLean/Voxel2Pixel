@@ -95,6 +95,7 @@ public partial class Root : Node3D
 			DisplayServer.WindowSetVsyncMode(DisplayServer.VSyncMode.Disabled);
 			GetViewport().UseXR = true;
 			_vrActive = true;
+			EnablePassthrough(xr);
 			SetupXRRig();
 		}
 		else
@@ -104,6 +105,27 @@ public partial class Root : Node3D
 				: "OpenXR not available, using flatscreen mode");
 			SetupFlatCamera();
 		}
+	}
+
+	/// <summary>
+	/// Shows the real world behind the model if the runtime supports it, otherwise leaves the dark
+	/// background. Two routes: the vendor passthrough API (Meta, via the OpenXR vendors plugin), or the
+	/// standard OpenXR alpha-blend environment mode. Either way the viewport background must be
+	/// transparent so the empty pixels are left for the compositor to fill with the camera image. The
+	/// raymarch shader discards misses and outputs opaque hits, so the model itself is unaffected.
+	/// </summary>
+	private void EnablePassthrough(XRInterface xr)
+	{
+		bool enabled = false;
+		if (xr.IsPassthroughSupported())
+			enabled = xr.StartPassthrough();
+		if (!enabled && xr.GetSupportedEnvironmentBlendModes().Contains((int)XRInterface.EnvironmentBlendModeEnum.AlphaBlend))
+		{
+			xr.EnvironmentBlendMode = XRInterface.EnvironmentBlendModeEnum.AlphaBlend;
+			enabled = true;
+		}
+		GetViewport().TransparentBg = enabled;
+		GD.Print(enabled ? "Passthrough enabled" : "Passthrough not available; using opaque background");
 	}
 
 	/// <summary>Builds the tracked rig: origin at floor level, head camera, and both controllers with small marker cubes.</summary>
