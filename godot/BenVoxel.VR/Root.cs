@@ -31,17 +31,10 @@ public partial class Root : Node3D
 	private bool _vrActive;
 	private XROrigin3D _xrOrigin;
 	private XRCamera3D _xrCamera;
-	private XRController3D _leftController;
-	private XRController3D _rightController;
-	/// <summary>Which controllers were gripping on the previous frame (bit 0 left, bit 1 right); a change re-baselines the grab.</summary>
-	private int _gripMask;
-	/// <summary>Grab frame and model pivot transform captured when the current grab started.</summary>
-	private Transform3D _grabFrameStart;
-	private Transform3D _pivotStart;
+	/// <summary>Both hands and everything they can touch; null on the flat screen.</summary>
+	private InteractionManager _interaction;
 	private FreeLookCamera _flatCamera;
 
-	/// <summary>Distance in metres from the grip pose to the controller tip (the marker box is 0.1 m deep, centred on the grip).</summary>
-	private const float TipOffset = 0.05f;
 	/// <summary>Seconds per blink phase of the edit cursor.</summary>
 	private const double CursorBlinkPeriod = 0.4;
 	/// <summary>One-voxel translucent cube, child of <see cref="_modelPivot"/> and snapped to the voxel under the right controller's tip.</summary>
@@ -56,24 +49,10 @@ public partial class Root : Node3D
 	/// <summary>Model bounds in voxel space (Y-up), kept for the sprite and for grab hit-testing.</summary>
 	private Vector3 _boxCenter;
 	private Vector3 _boxSize;
-	/// <summary>What the current grip grab moves: <see cref="_modelPivot"/> or <see cref="_sprite"/>. Chosen when the first grip goes down.</summary>
-	private Node3D _grabTarget;
-
-	/// <summary>Radius of the light sphere in metres.</summary>
-	private const float LightRadius = 0.025f;
-	/// <summary>White sphere marking the point light; a child of the root (world space), so grab-scaling the model does not resize it.</summary>
-	private MeshInstance3D _lightSphere;
-	/// <summary>Translucent shell around the light sphere, shown while it is being dragged.</summary>
-	private MeshInstance3D _lightHalo;
-	/// <summary>True while the right grip is dragging the light instead of the model.</summary>
-	private bool _draggingLight;
-	/// <summary>True when the light sphere is on (white); when off (black) the viewer's head is the light source.</summary>
-	private bool _lightOn = true;
-	private StandardMaterial3D _lightMaterial;
-	/// <summary>Right trigger state on the previous frame, for edge detection.</summary>
-	private bool _triggerWasDown;
-	/// <summary>Light position in the right controller's local space, captured when the drag started.</summary>
-	private Vector3 _lightGrabOffset;
+	/// <summary>Where the toy box starts: down and to the right of the model, at hip height.</summary>
+	private static readonly Vector3 ToyBoxWorldPosition = new(0.4f, 0.9f, -0.4f);
+	/// <summary>The point light, and what a trigger on it does.</summary>
+	private LightProp _light;
 
 	/// <summary>Uploads the model's segments to GPU textures and keeps them in sync with edits.</summary>
 	private VoxelBridge _voxelBridge;
@@ -108,6 +87,8 @@ public partial class Root : Node3D
 		SetupRaymarchBox();
 		SetupSprite();
 		SetupLight();
+		SetupProps();
+		SetupInteractables();
 		SetupShaderUniforms();
 		// Subscribe to model changes to update shader when data changes
 		_model.OnSegmentLoaded += _ => UpdateShaderSegments();
@@ -172,17 +153,18 @@ public partial class Root : Node3D
 		GD.Print(enabled ? "Passthrough enabled" : "Passthrough not available; using opaque background");
 	}
 
-	/// <summary>Builds the tracked rig: origin at floor level, head camera, and both controllers with small marker cubes.</summary>
+	/// <summary>Builds the tracked rig: origin at floor level, head camera, and both controllers with small marker cubes, and the interaction manager that reads them.</summary>
 	private void SetupXRRig()
 	{
 		_xrOrigin = new XROrigin3D { Name = "XROrigin" };
 		_xrCamera = new XRCamera3D { Name = "XRCamera", Current = true };
 		_xrOrigin.AddChild(_xrCamera);
-		_leftController = CreateController("LeftController", "left_hand");
-		_rightController = CreateController("RightController", "right_hand");
-		_xrOrigin.AddChild(_leftController);
-		_xrOrigin.AddChild(_rightController);
+		XRController3D leftController = CreateController("LeftController", "left_hand");
+		XRController3D rightController = CreateController("RightController", "right_hand");
+		_xrOrigin.AddChild(leftController);
+		_xrOrigin.AddChild(rightController);
 		AddChild(_xrOrigin);
+		_interaction = new InteractionManager(new Hand(leftController), new Hand(rightController));
 	}
 
 	private static XRController3D CreateController(string name, string tracker)
@@ -218,131 +200,6 @@ public partial class Root : Node3D
 		_flatCamera.LookAt(ModelWorldCenter);
 		_flatCamera.Near = 0.02f;
 		_flatCamera.Enabled = true; // after AddChild so it can find the previous camera
-	}
-
-	#endregion
-
-	#region Grab manipulation
-
-	/// <summary>
-	/// Grip-to-grab. The target is the ortho-sprite preview if the gripping hand's tip is inside it when the
-	/// first grip goes down, otherwise the editable model, and stays the same until all grips are released.
-	/// While one grip is held the target follows that controller (position and orientation).
-	/// While both are held it follows the midpoint between them, is oriented by the line between the hands
-	/// (with roll taken from the controllers' up directions) and is scaled by the change in hand distance.
-	/// All cases use one "grab frame" whose basis is scaled by the hand distance; the pivot is moved by
-	/// frame_now * frame_start^-1, so the model stays rigidly attached to the frame. Pressing or releasing a
-	/// grip changes the frame's definition, so the grab is re-baselined at that moment to avoid a jump.
-	/// </summary>
-	private void UpdateGrab()
-	{
-		if (_leftController is null)
-			return;
-		bool left = _leftController.IsButtonPressed("grip_click");
-		bool right = _rightController.IsButtonPressed("grip_click");
-		if (UpdateLightDrag(left, right))
-			return;
-		int mask = (left ? 1 : 0) | (right ? 2 : 0);
-		if (mask == 0)
-		{
-			_gripMask = 0;
-			return;
-		}
-		if (_gripMask == 0)
-			_grabTarget = PickGrabTarget(right ? _rightController : _leftController);
-		Transform3D frame = GetGrabFrame(left, right);
-		if (mask != _gripMask)
-		{
-			_gripMask = mask;
-			_grabFrameStart = frame;
-			_pivotStart = _grabTarget.GlobalTransform;
-			return;
-		}
-		_grabTarget.GlobalTransform = frame * _grabFrameStart.AffineInverse() * _pivotStart;
-	}
-
-	/// <summary>
-	/// Chooses what a grab moves. The ortho sprite wins if the controller's tip is inside its bounding sphere and
-	/// closer to its centre than to the model's; anywhere else the editable model is grabbed, as before.
-	/// </summary>
-	private Node3D PickGrabTarget(XRController3D controller)
-	{
-		Vector3 tip = controller.GlobalTransform * new Vector3(0f, 0f, -TipOffset);
-		(float spriteDistance, float spriteRadius) = BoundsSphereDistance(_sprite, tip);
-		if (spriteDistance > spriteRadius)
-			return _modelPivot;
-		(float modelDistance, float modelRadius) = BoundsSphereDistance(_modelPivot, tip);
-		return modelDistance <= modelRadius && modelDistance < spriteDistance ? _modelPivot : _sprite;
-	}
-
-	/// <summary>Distance from a world point to the centre of a pivot's model bounds, and the radius of the sphere around those bounds, both in metres.</summary>
-	private (float Distance, float Radius) BoundsSphereDistance(Node3D pivot, Vector3 point) =>
-		(pivot.ToGlobal(_boxCenter).DistanceTo(point), _boxSize.Length() * 0.5f * pivot.GlobalTransform.Basis.Scale.X);
-
-	/// <summary>
-	/// Light dragging takes priority over model grabbing. A drag starts when the right grip goes down (with the
-	/// left not held) while the cursor intersects the light sphere, and ends when that grip is released. While
-	/// dragging, the model grab is suspended and its state reset, so a still-held left grip re-baselines cleanly
-	/// afterwards. Returns true if the model grab should be skipped this frame.
-	/// </summary>
-	private bool UpdateLightDrag(bool left, bool right)
-	{
-		if (_draggingLight && !right)
-			_draggingLight = false;
-		else if (!_draggingLight && right && !left && _gripMask == 0 && CursorTouchesLight())
-		{
-			_draggingLight = true;
-			_lightGrabOffset = _rightController.GlobalTransform.AffineInverse() * _lightSphere.GlobalPosition;
-		}
-		if (!_draggingLight)
-			return false;
-		_gripMask = 0;
-		_lightSphere.GlobalPosition = _rightController.GlobalTransform * _lightGrabOffset;
-		return true;
-	}
-
-	/// <summary>True if the (voxel-snapped) edit cursor cube overlaps the light sphere. Tested in voxel space, where the cursor is an axis-aligned unit cube.</summary>
-	private bool CursorTouchesLight()
-	{
-		if (_cursor is null || !_rightController.GetHasTrackingData())
-			return false;
-		Vector3 centre = _modelPivot.ToLocal(_lightSphere.GlobalPosition);
-		float radius = LightRadius / _modelPivot.GlobalTransform.Basis.Scale.X;
-		Vector3 half = Vector3.One * 0.5f;
-		Vector3 closest = centre.Clamp(_cursor.Position - half, _cursor.Position + half);
-		return closest.DistanceSquaredTo(centre) <= radius * radius;
-	}
-
-	/// <summary>
-	/// Where the shader's light is in world space: the sphere when it is on, otherwise the viewer's head (the
-	/// XR camera is the midpoint between the eyes; on the flat screen it is the free-look camera).
-	/// </summary>
-	private Vector3 GetLightWorldPosition()
-	{
-		if (_lightOn)
-			return _lightSphere.GlobalPosition;
-		return GetHeadWorldPosition();
-	}
-
-	/// <summary>The viewer's position: the XR camera (midpoint between the eyes) in VR, otherwise the free-look camera.</summary>
-	private Vector3 GetHeadWorldPosition() => (_vrActive ? _xrCamera : (Node3D)_flatCamera).GlobalPosition;
-
-	private Transform3D GetGrabFrame(bool left, bool right)
-	{
-		if (!(left && right))
-			return (left ? _leftController : _rightController).GlobalTransform;
-		Transform3D l = _leftController.GlobalTransform;
-		Transform3D r = _rightController.GlobalTransform;
-		Vector3 across = r.Origin - l.Origin;
-		float distance = Mathf.Max(across.Length(), 0.01f);
-		Vector3 x = across / distance;
-		Vector3 up = l.Basis.Y + r.Basis.Y;
-		Vector3 z = x.Cross(up);
-		if (z.LengthSquared() < 1e-6f)
-			z = x.Cross(Vector3.Up); // controllers' up is parallel to the hand line; any perpendicular will do
-		z = z.Normalized();
-		Vector3 y = z.Cross(x);
-		return new Transform3D(new Basis(x, y, z).Scaled(Vector3.One * distance), (l.Origin + r.Origin) / 2);
 	}
 
 	#endregion
@@ -436,39 +293,63 @@ public partial class Root : Node3D
 		_modelPivot.AddChild(_cursor);
 	}
 
-	/// <summary>Creates the white light sphere, floating up and to the right of the model.</summary>
+	/// <summary>Creates the light sphere, floating up and to the right of the model.</summary>
 	private void SetupLight()
 	{
-		_lightMaterial = new StandardMaterial3D
-		{
-			ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
-			AlbedoColor = Colors.White,
-		};
-		_lightSphere = new MeshInstance3D
-		{
-			Name = "LightSphere",
-			Mesh = new SphereMesh { Radius = LightRadius, Height = LightRadius * 2f },
-			MaterialOverride = _lightMaterial,
-			CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
-			Position = ModelWorldCenter + new Vector3(0.2f, 0.2f, 0.1f),
-		};
-		_lightHalo = new MeshInstance3D
-		{
-			Name = "LightHalo",
-			Mesh = new SphereMesh { Radius = LightRadius * 2f, Height = LightRadius * 4f },
-			MaterialOverride = new StandardMaterial3D
-			{
-				ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
-				Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
-				BlendMode = BaseMaterial3D.BlendModeEnum.Add,
-				AlbedoColor = new Color(1f, 1f, 1f, 0.25f),
-			},
-			CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
-			Visible = false,
-		};
-		_lightSphere.AddChild(_lightHalo);
-		AddChild(_lightSphere);
+		_light = new LightProp(ModelWorldCenter + new Vector3(0.2f, 0.2f, 0.1f), CellTouchesSphere);
+		AddChild(_light.Node);
 	}
+
+	/// <summary>Creates the props: the toy box, facing the player, and the pencil floating above it.</summary>
+	private void SetupProps()
+	{
+		AddProp(new ToyBox { Position = ToyBoxWorldPosition, Rotation = new Vector3(0f, Mathf.DegToRad(-20f), 0f) });
+		AddProp(new ModelProp("res://assets/pencil/pencil.glb", 0.25f) { Position = ToyBoxWorldPosition + new Vector3(0f, 0.3f, 0f) });
+	}
+
+	/// <summary>Puts a prop in the world and makes it grabbable. This is all a new prop needs.</summary>
+	private void AddProp(Prop prop)
+	{
+		AddChild(prop);
+		_interaction?.Register(prop);
+	}
+
+	/// <summary>
+	/// Registers what the hands can touch. The sprite goes first so it wins a tie with the model; the model is also
+	/// what a grab that touches nothing carries.
+	/// </summary>
+	private void SetupInteractables()
+	{
+		if (_interaction is null)
+			return;
+		Func<(Vector3, float)> bounds = () => (_boxCenter, _boxSize.Length() * 0.5f);
+		_interaction.Register(new SphereGrabbable(_sprite, bounds));
+		_interaction.Register(new SphereGrabbable(_modelPivot, bounds), fallback: true);
+		_interaction.Register(_light);
+	}
+
+	/// <summary>The centre, in voxel space, of the voxel containing a world point.</summary>
+	private Vector3 SnapToVoxel(Vector3 world) => _modelPivot.ToLocal(world).Floor() + Vector3.One * 0.5f;
+
+	/// <summary>True if the voxel containing <paramref name="tip"/> overlaps a sphere. Tested in voxel space, where the voxel is an axis-aligned unit cube.</summary>
+	private bool CellTouchesSphere(Vector3 tip, Vector3 sphereWorld, float radiusMetres)
+	{
+		Vector3 cell = SnapToVoxel(tip);
+		Vector3 centre = _modelPivot.ToLocal(sphereWorld);
+		float radius = radiusMetres / _modelPivot.GlobalTransform.Basis.Scale.X;
+		Vector3 half = Vector3.One * 0.5f;
+		Vector3 closest = centre.Clamp(cell - half, cell + half);
+		return closest.DistanceSquaredTo(centre) <= radius * radius;
+	}
+
+	/// <summary>
+	/// Where the shader's light is in world space: the sphere when it is on, otherwise the viewer's head (the
+	/// XR camera is the midpoint between the eyes; on the flat screen it is the free-look camera).
+	/// </summary>
+	private Vector3 GetLightWorldPosition() => _light.On ? _light.WorldPosition : GetHeadWorldPosition();
+
+	/// <summary>The viewer's position: the XR camera (midpoint between the eyes) in VR, otherwise the free-look camera.</summary>
+	private Vector3 GetHeadWorldPosition() => (_vrActive ? _xrCamera : (Node3D)_flatCamera).GlobalPosition;
 
 	/// <summary>
 	/// Snaps the cursor to the voxel containing the right controller's tip and blinks it between two
@@ -477,22 +358,12 @@ public partial class Root : Node3D
 	/// </summary>
 	private void UpdateCursor(double delta)
 	{
-		if (_cursor is null || _rightController is null)
+		if (_cursor is null || _interaction is null)
 			return;
-		Vector3 tip = (_rightController.GlobalTransform * new Vector3(0f, 0f, -TipOffset));
-		Vector3 voxel = _modelPivot.ToLocal(tip); // voxel space, one unit per voxel
-		_cursor.Position = voxel.Floor() + Vector3.One * 0.5f;
-		// Over the light the cursor gives way to the halo, which stays up during the drag
-		bool overLight = _draggingLight || CursorTouchesLight();
-		_cursor.Visible = _rightController.GetHasTrackingData() && !overLight;
-		_lightHalo.Visible = overLight;
-		bool triggerDown = _rightController.IsButtonPressed("trigger_click");
-		if (triggerDown && !_triggerWasDown && overLight)
-		{
-			_lightOn = !_lightOn;
-			_lightMaterial.AlbedoColor = _lightOn ? Colors.White : Colors.Black;
-		}
-		_triggerWasDown = triggerDown;
+		Hand hand = _interaction.Primary;
+		_cursor.Position = SnapToVoxel(hand.TipWorld);
+		// Over the light the cursor gives way to the halo
+		_cursor.Visible = hand.HasTracking && hand.Hovered is not { SuppressesEditCursor: true };
 		_cursorTime += delta;
 		_cursorMaterial.NoDepthTest = (int)(_cursorTime / CursorBlinkPeriod) % 2 == 1;
 	}
@@ -616,7 +487,7 @@ public partial class Root : Node3D
 	public override void _Process(double delta)
 	{
 		_voxelBridge?.Poll();
-		UpdateGrab();
+		_interaction?.Update();
 		UpdateCursor(delta);
 		// The fragment stage has no inverse of MODEL_MATRIX, so supply it every frame. Reading it from
 		// the box's GlobalTransform includes the pivot, so moving or scaling the pivot just works.
