@@ -40,6 +40,15 @@ public partial class Root : Node3D
 	private Transform3D _pivotStart;
 	private FreeLookCamera _flatCamera;
 
+	/// <summary>Distance in metres from the grip pose to the controller tip (the marker box is 0.1 m deep, centred on the grip).</summary>
+	private const float TipOffset = 0.05f;
+	/// <summary>Seconds per blink phase of the edit cursor.</summary>
+	private const double CursorBlinkPeriod = 0.4;
+	/// <summary>One-voxel translucent cube, child of <see cref="_modelPivot"/> and snapped to the voxel under the right controller's tip.</summary>
+	private MeshInstance3D _cursor;
+	private StandardMaterial3D _cursorMaterial;
+	private double _cursorTime;
+
 	/// <summary>Uploads the model's segments to GPU textures and keeps them in sync with edits.</summary>
 	private VoxelBridge _voxelBridge;
 	/// <summary>Material running voxel_raymarch.gdshader; carries every shader uniform.</summary>
@@ -270,6 +279,7 @@ public partial class Root : Node3D
 			Position = ModelWorldCenter - center * MetresPerVoxel,
 		};
 		AddChild(_modelPivot);
+		SetupCursor();
 		_boxMesh = new BoxMesh { Size = size };
 		_raymarchMaterial = new ShaderMaterial { Shader = GD.Load<Shader>("res://voxel_raymarch.gdshader") };
 		_boundingBox = new MeshInstance3D
@@ -283,6 +293,49 @@ public partial class Root : Node3D
 		};
 		_modelPivot.AddChild(_boundingBox);
 		SetBoxUniforms(center, size);
+	}
+
+	/// <summary>
+	/// Creates the edit cursor: a translucent one-voxel cube that will preview where a voxel would be added
+	/// or removed. It is ordinary geometry in the transparent pass, which runs after the opaque pass where the
+	/// raymarch shader has written DEPTH at each hit voxel, so the depth test against the model just works.
+	/// Being a child of the pivot it is one voxel in size at any grab scale.
+	/// </summary>
+	private void SetupCursor()
+	{
+		_cursorMaterial = new StandardMaterial3D
+		{
+			ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+			Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+			AlbedoColor = new Color(1f, 0.9f, 0.2f, 0.45f),
+			CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+		};
+		_cursor = new MeshInstance3D
+		{
+			Name = "EditCursor",
+			Mesh = new BoxMesh { Size = Vector3.One * 1.02f }, // a hair oversize so it does not z-fight voxel faces
+			MaterialOverride = _cursorMaterial,
+			CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+			Visible = false, // until a controller exists
+		};
+		_modelPivot.AddChild(_cursor);
+	}
+
+	/// <summary>
+	/// Snaps the cursor to the voxel containing the right controller's tip and blinks it between two
+	/// looks: depth-tested (parts behind the model are hidden) and drawn over everything (x-ray), so
+	/// you can tell both where it is and whether the model is in front of it.
+	/// </summary>
+	private void UpdateCursor(double delta)
+	{
+		if (_cursor is null || _rightController is null)
+			return;
+		Vector3 tip = (_rightController.GlobalTransform * new Vector3(0f, 0f, -TipOffset));
+		Vector3 voxel = _modelPivot.ToLocal(tip); // voxel space, one unit per voxel
+		_cursor.Position = voxel.Floor() + Vector3.One * 0.5f;
+		_cursor.Visible = _rightController.GetHasTrackingData();
+		_cursorTime += delta;
+		_cursorMaterial.NoDepthTest = (int)(_cursorTime / CursorBlinkPeriod) % 2 == 1;
 	}
 
 	/// <summary>
@@ -396,6 +449,7 @@ public partial class Root : Node3D
 	{
 		_voxelBridge?.Poll();
 		UpdateGrab();
+		UpdateCursor(delta);
 		// The fragment stage has no inverse of MODEL_MATRIX, so supply it every frame. Reading it from
 		// the box's GlobalTransform includes the pivot, so moving or scaling the pivot just works.
 		_raymarchMaterial?.SetShaderParameter("inv_model_matrix", new Projection(_boundingBox.GlobalTransform.AffineInverse()));
