@@ -31,6 +31,13 @@ public partial class Root : Node3D
 	private bool _vrActive;
 	private XROrigin3D _xrOrigin;
 	private XRCamera3D _xrCamera;
+	private XRController3D _leftController;
+	private XRController3D _rightController;
+	/// <summary>Which controllers were gripping on the previous frame (bit 0 left, bit 1 right); a change re-baselines the grab.</summary>
+	private int _gripMask;
+	/// <summary>Grab frame and model pivot transform captured when the current grab started.</summary>
+	private Transform3D _grabFrameStart;
+	private Transform3D _pivotStart;
 	private FreeLookCamera _flatCamera;
 
 	/// <summary>Uploads the model's segments to GPU textures and keeps them in sync with edits.</summary>
@@ -134,8 +141,10 @@ public partial class Root : Node3D
 		_xrOrigin = new XROrigin3D { Name = "XROrigin" };
 		_xrCamera = new XRCamera3D { Name = "XRCamera", Current = true };
 		_xrOrigin.AddChild(_xrCamera);
-		_xrOrigin.AddChild(CreateController("LeftController", "left_hand"));
-		_xrOrigin.AddChild(CreateController("RightController", "right_hand"));
+		_leftController = CreateController("LeftController", "left_hand");
+		_rightController = CreateController("RightController", "right_hand");
+		_xrOrigin.AddChild(_leftController);
+		_xrOrigin.AddChild(_rightController);
 		AddChild(_xrOrigin);
 	}
 
@@ -172,6 +181,59 @@ public partial class Root : Node3D
 		_flatCamera.LookAt(ModelWorldCenter);
 		_flatCamera.Near = 0.02f;
 		_flatCamera.Enabled = true; // after AddChild so it can find the previous camera
+	}
+
+	#endregion
+
+	#region Grab manipulation
+
+	/// <summary>
+	/// Grip-to-grab. While one grip is held the model follows that controller (position and orientation).
+	/// While both are held it follows the midpoint between them, is oriented by the line between the hands
+	/// (with roll taken from the controllers' up directions) and is scaled by the change in hand distance.
+	/// All cases use one "grab frame" whose basis is scaled by the hand distance; the pivot is moved by
+	/// frame_now * frame_start^-1, so the model stays rigidly attached to the frame. Pressing or releasing a
+	/// grip changes the frame's definition, so the grab is re-baselined at that moment to avoid a jump.
+	/// </summary>
+	private void UpdateGrab()
+	{
+		if (_leftController is null)
+			return;
+		bool left = _leftController.IsButtonPressed("grip_click");
+		bool right = _rightController.IsButtonPressed("grip_click");
+		int mask = (left ? 1 : 0) | (right ? 2 : 0);
+		if (mask == 0)
+		{
+			_gripMask = 0;
+			return;
+		}
+		Transform3D frame = GetGrabFrame(left, right);
+		if (mask != _gripMask)
+		{
+			_gripMask = mask;
+			_grabFrameStart = frame;
+			_pivotStart = _modelPivot.GlobalTransform;
+			return;
+		}
+		_modelPivot.GlobalTransform = frame * _grabFrameStart.AffineInverse() * _pivotStart;
+	}
+
+	private Transform3D GetGrabFrame(bool left, bool right)
+	{
+		if (!(left && right))
+			return (left ? _leftController : _rightController).GlobalTransform;
+		Transform3D l = _leftController.GlobalTransform;
+		Transform3D r = _rightController.GlobalTransform;
+		Vector3 across = r.Origin - l.Origin;
+		float distance = Mathf.Max(across.Length(), 0.01f);
+		Vector3 x = across / distance;
+		Vector3 up = l.Basis.Y + r.Basis.Y;
+		Vector3 z = x.Cross(up);
+		if (z.LengthSquared() < 1e-6f)
+			z = x.Cross(Vector3.Up); // controllers' up is parallel to the hand line; any perpendicular will do
+		z = z.Normalized();
+		Vector3 y = z.Cross(x);
+		return new Transform3D(new Basis(x, y, z).Scaled(Vector3.One * distance), (l.Origin + r.Origin) / 2);
 	}
 
 	#endregion
@@ -333,6 +395,7 @@ public partial class Root : Node3D
 	public override void _Process(double delta)
 	{
 		_voxelBridge?.Poll();
+		UpdateGrab();
 		// The fragment stage has no inverse of MODEL_MATRIX, so supply it every frame. Reading it from
 		// the box's GlobalTransform includes the pivot, so moving or scaling the pivot just works.
 		_raymarchMaterial?.SetShaderParameter("inv_model_matrix", new Projection(_boundingBox.GlobalTransform.AffineInverse()));
