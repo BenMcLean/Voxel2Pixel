@@ -49,6 +49,22 @@ public partial class Root : Node3D
 	private StandardMaterial3D _cursorMaterial;
 	private double _cursorTime;
 
+	/// <summary>Radius of the light sphere in metres.</summary>
+	private const float LightRadius = 0.025f;
+	/// <summary>White sphere marking the point light; a child of the root (world space), so grab-scaling the model does not resize it.</summary>
+	private MeshInstance3D _lightSphere;
+	/// <summary>Translucent shell around the light sphere, shown while it is being dragged.</summary>
+	private MeshInstance3D _lightHalo;
+	/// <summary>True while the right grip is dragging the light instead of the model.</summary>
+	private bool _draggingLight;
+	/// <summary>True when the light sphere is on (white); when off (black) the viewer's head is the light source.</summary>
+	private bool _lightOn = true;
+	private StandardMaterial3D _lightMaterial;
+	/// <summary>Right trigger state on the previous frame, for edge detection.</summary>
+	private bool _triggerWasDown;
+	/// <summary>Light position in the right controller's local space, captured when the drag started.</summary>
+	private Vector3 _lightGrabOffset;
+
 	/// <summary>Uploads the model's segments to GPU textures and keeps them in sync with edits.</summary>
 	private VoxelBridge _voxelBridge;
 	/// <summary>Material running voxel_raymarch.gdshader; carries every shader uniform.</summary>
@@ -80,6 +96,7 @@ public partial class Root : Node3D
 		SetupDisplay();
 		LoadModel();
 		SetupRaymarchBox();
+		SetupLight();
 		SetupShaderUniforms();
 		// Subscribe to model changes to update shader when data changes
 		_model.OnSegmentLoaded += _ => UpdateShaderSegments();
@@ -210,6 +227,8 @@ public partial class Root : Node3D
 			return;
 		bool left = _leftController.IsButtonPressed("grip_click");
 		bool right = _rightController.IsButtonPressed("grip_click");
+		if (UpdateLightDrag(left, right))
+			return;
 		int mask = (left ? 1 : 0) | (right ? 2 : 0);
 		if (mask == 0)
 		{
@@ -225,6 +244,51 @@ public partial class Root : Node3D
 			return;
 		}
 		_modelPivot.GlobalTransform = frame * _grabFrameStart.AffineInverse() * _pivotStart;
+	}
+
+	/// <summary>
+	/// Light dragging takes priority over model grabbing. A drag starts when the right grip goes down (with the
+	/// left not held) while the cursor intersects the light sphere, and ends when that grip is released. While
+	/// dragging, the model grab is suspended and its state reset, so a still-held left grip re-baselines cleanly
+	/// afterwards. Returns true if the model grab should be skipped this frame.
+	/// </summary>
+	private bool UpdateLightDrag(bool left, bool right)
+	{
+		if (_draggingLight && !right)
+			_draggingLight = false;
+		else if (!_draggingLight && right && !left && _gripMask == 0 && CursorTouchesLight())
+		{
+			_draggingLight = true;
+			_lightGrabOffset = _rightController.GlobalTransform.AffineInverse() * _lightSphere.GlobalPosition;
+		}
+		if (!_draggingLight)
+			return false;
+		_gripMask = 0;
+		_lightSphere.GlobalPosition = _rightController.GlobalTransform * _lightGrabOffset;
+		return true;
+	}
+
+	/// <summary>True if the (voxel-snapped) edit cursor cube overlaps the light sphere. Tested in voxel space, where the cursor is an axis-aligned unit cube.</summary>
+	private bool CursorTouchesLight()
+	{
+		if (_cursor is null || !_rightController.GetHasTrackingData())
+			return false;
+		Vector3 centre = _modelPivot.ToLocal(_lightSphere.GlobalPosition);
+		float radius = LightRadius / _modelPivot.GlobalTransform.Basis.Scale.X;
+		Vector3 half = Vector3.One * 0.5f;
+		Vector3 closest = centre.Clamp(_cursor.Position - half, _cursor.Position + half);
+		return closest.DistanceSquaredTo(centre) <= radius * radius;
+	}
+
+	/// <summary>
+	/// Where the shader's light is in world space: the sphere when it is on, otherwise the viewer's head (the
+	/// XR camera is the midpoint between the eyes; on the flat screen it is the free-look camera).
+	/// </summary>
+	private Vector3 GetLightWorldPosition()
+	{
+		if (_lightOn)
+			return _lightSphere.GlobalPosition;
+		return (_vrActive ? _xrCamera : (Node3D)_flatCamera).GlobalPosition;
 	}
 
 	private Transform3D GetGrabFrame(bool left, bool right)
@@ -321,6 +385,40 @@ public partial class Root : Node3D
 		_modelPivot.AddChild(_cursor);
 	}
 
+	/// <summary>Creates the white light sphere, floating up and to the right of the model.</summary>
+	private void SetupLight()
+	{
+		_lightMaterial = new StandardMaterial3D
+		{
+			ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+			AlbedoColor = Colors.White,
+		};
+		_lightSphere = new MeshInstance3D
+		{
+			Name = "LightSphere",
+			Mesh = new SphereMesh { Radius = LightRadius, Height = LightRadius * 2f },
+			MaterialOverride = _lightMaterial,
+			CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+			Position = ModelWorldCenter + new Vector3(0.2f, 0.2f, 0.1f),
+		};
+		_lightHalo = new MeshInstance3D
+		{
+			Name = "LightHalo",
+			Mesh = new SphereMesh { Radius = LightRadius * 2f, Height = LightRadius * 4f },
+			MaterialOverride = new StandardMaterial3D
+			{
+				ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+				Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+				BlendMode = BaseMaterial3D.BlendModeEnum.Add,
+				AlbedoColor = new Color(1f, 1f, 1f, 0.25f),
+			},
+			CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+			Visible = false,
+		};
+		_lightSphere.AddChild(_lightHalo);
+		AddChild(_lightSphere);
+	}
+
 	/// <summary>
 	/// Snaps the cursor to the voxel containing the right controller's tip and blinks it between two
 	/// looks: depth-tested (parts behind the model are hidden) and drawn over everything (x-ray), so
@@ -333,7 +431,17 @@ public partial class Root : Node3D
 		Vector3 tip = (_rightController.GlobalTransform * new Vector3(0f, 0f, -TipOffset));
 		Vector3 voxel = _modelPivot.ToLocal(tip); // voxel space, one unit per voxel
 		_cursor.Position = voxel.Floor() + Vector3.One * 0.5f;
-		_cursor.Visible = _rightController.GetHasTrackingData();
+		// Over the light the cursor gives way to the halo, which stays up during the drag
+		bool overLight = _draggingLight || CursorTouchesLight();
+		_cursor.Visible = _rightController.GetHasTrackingData() && !overLight;
+		_lightHalo.Visible = overLight;
+		bool triggerDown = _rightController.IsButtonPressed("trigger_click");
+		if (triggerDown && !_triggerWasDown && overLight)
+		{
+			_lightOn = !_lightOn;
+			_lightMaterial.AlbedoColor = _lightOn ? Colors.White : Colors.Black;
+		}
+		_triggerWasDown = triggerDown;
 		_cursorTime += delta;
 		_cursorMaterial.NoDepthTest = (int)(_cursorTime / CursorBlinkPeriod) % 2 == 1;
 	}
@@ -453,6 +561,7 @@ public partial class Root : Node3D
 		// The fragment stage has no inverse of MODEL_MATRIX, so supply it every frame. Reading it from
 		// the box's GlobalTransform includes the pivot, so moving or scaling the pivot just works.
 		_raymarchMaterial?.SetShaderParameter("inv_model_matrix", new Projection(_boundingBox.GlobalTransform.AffineInverse()));
+		_raymarchMaterial?.SetShaderParameter("light_position", _modelPivot.ToLocal(GetLightWorldPosition()));
 		_toggleTimer += delta;
 		if (_toggleTimer >= 1.0)
 		{

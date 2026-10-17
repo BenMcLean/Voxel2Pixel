@@ -93,6 +93,10 @@ uniform mat4 inv_model_matrix;
 uniform float max_distance = 200.0;
 uniform int max_steps = 512;
 
+// Position of the point light in voxel space (Root.cs converts the light sphere's world position every
+// frame). Only the position matters; a point light has no orientation.
+uniform vec3 light_position = vec3(50.0, 50.0, 25.0);
+
 // =============================================================================
 // PALETTE
 // =============================================================================
@@ -234,9 +238,11 @@ vec4 raymarch(vec3 ray_origin, vec3 ray_dir, vec3 entry_normal, ivec3 box_min, i
             hit_pos = ray_origin + ray_dir * distance;
             vec3 color = get_material_color(material);
 
-            // Fixed directional light in voxel space plus 30% ambient. Faces turned away from the
-            // light are not darker than ambient. Wrapped in max() so back-facing normals clamp to 0.
-            float lighting = max(dot(normal, normalize(vec3(1.0, 1.0, 0.5))), 0.0) * 0.7 + 0.3;
+            // Point light at light_position (voxel space) plus 30% ambient, with no distance falloff. Faces
+            // turned away from the light are not darker than ambient. Wrapped in max() so back-facing
+            // normals clamp to 0.
+            vec3 to_light = normalize(light_position - hit_pos);
+            float lighting = max(dot(normal, to_light), 0.0) * 0.7 + 0.3;
 
             return vec4(color * lighting, 1.0);
         }
