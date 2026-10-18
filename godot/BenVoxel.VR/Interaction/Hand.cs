@@ -21,6 +21,13 @@ public sealed class Hand(XRController3D controller)
 	public bool TriggerPressed { get; private set; }
 	/// <summary>True only on the frame the trigger went down.</summary>
 	public bool TriggerJustPressed { get; private set; }
+	/// <summary>Thumbstick deflection, each axis -1 to 1: x right, y up.</summary>
+	public Vector2 Stick { get; private set; }
+	public bool StickPressed { get; private set; }
+	/// <summary>True only on the frame the thumbstick was clicked down.</summary>
+	public bool StickJustPressed { get; private set; }
+	/// <summary>True only on the frame the thumbstick click let go.</summary>
+	public bool StickJustReleased { get; private set; }
 	/// <summary>What this hand is currently pointing at, as resolved by <see cref="InteractionManager"/>; null if nothing.</summary>
 	public IInteractable Hovered { get; internal set; }
 
@@ -30,5 +37,10 @@ public sealed class Hand(XRController3D controller)
 		bool trigger = Controller.IsButtonPressed("trigger_click");
 		TriggerJustPressed = trigger && !TriggerPressed;
 		TriggerPressed = trigger;
+		Stick = Controller.GetVector2("primary");
+		bool stick = Controller.IsButtonPressed("primary_click");
+		StickJustPressed = stick && !StickPressed;
+		StickJustReleased = !stick && StickPressed;
+		StickPressed = stick;
 	}
 }

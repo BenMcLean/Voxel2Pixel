@@ -59,7 +59,7 @@ public partial class ModelProp : Prop
 	public override void _Process(double delta) => _spinner.RotateY(_spinRadiansPerSecond * (float)delta);
 
 	/// <summary>The bounds of every mesh under a node, in the space of the node's parent chain given by <paramref name="toRoot"/>.</summary>
-	private static Aabb? MeshBounds(Node3D node, Transform3D toRoot)
+	internal static Aabb? MeshBounds(Node3D node, Transform3D toRoot)
 	{
 		Transform3D transform = toRoot * node.Transform;
 		Aabb? result = null;

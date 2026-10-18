@@ -51,8 +51,15 @@ public partial class Root : Node3D
 	private Vector3 _boxSize;
 	/// <summary>Where the toy box starts: down and to the right of the model, at hip height.</summary>
 	private static readonly Vector3 ToyBoxWorldPosition = new(0.4f, 0.9f, -0.4f);
+	/// <summary>Where a summoned toy box lands: this far beyond the hand, and this far below it, in metres.</summary>
+	private const float ToyBoxSummonDistance = 0.12f;
+	private const float ToyBoxSummonDrop = 0.05f;
+	private ToyBox _toyBox;
 	/// <summary>The point light, and what a trigger on it does.</summary>
 	private LightProp _light;
+	/// <summary>The tool menu, opened by clicking either thumbstick; null on the flat screen.</summary>
+	private RadialMenu _menu;
+	private EditTool _tool = EditTool.Pencil;
 
 	/// <summary>Uploads the model's segments to GPU textures and keeps them in sync with edits.</summary>
 	private VoxelBridge _voxelBridge;
@@ -89,6 +96,7 @@ public partial class Root : Node3D
 		SetupLight();
 		SetupProps();
 		SetupInteractables();
+		SetupMenu();
 		SetupShaderUniforms();
 		// Subscribe to model changes to update shader when data changes
 		_model.OnSegmentLoaded += _ => UpdateShaderSegments();
@@ -303,7 +311,8 @@ public partial class Root : Node3D
 	/// <summary>Creates the props: the toy box, facing the player, and the pencil floating above it.</summary>
 	private void SetupProps()
 	{
-		AddProp(new ToyBox { Position = ToyBoxWorldPosition, Rotation = new Vector3(0f, Mathf.DegToRad(-20f), 0f) });
+		_toyBox = new ToyBox { Position = ToyBoxWorldPosition, Rotation = new Vector3(0f, Mathf.DegToRad(-20f), 0f) };
+		AddProp(_toyBox);
 		AddProp(new ModelProp("res://assets/pencil/pencil.glb", 0.25f) { Position = ToyBoxWorldPosition + new Vector3(0f, 0.3f, 0f) });
 	}
 
@@ -326,6 +335,35 @@ public partial class Root : Node3D
 		_interaction.Register(new SphereGrabbable(_sprite, bounds));
 		_interaction.Register(new SphereGrabbable(_modelPivot, bounds), fallback: true);
 		_interaction.Register(_light);
+	}
+
+	/// <summary>
+	/// Fills the tool menu. Each entry is an icon and what choosing it does; the menu lays out any number of entries,
+	/// so a new tool is one more line here.
+	/// </summary>
+	private void SetupMenu()
+	{
+		if (_interaction is null)
+			return;
+		_menu = new RadialMenu { Name = "ToolMenu" };
+		AddChild(_menu);
+		_menu.AddItem("Pencil", new ModelProp("res://assets/pencil/pencil.glb", 1f), _ => _tool = EditTool.Pencil, tiltDegrees: 45f);
+		_menu.AddItem("Select", new WireframeCube(), _ => _tool = EditTool.Select);
+		_menu.AddItem("Toybox", new ToyBox(), SummonToyBox);
+	}
+
+	/// <summary>Moves the toy box to just beyond a hand, as seen by the viewer, turned to face them.</summary>
+	private void SummonToyBox(Hand hand)
+	{
+		Vector3 head = GetHeadWorldPosition();
+		Vector3 away = hand.TipWorld - head;
+		away.Y = 0f;
+		away = away.LengthSquared() > 1e-4f ? away.Normalized() : Vector3.Forward;
+		Vector3 position = hand.TipWorld + away * ToyBoxSummonDistance;
+		position.Y = hand.TipWorld.Y - ToyBoxSummonDrop; // the chest's origin is the centre of its base
+		_toyBox.GlobalPosition = position;
+		// The chest's front is +Z
+		_toyBox.GlobalRotation = new Vector3(0f, Mathf.Atan2(head.X - position.X, head.Z - position.Z), 0f);
 	}
 
 	/// <summary>The centre, in voxel space, of the voxel containing a world point.</summary>
@@ -362,8 +400,9 @@ public partial class Root : Node3D
 			return;
 		Hand hand = _interaction.Primary;
 		_cursor.Position = SnapToVoxel(hand.TipWorld);
-		// Over the light the cursor gives way to the halo
-		_cursor.Visible = hand.HasTracking && hand.Hovered is not { SuppressesEditCursor: true };
+		// Over the light the cursor gives way to the halo, and it only belongs to the pencil, which the menu replaces while open
+		_cursor.Visible = hand.HasTracking && _tool == EditTool.Pencil && _menu is not { IsOpen: true }
+			&& hand.Hovered is not { SuppressesEditCursor: true };
 		_cursorTime += delta;
 		_cursorMaterial.NoDepthTest = (int)(_cursorTime / CursorBlinkPeriod) % 2 == 1;
 	}
@@ -488,6 +527,12 @@ public partial class Root : Node3D
 	{
 		_voxelBridge?.Poll();
 		_interaction?.Update();
+		if (_menu is not null)
+		{
+			Vector3 head = GetHeadWorldPosition();
+			_menu.Update(_interaction.Left, head);
+			_menu.Update(_interaction.Right, head);
+		}
 		UpdateCursor(delta);
 		// The fragment stage has no inverse of MODEL_MATRIX, so supply it every frame. Reading it from
 		// the box's GlobalTransform includes the pivot, so moving or scaling the pivot just works.
