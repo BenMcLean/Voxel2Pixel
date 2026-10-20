@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using BenVoxel.VR.Props;
 using Godot;
 
 namespace BenVoxel.VR;

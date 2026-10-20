@@ -4,6 +4,8 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using BenVoxel.FileToVoxCore;
 using BenVoxel.Models;
+using BenVoxel.VR.Props;
+using BenVoxel.VR.Tools;
 using Godot;
 
 namespace BenVoxel.VR;
@@ -49,13 +51,12 @@ public partial class Root : Node3D
 	/// <summary>Model bounds in voxel space (Y-up), kept for the sprite and for grab hit-testing.</summary>
 	private Vector3 _boxCenter;
 	private Vector3 _boxSize;
-	/// <summary>Where the toy box starts: down and to the right of the model, at hip height.</summary>
-	private static readonly Vector3 ToyBoxWorldPosition = new(0.4f, 0.9f, -0.4f);
 	/// <summary>Where a summoned toy box lands: this far beyond the hand, and this far below it, in metres.</summary>
 	private const float ToyBoxSummonDistance = 0.12f;
 	private const float ToyBoxSummonDrop = 0.05f;
+	/// <summary>Null until first summoned.</summary>
 	private ToyBox _toyBox;
-	/// <summary>The point light, and what a trigger on it does.</summary>
+	/// <summary>The point light, and what a trigger on it does. Null until a way to spawn it exists, so for now the viewer's head lights the model.</summary>
 	private LightProp _light;
 	/// <summary>The tool menu, opened by clicking either thumbstick; null on the flat screen.</summary>
 	private RadialMenu _menu;
@@ -73,7 +74,7 @@ public partial class Root : Node3D
 	private uint[] _palette;
 
 	/// <summary>Maps voxel space to world space: scale is <see cref="MetresPerVoxel"/>, position puts the model centre at <see cref="ModelWorldCenter"/>.</summary>
-	private Node3D _modelPivot;
+	private VoxelModelProp _modelPivot;
 	/// <summary>
 	/// Box mesh instance covering the model's bounds, child of <see cref="_modelPivot"/>. It is only the
 	/// rasterisation footprint: the shader ignores its geometry and traces rays through the voxels inside it.
@@ -92,9 +93,6 @@ public partial class Root : Node3D
 		SetupDisplay();
 		LoadModel();
 		SetupRaymarchBox();
-		SetupSprite();
-		SetupLight();
-		SetupProps();
 		SetupInteractables();
 		SetupMenu();
 		SetupShaderUniforms();
@@ -236,9 +234,8 @@ public partial class Root : Node3D
 	{
 		(Vector3 center, Vector3 size) = CalculateBoundingBox(_model.CurrentBounds);
 		GD.Print($"Voxel-space bounds (Y-up): center={center}, size={size}");
-		_modelPivot = new Node3D
+		_modelPivot = new VoxelModelProp
 		{
-			Name = "ModelPivot",
 			Scale = Vector3.One * MetresPerVoxel,
 			// Put the model's centre at ModelWorldCenter
 			Position = ModelWorldCenter - center * MetresPerVoxel,
@@ -271,7 +268,7 @@ public partial class Root : Node3D
 			Scale = Vector3.One * MetresPerVoxel,
 			Position = SpriteWorldCenter - _boxCenter * MetresPerVoxel,
 		};
-		AddChild(_sprite);
+		AddProp(_sprite);
 		SetBoxUniforms(_boxCenter, _boxSize);
 	}
 
@@ -301,21 +298,6 @@ public partial class Root : Node3D
 		_modelPivot.AddChild(_cursor);
 	}
 
-	/// <summary>Creates the light sphere, floating up and to the right of the model.</summary>
-	private void SetupLight()
-	{
-		_light = new LightProp(ModelWorldCenter + new Vector3(0.2f, 0.2f, 0.1f), CellTouchesSphere);
-		AddChild(_light.Node);
-	}
-
-	/// <summary>Creates the props: the toy box, facing the player, and the pencil floating above it.</summary>
-	private void SetupProps()
-	{
-		_toyBox = new ToyBox { Position = ToyBoxWorldPosition, Rotation = new Vector3(0f, Mathf.DegToRad(-20f), 0f) };
-		AddProp(_toyBox);
-		AddProp(new ModelProp("res://assets/pencil/pencil.glb", 0.25f) { Position = ToyBoxWorldPosition + new Vector3(0f, 0.3f, 0f) });
-	}
-
 	/// <summary>Puts a prop in the world and makes it grabbable. This is all a new prop needs.</summary>
 	private void AddProp(Prop prop)
 	{
@@ -324,17 +306,13 @@ public partial class Root : Node3D
 	}
 
 	/// <summary>
-	/// Registers what the hands can touch. The sprite goes first so it wins a tie with the model; the model is also
-	/// what a grab that touches nothing carries.
+	/// Registers what the hands can touch from the start: the model, which is also what a grab that touches nothing carries.
 	/// </summary>
 	private void SetupInteractables()
 	{
 		if (_interaction is null)
 			return;
-		Func<(Vector3, float)> bounds = () => (_boxCenter, _boxSize.Length() * 0.5f);
-		_interaction.Register(new SphereGrabbable(_sprite, bounds));
-		_interaction.Register(new SphereGrabbable(_modelPivot, bounds), fallback: true);
-		_interaction.Register(_light);
+		_interaction.Register(_modelPivot, fallback: true);
 	}
 
 	/// <summary>
@@ -352,7 +330,7 @@ public partial class Root : Node3D
 		_menu.AddItem("Toybox", new ToyBox(), SummonToyBox);
 	}
 
-	/// <summary>Moves the toy box to just beyond a hand, as seen by the viewer, turned to face them.</summary>
+	/// <summary>Moves the toy box to just beyond a hand, as seen by the viewer, turned to face them. It is created the first time.</summary>
 	private void SummonToyBox(Hand hand)
 	{
 		Vector3 head = GetHeadWorldPosition();
@@ -361,6 +339,11 @@ public partial class Root : Node3D
 		away = away.LengthSquared() > 1e-4f ? away.Normalized() : Vector3.Forward;
 		Vector3 position = hand.TipWorld + away * ToyBoxSummonDistance;
 		position.Y = hand.TipWorld.Y - ToyBoxSummonDrop; // the chest's origin is the centre of its base
+		if (_toyBox is null)
+		{
+			_toyBox = new ToyBox();
+			AddProp(_toyBox);
+		}
 		_toyBox.GlobalPosition = position;
 		// The chest's front is +Z
 		_toyBox.GlobalRotation = new Vector3(0f, Mathf.Atan2(head.X - position.X, head.Z - position.Z), 0f);
@@ -381,10 +364,10 @@ public partial class Root : Node3D
 	}
 
 	/// <summary>
-	/// Where the shader's light is in world space: the sphere when it is on, otherwise the viewer's head (the
+	/// Where the shader's light is in world space: the sphere when it exists and is on, otherwise the viewer's head (the
 	/// XR camera is the midpoint between the eyes; on the flat screen it is the free-look camera).
 	/// </summary>
-	private Vector3 GetLightWorldPosition() => _light.On ? _light.WorldPosition : GetHeadWorldPosition();
+	private Vector3 GetLightWorldPosition() => _light is { On: true } ? _light.WorldPosition : GetHeadWorldPosition();
 
 	/// <summary>The viewer's position: the XR camera (midpoint between the eyes) in VR, otherwise the free-look camera.</summary>
 	private Vector3 GetHeadWorldPosition() => (_vrActive ? _xrCamera : (Node3D)_flatCamera).GlobalPosition;
@@ -449,6 +432,13 @@ public partial class Root : Node3D
 	{
 		_boxCenter = center;
 		_boxSize = size;
+		_modelPivot.BoxCenter = center;
+		_modelPivot.BoxSize = size;
+		if (_sprite is not null)
+		{
+			_sprite.BoxCenter = center;
+			_sprite.BoxSize = size;
+		}
 		SetSharedParameter("box_center", center);
 		SetSharedParameter("box_size", size);
 	}
@@ -539,7 +529,7 @@ public partial class Root : Node3D
 		_raymarchMaterial?.SetShaderParameter("inv_model_matrix", new Projection(_boundingBox.GlobalTransform.AffineInverse()));
 		Vector3 lightWorld = GetLightWorldPosition();
 		_raymarchMaterial?.SetShaderParameter("light_position", _modelPivot.ToLocal(lightWorld));
-		_sprite?.UpdateView(GetHeadWorldPosition(), lightWorld, _boxCenter, _boxSize);
+		_sprite?.UpdateView(GetHeadWorldPosition(), lightWorld);
 		_toggleTimer += delta;
 		if (_toggleTimer >= 1.0)
 		{

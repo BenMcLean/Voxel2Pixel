@@ -1,7 +1,7 @@
 using System;
 using Godot;
 
-namespace BenVoxel.VR;
+namespace BenVoxel.VR.Props;
 
 /// <summary>
 /// The point light, shown as a white sphere in world space (a child of the root, so grab-scaling the model does not

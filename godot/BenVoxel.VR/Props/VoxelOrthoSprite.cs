@@ -1,6 +1,6 @@
 using Godot;
 
-namespace BenVoxel.VR;
+namespace BenVoxel.VR.Props;
 
 /// <summary>
 /// Non-editable ortho-sprite preview of the model (see voxel_ortho_sprite.gdshader). The node's local space is
@@ -11,7 +11,7 @@ namespace BenVoxel.VR;
 /// midpoint between the eyes), and the shader's rays and virtual pixel grid come from that quad, so both eyes
 /// see the same chunky pixels on a flat card instead of a stereoscopic 3D "big pixel" volume.
 /// </summary>
-public partial class VoxelOrthoSprite : Node3D
+public partial class VoxelOrthoSprite : VoxelProp
 {
 	/// <summary>Material running voxel_ortho_sprite.gdshader. Root binds the shared voxel textures to it.</summary>
 	public ShaderMaterial Material { get; } = new() { Shader = GD.Load<Shader>("res://voxel_ortho_sprite.gdshader") };
@@ -39,10 +39,9 @@ public partial class VoxelOrthoSprite : Node3D
 	/// </summary>
 	/// <param name="headWorld">Viewer position in world space (midpoint between the eyes in VR).</param>
 	/// <param name="lightWorld">Light position in world space.</param>
-	/// <param name="boxCenter">Centre of the model bounds in voxel space.</param>
-	/// <param name="boxSize">Size of the model bounds in voxel space.</param>
-	public void UpdateView(Vector3 headWorld, Vector3 lightWorld, Vector3 boxCenter, Vector3 boxSize)
+	public void UpdateView(Vector3 headWorld, Vector3 lightWorld)
 	{
+		Vector3 boxCenter = BoxCenter, boxSize = BoxSize;
 		Vector3 head = ToLocal(headWorld); // ToLocal includes this node's scale, so the result is in voxels
 		Vector3 viewDir = boxCenter - head;
 		if (viewDir.LengthSquared() < 1e-6f)

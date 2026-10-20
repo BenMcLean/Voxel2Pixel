@@ -1,4 +1,4 @@
-namespace BenVoxel.VR;
+namespace BenVoxel.VR.Tools;
 
 /// <summary>What a hand does to the model; chosen from the radial menu.</summary>
 public enum EditTool

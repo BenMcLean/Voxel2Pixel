@@ -1,6 +1,6 @@
 using Godot;
 
-namespace BenVoxel.VR;
+namespace BenVoxel.VR.Props;
 
 /// <summary>
 /// The toy box: a treasure chest (assets/chest/chest.glb, see assets/ASSETS.md). The node is the chest's pivot, at the

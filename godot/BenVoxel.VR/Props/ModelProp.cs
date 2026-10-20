@@ -1,6 +1,6 @@
 using Godot;
 
-namespace BenVoxel.VR;
+namespace BenVoxel.VR.Props;
 
 /// <summary>
 /// A prop showing an imported 3D model (see assets/ASSETS.md for where each came from). Whatever the model's
