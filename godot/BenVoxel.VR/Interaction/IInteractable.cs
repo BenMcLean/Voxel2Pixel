@@ -31,4 +31,10 @@ public interface IInteractable
 	void HoverEnter(Hand hand) { }
 	void HoverExit(Hand hand) { }
 	void TriggerDown(Hand hand) { }
+	/// <summary>
+	/// Called when a grip is about to carry this. Returns what to carry instead, which lets an item that only stands
+	/// for something (an icon in the toy box) bring the real thing into being under the hand. It must already be
+	/// registered with the <see cref="InteractionManager"/>, and be in the same <see cref="Grab"/> mode.
+	/// </summary>
+	IInteractable BeginGrab(Hand hand) => this;
 }

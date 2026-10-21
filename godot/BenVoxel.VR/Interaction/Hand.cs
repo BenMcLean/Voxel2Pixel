@@ -31,6 +31,9 @@ public sealed class Hand(XRController3D controller)
 	/// <summary>What this hand is currently pointing at, as resolved by <see cref="InteractionManager"/>; null if nothing.</summary>
 	public IInteractable Hovered { get; internal set; }
 
+	/// <summary>Buzzes the controller. Amplitude is 0 to 1.</summary>
+	public void Pulse(float amplitude, float seconds) => Controller.TriggerHapticPulse("haptic", 0f, amplitude, seconds, 0f);
+
 	public void Update()
 	{
 		GripPressed = Controller.IsButtonPressed("grip_click");

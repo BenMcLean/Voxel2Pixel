@@ -19,7 +19,11 @@ public abstract partial class Prop : Node3D, IInteractable
 	Node3D IInteractable.Node => this;
 	public GrabMode Grab => GrabMode.Free;
 
-	public float? HitTest(Hand hand)
+	public virtual void HoverEnter(Hand hand) { }
+	public virtual void HoverExit(Hand hand) { }
+	public virtual void TriggerDown(Hand hand) { }
+
+	public virtual float? HitTest(Hand hand)
 	{
 		(Vector3 centre, float radius) = LocalSphere;
 		float distance = ToGlobal(centre).DistanceTo(hand.TipWorld);

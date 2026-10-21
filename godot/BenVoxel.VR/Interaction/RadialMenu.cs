@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BenVoxel.VR.Props;
 using Godot;
 
 namespace BenVoxel.VR;
@@ -103,10 +102,7 @@ public sealed partial class RadialMenu : Node3D
 	/// <param name="chosen">Called with the hand that opened the menu when the item is chosen.</param>
 	public void AddItem(string name, Node3D icon, Action<Hand> chosen, float tiltDegrees = 0f)
 	{
-		Aabb bounds = ModelProp.MeshBounds(icon, Transform3D.Identity) ?? new Aabb(Vector3.Zero, Vector3.One);
-		float scale = IconDiagonal / Mathf.Max(bounds.Size.Length(), 0.0001f);
-		Node3D fit = new() { Name = "Fit", Scale = Vector3.One * scale, Position = -bounds.GetCenter() * scale };
-		fit.AddChild(icon);
+		Node3D fit = MiniIcon.Fit(icon, IconDiagonal);
 		Node3D tilt = new() { Name = "Tilt", Rotation = new Vector3(0f, 0f, Mathf.DegToRad(tiltDegrees)) };
 		tilt.AddChild(fit);
 		Node3D spinner = new() { Name = "Spinner" };

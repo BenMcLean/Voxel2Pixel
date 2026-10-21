@@ -42,6 +42,8 @@ public sealed class InteractionManager(Hand left, Hand right)
 	private IInteractable _dragTarget;
 	private Hand _dragHand;
 	private Vector3 _dragOffset;
+	/// <summary>The hand last gripping a Free grab, kept so a release can say which hand let go.</summary>
+	private Hand _lastGripHand;
 
 	/// <summary>Adds an item to be hovered and grabbed. Registration order breaks ties between equally near items.</summary>
 	/// <param name="fallback">If true, a Free grab that touches nothing carries this item instead.</param>
@@ -51,6 +53,22 @@ public sealed class InteractionManager(Hand left, Hand right)
 		if (fallback)
 			_fallback = item;
 	}
+
+	/// <summary>Removes an item; any hand hovering it stops hovering it. Do not call during a grab of the item.</summary>
+	public void Unregister(IInteractable item)
+	{
+		_items.Remove(item);
+		if (_fallback == item)
+			_fallback = null;
+		foreach (Hand hand in (Hand[])[Left, Right])
+		{
+			if (hand.Hovered == item)
+				SetHovered(hand, null);
+		}
+	}
+
+	/// <summary>Raised when the last grip carrying an item lets go, with the item and the hand that let go last.</summary>
+	public event System.Action<IInteractable, Hand> Released;
 
 	public void Update()
 	{
@@ -117,15 +135,19 @@ public sealed class InteractionManager(Hand left, Hand right)
 		int mask = (l ? 1 : 0) | (r ? 2 : 0);
 		if (mask == 0)
 		{
+			IInteractable released = _grabTarget;
 			_gripMask = 0;
 			_grabTarget = null;
+			if (released is not null)
+				Released?.Invoke(released, _lastGripHand);
 			return;
 		}
+		_lastGripHand = r ? Right : Left;
 		if (_gripMask == 0)
 		{
 			// Both grips down at once means the primary hand chooses, and only Free items can be chosen
 			Hand picker = r ? Right : Left;
-			_grabTarget = Pick(picker, freeOnly: true) ?? _fallback;
+			_grabTarget = Pick(picker, freeOnly: true)?.BeginGrab(picker) ?? _fallback;
 			if (_grabTarget is null)
 				return;
 		}
@@ -149,14 +171,18 @@ public sealed class InteractionManager(Hand left, Hand right)
 	{
 		if (_dragHand is not null && !_dragHand.GripPressed)
 		{
+			IInteractable released = _dragTarget;
+			Hand hand = _dragHand;
 			_dragHand = null;
 			_dragTarget = null;
+			Released?.Invoke(released, hand);
 		}
 		else if (_dragHand is null && _gripMask == 0 && l != r)
 		{
 			Hand hand = r ? Right : Left;
 			if (hand.Hovered is { Grab: GrabMode.Drag } target)
 			{
+				target = target.BeginGrab(hand);
 				_dragHand = hand;
 				_dragTarget = target;
 				_dragOffset = hand.GlobalTransform.AffineInverse() * target.Node.GlobalPosition;

@@ -330,6 +330,51 @@ public partial class Root : Node3D
 		_menu.AddItem("Toybox", new ToyBox(), SummonToyBox);
 	}
 
+	/// <summary>
+	/// Fills the toy box. Each entry is an icon, the kind of grab its prop takes, and how to bring the prop into the
+	/// world under a hand and take it out again; the box lays out any number of entries, so a new prop is one more call.
+	/// </summary>
+	private void SetupToyBoxItems(ToyBox box)
+	{
+		box.AddItem("Light", () => MiniIcon.LightSphere(LightProp.Radius), GrabMode.Drag, SpawnLight, DespawnLight);
+		// The pencil stands in for props that will have real functions
+		box.AddItem("Pencil", () => new ModelProp("res://assets/pencil/pencil.glb", 1f), GrabMode.Free, SpawnPencil, DespawnProp, tiltDegrees: 45f);
+	}
+
+	/// <summary>There is only one light; asking for it again brings it to the hand.</summary>
+	private IInteractable SpawnLight(Hand hand)
+	{
+		if (_light is null)
+		{
+			_light = new LightProp(hand.TipWorld, CellTouchesSphere);
+			AddChild(_light.Node);
+			_interaction.Register(_light);
+		}
+		_light.Node.GlobalPosition = hand.TipWorld;
+		return _light;
+	}
+
+	private void DespawnLight(IInteractable light)
+	{
+		_interaction.Unregister(light);
+		light.Node.QueueFree();
+		_light = null;
+	}
+
+	private IInteractable SpawnPencil(Hand hand)
+	{
+		ModelProp pencil = new("res://assets/pencil/pencil.glb", 0.2f);
+		AddProp(pencil);
+		pencil.GlobalPosition = hand.TipWorld;
+		return pencil;
+	}
+
+	private void DespawnProp(IInteractable prop)
+	{
+		_interaction.Unregister(prop);
+		prop.Node.QueueFree();
+	}
+
 	/// <summary>Moves the toy box to just beyond a hand, as seen by the viewer, turned to face them. It is created the first time.</summary>
 	private void SummonToyBox(Hand hand)
 	{
@@ -341,8 +386,10 @@ public partial class Root : Node3D
 		position.Y = hand.TipWorld.Y - ToyBoxSummonDrop; // the chest's origin is the centre of its base
 		if (_toyBox is null)
 		{
-			_toyBox = new ToyBox();
+			_toyBox = new ToyBox { Interaction = _interaction };
+			SetupToyBoxItems(_toyBox);
 			AddProp(_toyBox);
+			_interaction.Released += _toyBox.OnReleased;
 		}
 		_toyBox.GlobalPosition = position;
 		// The chest's front is +Z
@@ -523,6 +570,7 @@ public partial class Root : Node3D
 			_menu.Update(_interaction.Left, head);
 			_menu.Update(_interaction.Right, head);
 		}
+		_toyBox?.Face(GetHeadWorldPosition());
 		UpdateCursor(delta);
 		// The fragment stage has no inverse of MODEL_MATRIX, so supply it every frame. Reading it from
 		// the box's GlobalTransform includes the pivot, so moving or scaling the pivot just works.
