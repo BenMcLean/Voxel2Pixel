@@ -82,9 +82,8 @@ public partial class Root : Node3D
 	private MeshInstance3D _boundingBox;
 	private BoxMesh _boxMesh;
 
-	// Toggling voxel demo state (adds/removes the voxel at (0,0,0) once a second)
-	private double _toggleTimer;
-	private bool _voxelPresent;
+	/// <summary>Palette index written by the pencil. Index 0 is empty, so this must be 1 to 255.</summary>
+	private byte _paintColor = 1;
 	/// <summary>Last segment count printed, so the log only reports changes.</summary>
 	private int _lastSegmentCount;
 
@@ -102,8 +101,8 @@ public partial class Root : Node3D
 		_model.OnBrickDirty += (_, _, _) => UpdateShaderSegments();
 		_model.OnBoundsChanged += HandleBoundsChanged;
 		GD.Print(_vrActive
-			? "Demo ready in VR. Toggling voxel at (0,0,0) every second to demonstrate real-time editing."
-			: "Demo ready on the flat screen. Right-click + WASDQE to fly around.");
+			? "Ready in VR. Right trigger adds voxels at the cursor, A removes them."
+			: "Ready on the flat screen. Right-click + WASDQE to fly around.");
 	}
 
 	#region Display
@@ -438,6 +437,31 @@ public partial class Root : Node3D
 	}
 
 	/// <summary>
+	/// While the edit cursor is showing, the primary hand's trigger writes <see cref="_paintColor"/> into the voxel
+	/// under it and A clears it. Both act every frame they are held, so sweeping the hand draws a line. A write that
+	/// would not change the voxel is skipped, because every change re-uploads the whole segment to the GPU.
+	/// </summary>
+	private void ApplyPencil()
+	{
+		if (_cursor is not { Visible: true })
+			return;
+		Hand hand = _interaction.Primary;
+		bool add = hand.TriggerPressed, remove = hand.AxPressed;
+		if (add == remove)
+			return; // neither, or both
+		// Voxel space is Y-up, storage is Z-up: (x, y, z)_yup is (x, z, y)_zup
+		Vector3 cell = (_cursor.Position - Vector3.One * 0.5f).Round();
+		if (cell.X < 0 || cell.Y < 0 || cell.Z < 0 || cell.X > ushort.MaxValue || cell.Y > ushort.MaxValue || cell.Z > ushort.MaxValue)
+			return;
+		ushort x = (ushort)cell.X, y = (ushort)cell.Z, z = (ushort)cell.Y;
+		byte value = add ? _paintColor : (byte)0;
+		if (_model[x, y, z] == value)
+			return;
+		_model[x, y, z] = value;
+		hand.Pulse(0.2f, 0.02f);
+	}
+
+	/// <summary>
 	/// Calculates bounding box center and size in voxel space (Y-up) from model bounds (Z-up).
 	/// The max is extended by 2 voxels because bounds are stored at brick granularity (2x2x2 voxels), so
 	/// the last brick may contain voxels up to max + 1. Corners are therefore always integer coordinates.
@@ -558,7 +582,7 @@ public partial class Root : Node3D
 
 	/// <summary>
 	/// Per-frame work: lets the bridge finish any pending GPU bounds trim, refreshes the inverse model
-	/// matrix the shader needs, and runs the toggling-voxel editing demo.
+	/// matrix the shader needs, and applies the pencil.
 	/// </summary>
 	public override void _Process(double delta)
 	{
@@ -572,20 +596,65 @@ public partial class Root : Node3D
 		}
 		_toyBox?.Face(GetHeadWorldPosition());
 		UpdateCursor(delta);
+		ApplyPencil();
 		// The fragment stage has no inverse of MODEL_MATRIX, so supply it every frame. Reading it from
 		// the box's GlobalTransform includes the pivot, so moving or scaling the pivot just works.
 		_raymarchMaterial?.SetShaderParameter("inv_model_matrix", new Projection(_boundingBox.GlobalTransform.AffineInverse()));
 		Vector3 lightWorld = GetLightWorldPosition();
 		_raymarchMaterial?.SetShaderParameter("light_position", _modelPivot.ToLocal(lightWorld));
 		_sprite?.UpdateView(GetHeadWorldPosition(), lightWorld);
-		_toggleTimer += delta;
-		if (_toggleTimer >= 1.0)
+	}
+
+	/// <summary>
+	/// Screenshot keys: F9 and Ctrl+Shift+S. Steam's own F12 only works for apps it launched, and it may take other
+	/// function keys too, hence the second one.
+	/// </summary>
+	public override void _UnhandledKeyInput(InputEvent @event)
+	{
+		if (@event is InputEventKey { Pressed: true, Echo: false } key
+			&& (key.Keycode == Key.F9 || (key.Keycode == Key.S && key.CtrlPressed && key.ShiftPressed)))
+			SaveScreenshot();
+	}
+
+	/// <summary>Offscreen viewport and camera for screenshots; null until the first one. The XR render target cannot be read back, so the scene is drawn again here from the head's pose.</summary>
+	private SubViewport _shotViewport;
+	private Camera3D _shotCamera;
+	private bool _shotBusy;
+
+	private const int ScreenshotWidth = 1920;
+	private const int ScreenshotHeight = 1080;
+	private const float ScreenshotFov = 90f;
+
+	/// <summary>
+	/// Renders the scene once from the viewer's head with a flat camera and saves it as a PNG in the user data folder,
+	/// logging the path or the failure. It shows what the head sees, not the exact stereo image in the headset.
+	/// </summary>
+	private async void SaveScreenshot()
+	{
+		if (_shotBusy)
+			return;
+		_shotBusy = true;
+		if (_shotViewport is null)
 		{
-			_toggleTimer -= 1.0;
-			_voxelPresent = !_voxelPresent;
-			_model[0, 0, 0] = _voxelPresent ? (byte)1 : (byte)0;
-			GD.Print($"Voxel at (0,0,0): {(_voxelPresent ? "ADDED" : "REMOVED")}");
+			_shotViewport = new SubViewport
+			{
+				Name = "ScreenshotViewport",
+				Size = new Vector2I(ScreenshotWidth, ScreenshotHeight),
+				RenderTargetUpdateMode = SubViewport.UpdateMode.Disabled,
+			};
+			_shotCamera = new Camera3D { Name = "ScreenshotCamera", Fov = ScreenshotFov, Near = 0.02f, Current = true };
+			_shotViewport.AddChild(_shotCamera);
+			AddChild(_shotViewport);
 		}
+		_shotCamera.GlobalTransform = (_vrActive ? _xrCamera : (Node3D)_flatCamera).GlobalTransform;
+		_shotViewport.RenderTargetUpdateMode = SubViewport.UpdateMode.Once;
+		await ToSignal(RenderingServer.Singleton, RenderingServerInstance.SignalName.FramePostDraw);
+		string path = $"user://screenshot_{DateTime.Now:yyyyMMdd_HHmmss}.png";
+		Error error = _shotViewport.GetTexture().GetImage().SavePng(path);
+		GD.Print(error == Error.Ok
+			? $"Screenshot saved: {ProjectSettings.GlobalizePath(path)}"
+			: $"Screenshot failed ({error}): {path}");
+		_shotBusy = false;
 	}
 
 	public override void _ExitTree() => _voxelBridge?.Dispose();

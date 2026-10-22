@@ -38,12 +38,6 @@ uniform sampler2D palette : filter_nearest, repeat_disable, source_color;
 uniform vec3 box_center = vec3(0.0);
 uniform vec3 box_size = vec3(1.0);
 
-// DDA safety limits, so malformed data can never hang the GPU. max_distance is measured in voxel
-// space (after normalisation, one unit = one voxel); max_steps caps the number of voxel visits.
-// For well-formed models the bounds check in raymarch() ends the march long before either is reached.
-uniform float max_distance = 200.0;
-uniform int max_steps = 512;
-
 // =============================================================================
 // PALETTE
 // =============================================================================
@@ -81,6 +75,24 @@ int find_segment(ivec3 world_pos) {
     return -1; // Segment not loaded
 }
 
+// Reads one brick texel from the segment texture in a given slot of segment_bricks.
+//
+// WHY THE LOOP: tex_idx differs from pixel to pixel (neighbouring pixels can be in different segments), and
+// Vulkan requires the index into an array of samplers to be the same for every invocation in a group unless it
+// is marked non-uniform, which Godot's shader language cannot do. Violating that is undefined behaviour; on
+// some GPUs the whole group samples the texture of one pixel's index, so a segment shows another segment's
+// voxels (a smaller ghost copy of the model, flickering as it changes with the view). The loop counter is
+// uniform, so each segment_bricks[i] is a legal index, and only the pixels whose slot is i read the texture.
+vec4 fetch_brick(int tex_idx, ivec3 brick_coord) {
+    vec4 result = vec4(0.0);
+    for (int i = 0; i < active_segment_count; i++) {
+        // The read is inside the branch so only the matching slot costs a texture fetch; texelFetch needs no
+        // derivatives, so it is safe in divergent control flow.
+        if (i == tex_idx) result = texelFetch(segment_bricks[i], brick_coord, 0);
+    }
+    return result;
+}
+
 // Returns the palette index (0-255) of the voxel at a voxel-space position, or 0 if the voxel is
 // empty or its segment is not loaded.
 //
@@ -108,7 +120,7 @@ uint fetch_voxel(ivec3 world_pos_yup) {
     ivec3 voxel_offset = voxel_pos & ivec3(1);           // Voxel within brick: 0 or 1 per axis
 
     // Fetch the whole brick (8 bytes packed into the R and G float channels)
-    vec4 brick_data = texelFetch(segment_bricks[tex_idx], brick_coord, 0);
+    vec4 brick_data = fetch_brick(tex_idx, brick_coord);
 
     // Reinterpret the float bits as the original uints (a value cast would corrupt them)
     uint brick_low = floatBitsToUint(brick_data.r);   // Low 32 bits  = bytes 0-3
@@ -128,7 +140,7 @@ uint fetch_voxel(ivec3 world_pos_yup) {
 // =============================================================================
 
 // Walks the voxel grid along a ray and returns the palette index of the first non-empty voxel it enters,
-// or 0 if the ray leaves the bounding box or a safety limit is reached.
+// or 0 if the ray leaves the bounding box.
 //
 // DDA ALGORITHM:
 //   For each axis, side_dist holds the ray parameter t at which the ray next crosses a grid plane on
@@ -170,11 +182,18 @@ uint raymarch(vec3 ray_origin, vec3 ray_dir, vec3 entry_normal, ivec3 box_min, i
     // Normal of the face most recently crossed, used for lighting. It starts as the box entry face.
     normal = entry_normal;
 
-    // t of the most recent plane crossing, measured from ray_origin. It is both the safety-limit
-    // counter and (on a hit) the distance to the surface of the current voxel.
+    // t of the most recent plane crossing, measured from ray_origin: on a hit, the distance to the surface of
+    // the current voxel.
     float distance = 0.0;
 
-    for (int step = 0; step < max_steps && distance < max_distance; step++) {
+    // A DDA ray visits at most one voxel plus one per plane crossed, and a ray inside an axis-aligned box
+    // crosses at most (size.x + size.y + size.z) planes before leaving it. The bounds check below ends the
+    // march at that point, so this limit is only a guard against a non-terminating loop. It must scale with
+    // the box: a fixed cap truncates rays through large models, which shows as parts of them vanishing.
+    ivec3 box_extent = box_max - box_min;
+    int max_steps = box_extent.x + box_extent.y + box_extent.z + 3;
+
+    for (int step = 0; step < max_steps; step++) {
         // Primary exit: the ray has left the model's bounding box
         if (any(lessThan(voxel_pos, box_min)) || any(greaterThanEqual(voxel_pos, box_max))) {
             break;
@@ -217,7 +236,7 @@ uint raymarch(vec3 ray_origin, vec3 ray_dir, vec3 entry_normal, ivec3 box_min, i
         }
     }
 
-    // Miss: left the box or hit a safety limit
+    // Miss: left the box
     return 0u;
 }
 

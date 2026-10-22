@@ -21,6 +21,8 @@ public sealed class Hand(XRController3D controller)
 	public bool TriggerPressed { get; private set; }
 	/// <summary>True only on the frame the trigger went down.</summary>
 	public bool TriggerJustPressed { get; private set; }
+	/// <summary>The A/X face button, held.</summary>
+	public bool AxPressed { get; private set; }
 	/// <summary>Thumbstick deflection, each axis -1 to 1: x right, y up.</summary>
 	public Vector2 Stick { get; private set; }
 	public bool StickPressed { get; private set; }
@@ -40,6 +42,7 @@ public sealed class Hand(XRController3D controller)
 		bool trigger = Controller.IsButtonPressed("trigger_click");
 		TriggerJustPressed = trigger && !TriggerPressed;
 		TriggerPressed = trigger;
+		AxPressed = Controller.IsButtonPressed("ax_button");
 		Stick = Controller.GetVector2("primary");
 		bool stick = Controller.IsButtonPressed("primary_click");
 		StickJustPressed = stick && !StickPressed;

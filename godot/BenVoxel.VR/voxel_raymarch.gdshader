@@ -52,7 +52,7 @@ render_mode unshaded, cull_front;
 // =============================================================================
 // UNIFORMS
 // =============================================================================
-// The voxel storage uniforms (segments, bricks, palette, box_center, box_size, max_distance, max_steps)
+// The voxel storage uniforms (segments, bricks, palette, box_center, box_size)
 // are declared in voxel_storage.gdshaderinc.
 
 // Inverse of the MeshInstance's GlobalTransform, precomputed on the CPU every frame (Root._Process).
