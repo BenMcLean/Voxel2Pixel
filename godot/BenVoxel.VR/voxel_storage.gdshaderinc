@@ -1,11 +1,11 @@
 // Shared voxel storage access and traversal for voxel_raymarch.gdshader and voxel_ortho_sprite.gdshader.
-// Both shaders read the same segment / brick textures, which Root.cs binds to both materials, so edits
+// Both shaders read the same segment voxel textures, which Root.cs binds to both materials, so edits
 // show up in both at once. Everything here works in Godot Y-up voxel space (one unit per voxel).
 //
 // VOXEL STORAGE (see VoxelBridge.cs):
-//   The model is split into 128^3-voxel segments. Each segment is a 64^3 3D texture of "bricks"; one
-//   brick is 2x2x2 voxels packed into 8 bytes (one byte of palette index per voxel). A small directory
-//   texture lists which segments exist and which texture-array slot each one lives in.
+//   The model is split into 128^3-voxel segments. Each segment is a 128^3 R8 3D texture, one texel per
+//   voxel, holding the voxel's palette index. A small directory texture lists which segments exist and
+//   which texture-array slot each one lives in.
 //   Stored voxel data is Z-up (MagicaVoxel convention), so fetch_voxel() swaps Y and Z.
 
 // Number of valid entries in segment_directory. Entries beyond this are zero padding.
@@ -16,15 +16,17 @@ uniform int active_segment_count = 0;
 // Segment coordinates are in Z-up voxel storage space, in units of 128 voxels.
 uniform sampler2D segment_directory;
 
-// One 64^3 RGBAF 3D texture per loaded segment, indexed by the slot stored in the directory.
-// Each texel is one 2x2x2-voxel brick: the R channel holds the low 32 bits and the G channel the
-// high 32 bits of the 8-byte brick payload, bit-cast into floats (read back with floatBitsToUint).
+// One 128^3 R8 3D texture per loaded segment, indexed by the slot stored in the directory. Each texel is
+// one voxel's palette index. R8 is unsigned-normalised, not an integer format, so a fetch returns
+// index / 255.0 as a float; round(value * 255.0) gives the index back exactly. It must be read with
+// texelFetch (no filtering, which would blend indices) and the sampler must have no source_color hint
+// (no sRGB conversion).
 //
 // LIMIT OF THIS IMPLEMENTATION, NOT OF THE FORMAT: 64 is the most segments that can be resident at once,
 // and it must match VoxelBridge.MaxSegments (which refuses to upload more). The format itself addresses
-// 512 segments per axis. Supporting big scenes means replacing this array with a paged atlas texture;
-// see the note on VoxelBridge.MaxSegments for what that would involve.
-uniform sampler3D segment_bricks[64];
+// 512 segments per axis. Supporting big scenes means replacing this array; see the note on
+// VoxelBridge.MaxSegments for what that would involve.
+uniform sampler3D segment_voxels[64];
 
 // 256x1 RGBA8 palette LUT: texel n is palette entry n. Entry 0 is "empty" and is never looked up.
 // filter_nearest + texelFetch give exact integer lookups with no blending between entries.
@@ -75,20 +77,20 @@ int find_segment(ivec3 world_pos) {
     return -1; // Segment not loaded
 }
 
-// Reads one brick texel from the segment texture in a given slot of segment_bricks.
+// Reads one voxel texel from the segment texture in a given slot of segment_voxels.
 //
 // WHY THE LOOP: tex_idx differs from pixel to pixel (neighbouring pixels can be in different segments), and
 // Vulkan requires the index into an array of samplers to be the same for every invocation in a group unless it
 // is marked non-uniform, which Godot's shader language cannot do. Violating that is undefined behaviour; on
 // some GPUs the whole group samples the texture of one pixel's index, so a segment shows another segment's
 // voxels (a smaller ghost copy of the model, flickering as it changes with the view). The loop counter is
-// uniform, so each segment_bricks[i] is a legal index, and only the pixels whose slot is i read the texture.
-vec4 fetch_brick(int tex_idx, ivec3 brick_coord) {
-    vec4 result = vec4(0.0);
+// uniform, so each segment_voxels[i] is a legal index, and only the pixels whose slot is i read the texture.
+float fetch_texel(int tex_idx, ivec3 texel_coord) {
+    float result = 0.0;
     for (int i = 0; i < active_segment_count; i++) {
         // The read is inside the branch so only the matching slot costs a texture fetch; texelFetch needs no
         // derivatives, so it is safe in divergent control flow.
-        if (i == tex_idx) result = texelFetch(segment_bricks[i], brick_coord, 0);
+        if (i == tex_idx) result = texelFetch(segment_voxels[i], texel_coord, 0).r;
     }
     return result;
 }
@@ -101,10 +103,9 @@ vec4 fetch_brick(int tex_idx, ivec3 brick_coord) {
 // Lookup path:
 //   1. Swap Y and Z to get the Z-up storage coordinate.
 //   2. find_segment() locates the segment and its texture-array slot.
-//   3. Bits 1-6 of each axis select the brick (2x2x2 voxels) within the 64^3 segment texture;
-//      bit 0 of each axis selects the voxel within that brick. (Bits 7+ were used for the segment.)
-//   4. The brick's two floats are bit-cast to two uints (the 64-bit payload) and the voxel's byte is
-//      extracted.
+//   3. Bits 0-6 of each axis select the texel within the segment's 128^3 texture. (Bits 7+ were used
+//      for the segment.)
+//   4. The texel's normalised value is scaled back to the 0-255 palette index.
 uint fetch_voxel(ivec3 world_pos_yup) {
     // Convert from Godot Y-up to voxel Z-up: (x, y, z)_yup -> (x, z, y)_zup
     ivec3 voxel_pos = ivec3(world_pos_yup.x, world_pos_yup.z, world_pos_yup.y);
@@ -116,22 +117,7 @@ uint fetch_voxel(ivec3 world_pos_yup) {
     vec4 entry = texelFetch(segment_directory, ivec2(seg_idx, 0), 0);
     int tex_idx = int(entry.w);
 
-    ivec3 brick_coord = (voxel_pos >> 1) & ivec3(0x3F); // Brick within segment: 0-63 per axis
-    ivec3 voxel_offset = voxel_pos & ivec3(1);           // Voxel within brick: 0 or 1 per axis
-
-    // Fetch the whole brick (8 bytes packed into the R and G float channels)
-    vec4 brick_data = fetch_brick(tex_idx, brick_coord);
-
-    // Reinterpret the float bits as the original uints (a value cast would corrupt them)
-    uint brick_low = floatBitsToUint(brick_data.r);   // Low 32 bits  = bytes 0-3
-    uint brick_high = floatBitsToUint(brick_data.g);  // High 32 bits = bytes 4-7
-
-    // Brick byte layout: [v000, v100, v010, v110, v001, v101, v011, v111]
-    // i.e. byte index = (z << 2) | (y << 1) | x, with x/y/z the voxel offsets in storage (Z-up) space
-    int byte_idx = (voxel_offset.z << 2) | (voxel_offset.y << 1) | voxel_offset.x;
-    return (byte_idx < 4)
-        ? (brick_low >> uint(byte_idx * 8)) & 0xFFu      // Bytes 0-3 live in the low 32 bits
-        : (brick_high >> uint((byte_idx - 4) * 8)) & 0xFFu; // Bytes 4-7 live in the high 32 bits
+    return uint(round(fetch_texel(tex_idx, voxel_pos & ivec3(0x7F)) * 255.0));
 }
 
 

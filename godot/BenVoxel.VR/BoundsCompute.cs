@@ -237,8 +237,8 @@ public sealed class BoundsCompute : IDisposable
 			_rd.ComputeListBindUniformSet(computeList, uniformSet, 0);
 			_rd.ComputeListSetPushConstant(computeList, pushConstantBytes, (uint)pushConstantBytes.Length);
 
-			// Dispatch 1 workgroup (4×4×4 threads handle entire 64³ segment)
-			_rd.ComputeListDispatch(computeList, 1, 1, 1);
+			// Each workgroup covers a 64³ block of voxels, so a 128³ segment is 2×2×2 workgroups
+			_rd.ComputeListDispatch(computeList, 2, 2, 2);
 
 			// Add barrier between segments to ensure writes complete before next segment
 			_rd.ComputeListAddBarrier(computeList);

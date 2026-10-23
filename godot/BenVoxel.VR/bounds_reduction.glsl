@@ -2,13 +2,12 @@
 #version 450
 
 // Workgroup size: 4×4×4 = 64 threads per workgroup
-// Each thread processes a 16×16×16 region of bricks (4096 bricks per thread)
-// Total: 64 threads × 4096 bricks = 262,144 bricks = one full segment
+// Each thread processes a 16×16×16 region of voxels (4096 voxels per thread), so one workgroup covers a
+// 64³ block. A segment is 128³, so it is dispatched as 2×2×2 workgroups.
 layout(local_size_x = 4, local_size_y = 4, local_size_z = 4) in;
 
-// Segment brick texture (64³ bricks, RGBAF format)
-// R = low 32 bits of brick, G = high 32 bits (as float-reinterpreted uint)
-layout(set = 0, binding = 0) uniform sampler3D segment_bricks;
+// Segment voxel texture (128³ texels, R8 format): one palette-index byte per voxel. Read with texelFetch.
+layout(set = 0, binding = 0) uniform sampler3D segment_voxels;
 
 // Output buffer: 6 uints per segment (minX, maxX, minY, maxY, minZ, maxZ)
 // We use atomics to combine results from all threads
@@ -45,10 +44,9 @@ void main() {
     }
     barrier();
 
-    // Each thread processes a 16×16×16 region of bricks
-    // Thread (tx, ty, tz) processes bricks from (tx*16, ty*16, tz*16) to (tx*16+15, ty*16+15, tz*16+15)
+    // Each thread processes a 16×16×16 region of voxels, inside the 64³ block this workgroup covers
     uvec3 thread_id = gl_LocalInvocationID;
-    uvec3 brick_start = thread_id * 16u;
+    uvec3 voxel_start = gl_WorkGroupID * 64u + thread_id * 16u;
 
     // Track this thread's local min/max
     uint thread_min_x = 0xFFFFFFFFu, thread_max_x = 0u;
@@ -56,34 +54,21 @@ void main() {
     uint thread_min_z = 0xFFFFFFFFu, thread_max_z = 0u;
     bool thread_has_voxels = false;
 
-    // Iterate over this thread's brick region
-    for (uint bz = 0u; bz < 16u; bz++) {
-        for (uint by = 0u; by < 16u; by++) {
-            for (uint bx = 0u; bx < 16u; bx++) {
-                uvec3 brick_coord = brick_start + uvec3(bx, by, bz);
+    for (uint vz = 0u; vz < 16u; vz++) {
+        for (uint vy = 0u; vy < 16u; vy++) {
+            for (uint vx = 0u; vx < 16u; vx++) {
+                uvec3 voxel_coord = voxel_start + uvec3(vx, vy, vz);
 
-                // Sample the brick texture
-                // Texture coordinates are normalized [0,1], so divide by 64
-                vec3 tex_coord = (vec3(brick_coord) + 0.5) / 64.0;
-                vec4 brick_data = texture(segment_bricks, tex_coord);
-
-                // Reinterpret float bits as uint to get brick payload
-                uint low = floatBitsToUint(brick_data.r);
-                uint high = floatBitsToUint(brick_data.g);
-
-                // Check if brick has any voxels (any non-zero byte)
-                if (low != 0u || high != 0u) {
+                // Any non-zero palette index is a solid voxel
+                if (texelFetch(segment_voxels, ivec3(voxel_coord), 0).r > 0.0) {
                     thread_has_voxels = true;
 
-                    // Calculate world coordinates for this brick
-                    // Brick coordinates are in segment space (0-63)
-                    // Each brick covers 2 voxels, so multiply by 2
-                    // Then add segment origin
-                    uint world_x = segment_origin_x + brick_coord.x * 2u;
-                    uint world_y = segment_origin_y + brick_coord.y * 2u;
-                    uint world_z = segment_origin_z + brick_coord.z * 2u;
+                    // Bounds are kept at brick granularity (2×2×2 voxels), so snap to the brick origin
+                    // by clearing bit 0, then add the segment origin
+                    uint world_x = segment_origin_x + (voxel_coord.x & ~1u);
+                    uint world_y = segment_origin_y + (voxel_coord.y & ~1u);
+                    uint world_z = segment_origin_z + (voxel_coord.z & ~1u);
 
-                    // Update thread-local bounds
                     thread_min_x = min(thread_min_x, world_x);
                     thread_max_x = max(thread_max_x, world_x);
                     thread_min_y = min(thread_min_y, world_y);

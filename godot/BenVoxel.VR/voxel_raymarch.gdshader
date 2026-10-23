@@ -36,8 +36,8 @@ render_mode unshaded, cull_front;
 //
 // VOXEL STORAGE (see VoxelBridge.cs and voxel_storage.gdshaderinc, which holds the fetch and DDA code
 // shared with voxel_ortho_sprite.gdshader):
-//   The model is split into 128^3-voxel segments. Each segment is a 64^3 3D texture of "bricks"; one
-//   brick is 2x2x2 voxels packed into 8 bytes (one byte of palette index per voxel). A small directory
+//   The model is split into 128^3-voxel segments. Each segment is a 128^3 R8 3D texture, one texel
+//   per voxel, holding the voxel's palette index. A small directory
 //   texture lists which segments exist and which texture-array slot each one lives in.
 //
 // VR (OpenXR multiview):
@@ -52,7 +52,7 @@ render_mode unshaded, cull_front;
 // =============================================================================
 // UNIFORMS
 // =============================================================================
-// The voxel storage uniforms (segments, bricks, palette, box_center, box_size)
+// The voxel storage uniforms (segments, voxels, palette, box_center, box_size)
 // are declared in voxel_storage.gdshaderinc.
 
 // Inverse of the MeshInstance's GlobalTransform, precomputed on the CPU every frame (Root._Process).

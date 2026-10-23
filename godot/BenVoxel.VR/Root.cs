@@ -525,7 +525,7 @@ public partial class Root : Node3D
 		_sprite?.Material.SetShaderParameter(name, value);
 	}
 
-	/// <summary>Binds the segment count, directory texture, per-segment brick textures and palette to the shader.</summary>
+	/// <summary>Binds the segment count, directory texture, per-segment voxel textures and palette to the shader.</summary>
 	private void SetupShaderUniforms()
 	{
 		UpdateShaderSegments();
@@ -534,7 +534,7 @@ public partial class Root : Node3D
 
 	/// <summary>
 	/// Updates shader uniforms when segments are added or removed (also called from the model's
-	/// segment and brick events). The brick textures are bound as an array in directory order, so the
+	/// segment and brick events). The voxel textures are bound as an array in directory order, so the
 	/// directory's texture index for a segment is its position in that array. The array holds at most
 	/// <see cref="VoxelBridge.MaxSegments"/> textures (a temporary limit; see the note on that constant).
 	/// </summary>
@@ -554,7 +554,7 @@ public partial class Root : Node3D
 			else
 				GD.PrintErr($"Texture not found for segment ({entry.X}, {entry.Y}, {entry.Z})");
 		}
-		SetSharedParameter("segment_bricks", textureArray);
+		SetSharedParameter("segment_voxels", textureArray);
 		if (_voxelBridge.ActiveSegmentCount != _lastSegmentCount)
 		{
 			_lastSegmentCount = _voxelBridge.ActiveSegmentCount;

@@ -9,11 +9,11 @@ namespace BenVoxel.VR;
 /// <summary>
 /// Bridges SegmentedBrickModel (CPU) to Godot GPU textures for raymarching.
 ///
-/// The model is split into segments of 128³ voxels. Each loaded segment becomes one 64³ 3D texture in
-/// which one texel is one brick (2×2×2 voxels, 8 bytes, one palette-index byte per voxel). Godot's
-/// spatial shaders cannot sample integer textures, so the 8 bytes are stored bit-for-bit in the R and G
-/// channels of a 32-bit-float RGBAF texel (R = low 32 bits, G = high 32 bits) and recovered in the shader
-/// with floatBitsToUint. Each texture is 64³ × 16 bytes = 4 MB.
+/// The model is split into segments of 128³ voxels. Each loaded segment becomes one 128³ 3D texture in
+/// R8 format: one texel is one voxel, and its byte is the voxel's palette index. R8 is unsigned-normalised
+/// (not an integer format), so the shader reads it with texelFetch and recovers the index as
+/// round(value * 255), which is exact. The CPU model stores 2×2×2 bricks of 8 bytes; they are unpacked
+/// into this linear layout on upload. Each texture is 128³ × 1 byte = 2 MB.
 ///
 /// A small directory texture tells the shader which segments exist. It is rebuilt whenever a segment
 /// loads or unloads.
@@ -22,11 +22,11 @@ namespace BenVoxel.VR;
 /// - uniform int active_segment_count         = ActiveSegmentCount
 /// - uniform sampler2D segment_directory      = DirectoryTexture  (MaxSegments×1 RGBAF;
 ///                                              texel i = segX, segY, segZ, texture slot, as floats)
-/// - uniform sampler3D segment_bricks[64]     = the entries of Textures, ordered as Directory is, so a
+/// - uniform sampler3D segment_voxels[64]     = the entries of Textures, ordered as Directory is, so a
 ///                                              directory entry's TextureIndex is its array position
 ///
 /// Voxel coordinates here are Z-up storage coordinates (MagicaVoxel convention). A voxel at (x, y, z)
-/// is in segment (x >> 7, y >> 7, z >> 7), in brick ((x >> 1) &amp; 63, ...), at offset (x &amp; 1, ...).
+/// is in segment (x >> 7, y >> 7, z >> 7), at texel (x &amp; 127, y &amp; 127, z &amp; 127) of that segment's texture.
 ///
 /// The bridge also tracks when removals may have left the model's bounds larger than necessary and
 /// can recompute tight bounds on the GPU (see <see cref="Poll"/> and <see cref="TrimBounds"/>).
@@ -35,10 +35,10 @@ public sealed class VoxelBridge : IDisposable
 {
 	public readonly record struct SegmentEntry(ushort X, ushort Y, ushort Z, uint TextureIndex);
 
-	private const int BricksPerAxis = 64;  // 64³ bricks per segment
-	private const int BytesPerBrick = 8;   // ulong = 8 bytes
+	private const int VoxelsPerAxis = 128; // 128³ voxels per segment
+	private const int BricksPerAxis = 64;  // 64³ bricks per segment (CPU storage)
 	private const int TotalBricks = BricksPerAxis * BricksPerAxis * BricksPerAxis; // 262,144
-	private const int TextureSize = TotalBricks * BytesPerBrick; // 2 MB
+	private const int BytesPerSlice = VoxelsPerAxis * VoxelsPerAxis; // 16 KB, one Z slice of R8 texels
 
 	private readonly SegmentedBrickModel _model;
 
@@ -60,12 +60,12 @@ public sealed class VoxelBridge : IDisposable
 
 	/// <summary>
 	/// Maximum number of segments resident on the GPU at once. Must equal the size of the
-	/// <c>segment_bricks</c> sampler3D array in voxel_raymarch.gdshader; if it is larger, the shader
+	/// <c>segment_voxels</c> sampler3D array in voxel_raymarch.gdshader; if it is larger, the shader
 	/// indexes past the end of the array. It also sizes the directory texture.
 	///
 	/// TEMPORARY LIMIT - NOT PART OF THE FORMAT. The file format addresses 512 segments per axis
-	/// (SegmentedBrickModel.md), and each resident segment costs 4 MB of GPU memory here, so 64 is
-	/// 256 MB. Supporting big scenes needs a different residency scheme, for example one large 3D atlas
+	/// (SegmentedBrickModel.md), and each resident segment costs 2 MB of GPU memory here, so 64 is
+	/// 128 MB. Supporting big scenes needs a different residency scheme, for example one large 3D atlas
 	/// texture whose slots are paged in and out, with the directory mapping segment -> atlas slot. That
 	/// would replace this constant, the per-segment ImageTexture3D dictionary, the sampler array in the
 	/// shader, and the texture-array binding in Root.cs (SetupShaderUniforms / UpdateShaderSegments).
@@ -125,7 +125,7 @@ public sealed class VoxelBridge : IDisposable
 	}
 
 	/// <summary>
-	/// Uploads a segment's full texture (4 MB) unless doing so would exceed <see cref="MaxSegments"/>.
+	/// Uploads a segment's full texture (2 MB) unless doing so would exceed <see cref="MaxSegments"/>.
 	/// Replacing a segment that is already resident is always allowed. A refused segment is NOT drawn:
 	/// its voxels are treated as empty space, and an error is logged. Does not rebuild the directory.
 	/// </summary>
@@ -146,12 +146,10 @@ public sealed class VoxelBridge : IDisposable
 		if (!_textures.TryGetValue(segmentId, out ImageTexture3D texture))
 			return; // Segment not resident on GPU
 
-		// Incremental update: only update 2×2×2 voxel region (8 bytes)
-		int bx = brickIndex & 0x3F;
-		int by = (brickIndex >> 6) & 0x3F;
-		int bz = (brickIndex >> 12) & 0x3F;
-
-		UpdateBrickInTexture(texture, bx, by, bz, payload);
+		// ImageTexture3D can only be updated whole, so the segment's texture is rewritten from the model.
+		// Update keeps the same texture object, so nothing has to be rebound.
+		if (_model.TryGetSegment(segmentId, out ulong[] bricks))
+			texture.Update(CreateSliceImages(bricks));
 
 		// If any voxels were cleared, bounds might need shrinking
 		// We detect this by checking if the new payload has any zero bytes where it didn't before
@@ -241,75 +239,44 @@ public sealed class VoxelBridge : IDisposable
 	}
 
 	/// <summary>
-	/// Uploads 64³ brick array as RGBAF texture (simpler than trying to use uint formats).
-	/// Converts ulong bricks to 2xfloat32 representation.
+	/// Creates the 128³ R8 texture for a segment from its 64³ brick array.
 	/// </summary>
 	private ImageTexture3D CreateSegmentTexture(ulong[] bricks)
 	{
-		// Convert brick data to RGBAF format (4 floats per texel)
-		// We'll pack the ulong as: R=low32bits, G=high32bits, B=0, A=0
-		byte[] textureData = new byte[TotalBricks * 16]; // 4 floats × 4 bytes
-
-		for (int i = 0; i < TotalBricks; i++)
-		{
-			ulong brick = bricks[i];
-			uint low = (uint)(brick & 0xFFFFFFFF);
-			uint high = (uint)(brick >> 32);
-
-			int offset = i * 16;
-
-			// Store as floats (reinterpret uint bits as float)
-			BitConverter.GetBytes(BitConverter.UInt32BitsToSingle(low)).CopyTo(textureData, offset + 0);   // R
-			BitConverter.GetBytes(BitConverter.UInt32BitsToSingle(high)).CopyTo(textureData, offset + 4);  // G
-			BitConverter.GetBytes(0f).CopyTo(textureData, offset + 8);   // B (unused)
-			BitConverter.GetBytes(0f).CopyTo(textureData, offset + 12);  // A (unused)
-		}
-
-		// Create array of Z-slice images for 3D texture
-		Godot.Collections.Array<Image> images = new Godot.Collections.Array<Image>();
-		int bytesPerSlice = BricksPerAxis * BricksPerAxis * 16;
-
-		for (int z = 0; z < BricksPerAxis; z++)
-		{
-			byte[] sliceData = new byte[bytesPerSlice];
-			Array.Copy(textureData, z * bytesPerSlice, sliceData, 0, bytesPerSlice);
-			images.Add(Image.CreateFromData(BricksPerAxis, BricksPerAxis, false, Image.Format.Rgbaf, sliceData));
-		}
-
-		ImageTexture3D texture = new ImageTexture3D();
-		texture.Create(Image.Format.Rgbaf, BricksPerAxis, BricksPerAxis, BricksPerAxis, false, images);
-		GD.Print($"Created 3D brick texture: {BricksPerAxis}³ RGBAF");
+		ImageTexture3D texture = new();
+		texture.Create(Image.Format.R8, VoxelsPerAxis, VoxelsPerAxis, VoxelsPerAxis, false, CreateSliceImages(bricks));
 		return texture;
 	}
 
 	/// <summary>
-	/// Updates a single brick (2×2×2 voxels) in an existing GPU texture.
-	///
-	/// PERFORMANCE NOTE: ImageTexture3D doesn't support partial updates efficiently.
-	/// Re-uploading the entire segment is acceptable for editor use with moderate edit rates.
-	///
-	/// Future optimization: Implement dirty tracking and batch updates per frame.
+	/// Unpacks bricks into one R8 image per Z slice, the form ImageTexture3D takes. Brick i sits at
+	/// (i &amp; 63, (i >> 6) &amp; 63, i >> 12); within a brick, byte k is the voxel at offset
+	/// (k &amp; 1, (k >> 1) &amp; 1, k >> 2). Empty bricks are skipped, since the buffer starts zeroed.
 	/// </summary>
-	private void UpdateBrickInTexture(ImageTexture3D texture, int bx, int by, int bz, ulong brick)
+	private static Godot.Collections.Array<Image> CreateSliceImages(ulong[] bricks)
 	{
-		// Find which segment this texture belongs to
-		uint? foundSegmentId = null;
-		foreach (KeyValuePair<uint, ImageTexture3D> kvp in _textures)
+		byte[] voxels = new byte[VoxelsPerAxis * BytesPerSlice];
+		for (int i = 0; i < TotalBricks; i++)
 		{
-			if (kvp.Value == texture)
+			ulong brick = bricks[i];
+			if (brick == 0)
+				continue;
+			int x0 = (i & 0x3F) << 1, y0 = ((i >> 6) & 0x3F) << 1, z0 = (i >> 12) << 1;
+			for (int k = 0; k < 8; k++)
 			{
-				foundSegmentId = kvp.Key;
-				break;
+				int x = x0 + (k & 1), y = y0 + ((k >> 1) & 1), z = z0 + (k >> 2);
+				voxels[z * BytesPerSlice + y * VoxelsPerAxis + x] = (byte)(brick >> (k * 8));
 			}
 		}
 
-		if (!foundSegmentId.HasValue || !_model.TryGetSegment(foundSegmentId.Value, out ulong[] bricks))
-			return;
-
-		// Re-create the texture with updated data (same as CreateSegmentTexture)
-		// This is inefficient but simple for now
-		ImageTexture3D newTexture = CreateSegmentTexture(bricks);
-		_textures[foundSegmentId.Value] = newTexture;
+		Godot.Collections.Array<Image> images = [];
+		for (int z = 0; z < VoxelsPerAxis; z++)
+		{
+			byte[] sliceData = new byte[BytesPerSlice];
+			Array.Copy(voxels, z * BytesPerSlice, sliceData, 0, BytesPerSlice);
+			images.Add(Image.CreateFromData(VoxelsPerAxis, VoxelsPerAxis, false, Image.Format.R8, sliceData));
+		}
+		return images;
 	}
 
 	#region Bounds Trimming
